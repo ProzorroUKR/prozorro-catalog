@@ -1,0 +1,24 @@
+tags:
+- Profiles
+description: Profile update
+operationId: collection_put_profile
+requestBody:
+  description: Profile data
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/ProfileUpdateInput'
+responses:
+  "200":
+    description: successful operation
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ProfileResponse'
+  "422":
+    description: validation errors
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'

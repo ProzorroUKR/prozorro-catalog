@@ -1,0 +1,47 @@
+{
+  "id": "33190000-0000-10033300",
+  "additionalClassifications": [
+    {
+      "description": "Засоби індивідуального захисту (респіратори та маски) без клапану",
+      "id": "5011020",
+      "scheme": "KMU777"
+    }
+  ],
+  "classification": {
+    "description": "Медичне обладнання та вироби медичного призначення різні",
+    "id": "33190000-8",
+    "scheme": "ДК021"
+  },
+  "description": "Засоби індивідуального захисту (респіратори та маски) без клапану",
+  "images": [
+    {
+      "sizes": "200x200",
+      "url": "https://catalog.openprocurement.org.ua/images/mask.200x200.jpg"
+    }
+  ],
+  "procuringEntity": {
+    "address": {
+      "countryName": "Україна",
+      "locality": "Київ",
+      "postalCode": "02200",
+      "region": "Київ",
+      "streetAddress": "вулиця Ушинського, 40"
+    },
+    "contactPoint": {
+      "email": "czo.moza@gmail.com",
+      "faxNumber": "0445550055",
+      "name": "Надія Бігун",
+      "telephone": "380509995906",
+      "url": "http://czo.moz.gov.ua/"
+    },
+    "identifier": {
+      "id": "10033300",
+      "legalName": "Тестова центральна закупівельна організація \"МЕДИЧНА\"",
+      "scheme": "UA-EDR"
+    },
+    "name": "Тестова центральна закупівельна організація \"МЕДИЧНА\"",
+    "kind": "central"
+  },
+  "title": "Респіратори та маски без клапану",
+  "status": "active"
+}

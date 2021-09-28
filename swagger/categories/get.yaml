@@ -1,0 +1,13 @@
+tags:
+- Profiles
+description: Get a risk profile
+operationId: collection_get_profile
+produces:
+- application/json
+responses:
+  "200":
+    description: successful operation
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/Profile'

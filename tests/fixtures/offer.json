@@ -1,0 +1,40 @@
+{
+  "comment": "Доставка тільки по Києву",
+  "deliveryAddresses": [
+    {
+      "countryName": "Україна",
+      "locality": "Київ",
+      "postalCode": "01001",
+      "region": "Київ"
+    }
+  ],
+  "status": "active",
+  "suppliers": [
+    {
+      "address": {
+        "countryName": "Україна"
+      },
+      "contactPoint": {
+        "email": "K2.TENDER@EPICENTR.COM",
+        "name": "Векленко Ольга Валеріївна",
+        "telephone": "0638771741",
+        "url": "https://epicentr.ua"
+      },
+      "identifier": {
+        "id": "32490244",
+        "legalName": "ТОВ \"Епіцентр\"",
+        "scheme": "UA-EDR"
+      },
+      "name": "ТОВ \"Епіцентр\""
+    }
+  ],
+  "minOrderValue": {
+    "amount": 350,
+    "currency": "UAH"
+  },
+  "value": {
+    "amount": 35,
+    "currency": "UAH",
+    "valueAddedTaxIncluded": true
+  }
+}

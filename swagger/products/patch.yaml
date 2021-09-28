@@ -1,0 +1,24 @@
+tags:
+- Products
+description: Product update
+operationId: collection_put_product
+requestBody:
+  description: Product data
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/ProductUpdateInput'
+responses:
+  "200":
+    description: successful operation
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ProductResponse'
+  "422":
+    description: validation errors
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'

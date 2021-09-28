@@ -1,0 +1,169 @@
+{
+  "additionalClassifications": [
+    {
+      "description": "Засоби індивідуального захисту (респіратори та маски) без клапану",
+      "id": "5011020",
+      "scheme": "KMU777"
+    }
+  ],
+  "classification": {
+    "description": "Медичне обладнання та вироби медичного призначення різні",
+    "id": "33190000-8",
+    "scheme": "ДК021"
+  },
+  "criteria": [
+    {
+      "code": "OCDS-MEDIC-USE-TYPE",
+      "description": "Спосіб використання (одноразова або багаторазова)",
+      "id": "0001",
+      "requirementGroups": [
+        {
+          "description": "Спосіб використання - одноразова",
+          "id": "0001-001",
+          "requirements": [
+            {
+              "dataType": "string",
+              "expectedValue": "одноразова",
+              "id": "0001-001-01",
+              "title": "Одноразова"
+            }
+          ]
+        }
+      ],
+      "title": "Спосіб використання"
+    },
+    {
+      "code": "OCDS-MEDIC-LAYERS",
+      "description": "Кількість шарів тканини, не менше",
+      "id": "0002",
+      "requirementGroups": [
+        {
+          "description": "Кількість шарів тканини, не менше 3-х",
+          "id": "0002-001",
+          "requirements": [
+            {
+              "dataType": "integer",
+              "id": "0002-001-01",
+              "minValue": 3,
+              "pattern": "[0-9]*",
+              "title": "Три шари або більше",
+              "unit": {
+                "code": "S10",
+                "name": "шарів тканини"
+              }
+            }
+          ]
+        }
+      ],
+      "title": "Кількість шарів"
+    },
+    {
+      "code": "OCDS-MEDIC-PACKING-COUNT",
+      "description": "Одиниця пакування (не менше, штук)",
+      "id": "0003",
+      "requirementGroups": [
+        {
+          "description": "Не менше 50 шт/упаковка",
+          "id": "0003-001",
+          "requirements": [
+            {
+              "dataType": "integer",
+              "id": "0003-001-01",
+              "minValue": 50,
+              "pattern": "[0-9]*",
+              "title": "50 штук",
+              "unit": {
+                "code": "H73",
+                "name": "штука"
+              }
+            }
+          ]
+        }
+      ],
+      "title": "Одиниця пакування"
+    },
+    {
+      "code": "OCDS-MEDIC-NOSE-CLIP",
+      "description": "Виріб оснащений носовим зажимом (носовою кліпсою)",
+      "id": "0004",
+      "requirementGroups": [
+        {
+          "description": "Виріб оснащений носовим зажимом (носовою кліпсою)",
+          "id": "0004-001",
+          "requirements": [
+            {
+              "dataType": "boolean",
+              "description": "Виріб має бути оснащений носовим зажимом",
+              "expectedValue": true,
+              "id": "0004-001-01",
+              "title": "Виріб оснащений носовим зажимом"
+            }
+          ]
+        }
+      ],
+      "title": "Носовий зажим (кліпса)"
+    },
+    {
+      "code": "OCDS-MEDIC-ALL-ANY-ONE",
+      "description": "Тест на відповідність allOf, anyOf, oneOf",
+      "id": "0005",
+      "requirementGroups": [
+        {
+          "description": "Тест всім вимогам",
+          "id": "0005-001",
+          "requirements": [
+            {
+              "dataType": "string",
+              "id": "0005-001-01",
+              "title": "Тест allOf",
+              "allOf": ["ALL_A", "ALL_B", "ALL_C"]
+            }
+          ]
+        },
+        {
+          "description": "Тест всім вимогам",
+          "id": "0005-002",
+          "requirements": [
+            {
+              "dataType": "string",
+              "id": "0005-002-01",
+              "title": "Тест allOf",
+              "anyOf": ["ANY_A", "ANY_B", "ANY_C"]
+            }
+          ]
+        },
+        {
+          "description": "Тест всім вимогам",
+          "id": "0005-003",
+          "requirements": [
+            {
+              "dataType": "string",
+              "id": "0005-003-01",
+              "title": "Тест allOf",
+              "oneOf": ["ONE_A", "ONE_B", "ONE_C"]
+            }
+          ]
+        }
+      ],
+      "title": "Тест allOf, anyOf, oneOf"
+    }
+  ],
+  "description": "Маска медична захисна, гіпоалергенна, одноразова, з доставкою",
+  "images": [
+    {
+      "sizes": "200x200",
+      "url": "https://catalog.openprocurement.org.ua/images/mask.200x200.jpg"
+    }
+  ],
+  "status": "active",
+  "title": "Маска медична захисна, гіпоалергенна, одноразова, з доставкою",
+  "unit": {
+    "code": "H70",
+    "name": "упаковка"
+  },
+  "value": {
+    "amount": 50,
+    "currency": "UAH",
+    "valueAddedTaxIncluded": true
+  }
+}

@@ -1,0 +1,24 @@
+tags:
+- Profiles
+description: Get a list of risk profiles
+operationId: collection_get_profiles
+parameters:
+- in: query
+  name: search
+  schema:
+    type: string
+  description: Search phrase
+produces:
+- application/json
+responses:
+  "200":
+    description: successful operation
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Profile'
