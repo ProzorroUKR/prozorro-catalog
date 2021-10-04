@@ -16,7 +16,8 @@
   "images": [
     {
       "sizes": "200x200",
-      "url": "https://catalog.openprocurement.org.ua/images/mask.200x200.jpg"
+      "url": "https://catalog.openprocurement.org.ua/images/mask.200x200.jpg",
+      "hash": "md5:71a50dbba44c78128b221b7df7bb51f1"
     }
   ],
   "procuringEntity": {
@@ -24,7 +25,7 @@
       "countryName": "Україна",
       "locality": "Київ",
       "postalCode": "02200",
-      "region": "Київ",
+      "region": "Київська область",
       "streetAddress": "вулиця Ушинського, 40"
     },
     "contactPoint": {

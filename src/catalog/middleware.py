@@ -59,7 +59,7 @@ async def request_unpack_params(request, handler):
     to pass variables from url
     as kwargs
     """
-    if 'swagger' in request.path:
+    if 'swagger' in request.path or '/static/' in request.path:
         return await handler(request)
     return await handler(request, **request.match_info)
 

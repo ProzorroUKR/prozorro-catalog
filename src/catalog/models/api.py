@@ -32,3 +32,5 @@ class PaginatedList(BaseModel):
     data: Any
     next_page: Optional[dict]
 
+
+AnyInput = Input[Any]

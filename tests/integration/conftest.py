@@ -1,8 +1,8 @@
 from catalog.api import create_application
 from catalog.db import flush_database
-from aiohttp.helpers import BasicAuth
 from json import loads
 from .base import TEST_AUTH
+from uuid import uuid4
 import os.path
 import pytest
 
@@ -59,6 +59,19 @@ async def product(api, profile):
     data['relatedProfile'] = profile["data"]["id"]
     resp = await api.put(
         f"/api/products/{data['id']}",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 201, await resp.json()
+    return await resp.json()
+
+
+@pytest.fixture
+async def offer(api, product):
+    data = get_fixture_json('offer')
+    data['relatedProduct'] = product["data"]["id"]
+    resp = await api.put(
+        f"/api/offers/{uuid4().hex}",
         json={"data": data},
         auth=TEST_AUTH,
     )

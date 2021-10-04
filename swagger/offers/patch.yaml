@@ -1,0 +1,24 @@
+tags:
+- Offers
+description: Offer update
+operationId: collection_put_offer
+requestBody:
+  description: Offer data
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/OfferUpdateInput'
+responses:
+  "200":
+    description: successful operation
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/OfferResponse'
+  "422":
+    description: validation errors
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'

@@ -3,6 +3,8 @@ import csv
 import hashlib
 import io
 import logging
+from hashlib import sha256
+from json import dumps
 from urllib.parse import quote
 from aiocache import cached as aiocache_cached
 from aiohttp.hdrs import CONTENT_DISPOSITION, CONTENT_TYPE

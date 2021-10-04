@@ -16,7 +16,9 @@ from catalog.handlers.general import get_version, ping_handler
 from catalog.handlers.profile import ProfileView
 from catalog.handlers.category import CategoryView
 from catalog.handlers.product import ProductView
-from catalog.settings import SENTRY_DSN
+from catalog.handlers.offer import OfferView
+from catalog.handlers.image import ImageView
+from catalog.settings import SENTRY_DSN, IMG_PATH, IMG_DIR
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 import sentry_sdk
 import logging
@@ -103,6 +105,36 @@ def create_application(on_cleanup=None):
         ProductView.patch,
         name="update_product"
     )
+
+    # offers
+    app.router.add_get(
+        "/api/offers",
+        OfferView.collection_get,
+        name="read_offer_registry"
+    )
+    app.router.add_get(
+        r"/api/offers/{offer_id:[\w-]+}",
+        OfferView.get,
+        name="read_offer"
+    )
+    app.router.add_put(
+        r"/api/offers/{offer_id:[\w-]+}",
+        OfferView.put,
+        name="create_offer"
+    )
+    app.router.add_patch(
+        r"/api/offers/{offer_id:[\w-]+}",
+        OfferView.patch,
+        name="update_offer"
+    )
+    # images
+    app.router.add_post(
+        r"/api/images",
+        ImageView.post,
+        name="upload_image"
+    )
+    # server images for dev env
+    app.router.add_static(IMG_PATH, IMG_DIR)
 
     app.on_startup.append(init_mongo)
     if on_cleanup:

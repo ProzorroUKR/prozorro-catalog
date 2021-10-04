@@ -106,33 +106,34 @@ async def test_420_product_patch(api, product):
     resp_json = await resp.json()
     assert product_id == resp_json['data']['id']
 
+    resp = await api.patch('/api/products/%s' % product_id, json={"data": {}}, auth=TEST_AUTH)
+    assert resp.status == 401, await resp.json()
+    assert {'errors': ['Require access token']} == await resp.json()
+
+    resp = await api.patch('/api/products/%s' % product_id,
+                           json={
+                               "data": {},
+                               "access": {'token': "a" * 32},
+                           },
+                           auth=TEST_AUTH)
+    assert resp.status == 403, await resp.json()
+
     patch_product_bad = {
         "data": {
             "status": "unknown"
-        }
+        },
+        "access": product['access'],
     }
-
     resp = await api.patch('/api/products/%s' % product_id, json=patch_product_bad, auth=TEST_AUTH)
-    assert resp.status == 401
-
-    patch_product_bad['access'] = {'token': 'bad access token, but long enough'}
-
-    resp = await api.patch('/api/products/%s' % product_id, json=patch_product_bad, auth=TEST_AUTH)
-    assert resp.status == 403
-
-    patch_product_bad['access'] = dict(test_product['access'])
-
-    resp = await api.patch('/api/products/%s' % product_id, json=patch_product_bad, auth=TEST_AUTH)
-    assert resp.status == 400
+    assert resp.status == 400, await resp.json()
 
     patch_product_identifier = {
         "data": {
             "identifier": {
-                "id": "0463234567819",
-                "scheme": "EAN-13"
+                "id": "0463234567819"
             }
         },
-        "access": test_product['access']
+        "access": product['access']
     }
 
     resp = await api.patch('/api/products/%s' % product_id, json=patch_product_identifier, auth=TEST_AUTH)
@@ -143,7 +144,7 @@ async def test_420_product_patch(api, product):
             "status": "hidden",
             "title": "Маски (приховані)"
         },
-        "access": test_product['access']
+        "access": product['access']
     }
 
     resp = await api.patch('/api/products/%s' % product_id, json=patch_product, auth=TEST_AUTH)
@@ -166,7 +167,7 @@ async def test_420_product_patch(api, product):
 
 
 async def test_430_product_limit_offset(api, profile):
-    profile_id = profile['id']
+    profile_id = profile["data"]['id']
     test_product = {"data": api.get_fixture_json('product')}
 
     test_product_map = dict()

@@ -6,6 +6,7 @@ pydantic==1.7.3
 aiocache>=0.11.1, <1
 ujson # requirements for aiocache
 msgpack # requirements for aiocache
-aiofiles~=0.5.0
+aiofiles>=0.7.0
 python-json-logger==2.0.1
 sentry-sdk
+git+git://github.com/ProzorroUKR/standards.git@1.0.19#egg=standards

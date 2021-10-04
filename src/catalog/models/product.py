@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Optional, List, Set, Union
-from uuid import UUID
 from pydantic import Field, validator, AnyUrl, constr
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response
@@ -8,10 +7,6 @@ from catalog.models.common import Unit, Value, Image, Criteria, Classification, 
 from catalog.utils import get_now
 from enum import Enum
 import re
-import logging
-
-
-logger = logging.getLogger(__name__)
 
 
 class ProductStatus(str, Enum):
@@ -96,72 +91,21 @@ class ProductCreateData(BaseModel):
                 raise ValueError("not unique requirements")
         return v
 
-    @staticmethod
-    def validate_responses(profile, data):  # TODO improve this ?
-        profile_requirements = {
-            r["id"]: r
-            for c in profile.get("criteria", "")
-            for group in c["requirementGroups"]
-            for r in group["requirements"]
-        }
-        responded_requirements = set()
-        for req_response in data.get("requirementResponses", ""):
-            key = req_response['requirement']
-            value = req_response['value']
-            responded_requirements.add(key)
-
-            if key not in profile_requirements:
-                raise ValueError('requirement %s not found' % key)
-
-            requirement = profile_requirements[key]
-            if 'expectedValue' in requirement:
-                if value != requirement['expectedValue']:
-                    raise ValueError('requirement %s unexpected value' % key)
-            if 'minValue' in requirement:
-                if value < requirement['minValue']:
-                    raise ValueError('requirement %s minValue' % key)
-            if 'maxValue' in requirement:
-                if value > requirement['maxValue']:
-                    raise ValueError('requirement %s maxValue' % key)
-            if 'pattern' in requirement:
-                if not re.match(requirement['pattern'], str(value)):
-                    raise ValueError('requirement %s pattern' % key)
-            if 'allOf' in requirement:
-                if set(value) != set(requirement['allOf']):
-                    raise ValueError('requirement %s allOf' % key)
-            if 'anyOf' in requirement:
-                if isinstance(value, list):
-                    if not set(value).issubset(set(requirement['anyOf'])):
-                        raise ValueError('requirement %s anyOf' % key)
-                elif value not in requirement['anyOf']:
-                    raise ValueError('requirement %s anyOf' % key)
-            if 'oneOf' in requirement:
-                if value not in requirement['oneOf']:
-                    raise ValueError('requirement %s oneOf' % key)
-
-        for cr in profile['criteria']:
-            group_found = 0
-            for rg in cr['requirementGroups']:
-                requirement_found = 0
-                for req in rg['requirements']:
-                    if req['id'] in responded_requirements:
-                        requirement_found += 1
-                if requirement_found == len(rg['requirements']):
-                    group_found += 1
-            if group_found == 0:
-                raise ValueError('criteria %s not satisfied' % cr['id'])
-
 
 class ProductUpdateData(BaseModel):
-    title: Optional[str] = Field(None, min_length=1, max_length=250)
+    title: Optional[str] = Field(None, min_length=1, max_length=80)
     description: Optional[str] = Field(None, min_length=1, max_length=1000)
-    status: Optional[ProductStatus]
-    unit: Optional[Unit]
-    value: Optional[Value]
-    images: Optional[List[Image]] = Field(None, max_items=100)
-    criteria: Optional[List[Criteria]] = Field(None, min_items=1, max_items=100)
     classification: Optional[Classification]
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
+    additionalProperties: Optional[List[ProductProperty]] = Field(None, max_items=100)
+    identifier: Optional[ProductIdentifier]
+    alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_items=100)
+    brand: Optional[Brand]
+    product: Optional[ProductInfo]
+    manufacturers: Optional[List[Manufacturer]] = Field(None, max_items=100)
+    images: Optional[List[Image]] = Field(None, max_items=100)
+    requirementResponses: Optional[List[RequirementResponse]] = Field(None, max_items=100)
+    status: Optional[ProductStatus]
 
 
 class Product(ProductCreateData):

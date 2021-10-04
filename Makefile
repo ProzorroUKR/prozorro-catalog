@@ -1,8 +1,8 @@
 CI_COMMIT_SHORT_SHA ?= $(shell git rev-parse --short HEAD)
-IMAGE ?= rms:latest
-IMAGE_TEST ?= rms:test
+IMAGE ?= catalog:latest
+IMAGE_TEST ?= catalog:test
 GIT_STAMP ?= $(shell git describe)
-HELM ?= helm
+HELM ?= helm3
 
 .EXPORT_ALL_VARIABLES:
 

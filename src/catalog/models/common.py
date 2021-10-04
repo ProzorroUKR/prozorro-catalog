@@ -1,8 +1,10 @@
 from datetime import datetime
 from typing import Optional, List, Set, Union
-from pydantic import Field, validator, AnyUrl
+from pydantic import Field, validator, AnyUrl, constr
 from catalog.models.base import BaseModel
 from enum import Enum
+import standards
+import re
 
 
 class DataTypeEnum(str, Enum):
@@ -19,7 +21,7 @@ class Unit(BaseModel):
 
 
 class Value(BaseModel):
-    amount: float
+    amount: Union[int, float]
     currency: str = Field(..., regex=r"^[A-Z]{3}$")
     valueAddedTaxIncluded: bool = True
 
@@ -31,10 +33,11 @@ class Period(BaseModel):
 
 
 class Image(BaseModel):
-    sizes: str = Field(..., regex=r"^[0-9]{2,4}x[0-9]{2,4}$")
     url: AnyUrl
+    sizes: Optional[str] = Field(None, regex=r"^[0-9]{2,4}x[0-9]{2,4}$")
     title: Optional[str] = Field(None, min_length=1, max_length=250)
     format: Optional[str] = Field(None, regex=r"^image/[a-z]{2,10}$")
+    hash: Optional[str] = Field(None, regex=r"^md5:[0-9a-f]{32}$")
 
 
 class Requirement(BaseModel):
@@ -83,6 +86,33 @@ class Address(BaseModel):
     region: str = Field(..., max_length=80)
     streetAddress: str = Field(..., max_length=250)
 
+    @validator('region')
+    def region_standard(cls, v):
+        ua_regions = standards.load("classifiers/ua_regions.json")
+        if v not in ua_regions:
+            raise ValueError("must be one of classifiers/ua_regions.json")
+        return v
+
+
+class OfferSuppliersAddress(Address):
+    locality: Optional[constr(max_length=80)]
+
+
+class OfferDeliveryAddress(BaseModel):  # only countryName is required
+    countryName: str = Field(..., max_length=80)
+    locality: Optional[constr(max_length=80)]
+    postalCode: Optional[constr(max_length=20)]
+    region: Optional[constr(max_length=80)]
+    streetAddress: Optional[constr(max_length=250)]
+
+    @validator('region')
+    def region_standard(cls, v):
+        if v:
+            ua_regions = standards.load("classifiers/ua_regions.json")
+            if v not in ua_regions:
+                raise ValueError("must be one of classifiers/ua_regions.json")
+        return v
+
 
 class ContactPoint(BaseModel):
     name: str = Field(..., max_length=250)
@@ -90,6 +120,12 @@ class ContactPoint(BaseModel):
     url: Optional[str] = Field(None, max_length=250)
     email: Optional[str] = Field(None, max_length=250)
     faxNumber: Optional[str] = Field(None, max_length=250)
+
+    @validator('telephone')
+    def telephone_format(cls, v):
+        if not re.match(r"^(\+)?[0-9]{2,}(,( )?(\+)?[0-9]{2,})*$", v):
+            raise ValueError("Invalid phone format")
+        return v
 
 
 class Identifier(BaseModel):
@@ -104,7 +140,7 @@ class ProcuringEntityKind(str, Enum):
 
 
 class ProcuringEntity(BaseModel):
-    name: str = Field(..., max_length=250)
+    name: constr(max_length=250)
     address: Address
     contactPoint: ContactPoint
     identifier: Identifier

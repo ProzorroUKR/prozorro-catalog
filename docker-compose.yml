@@ -8,13 +8,15 @@ services:
         environment:
             MONGODB_URI: 'mongodb://root:example@mongo:27017/?replicaSet=rs0'
             PYTHONUNBUFFERED: '1'
+            CATALOG_DATA: '/app/prozorro/catalog'
         ports:
-            - 80:8000
+            - 8000:8000
         volumes:
             - ./src/catalog:/app/catalog
             - ./tests:/app/tests
             - ./swagger:/swagger
             - ./auth.ini:/app/auth.ini
+            - ./images:/app/images
         depends_on:
             - mongo
 
@@ -29,6 +31,16 @@ services:
             - mongo_data:/data/db
         ports:
             - 27017:27017
+
+    web:
+        image: nginx
+        volumes:
+            - ./nginx.conf:/etc/nginx/conf.d/default.conf
+            - ./images:/etc/nginx/html/static/images
+        ports:
+            - "80:80"
+        depends_on:
+            - api
 
 volumes:
     mongo_data:

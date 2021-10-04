@@ -5,14 +5,17 @@
       "countryName": "Україна",
       "locality": "Київ",
       "postalCode": "01001",
-      "region": "Київ"
+      "region": "Київська область"
     }
   ],
   "status": "active",
   "suppliers": [
     {
       "address": {
-        "countryName": "Україна"
+        "countryName": "Україна",
+        "postalCode": "01024",
+        "region": "Київська область",
+        "streetAddress": "вул. Приблизна 1, копус 20"
       },
       "contactPoint": {
         "email": "K2.TENDER@EPICENTR.COM",
@@ -25,7 +28,8 @@
         "legalName": "ТОВ \"Епіцентр\"",
         "scheme": "UA-EDR"
       },
-      "name": "ТОВ \"Епіцентр\""
+      "name": "ТОВ \"Епіцентр\"",
+      "scale": "micro"
     }
   ],
   "minOrderValue": {

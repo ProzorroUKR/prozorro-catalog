@@ -27,6 +27,14 @@ from .product import (
     ProductUpdateInput,
     ProductResponse,
 )
+from .offer import (
+    Offer,
+    OfferCreateData,
+    OfferUpdateData,
+    OfferCreateInput,
+    OfferUpdateInput,
+    OfferResponse,
+)
 
 __all__ = [
     "ProfileCreateData",
@@ -54,4 +62,11 @@ __all__ = [
     "ProductCreateInput",
     "ProductUpdateInput",
     "ProductResponse",
+
+    "Offer",
+    "OfferCreateData",
+    "OfferUpdateData",
+    "OfferCreateInput",
+    "OfferUpdateInput",
+    "OfferResponse",
 ]

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List, Set, Union
+from typing import Optional, List, Set, Union, Any
 from uuid import UUID
 from pydantic import Field, validator, AnyUrl
 from catalog.models.base import BaseModel
@@ -16,12 +16,12 @@ class CategoryStatus(str, Enum):
 
 
 class CategoryCreateData(BaseModel):
-    title: Optional[str] = Field(None, min_length=1, max_length=80)
-    description: Optional[str] = Field(None, min_length=1, max_length=1000)
-    classification: Optional[Classification]
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
+    classification: Classification
     procuringEntity: ProcuringEntity
     id: str = Field(..., regex=r"^[0-9A-Za-z_-]{20,32}$")
+    title: Optional[str] = Field(None, min_length=1, max_length=80)
+    description: Optional[str] = Field(None, min_length=1, max_length=1000)
+    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
     status: CategoryStatus = CategoryStatus.active
     images: Optional[List[Image]] = Field(None, max_items=100)
 
@@ -30,9 +30,9 @@ class CategoryCreateData(BaseModel):
         """
         instead of generating id, we ask user to pass through all these validations
         """
-        if values["classification"].id[:8] not in v:
+        if "classification" in values and values["classification"].id[:8] not in v:
             raise ValueError('id must include cpv')
-        if values["procuringEntity"].identifier.id not in v:
+        if "procuringEntity" in values and values["procuringEntity"].identifier.id not in v:
             raise ValueError('id must include edr')
         return v
 

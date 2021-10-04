@@ -79,6 +79,8 @@ async def flush_database(*_):
     await asyncio.gather(
         get_category_collection().delete_many({}),
         get_profiles_collection().delete_many({}),
+        get_products_collection().delete_many({}),
+        get_offers_collection().delete_many({}),
     )
 
 
@@ -323,7 +325,113 @@ async def update_product(obj):
 
 @asynccontextmanager
 @transaction_generator
-async def read_and_update_product(profile_id):
-    obj = await read_profile(profile_id)
+async def read_and_update_product(uid):
+    obj = await read_product(uid)
     yield obj
-    await update_profile(obj)
+    await update_product(obj)
+
+
+# products
+def get_products_collection():
+    return get_collection("products")
+
+
+async def init_products_indexes():
+    modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    try:
+        await get_products_collection().create_indexes(
+            [modified_index]
+        )
+    except PyMongoError as e:
+        logger.exception(e)
+
+
+async def insert_product(data):
+    inserted_id = await insert_object(
+        get_products_collection(),
+        data
+    )
+    return inserted_id
+
+
+async def find_products(**kwargs):
+    collection = get_products_collection()
+    result = await paginated_result(
+        collection, **kwargs
+    )
+    return result
+
+
+async def read_product(uid):
+    data = await get_products_collection().find_one(
+        {'_id': uid},
+        session=session_var.get(),
+    )
+    if not data:
+        raise web.HTTPNotFound(text="Product not found")
+    return rename_id(data)
+
+
+async def update_product(obj):
+    await update_object(get_products_collection(), obj)
+
+
+@asynccontextmanager
+@transaction_generator
+async def read_and_update_product(uid):
+    obj = await read_product(uid)
+    yield obj
+    await update_product(obj)
+
+
+# offers
+def get_offers_collection():
+    return get_collection("offers")
+
+
+async def init_offers_indexes():
+    modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    try:
+        await get_offers_collection().create_indexes(
+            [modified_index]
+        )
+    except PyMongoError as e:
+        logger.exception(e)
+
+
+async def insert_offer(data):
+    inserted_id = await insert_object(
+        get_offers_collection(),
+        data
+    )
+    return inserted_id
+
+
+async def find_offers(**kwargs):
+    collection = get_offers_collection()
+    result = await paginated_result(
+        collection, **kwargs
+    )
+    return result
+
+
+async def read_offer(uid):
+    data = await get_offers_collection().find_one(
+        {'_id': uid},
+        session=session_var.get(),
+    )
+    if not data:
+        raise web.HTTPNotFound(text="Product not found")
+    return rename_id(data)
+
+
+async def update_offer(obj):
+    await update_object(get_offers_collection(), obj)
+
+
+@asynccontextmanager
+@transaction_generator
+async def read_and_update_offer(uid):
+    obj = await read_offer(uid)
+    yield obj
+    await update_offer(obj)

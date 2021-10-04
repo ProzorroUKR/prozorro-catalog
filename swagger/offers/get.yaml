@@ -1,0 +1,13 @@
+tags:
+- Offers
+description: Get an offer
+operationId: get_offer
+produces:
+- application/json
+responses:
+  "200":
+    description: successful operation
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/OfferResponse'
