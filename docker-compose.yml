@@ -16,7 +16,7 @@ services:
             - ./tests:/app/tests
             - ./swagger:/app/swagger
             - ./auth.ini:/app/auth.ini
-            - ./images:/app/images
+            - ./media:/app/images
         depends_on:
             - mongo
 

@@ -29,7 +29,7 @@ cover/
 .vagrant/
 .cache/
 htmlcov/
-images/
+media/
 coverage.xml
 test.db
 pip-wheel-metadata/
