@@ -2,6 +2,8 @@ tags:
 - Products
 description: Product update
 operationId: collection_patch_product
+security:
+  - Basic: []
 requestBody:
   description: Product data
   required: true

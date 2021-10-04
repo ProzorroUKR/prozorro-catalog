@@ -2,6 +2,8 @@ tags:
 - Products
 description: Product create
 operationId: collection_put_product
+security:
+  - Basic: []
 requestBody:
   description: Product data
   required: true

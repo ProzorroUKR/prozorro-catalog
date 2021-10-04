@@ -2,6 +2,8 @@ tags:
 - Profiles
 description: Profile update
 operationId: collection_patch_profile
+security:
+  - Basic: []
 requestBody:
   description: Profile data
   required: true

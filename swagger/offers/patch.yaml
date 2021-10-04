@@ -2,6 +2,8 @@ tags:
 - Offers
 description: Offer update
 operationId: collection_put_offer
+security:
+  - Basic: []
 requestBody:
   description: Offer data
   required: true

@@ -2,6 +2,8 @@ tags:
 - Profiles
 description: Profile create
 operationId: collection_put_profile
+security:
+  - Basic: []
 requestBody:
   description: Profile data
   required: true

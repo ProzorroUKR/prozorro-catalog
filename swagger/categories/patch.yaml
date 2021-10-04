@@ -2,6 +2,8 @@ tags:
 - Categories
 description: Category update
 operationId: collection_patch_category
+security:
+  - Basic: []
 requestBody:
   description: Category data
   required: true

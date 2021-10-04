@@ -56,6 +56,8 @@ publish_latest:
     - shell
   variables:
     TAG: "latest"
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   script:
     - docker tag $CI_REGISTRY_IMAGE:$CI_TAG $CI_REGISTRY_IMAGE:$TAG
     - docker push $CI_REGISTRY_IMAGE:$TAG
