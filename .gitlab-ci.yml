@@ -17,7 +17,7 @@ build:
   tags:
     - shell
   script:
-    - docker build -t $CI_REGISTRY_IMAGE:$CI_TAG .
+    - docker build  --build-arg version=$(git describe --tags) -t $CI_REGISTRY_IMAGE:$CI_TAG .
     - docker push $CI_REGISTRY_IMAGE:$CI_TAG
 
 test:
