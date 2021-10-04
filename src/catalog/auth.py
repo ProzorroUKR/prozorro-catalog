@@ -1,4 +1,4 @@
-from catalog.models import User
+from catalog.models.user import User
 from catalog.settings import AUTH_DATA
 from aiohttp.helpers import BasicAuth
 from aiohttp.web import HTTPUnauthorized, HTTPForbidden

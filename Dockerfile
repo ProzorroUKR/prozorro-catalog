@@ -1,13 +1,13 @@
-FROM python:3.9-slim as base
+FROM python:3.9-alpine3.14 as base
 
 RUN pip install --upgrade pip
 
 WORKDIR /app
-RUN apt-get update && apt-get install -y git
+RUN apk --no-cache add gcc build-base git openssl-dev libffi-dev
 COPY requirements.txt .
 RUN pip install -r requirements.txt
-COPY swagger /swagger
-EXPOSE 80
+COPY swagger /app/swagger
+EXPOSE 8000
 
 FROM base as test_base
 

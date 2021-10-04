@@ -33,18 +33,25 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["python", "-m", "catalog.api"]
+#          command: ["sleep", "infinity"]
+          env:
+            - name: MONGODB_URI
+              value: '{{ .Values.mongodb_uri }}'
+            - name: DB_NAME
+              value: 'catalogs-{{ .Release.Name }}'
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 8000
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /
-              port: http
+              path: /api/ping
+              port: 8000
           readinessProbe:
             httpGet:
-              path: /
-              port: http
+              path: /api/ping
+              port: 8000
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

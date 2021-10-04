@@ -16,7 +16,7 @@ responses:
       application/json:
         schema:
           $ref: '#/components/schemas/ProductResponse'
-  "422":
+  "400":
     description: validation errors
     content:
       application/json:

@@ -9,10 +9,10 @@ from catalog import db
 from catalog.swagger import class_view_swagger_path
 from catalog.auth import set_access_token, validate_accreditation, validate_access_token
 from catalog.utils import pagination_params, get_now, async_retry
-from catalog.models import CategoryCreateInput, CategoryUpdateInput
+from catalog.models.category import CategoryCreateInput, CategoryUpdateInput
 
 
-@class_view_swagger_path('/swagger/categories')
+@class_view_swagger_path('/app/swagger/categories')
 class CategoryView(View):
 
     @classmethod

@@ -8,7 +8,7 @@ import pytest
 
 
 def get_fixture_json(name):
-    fixture_file = os.path.join("/app/tests/fixtures", f"{name}.json")
+    fixture_file = os.path.join("tests/fixtures", f"{name}.json")
     with open(fixture_file) as f:
         data = loads(f.read())
     return data

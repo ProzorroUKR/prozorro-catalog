@@ -6,7 +6,7 @@ from aiohttp_swagger import swagger_path
 from pymongo.errors import OperationFailure
 
 from catalog import db
-from catalog.models import Profile
+from catalog.models.profile import Profile
 from catalog.models.base import unchanged
 from catalog.models.profile import ProfileCreateInput, ProfileUpdateInput
 from catalog.swagger import class_view_swagger_path
@@ -14,7 +14,7 @@ from catalog.utils import pagination_params, get_now, requests_sequence_params, 
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
 
 
-@class_view_swagger_path('/swagger/profiles')
+@class_view_swagger_path('/app/swagger/profiles')
 class ProfileView(View):
 
     @classmethod

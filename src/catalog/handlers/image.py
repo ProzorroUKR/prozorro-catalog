@@ -31,7 +31,7 @@ async def generate_filename():
     return tmp_file
 
 
-@class_view_swagger_path('/swagger/images')
+@class_view_swagger_path('/app/swagger/images')
 class ImageView(View):
 
     @classmethod
@@ -69,6 +69,9 @@ class ImageView(View):
             # adding .png or .jpeg to the file
             filename = f"{tmp_file}.{img_type}"
             await aiofiles.os.rename(tmp_file, filename)
-            return {"url": filename.replace(IMG_DIR, IMG_PATH),
-                    "size": size,
-                    "hash": f"md5:{hash_md5.hexdigest()}"}
+            data = {
+                "url": filename.replace(IMG_DIR, IMG_PATH),
+                "size": size,
+                "hash": f"md5:{hash_md5.hexdigest()}"
+            }
+            return {"data": data}

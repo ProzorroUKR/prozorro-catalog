@@ -37,7 +37,7 @@ def create_application(on_cleanup=None):
         ),
         client_max_size=1024 ** 2 * 100
     )
-    app.router.add_get("/api/ping", ping_handler)
+    app.router.add_get("/api/ping", ping_handler, allow_head=False)
     app.router.add_get("/api/version", get_version, allow_head=False)
 
     # categories

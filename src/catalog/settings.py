@@ -3,11 +3,14 @@ from pymongo.write_concern import WriteConcern
 from pymongo.read_concern import ReadConcern
 from zoneinfo import ZoneInfo
 import configparser
+import logging
 import sys
 import os
 
+logger = logging.getLogger(__name__)
+
 MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://mongo:27017/")
-ENGINE_DB_NAME = os.environ.get("ENGINE_DB_NAME", "risk_engine")
+DB_NAME = os.environ.get("DB_NAME", "catalog")
 # 'PRIMARY', 'PRIMARY_PREFERRED', 'SECONDARY', 'SECONDARY_PREFERRED', 'NEAREST',
 READ_PREFERENCE = getattr(ReadPreference, os.environ.get("READ_PREFERENCE", "PRIMARY"))
 raw_write_concert = os.environ.get("WRITE_CONCERN", "1")
@@ -31,7 +34,10 @@ AUTH_DATA = {section_name: {name: secret
 
 # directory to store images
 IMG_DIR = os.getenv('IMG_DIR', '/app/images')
-IMG_PATH = os.getenv('AUTH_PATH', '/static/images')
+if not os.path.exists(IMG_DIR):
+    logger.warning(f"IMG_DIR '{IMG_DIR}' does not exist. Created")
+    os.makedirs(IMG_DIR)
+IMG_PATH = os.getenv('IMG_PATH', '/static/images')
 
 ALLOWED_IMG_TYPES = os.getenv('ALLOWED_IMG_TYPES', 'jpeg,png').split(",")
 

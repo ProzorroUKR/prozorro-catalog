@@ -15,11 +15,9 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import ASCENDING, DESCENDING, IndexModel
 from pymongo.collection import ReturnDocument
 from pymongo.errors import PyMongoError, ConnectionFailure, DuplicateKeyError
-
-from catalog.models import PaginatedList
 from catalog.settings import (
     MONGODB_URI, READ_PREFERENCE, WRITE_CONCERN, READ_CONCERN,
-    ENGINE_DB_NAME,
+    DB_NAME,
     MAX_LIST_LIMIT,
 )
 
@@ -37,7 +35,7 @@ async def init_mongo(app: web.Application) -> AsyncIOMotorDatabase:
     conn = AsyncIOMotorClient(MONGODB_URI, io_loop=loop)
 
     DB = conn.get_database(
-        ENGINE_DB_NAME,
+        DB_NAME,
         read_preference=READ_PREFERENCE,
         write_concern=WRITE_CONCERN,
         read_concern=READ_CONCERN,

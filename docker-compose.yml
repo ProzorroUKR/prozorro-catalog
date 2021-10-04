@@ -14,7 +14,7 @@ services:
         volumes:
             - ./src/catalog:/app/catalog
             - ./tests:/app/tests
-            - ./swagger:/swagger
+            - ./swagger:/app/swagger
             - ./auth.ini:/app/auth.ini
             - ./images:/app/images
         depends_on:
@@ -27,20 +27,15 @@ services:
             MONGODB_REPLICA_SET_MODE: primary
             MONGODB_REPLICA_SET_NAME: rs0
             MONGODB_REPLICA_SET_KEY: replicaSetKey
-        volumes:
-            - mongo_data:/data/db
         ports:
             - 27017:27017
 
-    web:
-        image: nginx
-        volumes:
-            - ./nginx.conf:/etc/nginx/conf.d/default.conf
-            - ./images:/etc/nginx/html/static/images
-        ports:
-            - "80:80"
-        depends_on:
-            - api
-
-volumes:
-    mongo_data:
+#    web:
+#        image: nginx
+#        volumes:
+#            - ./nginx.conf:/etc/nginx/conf.d/default.conf
+#            - ./images:/etc/nginx/html/static/images
+#        ports:
+#            - "80:80"
+#        depends_on:
+#            - api

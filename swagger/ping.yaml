@@ -1,7 +1,7 @@
 tags:
 - Helpers
 description:  This end-point allow to test that service is up.
-operationId: get_version
+operationId: ping
 produces:
 - text/plain
 responses:

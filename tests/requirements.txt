@@ -1,3 +1,2 @@
 pytest-aiohttp
-coverage
-freezegun==1.0.0
+pytest-cov

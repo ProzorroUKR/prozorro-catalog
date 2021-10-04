@@ -1,45 +1,75 @@
 stages:
-  - build
   - test
+  - build
+  - publish
   - deploy
   - cleanup
 
 variables:
-  IMAGE: "prozorro/catalog/develop:$CI_COMMIT_SHORT_SHA"
-  IMAGE_TEST: "prozorro/catalog/develop:$CI_COMMIT_SHORT_SHA-test"
-  IMAGE_FULL_NAME: "docker-registry.prozorro.gov.ua/cdb/prozorro-catalog"
-  IMAGE_TAG: "latest"
+  CI_TAG: "ci-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
   HELM: "helm3"
+  REPO_URL: http://repo-staging.dc.prozorro.gov.ua/repos/helm/
 
-
-build_images:
+build:
   stage: build
-  script:
-    - make docker-build
-  except:
-    - schedules
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   tags:
     - shell
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_TAG .
+    - docker push $CI_REGISTRY_IMAGE:$CI_TAG
 
-
-test-integration:
+test:
+  image: docker-registry.prozorro.gov.ua/docker/images/python:3.9-alpine3.14
   stage: test
-  tags:
-    - kube-dev
-  image: $IMAGE_TEST
   services:
     - bitnami/mongodb:latest
   variables:
+    SWAGGER_DOC_AVAILABLE: ""
+    AUTH_PATH: ${CI_PROJECT_DIR}/auth.ini
+    IMG_DIR: ${CI_PROJECT_DIR}/images
     MONGODB_URI: mongodb://root:example@mongo:27017/?replicaSet=rs0
     MONGODB_ROOT_PASSWORD: example
     MONGODB_REPLICA_SET_MODE: primary
     MONGODB_REPLICA_SET_NAME: rs0
     MONGODB_REPLICA_SET_KEY: replicaSetKey
+  tags:
+    - kube-dev
+  before_script:
+    - apk --no-cache add gcc build-base git openssl-dev libffi-dev
+    - pip install -r requirements.txt
+    - pip install -r tests/requirements.txt
+    - pip install -e .
+    - echo '127.0.0.1  mongo' >> /etc/hosts
   script:
-    - pytest --cov=catalog --cov-report xml tests/integration/
+    - pytest -x -s --cov=src/catalog --cov-report xml tests/integration/
   artifacts:
     paths:
       - coverage.xml
+  coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
+
+
+publish_latest:
+  stage: publish
+  tags:
+    - kube-dev
+  variables:
+    TAG: "latest"
+  script:
+    - docker tag $CI_REGISTRY_IMAGE:$CI_TAG $CI_REGISTRY_IMAGE:$TAG
+    - docker push $CI_REGISTRY_IMAGE:$TAG
+  only:
+    - master
+  except:
+    - schedules
+
+publish_tag:
+  extends: publish_latest
+  variables:
+    TAG: $CI_COMMIT_TAG
+  only:
+    - tags
 
 
 review:
@@ -53,33 +83,59 @@ review:
     on_stop: stop_review
     auto_stop_in: 1 month
   variables:
-    TAG: $CI_COMMIT_REF_SLUG
+    TAG: $CI_TAG
+    RELEASE: catalog-${CI_COMMIT_REF_SLUG}
   script:
-    - make dev-update
+    - helm3 upgrade -i ${RELEASE} helm/prozorro-catalog --namespace dev-prozorro
+        --set image.tag=${TAG}
+        --set ingress.hosts[0].host=catalog.${RELEASE}.k8s.prozorro.gov.ua,ingress.hosts[0].paths[0]=/
+  only:
+    - branches
+  except:
+    - master
+    - schedules
   when: manual
+
+
+review_master:
+  extends: review
+  stage: deploy
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    action: start
+    url: http://api.${CI_COMMIT_REF_SLUG}.${K8S_DOMAIN}/api/ping
+    on_stop: stop_review
+    auto_stop_in: 1 month
+  variables:
+    TAG: latest
+    RELEASE: catalog-master
   only:
     - master
+  except:
+    - schedules
 
 
 stop_review:
   stage: deploy
   script:
-    - make dev-auth-secret-delete
+    - helm3 delete $CI_COMMIT_REF_SLUG
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
     action: stop
   tags:
     - shell
-  when: manual
   only:
+    - branches
+  except:
     - master
+    - schedules
+  when: manual
 
 
-clenup-images:
+clenup-ci-image:
   stage: cleanup
   tags:
     - shell
   script:
-    - docker rmi -f $IMAGE || true
-    - docker rmi -f $IMAGE_TEST || true
+    - docker rmi -f $CI_TAG || true
   when: always

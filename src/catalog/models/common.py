@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional, List, Set, Union
 from pydantic import Field, validator, AnyUrl, constr
 from catalog.models.base import BaseModel
+from catalog.models.api import Response
 from enum import Enum
 import standards
 import re
@@ -30,6 +31,15 @@ class Period(BaseModel):
     durationInDays: Optional[int] = None
     startDate: Optional[datetime] = None
     endDate: Optional[datetime] = None
+
+
+class BaseImage(BaseModel):
+    url: AnyUrl
+    size: Optional[int]
+    hash: Optional[str] = Field(None, regex=r"^md5:[0-9a-z]{32}$")
+
+
+ImageResponse = Response[BaseImage]
 
 
 class Image(BaseModel):

@@ -29,7 +29,7 @@ async def test_600_image_create(api):
     assert resp.status == 201, await resp.json()
     assert {"url": "/static/images/aa/aa/aa/aaaaaaaaaaaaaaaaaaaaaaaaaa.png",
             "hash": "md5:71a50dbba44c78128b221b7df7bb51f1",
-            "size": 95} == await resp.json()
+            "size": 95} == (await resp.json())["data"]
 
     data = FormData()
     data.add_field('file',

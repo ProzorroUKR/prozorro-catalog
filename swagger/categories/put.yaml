@@ -1,22 +1,22 @@
 tags:
-- Profiles
-description: Profile update
-operationId: collection_put_profile
+- Categories
+description: Category update
+operationId: collection_put_category
 requestBody:
-  description: Profile data
+  description: Category data
   required: true
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/ProfileCreateData'
+        $ref: '#/components/schemas/CategoryCreateInput'
 responses:
   "200":
     description: successful operation
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/ProfileCreateData'
-  "422":
+          $ref: '#/components/schemas/CategoryResponse'
+  "400":
     description: validation errors
     content:
       application/json:

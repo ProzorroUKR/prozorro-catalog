@@ -13,7 +13,7 @@ from catalog.utils import pagination_params, get_now, requests_sequence_params, 
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
 
 
-@class_view_swagger_path('/swagger/offers')
+@class_view_swagger_path('/app/swagger/offers')
 class OfferView(View):
 
     @classmethod

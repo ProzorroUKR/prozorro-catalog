@@ -6,22 +6,15 @@ HELM ?= helm3
 
 .EXPORT_ALL_VARIABLES:
 
-ifdef CI
-  REBUILD_IMAGES_FOR_TESTS =
-else
-  REBUILD_IMAGES_FOR_TESTS = docker-build
-endif
 
-
-run: docker-build
-	docker-compose --file=docker-compose.yml up -d
-
-stop:
-	docker-compose --file=docker-compose.yml stop
+docker-build-test:
+	docker build --target=test --build-arg version=$(GIT_STAMP) -t $(IMAGE_FULL_NAME):$(IMAGE_TAG) .
+	docker push $(IMAGE_FULL_NAME):$(IMAGE_TAG)
 
 docker-build:
-	docker build --build-arg version=$(GIT_STAMP) -t $(IMAGE) .
-	docker build --target=test --build-arg version=$(GIT_STAMP) -t $(IMAGE_TEST) .
+	docker build --build-arg version=$(GIT_STAMP) -t $(IMAGE_FULL_NAME):$(IMAGE_TAG) .
+	docker push $(IMAGE_FULL_NAME):$(IMAGE_TAG)
+
 
 helm-lint:
 	$(HELM) lint helm/prozorro-catalog
@@ -45,24 +38,8 @@ version:
 pep8:
 	@flake8 src/
 
-test-unit: $(REBUILD_IMAGES_FOR_TESTS)
-	docker rm -f unit-$(CI_COMMIT_SHORT_SHA) || true
-	docker build --target=test -t $(IMAGE_TEST) .
-	docker run \
-		--name unit-$(CI_COMMIT_SHORT_SHA) \
-		--env AUTH_KS_DIR=tests/auth_keys \
-	   	$(IMAGE_TEST) \
-	   	nosetests -v tests/unit
+test-integration:
+	docker run $(CI_REGISTRY_IMAGE):$(CI_TAG) \
+	    --mount source=tests,target=/app/tests \
+	   	pip install -r tests/requirements && pytest --cov=catalog --cov-report xml tests/integration/
 
-test-integration: COMPOSE ?= docker-compose -f docker-compose-integration.yml
-test-integration: $(REBUILD_IMAGES_FOR_TESTS)
-	docker rm -f integration-$(CI_COMMIT_SHORT_SHA) || true
-	IMAGE_TEST=$(IMAGE_TEST) $(COMPOSE) run \
-	    --name integration-$(CI_COMMIT_SHORT_SHA) api \
-		nosetests -v tests/integration --with-coverage --cover-package=customs --cover-xml
-	docker cp integration-$(CI_COMMIT_SHORT_SHA):/asur_rms/coverage.xml coverage.xml		
-	cat coverage.xml | sed "s/\/asur_rms\/customs/\/builds\/asur\/rms\/src\/customs/" > coverage.xml.tmp && mv coverage.xml.tmp coverage.xml
-
-remove-compose: COMPOSE ?= docker-compose -f docker-compose-integration.yml
-remove-compose:
-	$(COMPOSE) down
