@@ -111,6 +111,8 @@ review_master:
   variables:
     TAG: latest
     RELEASE: catalog-master
+  after_script:
+    - kubectl --namespace dev-prozorro rollout restart deployment catalog-master-prozorro-catalog
   only:
     - master
   except:
