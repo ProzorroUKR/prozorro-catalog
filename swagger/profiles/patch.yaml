@@ -8,7 +8,7 @@ requestBody:
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/ProfileUpdateInput'
+        $ref: '#/components/schemas/Input_ProfileUpdateData_'
 responses:
   "200":
     description: successful operation
@@ -18,7 +18,7 @@ responses:
           type: object
           properties:
             data:
-              $ref: '#/components/schemas/Profile'
+              $ref: '#/components/schemas/Response_Profile_'
   "400":
     description: validation errors
     content:

@@ -9,11 +9,6 @@ class Access(BaseModel):
     token: str = Field(..., regex=r"[0-9a-f]{32}")
 
 
-class Error(BaseModel):
-    code: int
-    message: str
-
-
 class Input(GenericModel, Generic[DataT]):
     data: DataT
     access: Optional[Access]
@@ -21,16 +16,25 @@ class Input(GenericModel, Generic[DataT]):
 
 class Response(GenericModel, Generic[DataT]):
     data: Optional[DataT]
-    errors: Optional[List[Error]]
+    errors: Optional[List[str]]
 
 
 class ErrorResponse(BaseModel):
-    errors: List[Error]
+    errors: List[str]
+
+
+class ListItem(BaseModel):
+    id: str
+    dateModified: str
+
+
+class NextPage(BaseModel):
+    offset: str
 
 
 class PaginatedList(BaseModel):
-    data: Any
-    next_page: Optional[dict]
+    data: List[ListItem]
+    next_page: Optional[NextPage]
 
 
 AnyInput = Input[Any]

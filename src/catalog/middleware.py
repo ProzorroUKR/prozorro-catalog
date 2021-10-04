@@ -22,12 +22,8 @@ async def error_middleware(request, handler):
         response = await handler(request)
     except ValidationError as exc:
         text = json_dumps(dict(errors=[
-            dict(
-                msg=e["msg"],
-                loc=".".join(str(part) for part in e["loc"]),
-                type=e["type"],
-                values=e.get("ctx", None)
-            ) for e in exc.errors()
+            f"{e['msg']}: {'.'.join(str(part) for part in e['loc'])}"
+            for e in exc.errors()
         ]))
         return HTTPBadRequest(
             text=text,
@@ -67,8 +63,7 @@ async def request_unpack_params(request, handler):
 @middleware
 async def convert_response_to_json(request, handler):
     """
-    convert dicts and PaginatedList model objects
-    into valid json responses
+    convert dicts into valid json responses
     """
     response = await handler(request)
     if isinstance(response, dict):

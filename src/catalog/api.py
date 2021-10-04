@@ -44,12 +44,14 @@ def create_application(on_cleanup=None):
     app.router.add_get(
         "/api/categories",
         CategoryView.collection_get,
-        name="read_category_registry"
+        name="read_category_registry",
+        allow_head=False
     )
     app.router.add_get(
         r"/api/categories/{category_id:[\w-]+}",
         CategoryView.get,
-        name="read_category"
+        name="read_category",
+        allow_head=False
     )
     app.router.add_put(
         r"/api/categories/{category_id:[\w-]+}",
@@ -66,12 +68,14 @@ def create_application(on_cleanup=None):
     app.router.add_get(
         "/api/profiles",
         ProfileView.collection_get,
-        name="read_profile_registry"
+        name="read_profile_registry",
+        allow_head=False
     )
     app.router.add_get(
         r"/api/profiles/{profile_id:[\w-]+}",
         ProfileView.get,
-        name="read_profile"
+        name="read_profile",
+        allow_head=False
     )
     app.router.add_put(
         r"/api/profiles/{profile_id:[\w-]+}",
@@ -88,12 +92,14 @@ def create_application(on_cleanup=None):
     app.router.add_get(
         "/api/products",
         ProductView.collection_get,
-        name="read_product_registry"
+        name="read_product_registry",
+        allow_head=False
     )
     app.router.add_get(
         r"/api/products/{product_id:[\w-]+}",
         ProductView.get,
-        name="read_product"
+        name="read_product",
+        allow_head=False
     )
     app.router.add_put(
         r"/api/products/{product_id:[\w-]+}",
@@ -110,12 +116,14 @@ def create_application(on_cleanup=None):
     app.router.add_get(
         "/api/offers",
         OfferView.collection_get,
-        name="read_offer_registry"
+        name="read_offer_registry",
+        allow_head=False
     )
     app.router.add_get(
         r"/api/offers/{offer_id:[\w-]+}",
         OfferView.get,
-        name="read_offer"
+        name="read_offer",
+        allow_head=False
     )
     app.router.add_put(
         r"/api/offers/{offer_id:[\w-]+}",

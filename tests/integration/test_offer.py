@@ -42,14 +42,10 @@ async def test_510_offer_create(api, product):
     resp = await api.put('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)
     assert resp.status == 400
     errors = {'errors': [
-        {'msg': 'must be one of classifiers/ua_regions.json',
-         'loc': 'deliveryAddresses.0.region', 'type': 'value_error', 'values': None},
-        {'msg': 'must be one of organizations/scale.json keys',
-         'loc': 'suppliers.0.scale', 'type': 'value_error', 'values': None},
-        {'msg': 'must be one of classifiers/ua_regions.json',
-         'loc': 'suppliers.0.address.region', 'type': 'value_error', 'values': None},
-        {'msg': 'must be one of codelists/tender/tender_currency.json keys',
-         'loc': 'value.currency', 'type': 'value_error', 'values': None}
+        'must be one of classifiers/ua_regions.json: deliveryAddresses.0.region',
+        'must be one of organizations/scale.json keys: suppliers.0.scale',
+        'must be one of classifiers/ua_regions.json: suppliers.0.address.region',
+        'must be one of codelists/tender/tender_currency.json keys: value.currency'
     ]}
     assert errors == await resp.json()
 
@@ -97,8 +93,7 @@ async def test_520_offer_invalid(api, product):
 
     resp = await api.put('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)
     assert resp.status == 400
-    assert {'errors': [{'loc': 'dateModified', 'msg': 'extra fields not permitted', 'type': 'value_error.extra',
-                        'values': None}]} == await resp.json()
+    assert {'errors': ['extra fields not permitted: dateModified']} == await resp.json()
     test_offer['data'].pop('dateModified')
 
     test_offer['data']['relatedProduct'] = product_id + '0'
@@ -118,8 +113,7 @@ async def test_520_offer_invalid(api, product):
 
     resp = await api.put('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)
     assert resp.status == 400
-    assert {'errors': [{'loc': 'status', 'msg': 'field required', 'type': 'value_error.missing',
-                        'values': None}]} == await resp.json()
+    assert {'errors': ['field required: status']} == await resp.json()
 
 
 async def test_530_offer_patch(api, offer):

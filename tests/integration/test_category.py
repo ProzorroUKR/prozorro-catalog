@@ -31,8 +31,7 @@ async def test_110_category_create(api):
                          json=test_category,
                          auth=TEST_AUTH)
     assert resp.status == 400, await resp.json()
-    assert {'errors': [{'loc': 'data', 'msg': 'field required',
-                        'type': 'value_error.missing', 'values': None}]} == await resp.json()
+    assert {'errors': ['field required: data']} == await resp.json()
 
     resp = await api.put('/api/categories/%s' % category_id + '-1',
                          json={"data": test_category},
@@ -46,9 +45,7 @@ async def test_110_category_create(api):
                          json={"data": test_category},
                          auth=TEST_AUTH)
     assert resp.status == 400, await resp.json()
-    assert {'errors': [{'loc': 'data.id', 'msg': 'string does not match regex "^[0-9A-Za-z_-]{20,32}$"',
-                        'type': 'value_error.str.regex',
-                        'values': {'pattern': '^[0-9A-Za-z_-]{20,32}$'}}]} == await resp.json()
+    assert {'errors': ['string does not match regex "^[0-9A-Za-z_-]{20,32}$": data.id']} == await resp.json()
 
     test_category['id'] = category_id
 
@@ -68,9 +65,6 @@ async def test_110_category_create(api):
 
     test_category['access'] = dict(resp_json['access'])
     test_date_modified = resp_json['data']['dateModified']
-
-    resp = await api.head('/api/categories')
-    assert resp.status == 200
 
     resp = await api.get('/api/categories')
     assert resp.status == 200

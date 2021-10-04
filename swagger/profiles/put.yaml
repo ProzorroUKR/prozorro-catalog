@@ -8,14 +8,14 @@ requestBody:
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/ProfileCreateData'
+        $ref: '#/components/schemas/Input_ProfileCreateData_'
 responses:
   "200":
     description: successful operation
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/ProfileResponse'
+          $ref: '#/components/schemas/Response_Profile_'
   "400":
     description: validation errors
     content:

@@ -1,13 +1,23 @@
 tags:
-- Profiles
-description: Get a list of risk profiles
-operationId: collection_get_profiles
+- Categories
+description: Get a list of categories
+operationId: collection_get_categories
 parameters:
 - in: query
-  name: search
+  name: offset
   schema:
     type: string
-  description: Search phrase
+  description: Offset
+- in: query
+  name: limit
+  schema:
+    type: int
+  description: Limit
+- in: query
+  name: reverse
+  schema:
+    type: int
+  description: Descending order
 produces:
 - application/json
 responses:
@@ -16,9 +26,4 @@ responses:
     content:
       application/json:
         schema:
-          type: object
-          properties:
-            data:
-              type: array
-              items:
-                $ref: '#/components/schemas/Profile'
+          $ref: '#/components/schemas/PaginatedList'

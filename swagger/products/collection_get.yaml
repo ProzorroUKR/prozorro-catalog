@@ -4,10 +4,20 @@ description: Get a list of products
 operationId: collection_get_products
 parameters:
 - in: query
+  name: offset
+  schema:
+    type: string
+  description: Offset
+- in: query
   name: limit
   schema:
     type: int
   description: Limit
+- in: query
+  name: reverse
+  schema:
+    type: int
+  description: Descending order
 produces:
 - application/json
 responses:
@@ -16,9 +26,4 @@ responses:
     content:
       application/json:
         schema:
-          type: object
-          properties:
-            data:
-              type: array
-              items:
-                $ref: '#/components/schemas/PaginatedList'
+          $ref: '#/components/schemas/PaginatedList'

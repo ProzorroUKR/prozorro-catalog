@@ -8,14 +8,14 @@ requestBody:
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/OfferUpdateInput'
+        $ref: '#/components/schemas/Input_OfferUpdateData_'
 responses:
   "200":
     description: successful operation
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/OfferResponse'
+          $ref: '#/components/schemas/Response_Offer_'
   "400":
     description: validation errors
     content:

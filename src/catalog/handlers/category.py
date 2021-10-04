@@ -1,9 +1,6 @@
-import ast
 import random
-from secrets import token_hex
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPBadRequest, HTTPNotFound, HTTPConflict
-from aiohttp_swagger import swagger_path
 from pymongo.errors import OperationFailure
 from catalog import db
 from catalog.swagger import class_view_swagger_path

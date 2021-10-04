@@ -46,8 +46,7 @@ async def test_410_product_create(api, profile):
 
     resp = await api.put('/api/products/%s' % product_id, json=test_product, auth=TEST_AUTH)
     assert resp.status == 400
-    assert {'errors': [{'loc': 'data.id', 'msg': 'id must include classification',
-                        'type': 'value_error', 'values': None}]} == await resp.json()
+    assert {'errors': ['id must include classification: data.id']} == await resp.json()
 
     test_product['data']['classification']['id'] = cpv
 

@@ -1,6 +1,6 @@
 tags:
 - Profiles
-description: Get a risk profile
+description: Get a profile
 operationId: collection_get_profile
 produces:
 - application/json
@@ -10,4 +10,4 @@ responses:
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/Profile'
+          $ref: '#/components/schemas/Response_Profile_'
