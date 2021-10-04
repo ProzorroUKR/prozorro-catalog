@@ -53,7 +53,7 @@ test:
 publish_latest:
   stage: publish
   tags:
-    - kube-dev
+    - shell
   variables:
     TAG: "latest"
   script:
