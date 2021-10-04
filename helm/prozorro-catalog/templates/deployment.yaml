@@ -40,6 +40,8 @@ spec:
               value: '{{ .Values.mongodb_uri }}'
             - name: DB_NAME
               value: 'catalogs-{{ .Release.Name }}'
+            - name: AUTH_PATH
+              value: /app/etc/auth.ini
           ports:
             - name: http
               containerPort: 8000
@@ -54,6 +56,9 @@ spec:
               port: 8000
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/etc
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -66,3 +71,7 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+        - name: config-volume
+          secret:
+            secretName: {{ template "prozorro-catalog.fullname" . }}

@@ -36,7 +36,7 @@ def validate_access_token(request, obj, access):
 
 
 def validate_accreditation(request, item_name):
-    if request.user.name not in AUTH_DATA[item_name]:
+    if request.user.name not in AUTH_DATA.get(item_name, ""):
         raise HTTPForbidden(text=f"Forbidden '{item_name}' write operation")
 
 
