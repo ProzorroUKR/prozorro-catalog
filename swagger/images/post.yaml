@@ -1,0 +1,30 @@
+tags:
+- Images
+description: Upload an image
+operationId: image_upload
+security:
+  - Basic: []
+requestBody:
+  description: Image data
+  required: true
+  content:
+    multipart/form-data:
+      schema:
+        type: object
+        properties:
+          image:
+            type: string
+            format: binary
+responses:
+  "201":
+    description: successful operation
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/Response_BaseImage_'
+  "400":
+    description: validation errors
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'
