@@ -29,10 +29,6 @@ class class_view_swagger_path(object):
 
 
 def get_definitions():
-    # class X:
-    #     pass
-    # class_type = type(X)
-
     model_classes = []
     for module in dir(models):
         if module and not module.startswith("__"):
@@ -42,8 +38,6 @@ def get_definitions():
                     obj = getattr(sub_module, obj_name)
                     if isinstance(obj, type) and issubclass(obj, BaseModel):
                         model_classes.append(obj)
-                    else:
-                        print(["obj", obj_name])
 
     generated_schema = schema(
         model_classes,
