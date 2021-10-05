@@ -94,7 +94,7 @@ class Criteria(BaseModel):
 
 
 class Classification(BaseModel):
-    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
+    id: str = Field(..., min_length=1, max_length=32)
     description: str = Field(..., min_length=1, max_length=250)
     scheme: str = Field(..., min_length=1, max_length=10)
 
