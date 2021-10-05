@@ -216,7 +216,6 @@ async def update_category(category):
 
 
 @asynccontextmanager
-@transaction_generator
 async def read_and_update_category(uid):
     data = await read_category(uid)
     yield data
@@ -269,7 +268,6 @@ async def update_profile(profile):
 
 
 @asynccontextmanager
-@transaction_generator
 async def read_and_update_profile(profile_id):
     profile = await read_profile(profile_id)
     yield profile
@@ -322,60 +320,6 @@ async def update_product(obj):
 
 
 @asynccontextmanager
-@transaction_generator
-async def read_and_update_product(uid):
-    obj = await read_product(uid)
-    yield obj
-    await update_product(obj)
-
-
-# products
-def get_products_collection():
-    return get_collection("products")
-
-
-async def init_products_indexes():
-    modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
-    try:
-        await get_products_collection().create_indexes(
-            [modified_index]
-        )
-    except PyMongoError as e:
-        logger.exception(e)
-
-
-async def insert_product(data):
-    inserted_id = await insert_object(
-        get_products_collection(),
-        data
-    )
-    return inserted_id
-
-
-async def find_products(**kwargs):
-    collection = get_products_collection()
-    result = await paginated_result(
-        collection, **kwargs
-    )
-    return result
-
-
-async def read_product(uid):
-    data = await get_products_collection().find_one(
-        {'_id': uid},
-        session=session_var.get(),
-    )
-    if not data:
-        raise web.HTTPNotFound(text="Product not found")
-    return rename_id(data)
-
-
-async def update_product(obj):
-    await update_object(get_products_collection(), obj)
-
-
-@asynccontextmanager
-@transaction_generator
 async def read_and_update_product(uid):
     obj = await read_product(uid)
     yield obj
@@ -428,7 +372,6 @@ async def update_offer(obj):
 
 
 @asynccontextmanager
-@transaction_generator
 async def read_and_update_offer(uid):
     obj = await read_offer(uid)
     yield obj
