@@ -16,7 +16,7 @@
   "images": [
     {
       "sizes": "200x200",
-      "url": "https://catalog.openprocurement.org.ua/images/mask.200x200.jpg",
+      "url": "/static/images/mask.200x200.jpg",
       "hash": "md5:71a50dbba44c78128b221b7df7bb51f1"
     }
   ],

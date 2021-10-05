@@ -152,7 +152,7 @@
   "images": [
     {
       "sizes": "200x200",
-      "url": "https://catalog.openprocurement.org.ua/images/mask.200x200.jpg"
+      "url": "/static/images/mask.200x200.jpg"
     }
   ],
   "status": "active",

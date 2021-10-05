@@ -3,6 +3,7 @@ from typing import Optional, List, Set, Union
 from pydantic import Field, validator, AnyUrl, constr
 from catalog.models.base import BaseModel
 from catalog.models.api import Response
+from catalog.settings import IMG_PATH
 from enum import Enum
 import standards
 import re
@@ -53,11 +54,17 @@ ImageResponse = Response[BaseImage]
 
 
 class Image(BaseModel):
-    url: AnyUrl
+    url: str = Field(..., min_length=1)
     sizes: Optional[str] = Field(None, regex=r"^[0-9]{2,4}x[0-9]{2,4}$")
     title: Optional[str] = Field(None, min_length=1, max_length=250)
     format: Optional[str] = Field(None, regex=r"^image/[a-z]{2,10}$")
     hash: Optional[str] = Field(None, regex=r"^md5:[0-9a-f]{32}$")
+
+    @validator('url')
+    def valid_url(cls, v):
+        if not v.startswith(IMG_PATH):
+            raise ValueError(f"Invalid url, should start with {IMG_PATH}")
+        return v
 
 
 class Requirement(BaseModel):

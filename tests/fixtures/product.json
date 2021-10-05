@@ -41,7 +41,7 @@
   "images": [
     {
       "sizes": "500x175",
-      "url": "https://catalog.openprocurement.org.ua/images/619890.500x175.jpeg"
+      "url": "/static/images/619890.500x175.jpeg"
     }
   ],
   "manufacturers": [
