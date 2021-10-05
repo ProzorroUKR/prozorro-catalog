@@ -8,6 +8,10 @@ import standards
 import re
 
 
+UNIT_CODES = standards.load("unit_codes/recommended.json")
+UA_REGIONS = standards.load("classifiers/ua_regions.json")
+
+
 class DataTypeEnum(str, Enum):
     string = "string"
     datetime = "date-time"
@@ -19,6 +23,12 @@ class DataTypeEnum(str, Enum):
 class Unit(BaseModel):
     code: str = Field(..., min_length=1, max_length=80)
     name: str = Field(..., min_length=1, max_length=250)
+
+    @validator('code')
+    def code_standard(cls, v):
+        if v not in UNIT_CODES:
+            raise ValueError("must be one of unit_codes/recommended.json keys")
+        return v
 
 
 class Value(BaseModel):
@@ -98,8 +108,7 @@ class Address(BaseModel):
 
     @validator('region')
     def region_standard(cls, v):
-        ua_regions = standards.load("classifiers/ua_regions.json")
-        if v not in ua_regions:
+        if v not in UA_REGIONS:
             raise ValueError("must be one of classifiers/ua_regions.json")
         return v
 
@@ -118,8 +127,7 @@ class OfferDeliveryAddress(BaseModel):  # only countryName is required
     @validator('region')
     def region_standard(cls, v):
         if v:
-            ua_regions = standards.load("classifiers/ua_regions.json")
-            if v not in ua_regions:
+            if v not in UA_REGIONS:
                 raise ValueError("must be one of classifiers/ua_regions.json")
         return v
 

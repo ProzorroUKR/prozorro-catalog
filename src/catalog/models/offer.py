@@ -10,6 +10,10 @@ from enum import Enum
 import standards
 
 
+SCALE_STANDARD = standards.load("organizations/scale.json")
+CURRENCIES_STANDARD = standards.load("codelists/tender/tender_currency.json")
+
+
 class OfferStatus(str, Enum):
     active = 'active'
     hidden = 'hidden'
@@ -24,8 +28,7 @@ class Supplier(BaseModel):
 
     @validator('scale')
     def scale_standard(cls, v):
-        scale_standard = standards.load("organizations/scale.json")
-        if v not in scale_standard.keys():
+        if v not in SCALE_STANDARD.keys():
             raise ValueError("must be one of organizations/scale.json keys")
         return v
 
@@ -36,8 +39,7 @@ class MinOrderValue(BaseModel):
 
     @validator('currency')
     def currency_standard(cls, v):
-        currencies_standard = standards.load("codelists/tender/tender_currency.json")
-        if v not in currencies_standard.keys():
+        if v not in CURRENCIES_STANDARD.keys():
             raise ValueError("must be one of codelists/tender/tender_currency.json keys")
         return v
 
