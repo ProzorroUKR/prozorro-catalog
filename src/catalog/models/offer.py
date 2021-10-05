@@ -21,7 +21,7 @@ class OfferStatus(str, Enum):
 
 class Supplier(BaseModel):
     name: constr(max_length=250)
-    scale: constr(min_length=1, max_length=50)
+    scale: constr(max_length=50)
     address: OfferSuppliersAddress
     contactPoint: ContactPoint
     identifier: Identifier

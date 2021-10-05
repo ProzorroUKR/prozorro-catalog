@@ -141,7 +141,7 @@ class OfferDeliveryAddress(BaseModel):  # only countryName is required
 
 class ContactPoint(BaseModel):
     name: str = Field(..., max_length=250)
-    telephone: Optional[str] = Field(None, max_length=250)
+    telephone: str = Field(..., max_length=250)
     url: Optional[str] = Field(None, max_length=250)
     email: Optional[str] = Field(None, max_length=250)
     faxNumber: Optional[str] = Field(None, max_length=250)
@@ -154,7 +154,7 @@ class ContactPoint(BaseModel):
 
 
 class Identifier(BaseModel):
-    id: str = Field(..., max_length=50)
+    id: str = Field(..., min_length=4, max_length=50)
     legalName: str = Field(..., max_length=250)
     scheme: str = Field(..., max_length=20)
 
