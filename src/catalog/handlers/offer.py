@@ -2,15 +2,14 @@ import random
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPBadRequest, HTTPNotFound, HTTPConflict
 from pymongo.errors import OperationFailure
-from uuid import uuid4
 from catalog import db
-from catalog.models.base import unchanged
-from catalog.models.offer import OfferCreateData, OfferUpdateInput, Offer
+from catalog.models.offer import OfferCreateData, OfferUpdateInput
 from catalog.models.api import AnyInput
 from catalog.models.profile import Profile
 from catalog.swagger import class_view_swagger_path
-from catalog.utils import pagination_params, get_now, requests_sequence_params, async_retry
+from catalog.utils import pagination_params, get_now, async_retry
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
+from catalog.serializers.base import RootSerializer
 
 
 @class_view_swagger_path('/app/swagger/offers')
@@ -29,9 +28,7 @@ class OfferView(View):
     @classmethod
     async def get(cls, request, offer_id):
         data = await db.read_offer(offer_id)
-        if not data:
-            raise HTTPNotFound(text="Not found")
-        return {"data": data}
+        return {"data": RootSerializer(data).data}
 
     @classmethod
     async def put(cls, request, offer_id):
@@ -56,8 +53,8 @@ class OfferView(View):
         data['dateModified'] = get_now().isoformat()
         await db.insert_offer(data)
 
-        data.pop("access")
-        response = {"data": data, "access": access}
+        response = {"data": RootSerializer(data).data,
+                    "access": access}
         return response
 
     @classmethod
@@ -77,5 +74,4 @@ class OfferView(View):
             obj.update(data)
             data['dateModified'] = get_now().isoformat()
 
-        obj.pop("access")
-        return {"data": obj}
+        return {"data": RootSerializer(obj).data}

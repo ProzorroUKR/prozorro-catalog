@@ -1,16 +1,15 @@
-import re
 import random
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPBadRequest, HTTPNotFound, HTTPConflict
 from pymongo.errors import OperationFailure
 
 from catalog import db
-from catalog.models.base import unchanged
-from catalog.models.product import ProductCreateInput, ProductUpdateInput, Product
+from catalog.models.product import ProductCreateInput, ProductUpdateInput
 from catalog.models.profile import Profile
 from catalog.swagger import class_view_swagger_path
-from catalog.utils import pagination_params, get_now, requests_sequence_params, async_retry
+from catalog.utils import pagination_params, get_now, async_retry
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
+from catalog.serializers.base import RootSerializer
 
 
 @class_view_swagger_path('/app/swagger/products')
@@ -29,9 +28,7 @@ class ProductView(View):
     @classmethod
     async def get(cls, request, product_id):
         product = await db.read_product(product_id)
-        if not product:
-            raise HTTPNotFound(text="Not found")
-        return {"data": product}
+        return {"data": RootSerializer(product).data}
 
     @classmethod
     async def put(cls, request, product_id):
@@ -60,8 +57,8 @@ class ProductView(View):
         data['dateModified'] = get_now().isoformat()
         await db.insert_product(data)
 
-        data.pop("access")
-        response = {"data": data, "access": access}
+        response = {"data": RootSerializer(data).data,
+                    "access": access}
         return response
 
     @classmethod
@@ -81,5 +78,4 @@ class ProductView(View):
             product.update(data)
             data['dateModified'] = get_now().isoformat()
 
-        product.pop("access")
-        return {"data": product}
+        return {"data": RootSerializer(product).data}

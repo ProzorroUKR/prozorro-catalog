@@ -7,6 +7,7 @@ from catalog.swagger import class_view_swagger_path
 from catalog.auth import set_access_token, validate_accreditation, validate_access_token
 from catalog.utils import pagination_params, get_now, async_retry
 from catalog.models.category import CategoryCreateInput, CategoryUpdateInput
+from catalog.serializers.base import RootSerializer
 
 
 @class_view_swagger_path('/app/swagger/categories')
@@ -24,10 +25,8 @@ class CategoryView(View):
 
     @classmethod
     async def get(cls, request, category_id):
-        profile = await db.read_category(category_id)
-        if not profile:
-            raise HTTPNotFound(text="Not found")
-        return {"data": profile}
+        obj = await db.read_category(category_id)
+        return {"data": RootSerializer(obj, show_owner=False).data}
 
     @classmethod
     async def put(cls, request, category_id):
@@ -44,8 +43,8 @@ class CategoryView(View):
         data['dateModified'] = get_now().isoformat()
         await db.insert_category(data)
 
-        data.pop("access")
-        response = {"data": data, "access": access}
+        response = {"data": RootSerializer(data, show_owner=False).data,
+                    "access": access}
         return response
 
     @classmethod
@@ -65,5 +64,4 @@ class CategoryView(View):
             category.update(data)
             data['dateModified'] = get_now().isoformat()
 
-        category.pop("access")
-        return {"data": category}
+        return {"data": RootSerializer(category, show_owner=False).data}
