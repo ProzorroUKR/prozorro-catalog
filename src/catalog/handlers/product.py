@@ -43,6 +43,7 @@ class ProductView(View):
 
         profile_id = data['relatedProfile']
         profile = await db.read_profile(profile_id)  # ensure exists
+        validate_access_token(request, profile, body.access)
         if data['classification']['id'][:4] != profile['classification']['id'][:4]:
             raise HTTPBadRequest(text='product and profile classification mismatch')
 

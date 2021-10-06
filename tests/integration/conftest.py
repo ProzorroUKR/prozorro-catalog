@@ -59,7 +59,8 @@ async def product(api, profile):
     data['relatedProfile'] = profile["data"]["id"]
     resp = await api.put(
         f"/api/products/{data['id']}",
-        json={"data": data},
+        json={"data": data,
+              "access": profile["access"]},
         auth=TEST_AUTH,
     )
     assert resp.status == 201, await resp.json()
