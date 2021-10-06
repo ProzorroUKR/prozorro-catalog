@@ -89,6 +89,9 @@ async def request_id_middleware(request, handler):
 
 @middleware
 async def login_middleware(request, handler):
-    request.user = login_user(request, allow_anonymous=request.method in ("GET", "HEAD"))
+    request.user = login_user(
+        request,
+        allow_anonymous=request.method in ("GET", "HEAD") or request.path == "/api/search"
+    )
     response = await handler(request)
     return response

@@ -110,6 +110,7 @@ class ProductUpdateData(BaseModel):
 
 class Product(ProductCreateData):
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
+    owner: str
 
 
 ProductCreateInput = Input[ProductCreateData]

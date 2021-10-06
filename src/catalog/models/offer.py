@@ -70,6 +70,7 @@ class OfferUpdateData(BaseModel):
 
 class Offer(OfferCreateData):
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
+    owner: str
 
 
 OfferCreateInput = Input[OfferCreateData]

@@ -18,6 +18,7 @@ from catalog.handlers.category import CategoryView
 from catalog.handlers.product import ProductView
 from catalog.handlers.offer import OfferView
 from catalog.handlers.image import ImageView
+from catalog.handlers.search import SearchView
 from catalog.settings import SENTRY_DSN, IMG_PATH, IMG_DIR, CLIENT_MAX_SIZE
 from catalog.migration import import_data_job
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
@@ -135,6 +136,12 @@ def create_application(on_cleanup=None):
         r"/api/offers/{offer_id:[\w-]+}",
         OfferView.patch,
         name="update_offer"
+    )
+    # search
+    app.router.add_post(
+        r"/api/search",
+        SearchView.post,
+        name="search_resources"
     )
     # images
     app.router.add_post(

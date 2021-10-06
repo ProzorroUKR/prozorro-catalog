@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import Optional, List, Set, Union, Any
-from uuid import UUID
-from pydantic import Field, validator, AnyUrl
+from typing import Optional, List
+from pydantic import Field, validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response
 from catalog.models.common import Classification, Image, ProcuringEntity
@@ -50,6 +49,7 @@ class Category(CategoryCreateData):
     The Catalog Profile
     """
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
+    owner: str
 
 
 CategoryCreateInput = Input[CategoryCreateData]

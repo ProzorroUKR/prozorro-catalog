@@ -69,6 +69,7 @@ class Profile(ProfileCreateData):
     The Catalog Profile
     """
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
+    owner: str
 
     @staticmethod
     def validate_product(profile, data):  # TODO redesign this ?

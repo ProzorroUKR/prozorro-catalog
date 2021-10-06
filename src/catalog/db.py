@@ -106,6 +106,16 @@ def rename_id(obj):
     return obj
 
 
+async def find_objects(collection, ids):
+    filters = {"_id": {"$in": ids}}
+    items = await collection.find(
+        filters,
+    ).to_list(None)
+    for i in items:
+        rename_id(i)
+    return items
+
+
 async def paginated_result(collection, *_, offset, limit, reverse):
     limit = min(limit, MAX_LIST_LIMIT)
     limit = max(limit, 1)
