@@ -1,12 +1,9 @@
 import asyncio
 import logging
-import re
 from contextlib import asynccontextmanager
 from contextvars import ContextVar
-from datetime import datetime, date, timedelta
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 from aiohttp import web
-from bson import ObjectId
 from bson.codec_options import TypeRegistry
 from bson.codec_options import CodecOptions
 from bson.decimal128 import Decimal128
@@ -14,7 +11,7 @@ from decimal import Decimal
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import ASCENDING, DESCENDING, IndexModel
 from pymongo.collection import ReturnDocument
-from pymongo.errors import PyMongoError, ConnectionFailure, DuplicateKeyError
+from pymongo.errors import PyMongoError, DuplicateKeyError
 from catalog.settings import (
     MONGODB_URI, READ_PREFERENCE, WRITE_CONCERN, READ_CONCERN,
     DB_NAME,
@@ -27,7 +24,7 @@ DB = None
 session_var = ContextVar('session', default=None)
 
 
-async def init_mongo(app: web.Application) -> AsyncIOMotorDatabase:
+async def init_mongo(app) -> AsyncIOMotorDatabase:
     global DB
 
     logger.info('init mongod instance')
@@ -44,6 +41,7 @@ async def init_mongo(app: web.Application) -> AsyncIOMotorDatabase:
         init_category_indexes(),
         init_profile_indexes(),
         init_products_indexes(),
+        init_offers_indexes(),
     )
     return DB
 
@@ -66,7 +64,7 @@ def get_collection(name):
     return DB.get_collection(name, codec_options=codec_options)
 
 
-async def cleanup_db_client(*_):
+async def cleanup_db_client(app):
     global DB
     if DB:
         DB.client.close()

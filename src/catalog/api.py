@@ -18,7 +18,8 @@ from catalog.handlers.category import CategoryView
 from catalog.handlers.product import ProductView
 from catalog.handlers.offer import OfferView
 from catalog.handlers.image import ImageView
-from catalog.settings import SENTRY_DSN, IMG_PATH, IMG_DIR
+from catalog.settings import SENTRY_DSN, IMG_PATH, IMG_DIR, CLIENT_MAX_SIZE
+from catalog.migration import import_data_job
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 import sentry_sdk
 import logging
@@ -35,7 +36,7 @@ def create_application(on_cleanup=None):
             login_middleware,
             request_unpack_params,
         ),
-        client_max_size=1024 ** 2 * 100
+        client_max_size=CLIENT_MAX_SIZE
     )
     app.router.add_get("/api/ping", ping_handler, allow_head=False)
     app.router.add_get("/api/version", get_version, allow_head=False)
@@ -145,6 +146,7 @@ def create_application(on_cleanup=None):
     app.router.add_static(IMG_PATH, IMG_DIR)
 
     app.on_startup.append(init_mongo)
+    app.on_startup.append(import_data_job)
     if on_cleanup:
         app.on_cleanup.append(on_cleanup)
     app.on_cleanup.append(cleanup_db_client)

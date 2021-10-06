@@ -23,6 +23,7 @@ MAX_LIST_LIMIT = int(os.environ.get("MAX_LIST_LIMIT", 10000))
 IS_TEST = "test" in sys.argv[0]
 SENTRY_DSN = os.getenv('SENTRY_DSN')
 TIMEZONE = ZoneInfo('Europe/Kiev')
+CLIENT_MAX_SIZE = int(os.getenv('CLIENT_MAX_SIZE', 1024 ** 2 * 100))
 
 
 AUTH_PATH = os.getenv('AUTH_PATH', '/app/auth.ini')
@@ -44,3 +45,5 @@ ALLOWED_IMG_TYPES = os.getenv('ALLOWED_IMG_TYPES', 'jpeg,png').split(",")
 IMG_STORE_DIR_NAME_LEN = int(os.getenv('IMG_STORE_DIR_NAME_LEN', 2))
 IMG_STORE_DIR_LEVELS = int(os.getenv('IMG_STORE_DIR_LEVELS', 3))
 assert IMG_STORE_DIR_LEVELS * IMG_STORE_DIR_NAME_LEN < 32, "We only use 32 long uuid4 for both path and name"
+
+CATALOG_DATA = os.getenv("CATALOG_DATA")
