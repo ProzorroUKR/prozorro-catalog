@@ -17,18 +17,19 @@ logger = logging.getLogger(__name__)
 
 
 async def import_data_job(app):
-    if not CATALOG_DATA:
+    if CATALOG_DATA:
+        args = (
+            ("category", get_category_collection()),
+            ("profile", get_profiles_collection()),
+            ("product", get_products_collection()),
+            ("offer", get_offers_collection()),
+        )
+        await asyncio.gather(*(
+            import_items(item_name, col)
+            for item_name, col in args
+        ))
+    else:
         logger.info("Import job is skipped")
-    args = (
-        ("category", get_category_collection()),
-        ("profile", get_profiles_collection()),
-        ("product", get_products_collection()),
-        ("offer", get_offers_collection()),
-    )
-    await asyncio.gather(*(
-        import_items(item_name, col)
-        for item_name, col in args
-    ))
 
 
 async def import_items(name, collection):
