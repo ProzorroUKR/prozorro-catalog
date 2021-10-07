@@ -47,6 +47,7 @@ class ProfileCreateData(BaseModel):
     criteria: List[Criteria] = Field(..., min_items=1, max_items=100)
     classification: Classification
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
+    agreementsID: Optional[List[str]] = Field(None, min_items=1, max_items=100)
 
 
 class ProfileUpdateData(BaseModel):
@@ -62,6 +63,7 @@ class ProfileUpdateData(BaseModel):
     criteria: Optional[List[Criteria]] = Field(None, min_items=1, max_items=100)
     classification: Optional[Classification]
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
+    agreementsID: Optional[List[str]] = Field(None, min_items=1, max_items=100)
 
 
 class Profile(ProfileCreateData):

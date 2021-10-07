@@ -165,5 +165,9 @@
     "amount": 50,
     "currency": "UAH",
     "valueAddedTaxIncluded": true
-  }
+  },
+  "agreementsID": [
+    "c17b223523204a1b812c21837c7ac41a",
+    "0c491d88a95747379cf8966827cb0b41"
+  ]
 }
