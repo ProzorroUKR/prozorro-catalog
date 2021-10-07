@@ -9,14 +9,22 @@ class Access(BaseModel):
     token: str = Field(..., regex=r"[0-9a-f]{32}")
 
 
+class AccessOwner(Access):
+    owner: str
+
+
 class Input(GenericModel, Generic[DataT]):
     data: DataT
     access: Optional[Access]
 
 
+class CreateResponse(GenericModel, Generic[DataT]):
+    data: DataT
+    access: AccessOwner
+
+
 class Response(GenericModel, Generic[DataT]):
-    data: Optional[DataT]
-    errors: Optional[List[str]]
+    data: DataT
 
 
 class ErrorResponse(BaseModel):

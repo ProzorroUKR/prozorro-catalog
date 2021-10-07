@@ -3,7 +3,7 @@ from typing import Optional, List, Set, Union
 from uuid import UUID
 from pydantic import Field, validator, AnyUrl
 from catalog.models.base import BaseModel
-from catalog.models.api import Input, Response
+from catalog.models.api import Input, Response, CreateResponse
 from catalog.models.common import Unit, Value, Image, Criteria, Classification
 from catalog.utils import get_now
 from enum import Enum
@@ -149,3 +149,4 @@ class Profile(ProfileCreateData):
 ProfileCreateInput = Input[ProfileCreateData]
 ProfileUpdateInput = Input[ProfileUpdateData]
 ProfileResponse = Response[Profile]
+ProfileCreateResponse = CreateResponse[Profile]

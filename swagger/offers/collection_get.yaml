@@ -27,3 +27,9 @@ responses:
       application/json:
         schema:
           $ref: '#/components/schemas/PaginatedList'
+  "500":
+    description: Server error
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'

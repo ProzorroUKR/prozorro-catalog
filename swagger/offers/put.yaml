@@ -17,9 +17,27 @@ responses:
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/Response_Offer_'
+          $ref: '#/components/schemas/CreateResponse_Offer_'
   "400":
     description: validation errors
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'
+  "401":
+    description: Authorization header or access_token not provided
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            errors:
+              type: array
+              items:
+                type: string
+                example: Authorization header not found
+  "500":
+    description: Server error
     content:
       application/json:
         schema:

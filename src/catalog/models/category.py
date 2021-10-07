@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, List
 from pydantic import Field, validator
 from catalog.models.base import BaseModel
-from catalog.models.api import Input, Response
+from catalog.models.api import Input, Response, CreateResponse
 from catalog.models.common import Classification, Image, ProcuringEntity
 from catalog.utils import get_now
 from enum import Enum
@@ -55,3 +55,4 @@ class Category(CategoryCreateData):
 CategoryCreateInput = Input[CategoryCreateData]
 CategoryUpdateInput = Input[CategoryUpdateData]
 CategoryResponse = Response[Category]
+CategoryCreateResponse = CreateResponse[Category]

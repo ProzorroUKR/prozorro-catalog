@@ -3,7 +3,7 @@ from typing import Optional, List, Set, Union
 from uuid import UUID
 from pydantic import Field, validator, AnyUrl, constr
 from catalog.models.base import BaseModel
-from catalog.models.api import Input, Response
+from catalog.models.api import Input, Response, CreateResponse
 from catalog.models.common import Address, OfferSuppliersAddress, OfferDeliveryAddress, ContactPoint, Identifier
 from catalog.utils import get_now
 from enum import Enum
@@ -76,3 +76,4 @@ class Offer(OfferCreateData):
 OfferCreateInput = Input[OfferCreateData]
 OfferUpdateInput = Input[OfferUpdateData]
 OfferResponse = Response[Offer]
+OfferCreateResponse = CreateResponse[Offer]
