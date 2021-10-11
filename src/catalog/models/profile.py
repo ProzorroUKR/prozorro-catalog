@@ -12,7 +12,7 @@ import logging
 
 
 logger = logging.getLogger(__name__)
-AGREEMENT_ID_REGEX = re.compile(r"^[a-z0-9]{32}$")
+AGREEMENT_ID_REGEX = re.compile(r"^[a-f0-9]{32}$")
 
 
 class AgreementID(str):
