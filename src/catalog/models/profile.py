@@ -12,28 +12,7 @@ import logging
 
 
 logger = logging.getLogger(__name__)
-AGREEMENT_ID_REGEX = re.compile(r"^[a-f0-9]{32}$")
-
-
-class AgreementID(str):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate_pattern
-
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(
-            pattern=AGREEMENT_ID_REGEX.pattern,
-            examples=['0c491d88a9r7473d9cf8946827cb0b41', 'c17b2265232a4a1b872c21837c7ac41a'],
-        )
-
-    @classmethod
-    def validate_pattern(cls, v):
-        if not isinstance(v, str):
-            raise TypeError('string required')
-        if not AGREEMENT_ID_REGEX.fullmatch(v):
-            raise ValueError('invalid agreementsID format')
-        return cls(v)
+AGREEMENT_ID_REGEX = r"^[a-f0-9]{32}$"
 
 
 class ProfileStatus(str, Enum):
@@ -69,7 +48,7 @@ class ProfileCreateData(BaseModel):
     criteria: List[Criteria] = Field(..., min_items=1, max_items=100)
     classification: Classification
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
-    agreementsID: Optional[List[AgreementID]] = Field(None, min_items=1, max_items=100)
+    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
 
 
 class ProfileUpdateData(BaseModel):
@@ -85,7 +64,7 @@ class ProfileUpdateData(BaseModel):
     criteria: Optional[List[Criteria]] = Field(None, min_items=1, max_items=100)
     classification: Optional[Classification]
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
-    agreementsID: Optional[List[AgreementID]] = Field(None, min_items=1, max_items=100)
+    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
 
 
 class Profile(ProfileCreateData):
