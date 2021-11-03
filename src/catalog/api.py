@@ -47,7 +47,6 @@ def create_application(on_cleanup=None):
         "/api/categories",
         CategoryView.collection_get,
         name="read_category_registry",
-        allow_head=False
     )
     app.router.add_get(
         r"/api/categories/{category_id:[\w-]+}",
@@ -71,7 +70,6 @@ def create_application(on_cleanup=None):
         "/api/profiles",
         ProfileView.collection_get,
         name="read_profile_registry",
-        allow_head=False
     )
     app.router.add_get(
         r"/api/profiles/{profile_id:[\w-]+}",
@@ -95,7 +93,6 @@ def create_application(on_cleanup=None):
         "/api/products",
         ProductView.collection_get,
         name="read_product_registry",
-        allow_head=False
     )
     app.router.add_get(
         r"/api/products/{product_id:[\w-]+}",
@@ -119,7 +116,6 @@ def create_application(on_cleanup=None):
         "/api/offers",
         OfferView.collection_get,
         name="read_offer_registry",
-        allow_head=False
     )
     app.router.add_get(
         r"/api/offers/{offer_id:[\w-]+}",
