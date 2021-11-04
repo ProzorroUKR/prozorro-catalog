@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List, Set, Union
-from pydantic import Field, validator, AnyUrl, constr
+from pydantic import Field, validator, AnyUrl, constr, root_validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Response
 from catalog.settings import IMG_PATH
@@ -33,7 +33,7 @@ class Unit(BaseModel):
 
 
 class Value(BaseModel):
-    amount: Union[int, float]
+    amount: Union[float, int]
     currency: str = Field(..., regex=r"^[A-Z]{3}$")
     valueAddedTaxIncluded: bool = True
 
@@ -77,13 +77,24 @@ class Requirement(BaseModel):
     period: Optional[Period] = None
 
     pattern: Optional[str] = Field(None, max_length=250)
-    expectedValue: Optional[Union[bool, int, float, str]] = None
-    maxValue: Optional[Union[bool, int, float, str]] = None
-    minValue: Optional[Union[bool, int, float, str]] = None
+    expectedValue: Optional[Union[bool, float, int, str]] = None
+    maxValue: Optional[Union[bool, float, int, str]] = None
+    minValue: Optional[Union[bool, float, int, str]] = None
 
-    allOf: Optional[Set[Union[bool, int, float, str]]] = Field(None, max_items=100)
-    anyOf: Optional[Set[Union[bool, int, float, str]]] = Field(None, max_items=100)
-    oneOf: Optional[Set[Union[bool, int, float, str]]] = Field(None, max_items=100)
+    allOf: Optional[Set[Union[bool, float, int, str]]] = Field(None, max_items=100)
+    anyOf: Optional[Set[Union[bool, float, int, str]]] = Field(None, max_items=100)
+    oneOf: Optional[Set[Union[bool, float, int, str]]] = Field(None, max_items=100)
+
+    @root_validator
+    def check_sum(cls, values):
+        if values["dataType"] == DataTypeEnum.integer.value:
+            for k in ("expectedValue", "maxValue", "minValue"):
+                if values[k] is not None:
+                    try:
+                        values[k] = int(values[k])
+                    except ValueError:
+                        raise ValueError(f"Invalid integer '{values[k]}'")
+        return values
 
 
 class RequirementGroup(BaseModel):

@@ -50,7 +50,9 @@ async def test_310_profile_create(api, category):
             for requirement in r_group["requirements"]:
                 if requirement["dataType"] == "integer":
                     # pq bot converts it to str and then it passed to api to be converted to int
-                    assert requirement["minValue"] == int(str(requirement["minValue"]))
+                    assert type(requirement["minValue"]) is int
+                elif requirement["dataType"] == "number":
+                    assert type(requirement["minValue"]) is float
 
     test_profile_copy = test_profile.copy()
     test_profile['access'] = resp_json['access']
@@ -92,7 +94,7 @@ async def test_311_profile_limit_offset(api, category):
                              json={"data": profile_copy,
                                    "access": category['access']},
                              auth=TEST_AUTH)
-        assert resp.status == 201
+        assert resp.status == 201, await resp.json()
         resp_json = await resp.json()
         assert resp_json['data']['id'] == profile_copy['id']
         assert 'access' in resp_json
