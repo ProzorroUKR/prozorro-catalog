@@ -44,6 +44,14 @@ async def test_310_profile_create(api, category):
     assert 'token' in resp_json['access']
     test_date_modified = resp_json['data']['dateModified']
 
+    # test data type
+    for criteria in resp_json['data']["criteria"]:
+        for r_group in criteria["requirementGroups"]:
+            for requirement in r_group["requirements"]:
+                if requirement["dataType"] == "integer":
+                    # pq bot converts it to str and then it passed to api to be converted to int
+                    assert requirement["minValue"] == int(str(requirement["minValue"]))
+
     test_profile_copy = test_profile.copy()
     test_profile['access'] = resp_json['access']
 

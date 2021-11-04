@@ -77,13 +77,13 @@ class Requirement(BaseModel):
     period: Optional[Period] = None
 
     pattern: Optional[str] = Field(None, max_length=250)
-    expectedValue: Optional[Union[bool, float, str]] = None
-    maxValue: Optional[Union[bool, float, str]] = None
-    minValue: Optional[Union[bool, float, str]] = None
+    expectedValue: Optional[Union[bool, int, float, str]] = None
+    maxValue: Optional[Union[bool, int, float, str]] = None
+    minValue: Optional[Union[bool, int, float, str]] = None
 
-    allOf: Optional[Set[Union[bool, float, str]]] = Field(None, max_items=100)
-    anyOf: Optional[Set[Union[bool, float, str]]] = Field(None, max_items=100)
-    oneOf: Optional[Set[Union[bool, float, str]]] = Field(None, max_items=100)
+    allOf: Optional[Set[Union[bool, int, float, str]]] = Field(None, max_items=100)
+    anyOf: Optional[Set[Union[bool, int, float, str]]] = Field(None, max_items=100)
+    oneOf: Optional[Set[Union[bool, int, float, str]]] = Field(None, max_items=100)
 
 
 class RequirementGroup(BaseModel):
