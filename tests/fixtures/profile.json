@@ -51,16 +51,6 @@
                 "code": "E11",
                 "name": "Гігакалорія"
               }
-            },
-            {
-              "dataType": "number",
-              "id": "0002-001-02",
-              "minValue": 3.33,
-              "title": "Три шари або більше",
-              "unit": {
-                "code": "E11",
-                "name": "Гігакалорія"
-              }
             }
           ]
         }
@@ -77,9 +67,9 @@
           "id": "0003-001",
           "requirements": [
             {
-              "dataType": "integer",
+              "dataType": "number",
               "id": "0003-001-01",
-              "minValue": 50,
+              "minValue": 49.9,
               "pattern": "[0-9]*",
               "title": "50 штук",
               "unit": {
