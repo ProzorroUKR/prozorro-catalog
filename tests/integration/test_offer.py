@@ -167,6 +167,28 @@ async def test_530_offer_patch(api, offer):
     for key, patch_value in patch_offer['data'].items():
         assert str(resp_json['data'][key]) == str(patch_value)
 
+    patch_offer = {
+        "data": {
+            "deliveryAddresses": [
+                {
+                    "countryName": "Україна",
+                    "locality": "Київ"
+                }
+            ],
+        },
+        "access": offer['access']
+    }
+
+    resp = await api.patch('/api/offers/%s' % offer_id, json=patch_offer, auth=TEST_AUTH)
+    assert resp.status == 200
+    resp_json = await resp.json()
+    assert str(resp_json['data']['deliveryAddresses']) == str([
+        {
+            "countryName": "Україна",
+            "locality": "Київ"
+        }
+    ]
+)
     test_date_modified = resp_json['data']['dateModified']
 
     resp = await api.get('/api/offers')

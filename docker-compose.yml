@@ -1,5 +1,5 @@
 ---
-version: '3'
+version: '3.4'
 
 services:
     api:
@@ -29,6 +29,24 @@ services:
             MONGODB_REPLICA_SET_KEY: replicaSetKey
         ports:
             - 27017:27017
+
+    tests:
+        build:
+          context: .
+          dockerfile: Dockerfile
+          target: test
+        command: python -m pytest tests/integration
+        environment:
+            PYTHONUNBUFFERED: '1'
+            MONGODB_URI: 'mongodb://root:example@mongo:27017/?replicaSet=rs0'
+        volumes:
+            - ./src/catalog:/app/catalog
+            - ./tests:/app/tests
+            - ./swagger:/app/swagger
+            - ./auth.ini:/app/auth.ini
+            - ./media:/app/images
+        depends_on:
+            - mongo
 
 #    web:
 #        image: nginx
