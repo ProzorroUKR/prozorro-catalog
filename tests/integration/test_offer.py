@@ -56,6 +56,7 @@ async def test_510_offer_create(api, product):
     assert 'access' in resp_json
     assert 'token' in resp_json['access']
     test_date_modified = resp_json['data']['dateModified']
+    assert resp_json['data']['value']["amount"] == 35.5
 
     # insert second with the same id
     resp = await api.put('/api/offers/%s' % offer_id, json=valid_offer, auth=TEST_AUTH)
@@ -153,7 +154,7 @@ async def test_530_offer_patch(api, offer):
         "data": {
             "comment": "Доставка тільки по Києву на наступний день",
             "value": {
-                "amount": 33,
+                "amount": 33.9,
                 "currency": "UAH",
                 "valueAddedTaxIncluded": True
             }

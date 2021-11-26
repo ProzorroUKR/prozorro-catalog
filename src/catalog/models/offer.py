@@ -34,7 +34,7 @@ class Supplier(BaseModel):
 
 
 class MinOrderValue(BaseModel):
-    amount: Union[int, float] = Field(ge=0.01, le=999999999)
+    amount: float = Field(ge=0.01, le=999999999)
     currency: str = Field(..., regex=r"^[A-Z]{3}$")
 
     @validator('currency')

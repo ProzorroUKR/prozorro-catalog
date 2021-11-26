@@ -37,7 +37,7 @@
     "currency": "UAH"
   },
   "value": {
-    "amount": 35,
+    "amount": 35.5,
     "currency": "UAH",
     "valueAddedTaxIncluded": true
   }
