@@ -60,7 +60,7 @@ class OfferCreateData(BaseModel):
 
 
 class OfferUpdateData(BaseModel):
-    deliveryAddresses: Optional[List[Address]] = Field(None, min_items=1, max_items=100)
+    deliveryAddresses: Optional[List[OfferDeliveryAddress]] = Field(None, min_items=1, max_items=100)
     status: Optional[OfferStatus]
     suppliers: Optional[List[Supplier]] = Field(None, min_items=1, max_items=1)
     value: Optional[OfferValue]
