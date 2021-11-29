@@ -11,6 +11,7 @@ import re
 
 UNIT_CODES = standards.load("unit_codes/recommended.json")
 UA_REGIONS = standards.load("classifiers/ua_regions.json")
+COUNTRY_NAMES = standards.load("classifiers/countries.json")
 
 
 class DataTypeEnum(str, Enum):
@@ -130,6 +131,12 @@ class Address(BaseModel):
             raise ValueError("must be one of classifiers/ua_regions.json")
         return v
 
+    @validator('countryName')
+    def country_standard(cls, v):
+        if v not in COUNTRY_NAMES:
+            raise ValueError("must be one of classifiers/countries.json")
+        return v
+
 
 class OfferSuppliersAddress(Address):
     locality: Optional[constr(max_length=80)]
@@ -144,10 +151,21 @@ class OfferDeliveryAddress(BaseModel):  # only countryName is required
 
     @validator('region')
     def region_standard(cls, v):
-        if v:
-            if v not in UA_REGIONS:
-                raise ValueError("must be one of classifiers/ua_regions.json")
+        if v and v not in UA_REGIONS:
+            raise ValueError("must be one of classifiers/ua_regions.json")
         return v
+
+    @validator('countryName')
+    def country_standard(cls, v):
+        if v not in COUNTRY_NAMES:
+            raise ValueError("must be one of classifiers/countries.json")
+        return v
+
+    @root_validator
+    def region_for_ukraine(cls, values):
+        if values.get('region') and values.get('countryName') != 'Україна':
+            raise ValueError("region should be provided only for Ukraine")
+        return values
 
 
 class ContactPoint(BaseModel):
