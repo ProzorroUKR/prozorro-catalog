@@ -76,7 +76,7 @@ class ProductView(View):
             # export data back to dict
             data = body.data.dict_without_none()
             # update profile with valid data
-            product.update(data)
             data['dateModified'] = get_now().isoformat()
+            product.update(data)
 
         return {"data": RootSerializer(product).data}

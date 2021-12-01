@@ -253,6 +253,7 @@ async def test_120_category_patch(api, category):
         assert resp_json['data'][key] == patch_value
 
     test_date_modified = resp_json['data']['dateModified']
+    assert test_date_modified > category["data"]["dateModified"]
 
     resp = await api.get('/api/categories')
     assert resp.status == 200

@@ -168,6 +168,9 @@ async def test_530_offer_patch(api, offer):
     for key, patch_value in patch_offer['data'].items():
         assert str(resp_json['data'][key]) == str(patch_value)
 
+    test_date_modified = resp_json['data']['dateModified']
+    assert test_date_modified > offer["data"]["dateModified"]
+
     patch_offer = {
         "data": {
             "deliveryAddresses": [
