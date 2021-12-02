@@ -38,14 +38,32 @@ async def test_510_offer_create(api, product):
     test_offer['data']['suppliers'][0]['scale'] = 'Rx'
     test_offer['data']['value']['currency'] = 'AIR'
     test_offer['data']['deliveryAddresses'][0]["region"] = 'Київ'
+    test_offer['data']['deliveryAddresses'][0]["countryName"] = 'Not a country'
     test_offer['data']["suppliers"][0]['address']["region"] = 'Київ'
+    test_offer['data']["suppliers"][0]['address']["countryName"] = 'Not a country'
     resp = await api.put('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)
     assert resp.status == 400
     errors = {'errors': [
+        'must be one of classifiers/countries.json: deliveryAddresses.0.countryName',
         'must be one of classifiers/ua_regions.json: deliveryAddresses.0.region',
         'must be one of organizations/scale.json keys: suppliers.0.scale',
+        'must be one of classifiers/countries.json: suppliers.0.address.countryName',
         'must be one of classifiers/ua_regions.json: suppliers.0.address.region',
         'must be one of codelists/tender/tender_currency.json keys: value.currency'
+    ]}
+    assert errors == await resp.json()
+    test_offer['data']['suppliers'][0]['scale'] = 'micro'
+    test_offer['data']['value']['currency'] = 'UAH'
+    test_offer['data']["suppliers"][0]['address']["region"] = 'Київська область'
+    test_offer['data']["suppliers"][0]['address']["countryName"] = 'Україна'
+
+    test_offer['data']['deliveryAddresses'][0]["region"] = 'Київська область'
+    test_offer['data']['deliveryAddresses'][0]["countryName"] = 'Грузія'
+
+    resp = await api.put('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)
+    assert resp.status == 400
+    errors = {'errors': [
+        'region should be provided only for Ukraine: deliveryAddresses.0.__root__',
     ]}
     assert errors == await resp.json()
 
@@ -188,8 +206,7 @@ async def test_530_offer_patch(api, offer):
             "countryName": "Україна",
             "locality": "Київ"
         }
-    ]
-)
+    ])
     test_date_modified = resp_json['data']['dateModified']
 
     resp = await api.get('/api/offers')
