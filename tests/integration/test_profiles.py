@@ -182,6 +182,9 @@ async def test_320_profile_patch(api, profile):
     for key, patch_value in patch_profile['data'].items():
         assert resp_json['data'][key] == patch_value
 
+    test_date_modified = resp_json['data']['dateModified']
+    assert test_date_modified > profile["data"]["dateModified"]
+
     resp = await api.get(f'/api/profiles/{profile_id}')
     assert resp.status == 200
     resp_json = await resp.json()

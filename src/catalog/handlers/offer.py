@@ -71,7 +71,7 @@ class OfferView(View):
             # export data back to dict
             data = body.data.dict_without_none()
             # update profile with valid data
-            obj.update(data)
             data['dateModified'] = get_now().isoformat()
+            obj.update(data)
 
         return {"data": RootSerializer(obj).data}

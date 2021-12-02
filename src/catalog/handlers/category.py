@@ -61,7 +61,7 @@ class CategoryView(View):
             # export data back to dict
             data = body.data.dict_without_none()
             # update profile with valid data
-            category.update(data)
             data['dateModified'] = get_now().isoformat()
+            category.update(data)
 
         return {"data": RootSerializer(category, show_owner=False).data}

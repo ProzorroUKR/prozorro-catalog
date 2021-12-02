@@ -152,6 +152,9 @@ async def test_420_product_patch(api, product):
     for key, patch_value in patch_product['data'].items():
         assert resp_json['data'][key] == patch_value
 
+    test_date_modified = resp_json['data']['dateModified']
+    assert test_date_modified > product["data"]["dateModified"]
+
     resp = await api.get('/api/products/%s' % product_id)
     assert resp.status == 200
     resp_json = await resp.json()
