@@ -34,7 +34,7 @@ async def main():
             for collection in collections
         ))
         print(
-            f"Updated: {r[0].modified_count} categories; {r[1].modified_count} profiles; "
+            f"{name} -> {rename} updated: {r[0].modified_count} categories; {r[1].modified_count} profiles; "
             f"{r[2].modified_count} products; {r[3].modified_count} offers"
         )
 
