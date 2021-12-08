@@ -61,7 +61,7 @@ class OfferView(View):
     @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
                  fail_exception=HTTPConflict(text="Try again later"))
     async def patch(cls, request, offer_id):
-        validate_accreditation(request, "product")
+        validate_accreditation(request, "offer")
         async with db.read_and_update_offer(offer_id) as obj:
             # import and validate data
             json = await request.json()
