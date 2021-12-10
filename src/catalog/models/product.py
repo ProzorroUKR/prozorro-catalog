@@ -1,12 +1,11 @@
 from datetime import datetime
-from typing import Optional, List, Set, Union
-from pydantic import Field, validator, AnyUrl, constr
+from typing import Optional, List, Union
+from pydantic import Field, validator, constr, StrictInt, StrictFloat, StrictBool, StrictStr
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse
-from catalog.models.common import Unit, Value, Image, Criteria, Classification, Address, ContactPoint, Identifier
+from catalog.models.common import Image, Classification, Address, ContactPoint, Identifier
 from catalog.utils import get_now
 from enum import Enum
-import re
 
 
 class ProductStatus(str, Enum):
@@ -17,7 +16,7 @@ class ProductStatus(str, Enum):
 class ProductProperty(BaseModel):
     name: str = Field(..., min_length=1, max_length=80)
     code: str = Field(..., min_length=1, max_length=80)
-    value: Union[str, int, float, bool]
+    value: Union[StrictStr, StrictFloat, StrictInt, StrictBool]
 
 
 class ProductIdentifier(BaseModel):
@@ -48,7 +47,8 @@ class ProductInfo(BaseModel):
 class RequirementResponse(BaseModel):
     id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     requirement: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
-    value: Union[int, str, float, bool, List[str], List[float]]
+    value: Union[StrictInt, StrictFloat, StrictBool, StrictStr,
+                 List[StrictStr], List[float]]
 
 
 class ProductCreateData(BaseModel):

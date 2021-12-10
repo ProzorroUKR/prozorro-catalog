@@ -97,6 +97,29 @@ async def test_410_product_create(api, profile):
     assert resp_json['data']['id'] == test_product['data']['id']
 
 
+async def test_411_product_rr_create(api, profile):
+    profile_id = profile['data']['id']
+    test_product = {"data": api.get_fixture_json('product')}
+    product_id = '{}-{}-{}-{}'.format(
+        test_product['data']['classification']['id'][:4],
+        test_product['data']['brand']['name'][:4],
+        test_product['data']['identifier']['id'][:13],
+        randint(100000, 900000))
+
+    test_product['data']['requirementResponses'][2] = {
+      "id": "packing-count",
+      "requirement": "0003-001-01",
+      "value": 49.91
+    }
+
+    test_product['data']['id'] = product_id
+    test_product['data']['relatedProfile'] = profile_id
+    test_product['access'] = profile['access']
+
+    resp = await api.put(f'/api/products/{product_id}', json=test_product, auth=TEST_AUTH)
+    assert resp.status == 201, await resp.json()
+
+
 async def test_420_product_patch(api, product):
     product_id = product['data']['id']
 

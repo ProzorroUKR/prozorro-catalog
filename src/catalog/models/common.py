@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List, Set, Union
-from pydantic import Field, validator, AnyUrl, constr, root_validator
+from pydantic import Field, validator, AnyUrl, constr, root_validator,  StrictInt, StrictFloat, StrictBool, StrictStr
 from catalog.models.base import BaseModel
 from catalog.models.api import Response
 from catalog.settings import IMG_PATH
@@ -78,22 +78,20 @@ class Requirement(BaseModel):
     period: Optional[Period] = None
 
     pattern: Optional[str] = Field(None, max_length=250)
-    expectedValue: Optional[Union[bool, float, int, str]] = None
-    maxValue: Optional[Union[bool, float, int, str]] = None
-    minValue: Optional[Union[bool, float, int, str]] = None
+    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
+    maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
+    minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
 
-    allOf: Optional[Set[Union[bool, float, int, str]]] = Field(None, max_items=100)
-    anyOf: Optional[Set[Union[bool, float, int, str]]] = Field(None, max_items=100)
-    oneOf: Optional[Set[Union[bool, float, int, str]]] = Field(None, max_items=100)
+    allOf: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
+    anyOf: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
+    oneOf: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
 
     @root_validator
     def check_sum(cls, values):
         if values["dataType"] == DataTypeEnum.integer.value:
             for k in ("expectedValue", "maxValue", "minValue"):
                 if values[k] is not None:
-                    try:
-                        values[k] = int(values[k])
-                    except ValueError:
+                    if not isinstance(values[k], int):
                         raise ValueError(f"Invalid integer '{values[k]}'")
         return values
 
