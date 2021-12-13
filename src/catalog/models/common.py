@@ -131,7 +131,7 @@ class Address(BaseModel):
 
     @validator('countryName')
     def country_standard(cls, v):
-        if v not in COUNTRY_NAMES:
+        if v not in [names.get("name_uk") for names in COUNTRY_NAMES.values()]:
             raise ValueError("must be one of classifiers/countries.json")
         return v
 
@@ -155,7 +155,7 @@ class OfferDeliveryAddress(BaseModel):  # only countryName is required
 
     @validator('countryName')
     def country_standard(cls, v):
-        if v not in COUNTRY_NAMES:
+        if v not in [names.get("name_uk") for names in COUNTRY_NAMES.values()]:
             raise ValueError("must be one of classifiers/countries.json")
         return v
 
