@@ -1,34 +1,16 @@
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPBadRequest
 from catalog.swagger import class_view_swagger_path
-from catalog.settings import IMG_PATH, IMG_DIR, IMG_STORE_DIR_NAME_LEN, IMG_STORE_DIR_LEVELS, ALLOWED_IMG_TYPES
-from uuid import uuid4
-from os import makedirs
+from catalog.settings import IMG_PATH, IMG_DIR, ALLOWED_IMG_TYPES
+from catalog.image import monkey_patch_jpeg_tests, generate_filename
 import aiofiles
 import aiofiles.os
 import imghdr
 import hashlib
 import logging
-import os.path
 
 
-async_make_dirs = aiofiles.os.wrap(makedirs)
-
-
-async def generate_filename():
-    full_path = IMG_DIR
-    filename = uuid4().hex
-
-    if IMG_STORE_DIR_LEVELS:
-        sub_path = [filename[i:i+IMG_STORE_DIR_NAME_LEN]
-                    for i in range(0, IMG_STORE_DIR_LEVELS * IMG_STORE_DIR_NAME_LEN, IMG_STORE_DIR_NAME_LEN)]
-        filename = filename[IMG_STORE_DIR_LEVELS * IMG_STORE_DIR_NAME_LEN:]
-
-        full_path = os.path.join(IMG_DIR, *sub_path)
-        await async_make_dirs(full_path, exist_ok=True)
-
-    tmp_file = os.path.join(full_path, filename)
-    return tmp_file
+monkey_patch_jpeg_tests()
 
 
 @class_view_swagger_path('/app/swagger/images')

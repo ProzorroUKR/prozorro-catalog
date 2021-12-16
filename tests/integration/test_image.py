@@ -24,7 +24,7 @@ async def test_600_image_create(api):
 
     uuid_mock = Mock()
     uuid_mock.return_value.hex = "a" * 32
-    with patch("catalog.handlers.image.uuid4", uuid_mock):
+    with patch("catalog.image.uuid4", uuid_mock):
         resp = await api.post('/api/images', data=data, auth=TEST_AUTH)
     assert resp.status == 201, await resp.json()
     assert {"url": "/static/images/aa/aa/aa/aaaaaaaaaaaaaaaaaaaaaaaaaa.png",
@@ -36,7 +36,7 @@ async def test_600_image_create(api):
                    b"000000000",
                    filename='report.xls',
                    content_type='application/vnd.ms-excel')
-    with patch("catalog.handlers.image.uuid4", uuid_mock):
+    with patch("catalog.image.uuid4", uuid_mock):
         resp = await api.post('/api/images', data=data, auth=TEST_AUTH)
     assert resp.status == 400
     assert {'errors': ["Not allowed img type: 'None'"]} == await resp.json()
