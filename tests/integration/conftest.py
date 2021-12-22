@@ -1,5 +1,5 @@
 from catalog.api import create_application
-from catalog.db import flush_database
+from catalog.db import flush_database, init_mongo, get_database
 from json import loads
 from .base import TEST_AUTH
 from uuid import uuid4
@@ -12,6 +12,15 @@ def get_fixture_json(name):
     with open(fixture_file) as f:
         data = loads(f.read())
     return data
+
+
+@pytest.fixture
+async def db(loop):
+    try:
+        await init_mongo()
+        yield get_database()
+    except Exception:
+        await flush_database()
 
 
 @pytest.fixture

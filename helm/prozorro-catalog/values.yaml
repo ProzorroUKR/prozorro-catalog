@@ -13,7 +13,7 @@ image:
 imagePullSecrets:
   - name: prozorro-gitlab
 
-mongodb_uri: mongodb://root:catalog-dev@mongodb-catalog-service.data:27017
+mongodb_uri: mongodb://root:pass@mongodb-catalog.data.svc.cluster.local:27017/?replicaSet=rs0
 
 nameOverride: ""
 fullnameOverride: ""
