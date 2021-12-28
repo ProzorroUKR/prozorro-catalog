@@ -19,7 +19,7 @@ services:
             - ./tests:/app/tests
             - ./swagger:/app/swagger
             - ./auth.ini:/app/auth.ini
-            - ./media:/app/images
+            - ./migrations:/app/migrations
         depends_on:
             - mongo
 
@@ -48,6 +48,7 @@ services:
             - ./swagger:/app/swagger
             - ./auth.ini:/app/auth.ini
             - ./media:/app/images
+            - ./migrations:/app/migrations
         depends_on:
             - mongo
 

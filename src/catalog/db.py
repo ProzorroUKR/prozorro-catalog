@@ -24,7 +24,11 @@ DB = None
 session_var = ContextVar('session', default=None)
 
 
-async def init_mongo(app) -> AsyncIOMotorDatabase:
+def get_database():
+    return DB
+
+
+async def init_mongo(*app) -> AsyncIOMotorDatabase:
     global DB
 
     logger.info('init mongod instance')
@@ -98,6 +102,19 @@ def transaction_generator(func):
                 # in case of exceptions session_var may contain an ended session link
                 session_var.reset(token)
     return decorated
+
+
+@asynccontextmanager
+async def transaction_context_manager():
+    async with await DB.client.start_session() as s:
+        token = session_var.set(s)
+        try:
+            async with s.start_transaction():
+                yield s
+        finally:
+            # without finally
+            # in case of exceptions session_var may contain an ended session link
+            session_var.reset(token)
 
 
 def rename_id(obj):
