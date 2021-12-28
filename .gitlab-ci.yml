@@ -102,7 +102,7 @@ review:
 stop_review:
   stage: deploy
   script:
-    - helm3 delete catalog-$CI_COMMIT_REF_SLUG
+    - helm3 delete catalog-$CI_COMMIT_REF_SLUG --namespace dev-prozorro
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
     action: stop
