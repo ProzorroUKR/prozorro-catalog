@@ -17,7 +17,7 @@ class ResourceType(str, Enum):
 
 class SearchData(BaseModel):
     resource: ResourceType
-    ids: Set[str] = Field(..., min_items=1, max_items=300)
+    ids: Set[str] = Field(..., min_items=1, max_items=5000)
 
 
 SearchInput = Input[SearchData]
