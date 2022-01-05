@@ -1,7 +1,7 @@
 import random
-from unittest.mock import patch, call
+from unittest.mock import patch
 
-from catalog.migrations.cs_11945_profiles_agreement_id import migrate_profiles, Counters
+from catalog.migrations.cs_11945_profile_agreement_id.cs_11945_profiles_agreement_id import migrate_profiles, Counters
 from tests.integration.base import TEST_AUTH
 from tests.integration.conftest import get_fixture_json
 

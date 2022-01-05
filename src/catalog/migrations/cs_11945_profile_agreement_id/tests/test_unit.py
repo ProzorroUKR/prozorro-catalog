@@ -1,6 +1,6 @@
-from unittest.mock import patch, Mock, MagicMock, call
+from unittest.mock import patch, call
 
-from catalog.migrations.cs_11945_profiles_agreement_id import migrate_profiles
+from catalog.migrations.cs_11945_profile_agreement_id.cs_11945_profiles_agreement_id import migrate_profiles
 
 
 
