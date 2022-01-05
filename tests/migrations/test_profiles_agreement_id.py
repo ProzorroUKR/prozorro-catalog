@@ -62,9 +62,9 @@ async def test_migrate_profiles_one_scenario_ok(save_mock, load_agreements_mock,
     load_agreements_mock.side_effect = create_agreements_side_effect(agreements)
     await migrate_profiles()
     save_mock.assert_called_once()
-    assert logger.info.call_args_list == [
-        call('found agreement_id for profile profile_id=profile_id_001, agreement_id=agreement_id_001, classification_id=123456700-00'),
-    ]
+
+    required_logger_call = call('found agreement_id for profile profile_id=profile_id_001, agreement_id=agreement_id_001, classification_id=123456700-00')
+    assert required_logger_call in logger.debug.call_args_list
 
 
 @patch('catalog.migrations.cs_11945_profiles_agreement_id.logger')
@@ -113,9 +113,8 @@ async def test_migrate_profile_iterate_over_classificactions(save_mock, load_agr
     load_agreements_mock.side_effect = create_agreements_side_effect(agreements)
     await migrate_profiles()
     save_mock.assert_called_once()
-    assert logger.info.call_args_list == [
-        call('found agreement_id for profile profile_id=profile_id_001, agreement_id=agreement_id_003, classification_id=123450000-00'),
-    ]
+    required_logger_call = call('found agreement_id for profile profile_id=profile_id_001, agreement_id=agreement_id_003, classification_id=123450000-00')
+    assert required_logger_call in logger.debug.call_args_list
 
 
 @patch('catalog.migrations.cs_11945_profiles_agreement_id.logger')
@@ -194,9 +193,9 @@ async def test_migrate_profile_with_first_classification_only(save_mock, load_ag
     load_agreements_mock.side_effect = create_agreements_side_effect(agreements)
     await migrate_profiles()
     save_mock.assert_called_once()
-    assert logger.info.call_args_list == [
-        call('found agreement_id for profile profile_id=profile_id_001, agreement_id=agreement_id_001, classification_id=123456700-00'),
-    ]
+    required_logger_call = call(
+        'found agreement_id for profile profile_id=profile_id_001, agreement_id=agreement_id_001, classification_id=123456700-00')
+    assert required_logger_call in logger.debug.call_args_list
 
 
 @patch('catalog.migrations.cs_11945_profiles_agreement_id.logger')
@@ -290,9 +289,8 @@ async def test_migrate_profiles_additional_classification_not_matches(save_mock,
     load_agreements_mock.side_effect = create_agreements_side_effect(invalid_agreements)
     await migrate_profiles()
     save_mock.assert_not_called()
-    assert logger.info.call_args_list == [
-        call('not found agreements for profile_id_001'),
-    ]
+    required_logger_call = call('not found agreements for profile_id_001')
+    assert required_logger_call in logger.debug.call_args_list
 
 
 @patch('catalog.migrations.cs_11945_profiles_agreement_id.logger')
@@ -356,7 +354,5 @@ async def test_migrate_profiles_several_agreements_for_one_profile(save_mock, lo
     load_agreements_mock.side_effect = create_agreements_side_effect(agreements)
     await migrate_profiles()
     save_mock.assert_not_called()
-    assert logger.info.call_args_list == [
-        call('too many agreements for profile_id_001'),
-    ]
-
+    required_logger_call = call('too many agreements for profile_id_001')
+    assert required_logger_call in logger.debug.call_args_list

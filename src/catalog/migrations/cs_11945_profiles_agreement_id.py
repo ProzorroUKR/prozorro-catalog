@@ -2,21 +2,47 @@ import asyncio
 import logging
 import os
 import re
+from dataclasses import dataclass
 from typing import List
 
 import aiohttp
 
-from catalog.db import get_profiles_collection
-
+from catalog.db import get_profiles_collection, update_profile, rename_id
 
 OPENPROCUREMENT_API_URL = os.environ.get("OPENPROCUREMENT_API_URL", "127.0.0.1")
 
 
 logger = logging.getLogger(__name__)
 
+@dataclass
+class Counters:
+    total_profiles: int = 0
+    succeeded_profiles: int = 0
+    skipped_profiles: int = 0
+    no_agreement_profiles: int = 0
+    too_many_agreement_profiles: int = 0
 
-def save(profile):
-    logger.info(f'saving profile {profile["id"]}')
+    def __post_init__(self):
+        self.total_profiles = self.total_profiles or (
+            self.succeeded_profiles +
+            self.skipped_profiles +
+            self.no_agreement_profiles +
+            self.too_many_agreement_profiles
+        )
+
+    def __add__(self, other):
+        return Counters(
+            self.total_profiles + other.total_profiles,
+            self.succeeded_profiles + other.succeeded_profiles,
+            self.skipped_profiles + other.skipped_profiles,
+            self.no_agreement_profiles + other.no_agreement_profiles,
+            self.too_many_agreement_profiles + other.too_many_agreement_profiles,
+        )
+
+
+async def save(profile):
+    logger.debug(f'saving profile {profile["id"]}')
+    await update_profile(profile)
 
 
 def agreement_matches_profile(agreement, profile):
@@ -33,34 +59,51 @@ def agreement_matches_profile(agreement, profile):
 
 
 async def migrate_profiles():
-    collection = await load_profiles()
+    logger.info("Start migration.")
+    profiles = await load_profiles()
 
-    for profile in collection:
-        classification_id = profile["classification"]["id"]
-        additional_classifications_ids = [c['id'] for c in profile.get('additionalClassifications', "")]
+    counters = Counters()
 
-        for next_classification_id in modified_classification_ids(classification_id):
-            agreements = await load_agreements_by_classification(next_classification_id, additional_classifications_ids)
-            agreements_for_profile = [
-                a for a in agreements
-                if agreement_matches_profile(a, profile)
-            ]
-            if len(agreements_for_profile) > 1:
-                logger.info(f"too many agreements for {profile['_id']}")
-                break
-            if not agreements_for_profile:
-                continue
+    for profile in profiles:
+        profile = rename_id(profile)
+        new_counter = await migrate_profile(profile)
+        counters += new_counter
+        if counters.total_profiles % 100 == 0:
+            logger.info(f"Migration in progress. {counters}")
+    logger.info(f"Migration finished. {counters}")
+    return counters
 
-            agreement = agreements_for_profile[0]
-            profile['agreementId'] = agreement['id']
-            save(profile)
-            logger.info(f"found agreement_id for profile "
-                  f"profile_id={profile['_id']}, "
-                  f"agreement_id={agreement['id']}, "
-                  f"classification_id={agreement['classification']['id']}")
-            break
-        else:
-            logger.info(f"not found agreements for {profile['_id']}")
+
+async def migrate_profile(profile) -> Counters:
+    if profile.get('agreementID'):
+        logger.debug(f'skipping profile {profile["id"]}. agreementID already exists.')
+        return Counters(skipped_profiles=1)
+
+    classification_id = profile["classification"]["id"]
+    additional_classifications_ids = [c['id'] for c in profile.get('additionalClassifications', "")]
+    for next_classification_id in modified_classification_ids(classification_id):
+        agreements = await load_agreements_by_classification(next_classification_id, additional_classifications_ids)
+        agreements_for_profile = [
+            a for a in agreements
+            if agreement_matches_profile(a, profile)
+        ]
+        if len(agreements_for_profile) > 1:
+            logger.debug(f"too many agreements for {profile['id']}")
+            return Counters(too_many_agreement_profiles=1)
+        if not agreements_for_profile:
+            continue
+
+        agreement = agreements_for_profile[0]
+        profile['agreementID'] = agreement['id']
+        await save(profile)
+        logger.debug(f"found agreement_id for profile "
+                    f"profile_id={profile['id']}, "
+                    f"agreement_id={agreement['id']}, "
+                    f"classification_id={agreement['classification']['id']}")
+        return Counters(succeeded_profiles=1)
+    else:
+        logger.debug(f"not found agreements for {profile['id']}")
+        return Counters(no_agreement_profiles=1)
 
 
 async def load_profiles():
