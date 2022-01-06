@@ -9,7 +9,8 @@ import aiohttp
 
 from catalog.db import get_profiles_collection, update_profile, rename_id
 
-OPENPROCUREMENT_API_URL = os.environ.get("OPENPROCUREMENT_API_URL", "127.0.0.1")
+
+OPENPROCUREMENT_API_URL = os.environ.get("OPENPROCUREMENT_API_URL", "http://127.0.0.1:8000/api/0")
 
 
 logger = logging.getLogger(__name__)
@@ -40,15 +41,9 @@ class Counters:
         )
 
 
-async def save(profile):
-    logger.debug(f'saving profile {profile["id"]}')
-    await update_profile(profile)
-
-
 def agreement_matches_profile(agreement, profile):
     additionalClassifications_matches = (
-            {(c['id'], c['scheme']) for c in profile.get('additionalClassifications', "")}
-            == {(c['id'], c['scheme']) for c in agreement.get('additionalClassifications', "")}
+            profile.get('additionalClassifications', "") == agreement.get('additionalClassifications', "")
     )
 
     return (
@@ -60,11 +55,11 @@ def agreement_matches_profile(agreement, profile):
 
 async def migrate_profiles():
     logger.info("Start migration.")
-    profiles = await load_profiles()
+    # profiles = await load_profiles()
 
     counters = Counters()
 
-    for profile in profiles:
+    async for profile in load_profiles():
         profile = rename_id(profile)
         new_counter = await migrate_profile(profile)
         counters += new_counter
@@ -95,7 +90,7 @@ async def migrate_profile(profile) -> Counters:
 
         agreement = agreements_for_profile[0]
         profile['agreementID'] = agreement['id']
-        await save(profile)
+        await update_profile(profile)
         logger.debug(f"found agreement_id for profile "
                     f"profile_id={profile['id']}, "
                     f"agreement_id={agreement['id']}, "
@@ -106,13 +101,12 @@ async def migrate_profile(profile) -> Counters:
         return Counters(no_agreement_profiles=1)
 
 
-async def load_profiles():
-    collection = await get_profiles_collection().find(
+def load_profiles():
+    return get_profiles_collection().find(
         {
             "status": {"$ne": "general"},
         }
-    ).to_list(None)
-    return collection
+    )
 
 
 async def load_agreements_by_classification(classification_id: str, additional_classifications_ids: List[str]):
@@ -120,7 +114,7 @@ async def load_agreements_by_classification(classification_id: str, additional_c
     additional_classifications_query_string = ",".join(additional_classifications_ids) or 'none'
     async with aiohttp.ClientSession() as session:
         response = await session.get(
-            f"https://{OPENPROCUREMENT_API_URL}/api/0/agreements_by_classification/{classification_id_cleaned}?additional_classifications={additional_classifications_query_string}"
+            f"{OPENPROCUREMENT_API_URL}/agreements_by_classification/{classification_id_cleaned}?additional_classifications={additional_classifications_query_string}"
         )
         response_data = await response.json()
 
@@ -133,7 +127,7 @@ async def load_agreements_by_classification(classification_id: str, additional_c
 
 async def load_agreement_by_id(session, agreement_id):
     response = await session.get(
-        f"https://{OPENPROCUREMENT_API_URL}/api/0/agreements/{agreement_id}"
+        f"{OPENPROCUREMENT_API_URL}/agreements/{agreement_id}"
     )
     response_data = await response.json()
     return response_data['data']

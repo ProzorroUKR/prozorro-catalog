@@ -1,4 +1,4 @@
-from unittest.mock import patch, Mock, MagicMock, call
+from unittest.mock import patch, Mock, MagicMock, call, AsyncMock
 
 from catalog.migrations.cs_11945_profiles_agreement_id import migrate_profiles
 
@@ -9,21 +9,26 @@ def create_agreements_side_effect(agreements):
         return [
             a for a in agreements
             if (
-                a['classification']['id'] == c_id and
-                {i['id'] for i in a.get("additionalClassifications", "")} == set(additional_classifications_ids)
+                a["classification"]["id"] == c_id and
+                {i["id"] for i in a.get("additionalClassifications", "")} == set(additional_classifications_ids)
             )
         ]
     return load_agreements_by_classification
 
 
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.logger')
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.load_profiles')
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.load_agreements_by_classification')
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.save')
-async def test_migrate_profiles_one_scenario_ok(save_mock, load_agreements_mock, load_profiles_mock, logger):
+async def aiter(iterable):
+    for i in iterable:
+        yield i
+
+
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.logger")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.load_profiles")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.load_agreements_by_classification")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.update_profile")
+async def test_migrate_profiles_one_scenario_ok(update_mock, load_agreements_mock, load_profiles_mock, logger):
     profiles = [
         {
-            '_id': 'profile_id_001',
+            "_id": "profile_id_001",
             "classification": {
                 "id": "123456700-00",
                 "scheme": "test_main_scheme"
@@ -42,7 +47,7 @@ async def test_migrate_profiles_one_scenario_ok(save_mock, load_agreements_mock,
 
     agreements = [
         {
-            'id': 'agreement_id_001',
+            "id": "agreement_id_001",
             "classification": {
                 "id": "123456700-00",
                 "scheme": "test_main_scheme"
@@ -53,28 +58,28 @@ async def test_migrate_profiles_one_scenario_ok(save_mock, load_agreements_mock,
                     "scheme": "test_additional_scheme"
                 }
             ],
-            'procuringEntity': {'identifier': {'id': 'test_owner'}},
-            'agreementType': 'electronicCatalogue'
+            "procuringEntity": {"identifier": {"id": "test_owner"}},
+            "agreementType": "electronicCatalogue"
         },
     ]
 
-    load_profiles_mock.return_value = profiles
+    load_profiles_mock.return_value = aiter(profiles)
     load_agreements_mock.side_effect = create_agreements_side_effect(agreements)
     await migrate_profiles()
-    save_mock.assert_called_once()
+    update_mock.assert_called_once()
 
-    required_logger_call = call('found agreement_id for profile profile_id=profile_id_001, agreement_id=agreement_id_001, classification_id=123456700-00')
+    required_logger_call = call("found agreement_id for profile profile_id=profile_id_001, agreement_id=agreement_id_001, classification_id=123456700-00")
     assert required_logger_call in logger.debug.call_args_list
 
 
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.logger')
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.load_profiles')
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.load_agreements_by_classification')
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.save')
-async def test_migrate_profile_iterate_over_classificactions(save_mock, load_agreements_mock, load_profiles_mock, logger):
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.logger")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.load_profiles")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.load_agreements_by_classification")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.update_profile")
+async def test_migrate_profile_iterate_over_classificactions(update_mock, load_agreements_mock, load_profiles_mock, logger):
     profiles = [
         {
-            '_id': 'profile_id_001',
+            "_id": "profile_id_001",
             "classification": {
                 "id": "123456700-00",
                 "scheme": "test_main_scheme"
@@ -93,7 +98,7 @@ async def test_migrate_profile_iterate_over_classificactions(save_mock, load_agr
 
     agreements = [
         {
-            'id': 'agreement_id_003',
+            "id": "agreement_id_003",
             "classification": {
                 "id": "123450000-00",
                 "scheme": "test_main_scheme"
@@ -104,27 +109,27 @@ async def test_migrate_profile_iterate_over_classificactions(save_mock, load_agr
                     "scheme": "test_additional_scheme"
                 }
             ],
-            'procuringEntity': {'identifier': {'id': 'test_owner'}},
-            'agreementType': 'electronicCatalogue'
+            "procuringEntity": {"identifier": {"id": "test_owner"}},
+            "agreementType": "electronicCatalogue"
         }
     ]
 
-    load_profiles_mock.return_value = profiles
+    load_profiles_mock.return_value = aiter(profiles)
     load_agreements_mock.side_effect = create_agreements_side_effect(agreements)
     await migrate_profiles()
-    save_mock.assert_called_once()
-    required_logger_call = call('found agreement_id for profile profile_id=profile_id_001, agreement_id=agreement_id_003, classification_id=123450000-00')
+    update_mock.assert_called_once()
+    required_logger_call = call("found agreement_id for profile profile_id=profile_id_001, agreement_id=agreement_id_003, classification_id=123450000-00")
     assert required_logger_call in logger.debug.call_args_list
 
 
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.logger')
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.load_profiles')
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.load_agreements_by_classification')
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.save')
-async def test_migrate_profile_with_first_classification_only(save_mock, load_agreements_mock, load_profiles_mock, logger):
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.logger")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.load_profiles")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.load_agreements_by_classification")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.update_profile")
+async def test_migrate_profile_with_first_classification_only(update_mock, load_agreements_mock, load_profiles_mock, logger):
     profiles = [
         {
-            '_id': 'profile_id_001',
+            "_id": "profile_id_001",
             "classification": {
                 "id": "123456700-00",
                 "scheme": "test_main_scheme"
@@ -143,7 +148,7 @@ async def test_migrate_profile_with_first_classification_only(save_mock, load_ag
 
     agreements = [
         {
-            'id': 'agreement_id_001',
+            "id": "agreement_id_001",
             "classification": {
                 "id": "123456700-00",
                 "scheme": "test_main_scheme"
@@ -154,11 +159,11 @@ async def test_migrate_profile_with_first_classification_only(save_mock, load_ag
                     "scheme": "test_additional_scheme"
                 }
             ],
-            'procuringEntity': {'identifier': {'id': 'test_owner'}},
-            'agreementType': 'electronicCatalogue'
+            "procuringEntity": {"identifier": {"id": "test_owner"}},
+            "agreementType": "electronicCatalogue"
         },
         {
-            'id': 'agreement_id_002',
+            "id": "agreement_id_002",
             "classification": {
                 "id": "123456000-00",
                 "scheme": "test_main_scheme"
@@ -169,11 +174,11 @@ async def test_migrate_profile_with_first_classification_only(save_mock, load_ag
                     "scheme": "test_additional_scheme"
                 }
             ],
-            'procuringEntity': {'identifier': {'id': 'test_owner'}},
-            'agreementType': 'electronicCatalogue'
+            "procuringEntity": {"identifier": {"id": "test_owner"}},
+            "agreementType": "electronicCatalogue"
         },
         {
-            'id': 'agreement_id_003',
+            "id": "agreement_id_003",
             "classification": {
                 "id": "123450000-00",
                 "scheme": "test_main_scheme"
@@ -184,28 +189,28 @@ async def test_migrate_profile_with_first_classification_only(save_mock, load_ag
                     "scheme": "test_additional_scheme"
                 }
             ],
-            'procuringEntity': {'identifier': {'id': 'test_owner'}},
-            'agreementType': 'electronicCatalogue'
+            "procuringEntity": {"identifier": {"id": "test_owner"}},
+            "agreementType": "electronicCatalogue"
         }
     ]
 
-    load_profiles_mock.return_value = profiles
+    load_profiles_mock.return_value = aiter(profiles)
     load_agreements_mock.side_effect = create_agreements_side_effect(agreements)
     await migrate_profiles()
-    save_mock.assert_called_once()
+    update_mock.assert_called_once()
     required_logger_call = call(
-        'found agreement_id for profile profile_id=profile_id_001, agreement_id=agreement_id_001, classification_id=123456700-00')
+        "found agreement_id for profile profile_id=profile_id_001, agreement_id=agreement_id_001, classification_id=123456700-00")
     assert required_logger_call in logger.debug.call_args_list
 
 
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.logger')
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.load_profiles')
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.load_agreements_by_classification')
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.save')
-async def test_migrate_profiles_additional_classification_not_matches(save_mock, load_agreements_mock, load_profiles_mock, logger):
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.logger")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.load_profiles")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.load_agreements_by_classification")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.update_profile")
+async def test_migrate_profiles_additional_classification_not_matches(update_mock, load_agreements_mock, load_profiles_mock, logger):
     profiles = [
         {
-            '_id': 'profile_id_001',
+            "_id": "profile_id_001",
             "classification": {
                 "id": "123456700-00",
                 "scheme": "test_main_scheme"
@@ -224,7 +229,7 @@ async def test_migrate_profiles_additional_classification_not_matches(save_mock,
 
     invalid_agreements = [
         {
-            'id': 'agreement_id_001',
+            "id": "agreement_id_001",
             "classification": {
                 "id": "123456700-00",
                 "scheme": "test_main_scheme"
@@ -235,11 +240,11 @@ async def test_migrate_profiles_additional_classification_not_matches(save_mock,
                     "scheme": "test_additional_scheme"
                 }
             ],
-            'procuringEntity': {'identifier': {'id': 'test_owner'}},
-            'agreementType': 'electronicCatalogue'
+            "procuringEntity": {"identifier": {"id": "test_owner"}},
+            "agreementType": "electronicCatalogue"
         },
         {
-            'id': 'agreement_id_001',
+            "id": "agreement_id_001",
             "classification": {
                 "id": "123456700-00",
                 "scheme": "test_main_scheme"
@@ -250,11 +255,11 @@ async def test_migrate_profiles_additional_classification_not_matches(save_mock,
                     "scheme": "another_additional_scheme"
                 }
             ],
-            'procuringEntity': {'identifier': {'id': 'test_owner'}},
-            'agreementType': 'electronicCatalogue'
+            "procuringEntity": {"identifier": {"id": "test_owner"}},
+            "agreementType": "electronicCatalogue"
         },
         {
-            'id': 'agreement_id_001',
+            "id": "agreement_id_001",
             "classification": {
                 "id": "123456700-00",
                 "scheme": "test_main_scheme"
@@ -265,11 +270,11 @@ async def test_migrate_profiles_additional_classification_not_matches(save_mock,
                     "scheme": "test_additional_scheme"
                 }
             ],
-            'procuringEntity': {'identifier': {'id': 'test_owner'}},
-            'agreementType': 'some_other_agreement_type'
+            "procuringEntity": {"identifier": {"id": "test_owner"}},
+            "agreementType": "some_other_agreement_type"
         },
         {
-            'id': 'agreement_id_001',
+            "id": "agreement_id_001",
             "classification": {
                 "id": "123456700-00",
                 "scheme": "test_main_scheme"
@@ -280,27 +285,27 @@ async def test_migrate_profiles_additional_classification_not_matches(save_mock,
                     "scheme": "test_additional_scheme"
                 }
             ],
-            'procuringEntity': {'identifier': {'id': 'some_other_owner'}},
-            'agreementType': 'electronicCatalogue'
+            "procuringEntity": {"identifier": {"id": "some_other_owner"}},
+            "agreementType": "electronicCatalogue"
         },
     ]
 
-    load_profiles_mock.return_value = profiles
+    load_profiles_mock.return_value = aiter(profiles)
     load_agreements_mock.side_effect = create_agreements_side_effect(invalid_agreements)
     await migrate_profiles()
-    save_mock.assert_not_called()
-    required_logger_call = call('not found agreements for profile_id_001')
+    update_mock.assert_not_called()
+    required_logger_call = call("not found agreements for profile_id_001")
     assert required_logger_call in logger.debug.call_args_list
 
 
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.logger')
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.load_profiles')
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.load_agreements_by_classification')
-@patch('catalog.migrations.cs_11945_profiles_agreement_id.save')
-async def test_migrate_profiles_several_agreements_for_one_profile(save_mock, load_agreements_mock, load_profiles_mock, logger):
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.logger")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.load_profiles")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.load_agreements_by_classification")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.update_profile")
+async def test_migrate_profiles_several_agreements_for_one_profile(update_mock, load_agreements_mock, load_profiles_mock, logger):
     profiles = [
         {
-            '_id': 'profile_id_001',
+            "_id": "profile_id_001",
             "classification": {
                 "id": "123456700-00",
                 "scheme": "test_main_scheme"
@@ -319,7 +324,7 @@ async def test_migrate_profiles_several_agreements_for_one_profile(save_mock, lo
 
     agreements = [
         {
-            'id': 'agreement_id_001',
+            "id": "agreement_id_001",
             "classification": {
                 "id": "123456700-00",
                 "scheme": "test_main_scheme"
@@ -330,11 +335,11 @@ async def test_migrate_profiles_several_agreements_for_one_profile(save_mock, lo
                     "scheme": "test_additional_scheme"
                 }
             ],
-            'procuringEntity': {'identifier': {'id': 'test_owner'}},
-            'agreementType': 'electronicCatalogue'
+            "procuringEntity": {"identifier": {"id": "test_owner"}},
+            "agreementType": "electronicCatalogue"
         },
         {
-            'id': 'agreement_id_002',
+            "id": "agreement_id_002",
             "classification": {
                 "id": "123456700-00",
                 "scheme": "test_main_scheme"
@@ -345,14 +350,14 @@ async def test_migrate_profiles_several_agreements_for_one_profile(save_mock, lo
                     "scheme": "test_additional_scheme"
                 }
             ],
-            'procuringEntity': {'identifier': {'id': 'test_owner'}},
-            'agreementType': 'electronicCatalogue'
+            "procuringEntity": {"identifier": {"id": "test_owner"}},
+            "agreementType": "electronicCatalogue"
         },
     ]
 
-    load_profiles_mock.return_value = profiles
+    load_profiles_mock.return_value = aiter(profiles)
     load_agreements_mock.side_effect = create_agreements_side_effect(agreements)
     await migrate_profiles()
-    save_mock.assert_not_called()
-    required_logger_call = call('too many agreements for profile_id_001')
+    update_mock.assert_not_called()
+    required_logger_call = call("too many agreements for profile_id_001")
     assert required_logger_call in logger.debug.call_args_list
