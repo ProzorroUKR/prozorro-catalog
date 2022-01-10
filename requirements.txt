@@ -9,4 +9,4 @@ msgpack # requirements for aiocache
 aiofiles>=0.7.0
 python-json-logger==2.0.1
 sentry-sdk
-git+git://github.com/ProzorroUKR/standards.git@1.0.24#egg=standards
+git+git://github.com/ProzorroUKR/standards.git@1.0.25#egg=standards
