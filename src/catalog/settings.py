@@ -47,3 +47,5 @@ IMG_STORE_DIR_LEVELS = int(os.getenv('IMG_STORE_DIR_LEVELS', 3))
 assert IMG_STORE_DIR_LEVELS * IMG_STORE_DIR_NAME_LEN < 32, "We only use 32 long uuid4 for both path and name"
 
 CATALOG_DATA = os.getenv("CATALOG_DATA")
+
+OPENPROCUREMENT_API_URL = os.environ.get("OPENPROCUREMENT_API_URL", "http://127.0.0.1:8000/api/0")

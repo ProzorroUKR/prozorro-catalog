@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import os
 import re
 from dataclasses import dataclass
 from typing import List
@@ -8,10 +7,7 @@ from typing import List
 import aiohttp
 
 from catalog.db import get_profiles_collection, update_profile, rename_id
-
-
-OPENPROCUREMENT_API_URL = os.environ.get("OPENPROCUREMENT_API_URL", "http://127.0.0.1:8000/api/0")
-
+from catalog.settings import OPENPROCUREMENT_API_URL
 
 logger = logging.getLogger(__name__)
 CLASSIFICATION_ID_RE = re.compile(r"(\d{2,})[1-9](.*)")

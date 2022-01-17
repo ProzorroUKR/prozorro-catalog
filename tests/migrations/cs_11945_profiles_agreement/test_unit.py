@@ -1,7 +1,6 @@
-from unittest.mock import patch, Mock, MagicMock, call, AsyncMock
+from unittest.mock import patch, call
 
 from catalog.migrations.cs_11945_profiles_agreement_id import migrate_profiles
-
 
 
 def create_agreements_side_effect(agreements):
@@ -76,7 +75,7 @@ async def test_migrate_profiles_one_scenario_ok(update_mock, load_agreements_moc
 @patch("catalog.migrations.cs_11945_profiles_agreement_id.load_profiles")
 @patch("catalog.migrations.cs_11945_profiles_agreement_id.load_agreements_by_classification")
 @patch("catalog.migrations.cs_11945_profiles_agreement_id.update_profile")
-async def test_migrate_profile_iterate_over_classificactions(update_mock, load_agreements_mock, load_profiles_mock, logger):
+async def test_migrate_profile_iterate_over_classifications(update_mock, load_agreements_mock, load_profiles_mock, logger):
     profiles = [
         {
             "_id": "profile_id_001",
