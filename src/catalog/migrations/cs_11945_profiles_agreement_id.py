@@ -14,6 +14,8 @@ OPENPROCUREMENT_API_URL = os.environ.get("OPENPROCUREMENT_API_URL", "http://127.
 
 
 logger = logging.getLogger(__name__)
+CLASSIFICATION_ID_RE = re.compile(r"(\d{2,})[1-9](.*)")
+
 
 @dataclass
 class Counters:
@@ -43,20 +45,18 @@ class Counters:
 
 def agreement_matches_profile(agreement, profile):
     additionalClassifications_matches = (
-            profile.get('additionalClassifications', "") == agreement.get('additionalClassifications', "")
+        profile.get("additionalClassifications", "") == agreement.get("additionalClassifications", "")
     )
 
     return (
         additionalClassifications_matches and
-        agreement['agreementType'] == 'electronicCatalogue' and
-        profile['access']['owner'] == agreement['procuringEntity']['identifier']['id']
+        agreement["agreementType"] == "electronicCatalogue" and
+        profile["access"]["owner"] == agreement["procuringEntity"]["identifier"]["id"]
     )
 
 
 async def migrate_profiles():
     logger.info("Start migration.")
-    # profiles = await load_profiles()
-
     counters = Counters()
 
     async for profile in load_profiles():
@@ -70,12 +70,12 @@ async def migrate_profiles():
 
 
 async def migrate_profile(profile) -> Counters:
-    if profile.get('agreementID'):
-        logger.debug(f'skipping profile {profile["id"]}. agreementID already exists.')
+    if profile.get("agreementID"):
+        logger.debug(f"skipping profile {profile['id']}. agreementID already exists.")
         return Counters(skipped_profiles=1)
 
     classification_id = profile["classification"]["id"]
-    additional_classifications_ids = [c['id'] for c in profile.get('additionalClassifications', "")]
+    additional_classifications_ids = [c["id"] for c in profile.get("additionalClassifications", "")]
     for next_classification_id in modified_classification_ids(classification_id):
         agreements = await load_agreements_by_classification(next_classification_id, additional_classifications_ids)
         agreements_for_profile = [
@@ -85,11 +85,11 @@ async def migrate_profile(profile) -> Counters:
         if len(agreements_for_profile) > 1:
             logger.debug(f"too many agreements for {profile['id']}")
             return Counters(too_many_agreement_profiles=1)
-        if not agreements_for_profile:
+        elif not agreements_for_profile:
             continue
 
         agreement = agreements_for_profile[0]
-        profile['agreementID'] = agreement['id']
+        profile["agreementID"] = agreement["id"]
         await update_profile(profile)
         logger.debug(f"found agreement_id for profile "
                     f"profile_id={profile['id']}, "
@@ -110,17 +110,18 @@ def load_profiles():
 
 
 async def load_agreements_by_classification(classification_id: str, additional_classifications_ids: List[str]):
-    classification_id_cleaned = classification_id.split('-')[0]
-    additional_classifications_query_string = ",".join(additional_classifications_ids) or 'none'
+    classification_id_cleaned = classification_id.split("-")[0]
+    additional_classifications_query_string = ",".join(additional_classifications_ids) or "none"
     async with aiohttp.ClientSession() as session:
         response = await session.get(
-            f"{OPENPROCUREMENT_API_URL}/agreements_by_classification/{classification_id_cleaned}?additional_classifications={additional_classifications_query_string}"
+            f"{OPENPROCUREMENT_API_URL}/agreements_by_classification/{classification_id_cleaned}"
+            f"?additional_classifications={additional_classifications_query_string}"
         )
         response_data = await response.json()
 
         agreements = await asyncio.gather(*[
-            load_agreement_by_id(session, agreement['id'])
-            for agreement in response_data['data']
+            load_agreement_by_id(session, agreement["id"])
+            for agreement in response_data["data"]
         ])
     return agreements
 
@@ -130,16 +131,13 @@ async def load_agreement_by_id(session, agreement_id):
         f"{OPENPROCUREMENT_API_URL}/agreements/{agreement_id}"
     )
     response_data = await response.json()
-    return response_data['data']
-
-
-c_id_re = re.compile(r'(\d{2,})[1-9](.*)')
+    return response_data["data"]
 
 
 def modified_classification_ids(classification_id):
     while True:
         yield classification_id
-        match = c_id_re.match(classification_id)
+        match = CLASSIFICATION_ID_RE.match(classification_id)
         if not match:
             return
         classification_id = f"{match[1]}0{match[2]}"
