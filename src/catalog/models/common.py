@@ -14,7 +14,7 @@ UA_REGIONS = standards.load("classifiers/ua_regions.json")
 COUNTRY_NAMES = standards.load("classifiers/countries.json")
 
 COUNTRY_NAMES_UK = [names.get("name_uk") for names in COUNTRY_NAMES.values()]
-UNIT_CODES_UK = [names.get("name_uk") for names in UNIT_CODES.values()]
+UNIT_CODES = UNIT_CODES.keys()
 
 
 class DataTypeEnum(str, Enum):
@@ -31,7 +31,7 @@ class Unit(BaseModel):
 
     @validator('code')
     def code_standard(cls, v):
-        if v not in UNIT_CODES_UK:
+        if v not in UNIT_CODES:
             raise ValueError("must be one of unit_codes/recommended.json keys")
         return v
 
