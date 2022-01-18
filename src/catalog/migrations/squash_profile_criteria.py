@@ -3,6 +3,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from uuid import uuid4
 import logging
 from catalog.settings import MONGODB_URI, DB_NAME, READ_PREFERENCE, WRITE_CONCERN, READ_CONCERN
+from catalog.utils import get_now
 
 CLIENT = AsyncIOMotorClient(MONGODB_URI)
 DB = CLIENT.get_database(
@@ -57,7 +58,11 @@ async def migrate():
         except ValueError as e:
             logger.warning(f"Failed to modify {profile['_id']}, {str(e)}")
         else:
-            await collection.update_one({"_id": profile["_id"]}, {"$set": {"criteria": new_criteria}})
+            now = get_now().isoformat()
+            await collection.update_one(
+                {"_id": profile["_id"]},
+                {"$set": {"criteria": new_criteria, "dateModified": now}}
+            )
         if counter % 500 == 0:
             logger.info(f"Processed {counter} records")
     logger.info(f"Finished. Processed {counter} records")
