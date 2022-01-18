@@ -14,6 +14,7 @@ UA_REGIONS = standards.load("classifiers/ua_regions.json")
 COUNTRY_NAMES = standards.load("classifiers/countries.json")
 
 COUNTRY_NAMES_UK = [names.get("name_uk") for names in COUNTRY_NAMES.values()]
+UNIT_CODES = UNIT_CODES.keys()
 
 
 class DataTypeEnum(str, Enum):
