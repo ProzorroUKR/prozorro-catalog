@@ -8,6 +8,15 @@ async def test_410_product_create(api, profile):
     profile_id = profile['data']['id']
 
     test_product = {"data": api.get_fixture_json('product')}
+    test_product["data"]["relatedProfile"] = profile["data"]["id"]
+    for item, rr in enumerate(test_product["data"]["requirementResponses"]):
+        if item < 5:
+            rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["id"]
+        elif item == 5:
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["id"]
+        elif item == 6:
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["id"]
+
     cpv = test_product['data']['classification']['id']
     test_product['data']['classification']['id'] = '12345678'
 
@@ -82,7 +91,9 @@ async def test_410_product_create(api, profile):
 
     resp = await api.put('/api/products/%s' % product_id_copy, json=test_product_copy, auth=TEST_AUTH)
     assert resp.status == 400, await resp.json()
-    assert {'errors': ['criteria 0005 not satisfied']} == await resp.json()
+    resp = await resp.json()
+    assert "criteria" in resp["errors"][0]
+    assert "not satisfied" in resp["errors"][0]
 
     resp = await api.get('/api/products')
     assert resp.status == 200
@@ -100,17 +111,22 @@ async def test_410_product_create(api, profile):
 async def test_411_product_rr_create(api, profile):
     profile_id = profile['data']['id']
     test_product = {"data": api.get_fixture_json('product')}
+    test_product["data"]["relatedProfile"] = profile["data"]["id"]
+    for item, rr in enumerate(test_product["data"]["requirementResponses"]):
+        if item < 5:
+            rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["id"]
+        elif item == 5:
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["id"]
+        elif item == 6:
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["id"]
+
     product_id = '{}-{}-{}-{}'.format(
         test_product['data']['classification']['id'][:4],
         test_product['data']['brand']['name'][:4],
         test_product['data']['identifier']['id'][:13],
         randint(100000, 900000))
 
-    test_product['data']['requirementResponses'][2] = {
-      "id": "packing-count",
-      "requirement": "0003-001-01",
-      "value": 49.91
-    }
+    test_product['data']['requirementResponses'][2]["value"] = 49.91
 
     test_product['data']['id'] = product_id
     test_product['data']['relatedProfile'] = profile_id
@@ -194,6 +210,14 @@ async def test_420_product_patch(api, product):
 async def test_430_product_limit_offset(api, profile):
     profile_id = profile["data"]['id']
     test_product = {"data": api.get_fixture_json('product')}
+    test_product["data"]["relatedProfile"] = profile["data"]["id"]
+    for item, rr in enumerate(test_product["data"]["requirementResponses"]):
+        if item < 5:
+            rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["id"]
+        elif item == 5:
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["id"]
+        elif item == 6:
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["id"]
 
     test_product_map = dict()
     for i in range(11):
