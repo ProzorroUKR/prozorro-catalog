@@ -1,0 +1,55 @@
+tags:
+- Profile/Criteria/RequirementGroups
+description: RequirementGroup create
+operationId: collection_post_rg
+security:
+  - Basic: []
+parameters:
+- in: query
+  name: access_token
+  schema:
+    type: string
+  description: Токен від створенного об'єкта
+- in: headers
+  name: X-Access-Token
+  schema:
+    type: string
+  description: Токен від створенного об'єкта
+requestBody:
+  description: RequirementGroup data
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Input_RequirementGroupsCreateData_'
+responses:
+  "200":
+    description: successful operation
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/Response_RequirementGroup_'
+  "400":
+    description: validation errors
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'
+  "401":
+    description: Authorization header or access_token not provided
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            errors:
+              type: array
+              items:
+                type: string
+                example: Authorization header not found
+  "500":
+    description: Server error
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'

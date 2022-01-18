@@ -18,6 +18,11 @@ class Input(GenericModel, Generic[DataT]):
     access: Optional[Access]
 
 
+class BulkInput(GenericModel, Generic[DataT]):
+    data: List[DataT]
+    access: Optional[Access]
+
+
 class CreateResponse(GenericModel, Generic[DataT]):
     data: DataT
     access: AccessOwner
@@ -25,6 +30,10 @@ class CreateResponse(GenericModel, Generic[DataT]):
 
 class Response(GenericModel, Generic[DataT]):
     data: DataT
+
+
+class ListResponse(GenericModel, Generic[DataT]):
+    data: List[DataT]
 
 
 class ErrorResponse(BaseModel):
