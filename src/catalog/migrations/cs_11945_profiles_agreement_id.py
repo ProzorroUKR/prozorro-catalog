@@ -5,9 +5,11 @@ from dataclasses import dataclass
 from typing import List
 
 import aiohttp
+import sentry_sdk
 
-from catalog.db import get_profiles_collection, update_profile, rename_id
-from catalog.settings import OPENPROCUREMENT_API_URL
+from catalog.db import get_profiles_collection, update_profile, rename_id, init_mongo
+from catalog.logging import setup_logging
+from catalog.settings import OPENPROCUREMENT_API_URL, SENTRY_DSN
 
 logger = logging.getLogger(__name__)
 CLASSIFICATION_ID_RE = re.compile(r"(\d{2,})[1-9](.*)")
@@ -137,3 +139,16 @@ def modified_classification_ids(classification_id):
         if not match:
             return
         classification_id = f"{match[1]}0{match[2]}"
+
+
+def main():
+    setup_logging()
+    if SENTRY_DSN:
+        sentry_sdk.init(dsn=SENTRY_DSN)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(init_mongo())
+    loop.run_until_complete(migrate_profiles())
+
+
+if __name__ == '__main__':
+    main()
