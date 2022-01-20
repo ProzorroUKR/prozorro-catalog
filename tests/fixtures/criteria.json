@@ -1,7 +1,6 @@
 {
   "criteria": [
     {
-      "code": "OCDS-MEDIC-USE-TYPE",
       "description": "Спосіб використання (одноразова або багаторазова)",
       "requirementGroups": [
         {
@@ -18,7 +17,6 @@
       "title": "Спосіб використання"
     },
     {
-      "code": "OCDS-MEDIC-LAYERS",
       "description": "Кількість шарів тканини, не менше",
       "requirementGroups": [
         {
@@ -40,7 +38,6 @@
       "title": "Кількість шарів"
     },
     {
-      "code": "OCDS-MEDIC-PACKING-COUNT",
       "description": "Одиниця пакування (не менше, штук)",
       "requirementGroups": [
         {
@@ -62,7 +59,6 @@
       "title": "Одиниця пакування"
     },
     {
-      "code": "OCDS-MEDIC-NOSE-CLIP",
       "description": "Виріб оснащений носовим зажимом (носовою кліпсою)",
       "requirementGroups": [
         {
@@ -80,7 +76,6 @@
       "title": "Носовий зажим (кліпса)"
     },
     {
-      "code": "OCDS-MEDIC-ALL-ANY-ONE",
       "description": "Тест на відповідність allOf, anyOf, oneOf",
       "requirementGroups": [
         {

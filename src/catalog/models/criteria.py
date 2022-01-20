@@ -113,7 +113,6 @@ class RequirementGroup(BaseModel):
 
 class CriterionCreateData(BaseModel):
     title: str = Field(..., min_length=1, max_length=250)
-    code: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     description: str = Field(..., min_length=1, max_length=250)
 
     @property
@@ -135,7 +134,6 @@ class Criterion(BaseModel):
     id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     requirementGroups: List[RequirementGroup] = Field(..., min_items=1, max_items=100)
     title: str = Field(..., min_length=1, max_length=250)
-    code: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     description: str = Field(..., min_length=1, max_length=250)
 
 

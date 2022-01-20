@@ -151,7 +151,7 @@ class ProfileCriteriaRGView(View):
     async def get(cls, request, profile_id, criterion_id, rg_id):
         profile_criterion = await db.read_profile_criterion(profile_id, criterion_id)
         data = RootSerializer(profile_criterion, show_owner=False).data
-        response = find_item_by_id(data["criteria"]["requirementGroups"], rg_id)
+        response = find_item_by_id(data["criteria"]["requirementGroups"], rg_id, "requirementGroups")
         return {"data": response}
 
     @classmethod
@@ -182,7 +182,7 @@ class ProfileCriteriaRGView(View):
             # export data back to dict
             data = body.data.dict_without_none()
             # update profile with valid data
-            rg = find_item_by_id(profile["criteria"]["requirementGroups"], rg_id)
+            rg = find_item_by_id(profile["criteria"]["requirementGroups"], rg_id, "requirementGroups")
             rg.update(data)
             profile["dateModified"] = get_now().isoformat()
 
