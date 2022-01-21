@@ -10,7 +10,7 @@ async def test_on_fixtures(db, profile, product):
     old_products = await db.products.find({}).to_list(None)
     with patch("migrations.cs_12110_remove_codes.logger") as logger:
         await migrate()
-    stats = {'total_profiles': 1, 'updated_profiles': 1, 'total_products': 1, 'updated_products': 1}
+    stats = {'updated_profiles': 1, 'updated_products': 1}
     assert logger.info.call_args_list == [call("Start migration"), call(f"Finished. Stats: {stats}")]
 
     # test profiles

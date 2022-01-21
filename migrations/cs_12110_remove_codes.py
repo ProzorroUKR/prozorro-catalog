@@ -1,39 +1,66 @@
+import asyncio
+import logging
 from collections import defaultdict
-from catalog.db import get_profiles_collection, get_products_collection, init_mongo
+from datetime import timedelta
+
+from pymongo import UpdateOne
+import sentry_sdk
+
+from catalog.db import get_profiles_collection, get_products_collection, init_mongo, transaction_context_manager
 from catalog.logging import setup_logging
 from catalog.utils import get_now
 from catalog.settings import SENTRY_DSN
-import asyncio
-import logging
-import sentry_sdk
 
 
 logger = logging.getLogger(__name__)
 
 
+async def update_many_with_different_dateModified(collection, session, update_req, time_diff=1):
+    bulk = []
+    now = get_now()
+    async for doc in collection.find(projection="_id"):
+
+        bulk.append(
+            UpdateOne(
+                filter={"_id": doc["_id"]},
+                update={
+                    **update_req,
+                    "$set": {"dateModified": now.isoformat()},
+                },
+            )
+        )
+        now -= timedelta(seconds=time_diff)
+
+    if bulk:
+        result = await collection.bulk_write(bulk, session=session)
+        if result.modified_count != len(bulk):
+            logger.error(f"Unexpected modified_count: {result.modified_count}; expected {len(bulk)}")
+        return result.modified_count
+
+
 async def migrate():
     logger.info("Start migration")
     counters = defaultdict(int)
-    now = get_now().isoformat()
-    profile_res = await get_profiles_collection().update_many(
-        {},
-        {
-            "$unset": {"criteria.$[].code": ""},
-            "$set": {"dateModified": now},
-        },
-    )
-    product_res = await get_products_collection().update_many(
-        {},
-        {
-            "$unset": {"requirementResponses.$[].id": ""},
-            "$set": {"dateModified": now}
-        },
-    )
+
+    profile_collection = get_profiles_collection()
+    products_collection = get_products_collection()
+
+    async with transaction_context_manager() as session:
+        updated_profiles = await update_many_with_different_dateModified(
+            profile_collection,
+            session,
+            {"$unset": {"criteria.$[].code": ""}},
+        )
+
+        updated_products = await update_many_with_different_dateModified(
+            products_collection,
+            session,
+            {"$unset": {"requirementResponses.$[].id": ""}},
+        )
+
     counters.update({
-        "total_profiles": profile_res.matched_count,
-        "updated_profiles": profile_res.modified_count,
-        "total_products": product_res.matched_count,
-        "updated_products": product_res.modified_count
+        "updated_profiles": updated_profiles,
+        "updated_products": updated_products,
     })
     logger.info(f"Finished. Stats: {dict(counters)}")
 
