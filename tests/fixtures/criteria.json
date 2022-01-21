@@ -1,0 +1,115 @@
+{
+  "criteria": [
+    {
+      "description": "Спосіб використання (одноразова або багаторазова)",
+      "requirementGroups": [
+        {
+          "description": "Спосіб використання - одноразова",
+          "requirements": [
+            {
+              "dataType": "string",
+              "expectedValue": "одноразова",
+              "title": "Одноразова"
+            }
+          ]
+        }
+      ],
+      "title": "Спосіб використання"
+    },
+    {
+      "description": "Кількість шарів тканини, не менше",
+      "requirementGroups": [
+        {
+          "description": "Кількість шарів тканини, не менше 3-х",
+          "requirements": [
+            {
+              "dataType": "integer",
+              "minValue": 3,
+              "pattern": "[0-9]*",
+              "title": "Три шари або більше",
+              "unit": {
+                "code": "E11",
+                "name": "Гігакалорія"
+              }
+            }
+          ]
+        }
+      ],
+      "title": "Кількість шарів"
+    },
+    {
+      "description": "Одиниця пакування (не менше, штук)",
+      "requirementGroups": [
+        {
+          "description": "Не менше 50 шт/упаковка",
+          "requirements": [
+            {
+              "dataType": "number",
+              "minValue": 49.9,
+              "pattern": "[0-9]*",
+              "title": "50 штук",
+              "unit": {
+                "code": "E07",
+                "name": "мегават-година в годину"
+              }
+            }
+          ]
+        }
+      ],
+      "title": "Одиниця пакування"
+    },
+    {
+      "description": "Виріб оснащений носовим зажимом (носовою кліпсою)",
+      "requirementGroups": [
+        {
+          "description": "Виріб оснащений носовим зажимом (носовою кліпсою)",
+          "requirements": [
+            {
+              "dataType": "boolean",
+              "description": "Виріб має бути оснащений носовим зажимом",
+              "expectedValue": true,
+              "title": "Виріб оснащений носовим зажимом"
+            }
+          ]
+        }
+      ],
+      "title": "Носовий зажим (кліпса)"
+    },
+    {
+      "description": "Тест на відповідність allOf, anyOf, oneOf",
+      "requirementGroups": [
+        {
+          "description": "Тест всім вимогам",
+          "requirements": [
+            {
+              "dataType": "string",
+              "title": "Тест allOf",
+              "allOf": ["ALL_A", "ALL_B", "ALL_C"]
+            }
+          ]
+        },
+        {
+          "description": "Тест всім вимогам",
+          "requirements": [
+            {
+              "dataType": "string",
+              "title": "Тест allOf",
+              "anyOf": ["ANY_A", "ANY_B", "ANY_C"]
+            }
+          ]
+        },
+        {
+          "description": "Тест всім вимогам",
+          "requirements": [
+            {
+              "dataType": "string",
+              "title": "Тест allOf",
+              "oneOf": ["ONE_A", "ONE_B", "ONE_C"]
+            }
+          ]
+        }
+      ],
+      "title": "Тест allOf, anyOf, oneOf"
+    }
+  ]
+}

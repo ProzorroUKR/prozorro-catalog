@@ -45,7 +45,6 @@ class ProductInfo(BaseModel):
 
 
 class RequirementResponse(BaseModel):
-    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     requirement: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     value: Union[StrictInt, StrictFloat, StrictBool, StrictStr,
                  List[StrictStr], List[float]]
@@ -82,10 +81,6 @@ class ProductCreateData(BaseModel):
     @validator('requirementResponses')
     def unique_responses_ids(cls, v):
         if v:
-            ids = [e.id for e in v]
-            if len(ids) != len(set(ids)):
-                raise ValueError("not unique requirementResponses.id")
-
             requirements = [e.requirement for e in v]
             if len(requirements) != len(set(requirements)):
                 raise ValueError("not unique requirements")

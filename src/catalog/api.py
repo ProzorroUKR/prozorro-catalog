@@ -13,7 +13,12 @@ from catalog.middleware import (
 from catalog.db import init_mongo, cleanup_db_client
 from catalog.logging import AccessLogger, setup_logging
 from catalog.handlers.general import get_version, ping_handler
-from catalog.handlers.profile import ProfileView
+from catalog.handlers.profile import (
+    ProfileView,
+    ProfileCriteriaView,
+    ProfileCriteriaRGView,
+    ProfileCriteriaRGRequirementView,
+)
 from catalog.handlers.category import CategoryView
 from catalog.handlers.product import ProductView
 from catalog.handlers.offer import OfferView
@@ -86,6 +91,90 @@ def create_application(on_cleanup=None):
         r"/api/profiles/{profile_id:[\w-]+}",
         ProfileView.patch,
         name="update_profile"
+    )
+
+    # profile criteria
+    app.router.add_get(
+        "/api/profiles/{profile_id:[\w-]+}/criteria",
+        ProfileCriteriaView.collection_get,
+        name="read_profile_criteria_registry",
+    )
+    app.router.add_get(
+        "/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}",
+        ProfileCriteriaView.get,
+        name="read_profile_criteria",
+        allow_head=False,
+    )
+    app.router.add_post(
+        r"/api/profiles/{profile_id:[\w-]+}/criteria",
+        ProfileCriteriaView.post,
+        name="create_profile_criteria"
+    )
+    app.router.add_patch(
+        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}",
+        ProfileCriteriaView.patch,
+        name="update_profile_criteria"
+    )
+    app.router.add_delete(
+        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}",
+        ProfileCriteriaView.delete,
+        name="delete_profile_criteria"
+    )
+
+    # profile criteria RG
+    app.router.add_get(
+        "/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups",
+        ProfileCriteriaRGView.collection_get,
+        name="read_profile_criteria_rg_registry",
+    )
+    app.router.add_get(
+        "/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}",
+        ProfileCriteriaRGView.get,
+        name="read_profile_criteria_rg",
+        allow_head=False,
+    )
+    app.router.add_post(
+        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups",
+        ProfileCriteriaRGView.post,
+        name="create_profile_criteria_rg"
+    )
+    app.router.add_patch(
+        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}",
+        ProfileCriteriaRGView.patch,
+        name="update_profile_criteria_rg"
+    )
+    app.router.add_delete(
+        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}",
+        ProfileCriteriaRGView.delete,
+        name="delete_profile_criteria_rg"
+    )
+
+    # profile criteria RG requirements
+    app.router.add_get(
+        "/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements",
+        ProfileCriteriaRGRequirementView.collection_get,
+        name="read_profile_criteria_rg_requirement_registry",
+    )
+    app.router.add_get(
+        "/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
+        ProfileCriteriaRGRequirementView.get,
+        name="read_profile_criteria_rg_requirement",
+        allow_head=False,
+    )
+    app.router.add_post(
+        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements",
+        ProfileCriteriaRGRequirementView.post,
+        name="create_profile_criteria_rg_requirement"
+    )
+    app.router.add_patch(
+        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
+        ProfileCriteriaRGRequirementView.patch,
+        name="update_profile_criteria_rg_requirement"
+    )
+    app.router.add_delete(
+        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
+        ProfileCriteriaRGRequirementView.delete,
+        name="delete_profile_criteria_rg_requirement"
     )
 
     # products

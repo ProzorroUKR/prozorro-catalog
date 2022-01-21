@@ -71,38 +71,24 @@
   },
   "requirementResponses": [
     {
-      "id": "medic-use-type",
-      "requirement": "0001-001-01",
       "value": "одноразова"
     },
     {
-      "id": "medic-layers",
-      "requirement": "0002-001-01",
       "value": 3
     },
     {
-      "id": "packing-count",
-      "requirement": "0003-001-01",
       "value": 50
     },
     {
-      "id": "nose-clip",
-      "requirement": "0004-001-01",
       "value": true
     },
     {
-      "id": "test-allOf",
-      "requirement": "0005-001-01",
       "value": ["ALL_A", "ALL_B", "ALL_C"]
     },
     {
-      "id": "test-anyOf",
-      "requirement": "0005-002-01",
       "value": ["ANY_A", "ANY_C"]
     },
     {
-      "id": "test-oneOf",
-      "requirement": "0005-003-01",
       "value": "ONE_B"
     }
   ],

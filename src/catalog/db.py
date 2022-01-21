@@ -123,6 +123,12 @@ def rename_id(obj):
     return obj
 
 
+def remove_id(obj):
+    if obj:
+        obj.pop("_id")
+    return obj
+
+
 async def find_objects(collection, ids):
     filters = {"_id": {"$in": ids}}
     items = await collection.find(
@@ -297,6 +303,92 @@ async def read_and_update_profile(profile_id):
     profile = await read_profile(profile_id)
     yield profile
     await update_profile(profile)
+
+
+# profile criteria
+async def read_profile_criteria(profile_id):
+    profile_criteria = await get_profiles_collection().find_one(
+        {"_id": profile_id},
+        {"criteria": 1, "access": 1},
+        session=session_var.get()
+    )
+    if not profile_criteria:
+        raise web.HTTPNotFound(text="Profile not found")
+    return remove_id(profile_criteria)
+
+
+async def read_profile_criterion(profile_id, criterion_id):
+    async for profile_criterion in get_profiles_collection().aggregate(
+        [
+            {"$match": {"_id": profile_id}},
+            {"$unwind": "$criteria"},
+            {"$match": {"criteria.id": criterion_id}},
+            {"$project": {"criteria": 1, "access": 1, "dateModified": 1}}
+        ],
+        session=session_var.get()
+    ):
+        if not profile_criterion["criteria"]:
+            raise web.HTTPNotFound(text="Criteria not found")
+        return remove_id(profile_criterion)
+    raise web.HTTPNotFound(text="Criteria not found")
+
+
+async def update_profile_criterion(profile_id, data, criterion_id, dateModified):
+    collection = get_profiles_collection()
+    update_data = {"dateModified": dateModified}
+    for k, v in data.items():
+        update_data[f"criteria.$.{k}"] = v
+    await collection.update_one(
+        {'_id': profile_id, "criteria.id": criterion_id},
+        {"$set": update_data},
+        session=session_var.get(),
+    )
+
+
+@asynccontextmanager
+async def read_and_update_profile_criterion(profile_id, criterion_id):
+    profile = await read_profile_criterion(profile_id, criterion_id)
+    yield profile
+    await update_profile_criterion(profile_id, profile["criteria"], criterion_id, profile["dateModified"])
+
+
+async def delete_profile_criterion(profile_id, criterion_id, dateModified):
+    collection = get_profiles_collection()
+    updated = await collection.update_one(
+        {'_id': profile_id, "criteria.id": criterion_id},
+        {
+            "$pull": {"criteria": {"id": criterion_id}},
+            "$set": {"dateModified": dateModified}
+        },
+        session=session_var.get(),
+    )
+    if updated.modified_count == 0:
+        raise web.HTTPNotFound(text="Criterion not found")
+
+
+async def delete_profile_criterion_rg(profile_id, criterion_id, dateModified):
+    collection = get_profiles_collection()
+    updated = await collection.update_one(
+        {'_id': profile_id, "criteria.id": criterion_id},
+        {
+            "$pull": {"criteria": {"id": criterion_id}},
+            "$set": {"dateModified": dateModified}
+        },
+        session=session_var.get(),
+    )
+    if updated.modified_count == 0:
+        raise web.HTTPNotFound(text="Criterion not found")
+
+
+async def get_access_token(profile_id):
+    profile = await get_profiles_collection().find_one(
+        {"_id": profile_id},
+        {"access": 1},
+        session=session_var.get()
+    )
+    if not profile:
+        raise web.HTTPNotFound(text="Profile not found")
+    return remove_id(profile)
 
 
 # products

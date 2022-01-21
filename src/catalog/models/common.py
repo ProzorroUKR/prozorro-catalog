@@ -1,6 +1,6 @@
 from datetime import datetime
-from typing import Optional, List, Set, Union
-from pydantic import Field, validator, AnyUrl, constr, root_validator,  StrictInt, StrictFloat, StrictBool, StrictStr
+from typing import Optional, Union
+from pydantic import Field, validator, AnyUrl, constr, root_validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Response
 from catalog.settings import IMG_PATH
@@ -69,48 +69,6 @@ class Image(BaseModel):
         if not v.startswith(IMG_PATH):
             raise ValueError(f"Invalid url, should start with {IMG_PATH}")
         return v
-
-
-class Requirement(BaseModel):
-    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
-    title: str = Field(..., min_length=1, max_length=250)
-    dataType: DataTypeEnum = Field(..., max_length=100)
-
-    unit: Optional[Unit] = None
-    description: Optional[str] = Field(None, max_length=1000)
-    period: Optional[Period] = None
-
-    pattern: Optional[str] = Field(None, max_length=250)
-    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
-    maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
-    minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
-
-    allOf: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
-    anyOf: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
-    oneOf: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
-
-    @root_validator
-    def check_sum(cls, values):
-        if values["dataType"] == DataTypeEnum.integer.value:
-            for k in ("expectedValue", "maxValue", "minValue"):
-                if values[k] is not None:
-                    if not isinstance(values[k], int):
-                        raise ValueError(f"Invalid integer '{values[k]}'")
-        return values
-
-
-class RequirementGroup(BaseModel):
-    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
-    description: str = Field(..., min_length=1, max_length=1000)
-    requirements: List[Requirement] = Field(..., min_items=1, max_items=100)
-
-
-class Criteria(BaseModel):
-    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
-    title: str = Field(..., min_length=1, max_length=250)
-    code: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
-    description: str = Field(..., min_length=1, max_length=250)
-    requirementGroups: List[RequirementGroup] = Field(..., min_items=1, max_items=100)
 
 
 class Classification(BaseModel):

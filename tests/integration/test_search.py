@@ -34,13 +34,24 @@ async def test_search(api):
             auth=TEST_AUTH,
         )
         assert resp.status == 201, await resp.json()
-        profile_access = (await resp.json())["access"]
+        resp = await resp.json()
+        resp = await api.create_criteria(api, resp)
+        profile_access = (resp)["access"]
+
         ids["profile"].append(profile_id)
 
         product_id = f"{product['classification']['id'][:4]}-{product['brand']['name'][:4]}-" \
             f"{product['identifier']['id'][:13]}-00000{i}"
         product['id'] = product_id
-        product['relatedProfile'] = profile["id"]
+        product['relatedProfile'] = resp["data"]["id"]
+        for item, rr in enumerate(product["requirementResponses"]):
+            if item < 5:
+                rr["requirement"] = resp["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["id"]
+            elif item == 5:
+                rr["requirement"] = resp["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["id"]
+            elif item == 6:
+                rr["requirement"] = resp["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["id"]
+
         resp = await api.put(
             f"/api/products/{product_id}",
             json={"data": product,

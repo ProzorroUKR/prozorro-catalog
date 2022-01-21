@@ -8,7 +8,7 @@ from json import dumps
 from urllib.parse import quote
 from aiocache import cached as aiocache_cached
 from aiohttp.hdrs import CONTENT_DISPOSITION, CONTENT_TYPE
-from aiohttp.web import Response, HTTPBadRequest
+from aiohttp.web import Response, HTTPBadRequest, HTTPNotFound
 from catalog.settings import IS_TEST, TIMEZONE
 from datetime import datetime
 
@@ -124,3 +124,10 @@ def async_retry(tries=-1, exceptions=Exception,
 def create_md5_hash(string):
     result = hashlib.md5(string.encode())
     return result.hexdigest()
+
+
+def find_item_by_id(items, item_id, item_name):
+    for item in items:
+        if item["id"] == item_id:
+            return item
+    raise HTTPNotFound(text=f"{item_name} with id {item_id} not found")

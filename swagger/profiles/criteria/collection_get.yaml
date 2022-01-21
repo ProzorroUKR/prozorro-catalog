@@ -1,0 +1,19 @@
+tags:
+- Profile/Criteria
+description: Get a list of criteria
+operationId: collection_get_criteria
+produces:
+- application/json
+responses:
+  "200":
+    description: successful operation
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ListResponse_Criterion_'
+  "500":
+    description: Server error
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'
