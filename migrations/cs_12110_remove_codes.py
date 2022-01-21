@@ -15,7 +15,7 @@ from catalog.settings import SENTRY_DSN
 logger = logging.getLogger(__name__)
 
 
-async def update_many_with_different_dateModified(collection, session, update_req, time_diff=1):
+async def update_many_with_different_dateModified(collection, update_req, session=None, time_diff=1):
     bulk = []
     now = get_now()
     async for doc in collection.find(projection="_id"):
@@ -45,18 +45,15 @@ async def migrate():
     profile_collection = get_profiles_collection()
     products_collection = get_products_collection()
 
-    async with transaction_context_manager() as session:
-        updated_profiles = await update_many_with_different_dateModified(
-            profile_collection,
-            session,
-            {"$unset": {"criteria.$[].code": ""}},
-        )
+    updated_profiles = await update_many_with_different_dateModified(
+        profile_collection,
+        {"$unset": {"criteria.$[].code": ""}},
+    )
 
-        updated_products = await update_many_with_different_dateModified(
-            products_collection,
-            session,
-            {"$unset": {"requirementResponses.$[].id": ""}},
-        )
+    updated_products = await update_many_with_different_dateModified(
+        products_collection,
+        {"$unset": {"requirementResponses.$[].id": ""}},
+    )
 
     counters.update({
         "updated_profiles": updated_profiles,
