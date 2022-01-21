@@ -1,6 +1,7 @@
 from collections import defaultdict
 from catalog.db import get_profiles_collection, get_products_collection, init_mongo
 from catalog.logging import setup_logging
+from catalog.utils import get_now
 from catalog.settings import SENTRY_DSN
 import asyncio
 import logging
@@ -13,8 +14,21 @@ logger = logging.getLogger(__name__)
 async def migrate():
     logger.info("Start migration")
     counters = defaultdict(int)
-    profile_res = await get_profiles_collection().update_many({}, {"$unset": {"criteria.$[].code": ""}})
-    product_res = await get_products_collection().update_many({}, {"$unset": {"requirementResponses.$[].id": ""}})
+    now = get_now().isoformat()
+    profile_res = await get_profiles_collection().update_many(
+        {},
+        {
+            "$unset": {"criteria.$[].code": ""},
+            "$set": {"dateModified": now},
+        },
+    )
+    product_res = await get_products_collection().update_many(
+        {},
+        {
+            "$unset": {"requirementResponses.$[].id": ""},
+            "$set": {"dateModified": now}
+        },
+    )
     counters.update({
         "total_profiles": profile_res.matched_count,
         "updated_profiles": profile_res.modified_count,
