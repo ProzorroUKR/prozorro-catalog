@@ -57,7 +57,8 @@ async def test_migrate_profiles_one_scenario_ok(load_agreements_mock, api, categ
                 }
             ],
             "procuringEntity": {"identifier": {"id": "test.prozorro.ua"}},
-            "agreementType": "electronicCatalogue"
+            "agreementType": "electronicCatalogue",
+            "status": "active"
         }
     ]
 
@@ -119,7 +120,8 @@ async def test_migrate_500_profiles(load_agreements_mock, api, category):
                 }
             ],
             "procuringEntity": {"identifier": {"id": "test.prozorro.ua"}},
-            "agreementType": "electronicCatalogue"
+            "agreementType": "electronicCatalogue",
+            "status": "active"
         }
     ]
     profiles = []

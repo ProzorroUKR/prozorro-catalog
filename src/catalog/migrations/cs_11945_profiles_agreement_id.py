@@ -43,12 +43,13 @@ class Counters:
 
 def agreement_matches_profile(agreement, profile):
     additionalClassifications_matches = (
-        profile.get("additionalClassifications", "") == agreement.get("additionalClassifications", "")
+        profile.get("additionalClassifications", []) == agreement.get("additionalClassifications", [])
     )
 
     return (
         additionalClassifications_matches and
         agreement["agreementType"] == "electronicCatalogue" and
+        agreement["status"] == "active" and
         profile["access"]["owner"] == agreement["procuringEntity"]["identifier"]["id"]
     )
 
@@ -69,34 +70,34 @@ async def migrate_profiles():
 
 async def migrate_profile(profile) -> Counters:
     if profile.get("agreementID"):
-        logger.debug(f"skipping profile {profile['id']}. agreementID already exists.")
+        logger.debug(f"Skipped {profile['id']}. agreementID already exists.")
         return Counters(skipped_profiles=1)
 
     classification_id = profile["classification"]["id"]
     additional_classifications_ids = [c["id"] for c in profile.get("additionalClassifications", "")]
     for next_classification_id in modified_classification_ids(classification_id):
+        logger.debug(f"Trying {next_classification_id} for {profile['id']}.")
         agreements = await load_agreements_by_classification(next_classification_id, additional_classifications_ids)
         agreements_for_profile = [
             a for a in agreements
             if agreement_matches_profile(a, profile)
         ]
         if len(agreements_for_profile) > 1:
-            logger.debug(f"too many agreements for {profile['id']}")
+            logger.debug(f"Failed {profile['id']}. Too many agreements for {profile['id']} at {next_classification_id}.")
             return Counters(too_many_agreement_profiles=1)
         elif not agreements_for_profile:
+            logger.debug(f"Round failed. Found no agreements with {next_classification_id} for {profile['id']}.")
             continue
 
         agreement = agreements_for_profile[0]
         profile["agreementID"] = agreement["id"]
         await update_profile(profile)
-        logger.debug(f"found agreement_id for profile "
-                    f"profile_id={profile['id']}, "
+        logger.debug(f"Resolved {profile['id']}. Found agreement_id for profile "
                     f"agreement_id={agreement['id']}, "
                     f"classification_id={agreement['classification']['id']}")
         return Counters(succeeded_profiles=1)
-    else:
-        logger.debug(f"not found agreements for {profile['id']}")
-        return Counters(no_agreement_profiles=1)
+    logger.debug(f"Failed {profile['id']}. Not found agreements for {profile['id']}.")
+    return Counters(no_agreement_profiles=1)
 
 
 def load_profiles():
