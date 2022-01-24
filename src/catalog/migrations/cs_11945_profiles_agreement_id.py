@@ -133,6 +133,19 @@ async def load_agreement_by_id(session, agreement_id):
     return response_data["data"]
 
 
+async def ensure_api_accessibility():
+    async with aiohttp.ClientSession() as session:
+        response = await session.get(
+            f"{OPENPROCUREMENT_API_URL}/agreements"
+        )
+        if response.status != 200:
+            return False
+        response_data = (await response.json()) or {}
+        if not response_data or "data" not in response_data:
+            return False
+    return True
+
+
 def modified_classification_ids(classification_id):
     while True:
         yield classification_id
@@ -148,6 +161,12 @@ def main():
         sentry_sdk.init(dsn=SENTRY_DSN)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init_mongo())
+    is_api_accessible = loop.run_until_complete(ensure_api_accessibility())
+    if not is_api_accessible:
+        logger.warning(f"Cannot retrieve any agreements from {OPENPROCUREMENT_API_URL}.")
+    else:
+        logger.info(f"Api {OPENPROCUREMENT_API_URL} accessible.")
+
     loop.run_until_complete(migrate_profiles())
 
 
