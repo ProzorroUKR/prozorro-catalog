@@ -116,19 +116,25 @@ async def load_agreements_by_classification(classification_id: str, additional_c
             f"{OPENPROCUREMENT_API_URL}/agreements_by_classification/{classification_id_cleaned}"
             f"?additional_classifications={additional_classifications_query_string}"
         )
+        if response.status != 200:
+            logger.info(f"Received {response.status} on {response.url}")
+            return []
         response_data = await response.json()
 
         agreements = await asyncio.gather(*[
             load_agreement_by_id(session, agreement["id"])
             for agreement in response_data["data"]
         ])
-    return agreements
+    return [a for a in agreements if a]
 
 
 async def load_agreement_by_id(session, agreement_id):
     response = await session.get(
         f"{OPENPROCUREMENT_API_URL}/agreements/{agreement_id}"
     )
+    if response.status != 200:
+        logger.info(f"Received {response.status} on {response.url}")
+        return None
     response_data = await response.json()
     return response_data["data"]
 
