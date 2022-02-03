@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import re
+import traceback
 from dataclasses import dataclass
 from typing import List
 
@@ -60,7 +61,12 @@ async def migrate_profiles():
 
     async for profile in load_profiles():
         profile = rename_id(profile)
-        new_counter = await migrate_profile(profile)
+        try:
+            new_counter = await migrate_profile(profile)
+        except Exception as e:
+            logger.debug(f"Failed {profile['id']}. Caught {type(e).__name__}.")
+            traceback.print_exc()
+            new_counter = Counters(skipped_profiles=1)
         counters += new_counter
         if counters.total_profiles % 100 == 0:
             logger.info(f"Migration in progress. {counters}")

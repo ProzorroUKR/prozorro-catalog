@@ -556,3 +556,81 @@ async def test_migrate_profiles_skip_if_provided(update_mock, load_agreements_mo
     update_mock.assert_not_called()
     required_log = "Skipped profile_id_001. agreementID already exists."
     assert call(required_log) in logger.debug.call_args_list
+
+
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.logger")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.load_profiles")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.load_agreements_by_classification")
+@patch("catalog.migrations.cs_11945_profiles_agreement_id.update_profile")
+async def test_migrate_profiles_continues_after_rised_exception(update_mock, load_agreements_mock, load_profiles_mock, logger):
+    profiles = [
+        {
+            "_id": "profile_id_001",
+            "classification": {
+                "id": "123456700-00",
+                "scheme": "test_main_scheme"
+            },
+            "additionalClassifications": [
+                {
+                    "id": "111111",
+                    "scheme": "test_additional_scheme"
+                }
+            ],
+            "access": {
+                "owner": "test_owner"
+            }
+        },
+        {
+            "_id": "profile_id_002",
+            "classification": {
+                "id": "129999900-00",
+                "scheme": "test_main_scheme"
+            },
+            "additionalClassifications": [
+                {
+                    "id": "111111",
+                    "scheme": "test_additional_scheme"
+                }
+            ],
+            "access": {
+                "owner": "test_owner"
+            }
+        },
+    ]
+
+    agreements = [
+        {
+            "id": "agreement_id_001",
+            "classification": {
+                "id": "129999900-00",
+                "scheme": "test_main_scheme"
+            },
+            "additionalClassifications": [
+                {
+                    "id": "111111",
+                    "scheme": "test_additional_scheme"
+                }
+            ],
+            "procuringEntity": {"identifier": {"id": "test_owner"}},
+            "agreementType": "electronicCatalogue",
+            "status": "active",
+        },
+    ]
+
+    f = create_agreements_side_effect(agreements)
+    def load_arguments_raises_error(c_id, additional_classifications_ids):
+        if c_id == "123456700-00":
+            raise ValueError
+        return f(c_id, additional_classifications_ids)
+
+    load_profiles_mock.return_value = aiter(profiles)
+    load_agreements_mock.side_effect = load_arguments_raises_error
+    counters = await migrate_profiles()
+    assert counters.total_profiles == 2
+    assert counters.skipped_profiles == 1
+    assert counters.succeeded_profiles == 1
+    required_log = "Failed profile_id_001. Caught ValueError."
+    assert call(required_log) in logger.debug.call_args_list
+    required_log = ("Resolved profile_id_002. Found agreement_id for profile agreement_id=agreement_id_001, "
+                    "classification_id=129999900-00")
+    assert call(required_log) in logger.debug.call_args_list
