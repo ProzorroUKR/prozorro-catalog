@@ -51,7 +51,7 @@ async def create_criteria(api, profile):
 
 
 @pytest.fixture
-async def db(loop):
+async def db(event_loop):
     try:
         await init_mongo()
         yield get_database()
@@ -60,7 +60,7 @@ async def db(loop):
 
 
 @pytest.fixture
-async def api(loop, aiohttp_client):
+async def api(event_loop, aiohttp_client):
     app = await aiohttp_client(create_application(on_cleanup=flush_database))
     app.get_fixture_json = get_fixture_json
     app.create_criteria = create_criteria
