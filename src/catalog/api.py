@@ -95,12 +95,12 @@ def create_application(on_cleanup=None):
 
     # profile criteria
     app.router.add_get(
-        "/api/profiles/{profile_id:[\w-]+}/criteria",
+        r"/api/profiles/{profile_id:[\w-]+}/criteria",
         ProfileCriteriaView.collection_get,
         name="read_profile_criteria_registry",
     )
     app.router.add_get(
-        "/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}",
+        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}",
         ProfileCriteriaView.get,
         name="read_profile_criteria",
         allow_head=False,
@@ -123,12 +123,12 @@ def create_application(on_cleanup=None):
 
     # profile criteria RG
     app.router.add_get(
-        "/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups",
+        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups",
         ProfileCriteriaRGView.collection_get,
         name="read_profile_criteria_rg_registry",
     )
     app.router.add_get(
-        "/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}",
+        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}",
         ProfileCriteriaRGView.get,
         name="read_profile_criteria_rg",
         allow_head=False,
@@ -151,12 +151,12 @@ def create_application(on_cleanup=None):
 
     # profile criteria RG requirements
     app.router.add_get(
-        "/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements",
+        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements",
         ProfileCriteriaRGRequirementView.collection_get,
         name="read_profile_criteria_rg_requirement_registry",
     )
     app.router.add_get(
-        "/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
+        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
         ProfileCriteriaRGRequirementView.get,
         name="read_profile_criteria_rg_requirement",
         allow_head=False,
