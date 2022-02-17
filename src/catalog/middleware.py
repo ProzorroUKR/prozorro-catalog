@@ -25,7 +25,7 @@ async def error_middleware(request, handler):
             f"{e['msg']}: {'.'.join(str(part) for part in e['loc'])}"
             for e in exc.errors()
         ]))
-        return HTTPBadRequest(
+        raise HTTPBadRequest(
             text=text,
             content_type="application/json",
         )
@@ -35,12 +35,12 @@ async def error_middleware(request, handler):
              exc.text = json_dumps({"errors": [exc.text]})
              raise exc
         elif isinstance(exc, JSONDecodeError):
-            return HTTPBadRequest(
+            raise HTTPBadRequest(
                 content_type="application/json",
                 text=json_dumps({"errors": [f"Bad request: required valid json body. {exc}"]})
             )
         logger.exception(exc)
-        return HTTPInternalServerError(
+        raise HTTPInternalServerError(
             text=json_dumps({"errors": [str(exc)]}),
             content_type="application/json",
         )
