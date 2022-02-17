@@ -24,7 +24,8 @@ test:
   image: docker-registry.prozorro.gov.ua/docker/images/python:3.9-alpine3.14
   stage: test
   services:
-    - bitnami/mongodb:latest
+    - name: bitnami/mongodb:4.4.12-debian-10-r24
+      alias: mongo
   variables:
     SWAGGER_DOC_AVAILABLE: ""
     AUTH_PATH: ${CI_PROJECT_DIR}/auth.ini
@@ -41,9 +42,8 @@ test:
     - pip install -r requirements.txt
     - pip install -r tests/requirements.txt
     - pip install -e .
-    - echo '127.0.0.1  mongo' >> /etc/hosts
   script:
-    - pytest -x -s --cov=src/catalog --cov-report xml tests/integration/
+    - pytest -x -s -v --cov=src/catalog --cov-report xml tests/integration/
   artifacts:
     paths:
       - coverage.xml
