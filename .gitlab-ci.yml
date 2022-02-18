@@ -47,6 +47,8 @@ test:
   artifacts:
     paths:
       - coverage.xml
+    reports:
+      cobertura: coverage.xml
   coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
 
 
