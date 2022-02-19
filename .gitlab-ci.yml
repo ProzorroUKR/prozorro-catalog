@@ -45,8 +45,6 @@ test:
   script:
     - pytest -x -s --cov=src/catalog --cov-report xml tests/integration/
   artifacts:
-    paths:
-      - coverage.xml
     reports:
       cobertura: coverage.xml
   coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
