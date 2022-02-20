@@ -43,7 +43,10 @@ test:
     - pip install -r tests/requirements.txt
     - pip install -e .
   script:
-    - pytest -x -s --cov=src/catalog --cov-report xml tests/integration/
+    - pytest -x -s tests/integration/
+      --cov=src/catalog
+      --cov-report xml
+      --cov-report term
   artifacts:
     reports:
       cobertura: coverage.xml
