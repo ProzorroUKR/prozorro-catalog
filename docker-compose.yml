@@ -47,6 +47,7 @@ services:
             - ./tests:/app/tests
             - ./swagger:/app/swagger
             - ./auth.ini:/app/auth.ini
+            - ./pytest.ini:/app/pytest.ini
             - ./media:/app/images
             - ./migrations:/app/migrations
         depends_on:
