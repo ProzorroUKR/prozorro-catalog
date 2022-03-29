@@ -120,14 +120,6 @@ async def test_520_offer_invalid(api, product):
     assert resp.status == 404
     assert {'errors': ['Product not found']} == await resp.json()
 
-    test_offer['data']['relatedProduct'] = product_id
-    test_offer['data']['value']['amount'] += 10000
-
-    resp = await api.put('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)
-    assert resp.status == 400
-    assert {'errors': ['value.amount mismatch']} == await resp.json()
-
-    test_offer['data']['value']['amount'] -= 10000
     test_offer['data'].pop('status')
 
     resp = await api.put('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)
