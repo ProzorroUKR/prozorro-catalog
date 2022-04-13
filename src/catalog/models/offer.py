@@ -21,10 +21,10 @@ class OfferStatus(str, Enum):
 
 class Supplier(BaseModel):
     name: constr(max_length=250)
-    scale: Optional[constr(max_length=50)]
-    address: Optional[OfferSuppliersAddress]
+    scale: constr(max_length=50)
+    address: OfferSuppliersAddress
     contactPoint: ContactPoint
-    identifier: Optional[Identifier]
+    identifier: Identifier
 
     @validator('scale')
     def scale_standard(cls, v):
