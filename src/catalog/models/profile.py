@@ -158,9 +158,7 @@ class Profile(BaseModel):
 
     @staticmethod
     def validate_offer(profile, data):
-        if data['value']['amount'] > profile['value']['amount']:
-            raise ValueError('value.amount mismatch')
-        if data['value']['currency'] > profile['value']['currency']:
+        if data['value']['currency'] != profile['value']['currency']:
             raise ValueError('value.currency mismatch')
 
         if 'valueAddedTaxIncluded' in profile['value']:

@@ -37,33 +37,48 @@ async def test_510_offer_create(api, product):
 
     test_offer['data']['suppliers'][0]['scale'] = 'Rx'
     test_offer['data']['value']['currency'] = 'AIR'
-    test_offer['data']['deliveryAddresses'][0]["region"] = 'Київ'
+
+    test_offer['data']['deliveryAddresses'][0]["region"] = 'Not a region of Ukraine'
     test_offer['data']['deliveryAddresses'][0]["countryName"] = 'Not a country'
-    test_offer['data']["suppliers"][0]['address']["region"] = 'Київ'
+    test_offer['data']["suppliers"][0]['address']["region"] = 'Not a region of Ukraine'
     test_offer['data']["suppliers"][0]['address']["countryName"] = 'Not a country'
+
     resp = await api.put('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)
     assert resp.status == 400
     errors = {'errors': [
         'must be one of classifiers/countries.json: deliveryAddresses.0.countryName',
-        'must be one of classifiers/ua_regions.json: deliveryAddresses.0.region',
+        'can be provided only for Ukraine: deliveryAddresses.0.region',
         'must be one of organizations/scale.json keys: suppliers.0.scale',
         'must be one of classifiers/countries.json: suppliers.0.address.countryName',
-        'must be one of classifiers/ua_regions.json: suppliers.0.address.region',
         'must be one of codelists/tender/tender_currency.json keys: value.currency'
     ]}
     assert errors == await resp.json()
+
     test_offer['data']['suppliers'][0]['scale'] = 'micro'
     test_offer['data']['value']['currency'] = 'UAH'
-    test_offer['data']["suppliers"][0]['address']["region"] = 'Київська область'
-    test_offer['data']["suppliers"][0]['address']["countryName"] = 'Україна'
 
-    test_offer['data']['deliveryAddresses'][0]["region"] = 'Київська область'
+    test_offer['data']["suppliers"][0]['address']["region"] = 'Not a region of Ukraine'
+    test_offer['data']["suppliers"][0]['address']["countryName"] = 'Грузія'
+    test_offer['data']['deliveryAddresses'][0]["region"] = 'Not a region of Ukraine'
     test_offer['data']['deliveryAddresses'][0]["countryName"] = 'Грузія'
 
     resp = await api.put('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)
     assert resp.status == 400
     errors = {'errors': [
-        'region should be provided only for Ukraine: deliveryAddresses.0.__root__',
+        'can be provided only for Ukraine: deliveryAddresses.0.region',
+    ]}
+    assert errors == await resp.json()
+
+    test_offer['data']["suppliers"][0]['address']["region"] = 'Not an Ukraine region'
+    test_offer['data']["suppliers"][0]['address']["countryName"] = 'Україна'
+    test_offer['data']['deliveryAddresses'][0]["region"] = 'Not an Ukraine region'
+    test_offer['data']['deliveryAddresses'][0]["countryName"] = 'Україна'
+
+    resp = await api.put('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)
+    assert resp.status == 400
+    errors = {'errors': [
+        'must be one of classifiers/ua_regions.json: deliveryAddresses.0.region',
+        'must be one of classifiers/ua_regions.json: suppliers.0.address.region'
     ]}
     assert errors == await resp.json()
 
@@ -120,14 +135,6 @@ async def test_520_offer_invalid(api, product):
     assert resp.status == 404
     assert {'errors': ['Product not found']} == await resp.json()
 
-    test_offer['data']['relatedProduct'] = product_id
-    test_offer['data']['value']['amount'] += 10000
-
-    resp = await api.put('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)
-    assert resp.status == 400
-    assert {'errors': ['value.amount mismatch']} == await resp.json()
-
-    test_offer['data']['value']['amount'] -= 10000
     test_offer['data'].pop('status')
 
     resp = await api.put('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)

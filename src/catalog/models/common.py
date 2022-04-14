@@ -16,6 +16,8 @@ COUNTRY_NAMES = standards.load("classifiers/countries.json")
 COUNTRY_NAMES_UK = [names.get("name_uk") for names in COUNTRY_NAMES.values()]
 UNIT_CODES = UNIT_CODES.keys()
 
+UKRAINE_COUNTRY_NAME_UK = COUNTRY_NAMES.get("UA").get("name_uk")
+
 
 class DataTypeEnum(str, Enum):
     string = "string"
@@ -85,8 +87,9 @@ class Address(BaseModel):
     streetAddress: str = Field(..., max_length=250)
 
     @validator('region')
-    def region_standard(cls, v):
-        if v not in UA_REGIONS:
+    def region_standard(cls, v, values):
+        country_name = values.get("countryName")
+        if country_name == UKRAINE_COUNTRY_NAME_UK and v not in UA_REGIONS:
             raise ValueError("must be one of classifiers/ua_regions.json")
         return v
 
@@ -101,30 +104,18 @@ class OfferSuppliersAddress(Address):
     locality: Optional[constr(max_length=80)]
 
 
-class OfferDeliveryAddress(BaseModel):  # only countryName is required
-    countryName: str = Field(..., max_length=80)
+class OfferDeliveryAddress(Address):  # only countryName is required
     locality: Optional[constr(max_length=80)]
     postalCode: Optional[constr(max_length=20)]
     region: Optional[constr(max_length=80)]
     streetAddress: Optional[constr(max_length=250)]
 
     @validator('region')
-    def region_standard(cls, v):
-        if v and v not in UA_REGIONS:
-            raise ValueError("must be one of classifiers/ua_regions.json")
+    def region_for_ukraine_only(cls, v, values):
+        country_name = values.get("countryName")
+        if country_name != UKRAINE_COUNTRY_NAME_UK and v:
+            raise ValueError("can be provided only for Ukraine")
         return v
-
-    @validator('countryName')
-    def country_standard(cls, v):
-        if v not in COUNTRY_NAMES_UK:
-            raise ValueError("must be one of classifiers/countries.json")
-        return v
-
-    @root_validator
-    def region_for_ukraine(cls, values):
-        if values.get('region') and values.get('countryName') != 'Україна':
-            raise ValueError("region should be provided only for Ukraine")
-        return values
 
 
 class ContactPoint(BaseModel):
