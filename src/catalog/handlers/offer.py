@@ -3,9 +3,8 @@ from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPBadRequest, HTTPNotFound, HTTPConflict
 from pymongo.errors import OperationFailure
 from catalog import db
-from catalog.models.offer import OfferCreateData, OfferUpdateInput
+from catalog.models.offer import OfferCreateData, OfferUpdateInput, Offer
 from catalog.models.api import AnyInput
-from catalog.models.profile import Profile
 from catalog.swagger import class_view_swagger_path
 from catalog.utils import pagination_params, get_now, async_retry
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
@@ -42,12 +41,12 @@ class OfferView(View):
 
         # validations between objects
         product = await db.read_product(data['relatedProduct'])  # ensure exists
-        profile = await db.read_profile(product['relatedProfile'])  # we will need it later
+        # --
+
         try:
-            Profile.validate_offer(profile, data)
+            Offer.validate_offer(data)
         except ValueError as e:
             raise HTTPBadRequest(text=e.args[0])
-        # --
 
         access = set_access_token(request, data)
         data['dateModified'] = get_now().isoformat()

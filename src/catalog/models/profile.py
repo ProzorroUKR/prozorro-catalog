@@ -156,21 +156,6 @@ class Profile(BaseModel):
             if group_found == 0:
                 raise ValueError('criteria %s not satisfied' % cr['id'])
 
-    @staticmethod
-    def validate_offer(profile, data):
-        if data['value']['currency'] != profile['value']['currency']:
-            raise ValueError('value.currency mismatch')
-
-        if 'valueAddedTaxIncluded' in profile['value']:
-            if data['value'].get('valueAddedTaxIncluded', None) != profile['value']['valueAddedTaxIncluded']:
-                raise ValueError('value.valueAddedTaxIncluded mismatch')
-
-        if 'minOrderValue' in data:
-            if data['minOrderValue']['amount'] < data['value']['amount']:
-                raise ValueError('minOrderValue.amount mismatch')
-            if data['minOrderValue']['currency'] != data['value']['currency']:
-                raise ValueError('minOrderValue.currency mismatch')
-
 
 ProfileCreateInput = Input[ProfileCreateData]
 ProfileUpdateInput = Input[ProfileUpdateData]

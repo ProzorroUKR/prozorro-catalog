@@ -14,13 +14,6 @@ async def test_510_offer_create(api, product):
     resp = await api.patch('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)
     assert resp.status == 404
 
-    test_offer['data']['value']['currency'] = 'USD'
-
-    resp = await api.put('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)
-    assert resp.status == 400, await resp.json()
-    assert {'errors': ['value.currency mismatch']} == await resp.json()
-
-    test_offer['data']['value']['currency'] = 'UAH'
     test_offer['data']['minOrderValue']['amount'] = 1
 
     resp = await api.put('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)
