@@ -72,6 +72,14 @@ class Offer(OfferCreateData):
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     owner: str
 
+    @staticmethod
+    def validate_offer(data):  # TODO redesign this ?
+        if 'minOrderValue' in data:
+            if data['minOrderValue']['amount'] < data['value']['amount']:
+                raise ValueError('minOrderValue.amount mismatch')
+            if data['minOrderValue']['currency'] != data['value']['currency']:
+                raise ValueError('minOrderValue.currency mismatch')
+
 
 OfferCreateInput = Input[OfferCreateData]
 OfferUpdateInput = Input[OfferUpdateData]
