@@ -83,13 +83,13 @@
       "value": true
     },
     {
-      "value": ["ALL_A", "ALL_B", "ALL_C"]
+      "values": ["ALL_A", "ALL_B", "ALL_C"]
     },
     {
-      "value": ["ANY_A", "ANY_C"]
+      "values": ["ANY_A", "ANY_C"]
     },
     {
-      "value": "ONE_B"
+      "values": ["ONE_B"]
     }
   ],
   "status": "active",

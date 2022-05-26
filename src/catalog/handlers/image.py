@@ -57,3 +57,4 @@ class ImageView(View):
                 "hash": f"md5:{hash_md5.hexdigest()}"
             }
             return {"data": data}
+        raise HTTPBadRequest(text='There are no images')

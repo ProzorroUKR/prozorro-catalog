@@ -84,7 +84,9 @@
             {
               "dataType": "string",
               "title": "Тест allOf",
-              "allOf": ["ALL_A", "ALL_B", "ALL_C"]
+              "expectedValues": ["ALL_A", "ALL_B", "ALL_C"],
+              "expectedMinItems": 3,
+              "expectedMaxItems": 3
             }
           ]
         },
@@ -94,7 +96,8 @@
             {
               "dataType": "string",
               "title": "Тест allOf",
-              "anyOf": ["ANY_A", "ANY_B", "ANY_C"]
+              "expectedValues": ["ANY_A", "ANY_B", "ANY_C"],
+              "expectedMaxItems": 2
             }
           ]
         },
@@ -104,7 +107,9 @@
             {
               "dataType": "string",
               "title": "Тест allOf",
-              "oneOf": ["ONE_A", "ONE_B", "ONE_C"]
+              "expectedValues": ["ONE_A", "ONE_B", "ONE_C"],
+              "expectedMinItems": 1,
+              "expectedMaxItems": 1
             }
           ]
         }

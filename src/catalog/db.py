@@ -70,7 +70,7 @@ def get_collection(name):
 
 async def cleanup_db_client(app):
     global DB
-    if DB:
+    if DB is not None:
         DB.client.close()
         DB = None
 

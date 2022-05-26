@@ -12,6 +12,7 @@ from catalog.models.criteria import (
     RequirementCreateInput,
     RequirementUpdateInput,
     BulkRequirementCreateInput,
+    Requirement,
 )
 from catalog.swagger import class_view_swagger_path
 from catalog.utils import pagination_params, get_now, async_retry, find_item_by_id
@@ -252,6 +253,7 @@ class ProfileCriteriaRGRequirementView(View):
             rg = find_item_by_id(profile["criteria"]["requirementGroups"], rg_id, "requirementGroups")
             requirement = find_item_by_id(rg["requirements"], requirement_id, "requirements")
             requirement.update(data)
+            Requirement(**requirement)
             profile["dateModified"] = get_now().isoformat()
 
         return {"data": BaseSerializer(requirement).data}

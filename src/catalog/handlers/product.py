@@ -1,6 +1,6 @@
 import random
 from aiohttp.web_urldispatcher import View
-from aiohttp.web import HTTPBadRequest, HTTPNotFound, HTTPConflict
+from aiohttp.web import HTTPBadRequest, HTTPConflict
 from pymongo.errors import OperationFailure
 
 from catalog import db

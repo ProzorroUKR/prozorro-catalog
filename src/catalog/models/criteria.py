@@ -1,6 +1,7 @@
 from typing import Optional, Set, Union, List
 from uuid import uuid4
-from pydantic import Field, root_validator,  StrictInt, StrictFloat, StrictBool, StrictStr
+from decimal import Decimal
+from pydantic import Field, root_validator,  StrictInt, StrictFloat, StrictBool, StrictStr, PositiveInt
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, BulkInput, ListResponse
 from catalog.models.common import Unit, DataTypeEnum, Period
@@ -10,7 +11,78 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class RequirementCreateData(BaseModel):
+class RequirementBaseValidators(BaseModel):
+
+    _TYPEMAP = {
+        DataTypeEnum.string.value: str,
+        DataTypeEnum.integer.value: int,
+        DataTypeEnum.number.value: (float, int),
+        DataTypeEnum.datetime.value: str,
+        DataTypeEnum.boolean.value: bool,
+    }
+
+    @classmethod
+    def _check_value_type(cls, value, data_type_name):
+        data_type = cls._TYPEMAP.get(data_type_name)
+        if not data_type:
+            raise ValueError(f"Invalid dataType '{data_type_name}'")
+
+        if not isinstance(value, data_type):
+            raise ValueError(f"Value '{value}' isn't {data_type_name}")
+
+    @root_validator
+    def check_sum(cls, values):
+
+        for k in ("expectedValue", "maxValue", "minValue"):
+            if values.get(k) is not None:
+                cls._check_value_type(values[k], values["dataType"])
+        if values.get("expectedValues"):
+            for value in values["expectedValues"]:
+                cls._check_value_type(value, values["dataType"])
+        return values
+
+    @root_validator
+    def validate_expected_items(cls, values):
+        expected_min_items = values.get("expectedMinItems")
+        expected_max_items = values.get("expectedMaxItems")
+        expected_values = values.get("expectedValues")
+
+        if expected_values:
+            if expected_min_items and expected_max_items and expected_min_items > expected_max_items:
+                raise ValueError("expectedMinItems couldn't be greater then expectedMaxItems")
+
+            if expected_min_items and expected_min_items > len(expected_values):
+                raise ValueError(
+                    "expectedMinItems couldn't be greater then count of items in expectedValues"
+                )
+
+            if expected_max_items and expected_max_items > len(expected_values):
+                raise ValueError(
+                    "expectedMaxItems couldn't be greater then count of items in expectedValues"
+                )
+
+        elif expected_min_items or expected_max_items:
+            raise ValueError(
+                "expectedMinItems and expectedMaxItems couldn't exist without expectedValues"
+            )
+
+        return values
+
+    @root_validator
+    def validate_available_values(cls, values):
+
+        error_map = {
+            "expectedValue": ["minValue", "maxValue", "expectedValues"],
+            "expectedValues": ["minValue", "maxValue", "expectedValue"],
+        }
+
+        for k, v in error_map.items():
+            if values[k] and any(values[i] for i in v):
+                raise ValueError(f"{k} couldn't exists together with one of {v}")
+        return values
+
+
+class RequirementCreateData(RequirementBaseValidators):
     title: str = Field(..., min_length=1, max_length=250)
     dataType: DataTypeEnum = Field(..., max_length=100)
 
@@ -23,24 +95,15 @@ class RequirementCreateData(BaseModel):
     maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
     minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
 
-    allOf: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
-    anyOf: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
-    oneOf: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
+    expectedValues: Optional[List[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
+    expectedMinItems: Optional[PositiveInt] = None
+    expectedMaxItems: Optional[PositiveInt] = None
 
     @property
     def id(self):
         new_id = uuid4().hex
         self.__dict__['id'] = new_id
         return new_id
-
-    @root_validator
-    def check_sum(cls, values):
-        if values["dataType"] == DataTypeEnum.integer.value:
-            for k in ("expectedValue", "maxValue", "minValue"):
-                if values[k] is not None:
-                    if not isinstance(values[k], int):
-                        raise ValueError(f"Invalid integer '{values[k]}'")
-        return values
 
 
 class RequirementUpdateData(BaseModel):
@@ -56,21 +119,12 @@ class RequirementUpdateData(BaseModel):
     maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
     minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
 
-    allOf: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
-    anyOf: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
-    oneOf: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
-
-    @root_validator
-    def check_sum(cls, values):
-        if values["dataType"] == DataTypeEnum.integer.value:
-            for k in ("expectedValue", "maxValue", "minValue"):
-                if values[k] is not None:
-                    if not isinstance(values[k], int):
-                        raise ValueError(f"Invalid integer '{values[k]}'")
-        return values
+    expectedValues: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
+    expectedMinItems: Optional[PositiveInt] = None
+    expectedMaxItems: Optional[PositiveInt] = None
 
 
-class Requirement(BaseModel):
+class Requirement(RequirementBaseValidators):
     id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     title: str = Field(..., min_length=1, max_length=250)
     dataType: DataTypeEnum = Field(..., max_length=100)
@@ -84,9 +138,9 @@ class Requirement(BaseModel):
     maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
     minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
 
-    allOf: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
-    anyOf: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
-    oneOf: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
+    expectedValues: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
+    expectedMinItems: Optional[PositiveInt] = None
+    expectedMaxItems: Optional[PositiveInt] = None
 
 
 class RequirementGroupsCreateData(BaseModel):
