@@ -143,9 +143,12 @@ class ProcuringEntityKind(str, Enum):
     regional = "regional"
 
 
-class ProcuringEntity(BaseModel):
+class Organization(BaseModel):
     name: constr(max_length=250)
     address: Address
     contactPoint: ContactPoint
     identifier: Identifier
+
+
+class ProcuringEntity(Organization):
     kind: ProcuringEntityKind

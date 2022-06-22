@@ -134,3 +134,16 @@ async def offer(api, product):
     )
     assert resp.status == 201, await resp.json()
     return await resp.json()
+
+
+@pytest.fixture
+async def vendor(api, category):
+    data = get_fixture_json('vendor')
+    data['categories'] = [{"id": category["data"]["id"]}]
+    resp = await api.post(
+        f"/api/vendors",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 201, await resp.json()
+    return await resp.json()

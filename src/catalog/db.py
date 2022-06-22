@@ -46,6 +46,7 @@ async def init_mongo(*app) -> AsyncIOMotorDatabase:
         init_profile_indexes(),
         init_products_indexes(),
         init_offers_indexes(),
+        init_vendor_indexes(),
     )
     return DB
 
@@ -81,6 +82,7 @@ async def flush_database(*_):
         get_profiles_collection().delete_many({}),
         get_products_collection().delete_many({}),
         get_offers_collection().delete_many({}),
+        get_vendor_collection().delete_many({}),
     )
 
 
@@ -493,3 +495,50 @@ async def read_and_update_offer(uid):
     obj = await read_offer(uid)
     yield obj
     await update_offer(obj)
+
+
+# vendor
+def get_vendor_collection():
+    return get_collection("vendors")
+
+
+async def init_vendor_indexes():
+    modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    try:
+        await get_vendor_collection().create_indexes([modified_index])
+    except PyMongoError as e:
+        logger.exception(e)
+
+
+async def find_vendors(**kwargs):
+    collection = get_vendor_collection()
+    result = await paginated_result(
+        collection, **kwargs
+    )
+    return result
+
+
+async def read_vendor(uid):
+    object = await get_vendor_collection().find_one(
+        {'_id': uid},
+        session=session_var.get(),
+    )
+    if not object:
+        raise web.HTTPNotFound(text="Vendor not found")
+    return rename_id(object)
+
+
+async def insert_vendor(data):
+    inserted_id = await insert_object(get_vendor_collection(), data)
+    return inserted_id
+
+
+async def update_vendor(data):
+    await update_object(get_vendor_collection(), data)
+
+
+@asynccontextmanager
+async def read_and_update_vendor(uid):
+    data = await read_vendor(uid)
+    yield data
+    await update_vendor(data)

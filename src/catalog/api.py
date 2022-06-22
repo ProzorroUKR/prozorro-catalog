@@ -24,6 +24,7 @@ from catalog.handlers.product import ProductView
 from catalog.handlers.offer import OfferView
 from catalog.handlers.image import ImageView
 from catalog.handlers.search import SearchView
+from catalog.handlers.vendor import VendorView
 from catalog.settings import SENTRY_DSN, IMG_PATH, IMG_DIR, CLIENT_MAX_SIZE
 from catalog.migration import import_data_job
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
@@ -222,6 +223,30 @@ def create_application(on_cleanup=None):
         OfferView.patch,
         name="update_offer"
     )
+
+    # vendors
+    app.router.add_get(
+        "/api/vendors",
+        VendorView.collection_get,
+        name="read_vendor_registry",
+        allow_head=False
+    )
+    app.router.add_get(
+        r"/api/vendors/{vendor_id:[\w]{32}}",
+        VendorView.get,
+        name="read_vendor",
+    )
+    app.router.add_post(
+        r"/api/vendors",
+        VendorView.post,
+        name="create_vendor"
+    )
+    app.router.add_patch(
+        r"/api/vendors/{vendor_id:[\w]{32}}",
+        VendorView.patch,
+        name="update_vendor"
+    )
+
     # search
     app.router.add_post(
         r"/api/search",
