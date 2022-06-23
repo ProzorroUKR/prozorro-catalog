@@ -99,11 +99,6 @@ async def profile(api, category):
 @pytest.fixture
 async def product(api, profile):
     data = get_fixture_json('product')
-    data["id"] = '{}-{}-{}-000000'.format(
-        data['classification']['id'][:4],
-        data['brand']['name'][:4],
-        data['identifier']['id'][:13]
-    )
     data['relatedProfile'] = profile["data"]["id"]
     for item, rr in enumerate(data["requirementResponses"]):
         if item < 5:
@@ -113,10 +108,9 @@ async def product(api, profile):
         elif item == 6:
             rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["id"]
 
-    resp = await api.put(
-        f"/api/products/{data['id']}",
-        json={"data": data,
-              "access": profile["access"]},
+    resp = await api.post(
+        "/api/products",
+        json={"data": data, "access": profile["access"]},
         auth=TEST_AUTH,
     )
     assert resp.status == 201, await resp.json()

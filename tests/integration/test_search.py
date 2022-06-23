@@ -40,9 +40,6 @@ async def test_search(api):
 
         ids["profile"].append(profile_id)
 
-        product_id = f"{product['classification']['id'][:4]}-{product['brand']['name'][:4]}-" \
-            f"{product['identifier']['id'][:13]}-00000{i}"
-        product['id'] = product_id
         product['relatedProfile'] = resp["data"]["id"]
         for item, rr in enumerate(product["requirementResponses"]):
             if item < 5:
@@ -52,17 +49,18 @@ async def test_search(api):
             elif item == 6:
                 rr["requirement"] = resp["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["id"]
 
-        resp = await api.put(
-            f"/api/products/{product_id}",
-            json={"data": product,
-                  "access": profile_access},
+        resp = await api.post(
+            "/api/products",
+            json={"data": product, "access": profile_access},
             auth=TEST_AUTH,
         )
-        assert resp.status == 201, await resp.json()
+        assert resp.status == 201
+        result = await resp.json()
+        product_id = result["data"]["id"]
         ids["product"].append(product_id)
 
         offer_id = uuid4().hex
-        offer['relatedProduct'] = product["id"]
+        offer['relatedProduct'] = product_id
         resp = await api.put(
             f"/api/offers/{offer_id}",
             json={"data": offer},

@@ -20,7 +20,7 @@ from catalog.handlers.profile import (
     ProfileCriteriaRGRequirementView,
 )
 from catalog.handlers.category import CategoryView
-from catalog.handlers.product import ProductView
+from catalog.handlers.product import ProductView, VendorProductView
 from catalog.handlers.offer import OfferView
 from catalog.handlers.image import ImageView
 from catalog.handlers.search import SearchView
@@ -190,9 +190,9 @@ def create_application(on_cleanup=None):
         name="read_product",
         allow_head=False
     )
-    app.router.add_put(
-        r"/api/products/{product_id:[\w-]+}",
-        ProductView.put,
+    app.router.add_post(
+        r"/api/products",
+        ProductView.post,
         name="create_product"
     )
     app.router.add_patch(
@@ -245,6 +245,11 @@ def create_application(on_cleanup=None):
         r"/api/vendors/{vendor_id:[\w]{32}}",
         VendorView.patch,
         name="update_vendor"
+    )
+    app.router.add_post(
+        r"/api/vendors/{vendor_id:[\w]{32}}/products",
+        VendorProductView.post,
+        name="create_vendor_product",
     )
 
     # search

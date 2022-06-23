@@ -123,7 +123,7 @@ async def test_520_offer_invalid(api, product):
     assert {'errors': ['extra fields not permitted: dateModified']} == await resp.json()
     test_offer['data'].pop('dateModified')
 
-    test_offer['data']['relatedProduct'] = product_id + '0'
+    test_offer['data']['relatedProduct'] = product_id[:-1]
     resp = await api.put('/api/offers/%s' % offer_id, json=test_offer, auth=TEST_AUTH)
     assert resp.status == 404
     assert {'errors': ['Product not found']} == await resp.json()

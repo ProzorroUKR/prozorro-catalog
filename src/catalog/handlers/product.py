@@ -1,4 +1,6 @@
 import random
+from uuid import uuid4
+
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPBadRequest, HTTPConflict
 from pymongo.errors import OperationFailure
@@ -9,7 +11,7 @@ from catalog.models.profile import Profile
 from catalog.swagger import class_view_swagger_path
 from catalog.utils import pagination_params, get_now, async_retry
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
-from catalog.serializers.base import RootSerializer
+from catalog.serializers.product import ProductSerializer
 
 
 @class_view_swagger_path('/app/swagger/products')
@@ -28,18 +30,21 @@ class ProductView(View):
     @classmethod
     async def get(cls, request, product_id):
         product = await db.read_product(product_id)
-        return {"data": RootSerializer(product).data}
+        vendor = None
+        if "vendor" in product:
+            vendor = await db.read_vendor(product["vendor"]["id"])
+
+        return {"data": ProductSerializer(product, vendor=vendor).data}
 
     @classmethod
-    async def put(cls, request, product_id):
+    async def post(cls, request):
         validate_accreditation(request, "product")
         # import and validate data
         json = await request.json()
         body = ProductCreateInput(**json)
         # export data back to dict
         data = body.data.dict_without_none()
-        if product_id != data['id']:
-            raise HTTPBadRequest(text='id mismatch')
+        data['id'] = uuid4().hex
 
         profile_id = data['relatedProfile']
         profile = await db.read_profile(profile_id)  # ensure exists
@@ -58,9 +63,8 @@ class ProductView(View):
         data['dateModified'] = get_now().isoformat()
         await db.insert_product(data)
 
-        response = {"data": RootSerializer(data).data,
-                    "access": access}
-        return response
+        return {"data": ProductSerializer(data).data,
+                "access": access}
 
     @classmethod
     @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
@@ -79,4 +83,24 @@ class ProductView(View):
             data['dateModified'] = get_now().isoformat()
             product.update(data)
 
-        return {"data": RootSerializer(product).data}
+        return {"data": ProductSerializer(product).data}
+
+
+@class_view_swagger_path('/app/swagger/products/vendors')
+class VendorProductView(View):
+
+    @classmethod
+    async def post(cls, request, vendor_id: str) -> dict:
+        vendor = await db.read_vendor(vendor_id)
+        json = await request.json()
+        body = ProductCreateInput(**json)
+        validate_access_token(request, vendor, body.access)
+
+        data = body.data.dict_without_none()
+        data['id'] = uuid4().hex
+        data['vendor'] = {"id": vendor_id}
+        data['dateCreated'] = data['dateModified'] = get_now().isoformat()
+        data['access'] = {'owner': request.user.name}
+        await db.insert_product(data)
+
+        return {'data': ProductSerializer(data, vendor=vendor).data}
