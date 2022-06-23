@@ -38,6 +38,12 @@ class Manufacturer(BaseModel):
     identifier: Identifier
 
 
+class VendorInfo(BaseModel):
+    id: str = Field(..., min_length=1, max_length=250)
+    name: str
+    identifier: Identifier
+
+
 class ProductInfo(BaseModel):
     name: constr(max_length=250)
     uri: Optional[constr(max_length=250)]
@@ -58,7 +64,6 @@ class ProductCreateData(BaseModel):
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
     additionalProperties: Optional[List[ProductProperty]] = Field(None, max_items=100)
     identifier: ProductIdentifier
-    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_items=100)
     brand: Brand
     product: ProductInfo
@@ -66,17 +71,6 @@ class ProductCreateData(BaseModel):
     images: Optional[List[Image]] = Field(None, max_items=100)
     requirementResponses: Optional[List[RequirementResponse]] = Field(None, max_items=100)
     status: ProductStatus = ProductStatus.active
-
-    @validator('id')
-    def id_format(cls, v, values, **kwargs):
-        """
-        instead of generating id, we ask user to pass through all these validations
-        """
-        if values['identifier'].id[:12] not in v:
-            raise ValueError('id must include identifier')
-        if values['classification'].id[:4] not in v:
-            raise ValueError('id must include classification')
-        return v
 
     @validator('requirementResponses')
     def unique_responses_ids(cls, v):
@@ -104,8 +98,10 @@ class ProductUpdateData(BaseModel):
 
 
 class Product(ProductCreateData):
+    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     owner: str
+    vendor: Optional[VendorInfo]
 
 
 ProductCreateInput = AuthorizedInput[ProductCreateData]

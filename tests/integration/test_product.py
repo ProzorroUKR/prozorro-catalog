@@ -19,17 +19,39 @@ async def test_410_product_create(api, profile):
 
     cpv = test_product['data']['classification']['id']
     test_product['data']['classification']['id'] = '12345678'
-
-    product_id = '{}-{}-{}-{}'.format(
-        test_product['data']['classification']['id'][:4],
-        test_product['data']['brand']['name'][:4],
-        test_product['data']['identifier']['id'][:13],
-        randint(100000, 900000)
-    )
-
-    test_product['data']['id'] = product_id
     test_product['data']['relatedProfile'] = profile_id
     test_product['access'] = profile['access']
+
+    resp = await api.patch(
+        '/api/products/some_id',
+        json=test_product,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 404, await resp.json()
+
+    resp = await api.post(
+        '/api/products',
+        json=test_product,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400, await resp.json()
+    assert {'errors': ['product and profile classification mismatch']} == await resp.json()
+
+    test_product['data']['classification']['id'] = '87654321'
+
+    resp = await api.post('/api/products', json=test_product, auth=TEST_AUTH)
+    assert resp.status == 400
+    assert {'errors': ['product and profile classification mismatch']} == await resp.json()
+
+    test_product['data']['classification']['id'] = cpv
+
+    resp = await api.post('/api/products', json=test_product, auth=TEST_AUTH)
+    assert resp.status == 201, await resp.json()
+    resp_json = await resp.json()
+    assert 'id' in resp_json['data']
+    assert 'access' in resp_json
+    assert 'token' in resp_json['access']
+    product_id = resp_json['data']['id']
 
     resp = await api.patch(
         '/api/products/%s' % product_id,
@@ -38,58 +60,13 @@ async def test_410_product_create(api, profile):
     assert resp.status == 401, await resp.json()
     assert await resp.json() == {'errors': ['Authorization header not found']}
 
-    resp = await api.patch(
-        '/api/products/%s' % product_id,
-        json=test_product,
-        auth=TEST_AUTH,
-    )
-    assert resp.status == 404, await resp.json()
-
-    resp = await api.put('/api/products/%s' % product_id,
-                         json=test_product,
-                         auth=TEST_AUTH)
-    assert resp.status == 400, await resp.json()
-    assert {'errors': ['product and profile classification mismatch']} == await resp.json()
-
-    test_product['data']['classification']['id'] = '87654321'
-
-    resp = await api.put('/api/products/%s' % product_id, json=test_product, auth=TEST_AUTH)
-    assert resp.status == 400
-    assert {'errors': ['id must include classification: data.id']} == await resp.json()
-
-    test_product['data']['classification']['id'] = cpv
-
-    product_id = '{}-{}-{}-{}'.format(
-        test_product['data']['classification']['id'][:4],
-        test_product['data']['brand']['name'][:4],
-        test_product['data']['identifier']['id'][:13],
-        randint(100000, 900000))
-    test_product['data']['id'] = product_id
-
-    resp = await api.put('/api/products/%s' % product_id + '-1', json=test_product, auth=TEST_AUTH)
-    assert resp.status == 400
-    assert {'errors': ['id mismatch']} == await resp.json()
-
-    resp = await api.put('/api/products/%s' % product_id, json=test_product, auth=TEST_AUTH)
-    assert resp.status == 201, await resp.json()
-    resp_json = await resp.json()
-    assert resp_json['data']['id'] == test_product['data']['id']
-    assert 'access' in resp_json
-    assert 'token' in resp_json['access']
-
     test_product_copy = deepcopy(test_product)
     test_product['access'] = resp_json['access']
 
-    resp = await api.put('/api/products/%s' % product_id, json=test_product_copy, auth=TEST_AUTH)
-    assert resp.status == 400
-    assert {'errors': [f'Document with id {product_id} already exists']} == await resp.json()
-
-    product_id_copy = product_id + '1'
-    test_product_copy['data']['id'] = product_id_copy
     for i in range(3):
         test_product_copy['data']['requirementResponses'].pop()
 
-    resp = await api.put('/api/products/%s' % product_id_copy, json=test_product_copy, auth=TEST_AUTH)
+    resp = await api.post('/api/products', json=test_product_copy, auth=TEST_AUTH)
     assert resp.status == 400, await resp.json()
     resp = await resp.json()
     assert "criteria" in resp["errors"][0]
@@ -105,7 +82,7 @@ async def test_410_product_create(api, profile):
     resp = await api.get('/api/products/%s' % product_id)
     assert resp.status == 200
     resp_json = await resp.json()
-    assert resp_json['data']['id'] == test_product['data']['id']
+    assert 'id' in resp_json['data']
 
 
 async def test_411_product_rr_create(api, profile):
@@ -128,11 +105,10 @@ async def test_411_product_rr_create(api, profile):
 
     test_product['data']['requirementResponses'][2]["value"] = 49.91
 
-    test_product['data']['id'] = product_id
     test_product['data']['relatedProfile'] = profile_id
     test_product['access'] = profile['access']
 
-    resp = await api.put(f'/api/products/{product_id}', json=test_product, auth=TEST_AUTH)
+    resp = await api.post('/api/products', json=test_product, auth=TEST_AUTH)
     assert resp.status == 201, await resp.json()
 
 
@@ -221,23 +197,18 @@ async def test_430_product_limit_offset(api, profile):
 
     test_product_map = dict()
     for i in range(11):
-        product_id = '{}-{}-{}-{}'.format(
-            test_product['data']['classification']['id'][:4],
-            test_product['data']['brand']['name'][:4],
-            test_product['data']['identifier']['id'][:13],
-            randint(100000, 900000))
 
         test_product_copy = deepcopy(test_product)
-        test_product_copy['data']['id'] = product_id
         test_product_copy['data']['relatedProfile'] = profile_id
         test_product_copy['access'] = profile['access']
 
-        resp = await api.put('/api/products/%s' % product_id, json=test_product_copy, auth=TEST_AUTH)
+        resp = await api.post('/api/products', json=test_product_copy, auth=TEST_AUTH)
         assert resp.status == 201
         resp_json = await resp.json()
-        assert resp_json['data']['id'] == test_product_copy['data']['id']
+        assert 'id' in resp_json['data']
         assert 'access' in resp_json
         assert 'token' in resp_json['access']
+        product_id = resp_json['data']['id']
 
         test_product_map[product_id] = resp_json['data']['dateModified']
 
@@ -271,3 +242,63 @@ async def test_430_product_limit_offset(api, profile):
             assert test_product_map.pop(item['id']) == item['dateModified']
 
     assert len(test_product_map) == 0
+
+
+async def test_vendor_product_create(api, profile):
+    profile_id = profile['data']['id']
+    test_vendor = api.get_fixture_json('vendor')
+    resp = await api.post(
+        '/api/vendors',
+        json={"data": test_vendor},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+
+    assert resp.status == 201, result
+    vendor = result['data']
+    vendor_token = result['access']['token']
+
+    test_product = api.get_fixture_json('product')
+    test_product['relatedProfile'] = profile_id
+    del test_product['requirementResponses']
+
+    resp = await api.post(
+        '/api/vendors/some_vendor/products',
+        json={"data": test_product},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 404
+
+    resp = await api.post(
+        f'/api/vendors/{vendor["id"]}/products',
+        json={"data": test_product},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 401
+    result = await resp.json()
+    assert result == {'errors': ['Require access token']}
+
+    resp = await api.post(
+        f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',
+        json={'data': test_product},
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 201
+    result = await resp.json()
+    product = result['data']
+    assert 'data' in result
+    # assert "access" in result
+    assert 'vendor' in product
+    assert vendor['id'] == product['vendor']['id']
+    assert vendor['vendor']['name'] == product['vendor']['name']
+    assert vendor['vendor']['identifier'] == product['vendor']['identifier']
+
+    resp = await api.get('/api/products')
+    result = await resp.json()
+    assert len(result['data']) == 1
+
+    resp = await api.get(f'/api/products/{product["id"]}')
+    result = await resp.json()
+    assert vendor['vendor']['name'] == result['data']['vendor']['name']
+    assert vendor['vendor']['identifier'] == result['data']['vendor']['identifier']
