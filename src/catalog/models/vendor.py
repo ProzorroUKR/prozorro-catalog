@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, List
 from pydantic import Field, validator
 from catalog.models.base import BaseModel
-from catalog.models.api import Input, Response, CreateResponse
+from catalog.models.api import Input, Response, CreateResponse, AuthorizedInput
 from catalog.models.common import Organization
 
 
@@ -33,6 +33,6 @@ class Vendor(VendorPostData):
 
 
 VendorPostInput = Input[VendorPostData]
-VendorPatchInput = Input[VendorPatchData]
+VendorPatchInput = AuthorizedInput[VendorPatchData]
 VendorResponse = Response[Vendor]
 VendorCreateResponse = CreateResponse[Vendor]

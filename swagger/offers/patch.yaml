@@ -21,7 +21,7 @@ requestBody:
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/Input_OfferUpdateData_'
+        $ref: '#/components/schemas/AuthorizedInput_OfferUpdateData_'
 responses:
   "200":
     description: successful operation

@@ -15,7 +15,11 @@ class AccessOwner(Access):
 
 class Input(GenericModel, Generic[DataT]):
     data: DataT
-    access: Optional[Access]
+
+
+class AuthorizedInput(GenericModel, Generic[DataT]):
+    data: DataT
+    access: Optional[Access]  # will be checked later cos we want 401 not 400
 
 
 class BulkInput(GenericModel, Generic[DataT]):

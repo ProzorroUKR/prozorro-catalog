@@ -3,7 +3,7 @@ from typing import Optional, List, Set, Union
 from uuid import UUID
 from pydantic import Field, validator, AnyUrl
 from catalog.models.base import BaseModel
-from catalog.models.api import Input, Response, CreateResponse
+from catalog.models.api import Response, CreateResponse, AuthorizedInput
 from catalog.models.common import Unit, Value, Image, Classification
 from catalog.models.criteria import Criterion
 from catalog.utils import get_now
@@ -172,7 +172,7 @@ class Profile(BaseModel):
                 raise ValueError('criteria %s not satisfied' % cr['id'])
 
 
-ProfileCreateInput = Input[ProfileCreateData]
-ProfileUpdateInput = Input[ProfileUpdateData]
+ProfileCreateInput = AuthorizedInput[ProfileCreateData]
+ProfileUpdateInput = AuthorizedInput[ProfileUpdateData]
 ProfileResponse = Response[Profile]
 ProfileCreateResponse = CreateResponse[Profile]

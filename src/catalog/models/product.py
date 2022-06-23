@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, List, Union
 from pydantic import Field, validator, constr, StrictInt, StrictFloat, StrictBool, StrictStr
 from catalog.models.base import BaseModel
-from catalog.models.api import Input, Response, CreateResponse
+from catalog.models.api import Response, CreateResponse, AuthorizedInput
 from catalog.models.common import Image, Classification, Address, ContactPoint, Identifier
 from catalog.utils import get_now
 from enum import Enum
@@ -108,7 +108,7 @@ class Product(ProductCreateData):
     owner: str
 
 
-ProductCreateInput = Input[ProductCreateData]
-ProductUpdateInput = Input[ProductUpdateData]
+ProductCreateInput = AuthorizedInput[ProductCreateData]
+ProductUpdateInput = AuthorizedInput[ProductUpdateData]
 ProductResponse = Response[Product]
 ProductCreateResponse = CreateResponse[Product]

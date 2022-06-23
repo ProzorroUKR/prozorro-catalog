@@ -21,7 +21,7 @@ requestBody:
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/Input_RequirementGroupsCreateData_'
+        $ref: '#/components/schemas/AuthorizedInput_RequirementGroupsCreateData_'
 responses:
   "200":
     description: successful operation

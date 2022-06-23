@@ -1,9 +1,8 @@
 from typing import Optional, Set, Union, List
 from uuid import uuid4
-from decimal import Decimal
 from pydantic import Field, root_validator,  StrictInt, StrictFloat, StrictBool, StrictStr, PositiveInt
 from catalog.models.base import BaseModel
-from catalog.models.api import Input, Response, BulkInput, ListResponse
+from catalog.models.api import Response, BulkInput, ListResponse, AuthorizedInput
 from catalog.models.common import Unit, DataTypeEnum, Period
 import logging
 
@@ -191,18 +190,18 @@ class Criterion(BaseModel):
     description: str = Field(..., min_length=1, max_length=250)
 
 
-CriterionCreateInput = Input[CriterionCreateData]
-CriterionUpdateInput = Input[CriterionUpdateData]
+CriterionCreateInput = AuthorizedInput[CriterionCreateData]
+CriterionUpdateInput = AuthorizedInput[CriterionUpdateData]
 CriterionResponse = Response[Criterion]
 CriterionListResponse = ListResponse[Criterion]
 
-RGCreateInput = Input[RequirementGroupsCreateData]
-RGUpdateInput = Input[RequirementGroupsUpdateData]
+RGCreateInput = AuthorizedInput[RequirementGroupsCreateData]
+RGUpdateInput = AuthorizedInput[RequirementGroupsUpdateData]
 RGResponse = Response[RequirementGroup]
 RGListResponse = ListResponse[RequirementGroup]
 
-RequirementCreateInput = Input[RequirementCreateData]
-RequirementUpdateInput = Input[RequirementUpdateData]
+RequirementCreateInput = AuthorizedInput[RequirementCreateData]
+RequirementUpdateInput = AuthorizedInput[RequirementUpdateData]
 BulkRequirementCreateInput = BulkInput[RequirementCreateData]
 RequirementResponse = Response[Requirement]
 RequirementListResponse = ListResponse[Requirement]
