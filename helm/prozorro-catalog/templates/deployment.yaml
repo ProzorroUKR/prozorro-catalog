@@ -1,5 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
+{{ $root := . }}
 metadata:
   name: {{ include "prozorro-catalog.fullname" . }}
   labels:
@@ -36,12 +37,10 @@ spec:
           command: ["python", "-m", "catalog.api"]
 #          command: ["sleep", "infinity"]
           env:
-            - name: MONGODB_URI
-              value: '{{ .Values.mongodb_uri }}'
-            - name: DB_NAME
-              value: 'catalogs-{{ .Release.Name }}'
-            - name: AUTH_PATH
-              value: /app/etc/auth.ini
+            {{- range $key, $value := .Values.environment }}
+            - name: {{ $key }}
+              value: {{ tpl $value $root | quote }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 8000

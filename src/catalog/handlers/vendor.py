@@ -27,7 +27,7 @@ class VendorView(View):
     @classmethod
     async def get(cls, request, vendor_id):
         obj = await db.read_vendor(vendor_id)
-        return {"data": RootSerializer(obj, show_owner=False).data}
+        return {"data": RootSerializer(obj).data}
 
     @classmethod
     async def post(cls, request):

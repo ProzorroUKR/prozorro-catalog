@@ -2,6 +2,7 @@ from pymongo import ReadPreference
 from pymongo.write_concern import WriteConcern
 from pymongo.read_concern import ReadConcern
 from zoneinfo import ZoneInfo
+from uuid import uuid4
 import configparser
 import logging
 import sys
@@ -49,3 +50,23 @@ assert IMG_STORE_DIR_LEVELS * IMG_STORE_DIR_NAME_LEN < 32, "We only use 32 long 
 CATALOG_DATA = os.getenv("CATALOG_DATA")
 
 OPENPROCUREMENT_API_URL = os.environ.get("OPENPROCUREMENT_API_URL", "http://127.0.0.1:8000/api/0")
+
+
+DOC_SERVICE_URL = os.environ.get("DOC_SERVICE_URL", "https://docs.prozorro.gov.ua")
+DOC_SERVICE_DEP_URL = os.environ.get("DOC_SERVICE_DEP_URL", "")
+
+# to check document urls are really from the doc service
+# when they come to this api
+# can be taken from doc service config
+DOC_SERVICE_SEEDS = [v.encode() for v in os.environ.get("DOC_SERVICE_SEEDS", uuid4().hex * 2).split(",")]
+
+# there're can be many seeds to rotate them
+# so part of it is sent as `&Key=` in url
+# this param can configure length, however I don't think we gonna change this
+DOC_SERVICE_KEY_LENGTH = int(os.environ.get("DOC_SERVICE_KEY_LENGTH", 8))
+
+# to make a signature
+# so when we redirect ot doc service
+# it knows we come from this api
+# should be generated and put both here and to the doc service config
+DOC_SERVICE_SIGNING_SEED = os.environ.get("DOC_SERVICE_SIGNING_SEED", uuid4().hex * 2).encode()

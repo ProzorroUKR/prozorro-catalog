@@ -8,5 +8,6 @@ ujson # requirements for aiocache
 msgpack # requirements for aiocache
 aiofiles>=0.7.0
 python-json-logger==2.0.1
+PyNaCl>=1.5.0, <2
 sentry-sdk
 git+https://github.com/ProzorroUKR/standards.git@1.0.25#egg=standards

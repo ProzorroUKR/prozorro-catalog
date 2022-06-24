@@ -9,6 +9,7 @@ from catalog.middleware import (
     error_middleware,
     request_id_middleware,
     login_middleware,
+    context_middleware,
 )
 from catalog.db import init_mongo, cleanup_db_client
 from catalog.logging import AccessLogger, setup_logging
@@ -25,6 +26,7 @@ from catalog.handlers.offer import OfferView
 from catalog.handlers.image import ImageView
 from catalog.handlers.search import SearchView
 from catalog.handlers.vendor import VendorView
+from catalog.handlers.vendor_document import VendorDocumentView
 from catalog.settings import SENTRY_DSN, IMG_PATH, IMG_DIR, CLIENT_MAX_SIZE
 from catalog.migration import import_data_job
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
@@ -38,6 +40,7 @@ def create_application(on_cleanup=None):
     app = web.Application(
         middlewares=(
             request_id_middleware,
+            context_middleware,
             error_middleware,
             convert_response_to_json,
             login_middleware,
@@ -250,6 +253,34 @@ def create_application(on_cleanup=None):
         r"/api/vendors/{vendor_id:[\w]{32}}/products",
         VendorProductView.post,
         name="create_vendor_product",
+    )
+
+    # vendor docs
+    app.router.add_get(
+        r"/api/vendors/{vendor_id:[\w]{32}}/documents",
+        VendorDocumentView.collection_get,
+        name="read_vendor_document_registry",
+        allow_head=False,
+    )
+    app.router.add_get(
+        r"/api/vendors/{vendor_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
+        VendorDocumentView.get,
+        name="read_vendor_document",
+    )
+    app.router.add_post(
+        r"/api/vendors/{vendor_id:[\w]{32}}/documents",
+        VendorDocumentView.post,
+        name="create_vendor_document"
+    )
+    app.router.add_put(
+        r"/api/vendors/{vendor_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
+        VendorDocumentView.put,
+        name="replace_vendor_document",
+    )
+    app.router.add_patch(
+        r"/api/vendors/{vendor_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
+        VendorDocumentView.patch,
+        name="update_vendor_document",
     )
 
     # search

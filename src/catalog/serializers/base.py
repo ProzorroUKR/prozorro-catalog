@@ -60,7 +60,7 @@ class BaseSerializer:
 
 class RootSerializer(BaseSerializer):
     def __init__(self, data: dict, show_owner=True):
-        access = data.pop("access")
+        access = data.pop("access", None)
         if access and show_owner:
             data["owner"] = access["owner"]
         super().__init__(data)

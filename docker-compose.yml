@@ -11,6 +11,9 @@ services:
         environment:
             MONGODB_URI: 'mongodb://root:example@mongo:27017/?replicaSet=rs0'
             PYTHONUNBUFFERED: '1'
+            DOC_SERVICE_URL: http://ds.k8s.prozorro.gov.ua
+            DOC_SERVICE_SIGNING_SEED: 480310b588d10049d4a1199c37c258ecc9e2d15fde6851cbe8eaf35210fbefc0
+            DOC_SERVICE_SEEDS: a8968c4682ffa921c91caab5b60c84fbd089311549e5c3defd48f413c89337b6
 #            CATALOG_DATA: '/app/images'
         ports:
             - 8000:8000
@@ -33,25 +36,25 @@ services:
         ports:
             - 27017:27017
 
-    tests:
-        build:
-          context: .
-          dockerfile: Dockerfile
-          target: test
-        command: python -m pytest tests/integration
-        environment:
-            PYTHONUNBUFFERED: '1'
-            MONGODB_URI: 'mongodb://root:example@mongo:27017/?replicaSet=rs0'
-        volumes:
-            - ./src/catalog:/app/catalog
-            - ./tests:/app/tests
-            - ./swagger:/app/swagger
-            - ./auth.ini:/app/auth.ini
-            - ./pytest.ini:/app/pytest.ini
-            - ./media:/app/images
-            - ./migrations:/app/migrations
-        depends_on:
-            - mongo
+#    tests:
+#        build:
+#          context: .
+#          dockerfile: Dockerfile
+#          target: test
+#        command: python -m pytest tests/integration
+#        environment:
+#            PYTHONUNBUFFERED: '1'
+#            MONGODB_URI: 'mongodb://root:example@mongo:27017/?replicaSet=rs0'
+#        volumes:
+#            - ./src/catalog:/app/catalog
+#            - ./tests:/app/tests
+#            - ./swagger:/app/swagger
+#            - ./auth.ini:/app/auth.ini
+#            - ./pytest.ini:/app/pytest.ini
+#            - ./media:/app/images
+#            - ./migrations:/app/migrations
+#        depends_on:
+#            - mongo
 
 #    web:
 #        image: nginx

@@ -6,6 +6,7 @@ from aiohttp.web import (
 )
 from catalog.logging import request_id_var
 from catalog.auth import login_user
+from catalog.context import set_now, set_request
 from json import JSONDecodeError
 from aiohttp.web import middleware, HTTPException
 from pydantic import ValidationError
@@ -22,7 +23,7 @@ async def error_middleware(request, handler):
         response = await handler(request)
     except ValidationError as exc:
         text = json_dumps(dict(errors=[
-            f"{e['msg']}: {'.'.join(str(part) for part in e['loc'])}"
+            f"{e['msg']}: {'.'.join(str(part) for part in e['loc'] if part != '__root__')}"
             for e in exc.errors()
         ]))
         raise HTTPBadRequest(
@@ -93,5 +94,13 @@ async def login_middleware(request, handler):
         request,
         allow_anonymous=request.method in ("GET", "HEAD") or request.path == "/api/search"
     )
+    response = await handler(request)
+    return response
+
+
+@middleware
+async def context_middleware(request, handler):
+    set_request(request)
+    set_now()
     response = await handler(request)
     return response
