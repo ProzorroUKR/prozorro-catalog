@@ -23,7 +23,7 @@ async def error_middleware(request, handler):
         response = await handler(request)
     except ValidationError as exc:
         text = json_dumps(dict(errors=[
-            f"{e['msg']}: {'.'.join(str(part) for part in e['loc'] if part != '__root__')}"
+            f"{e['msg']}: {'.'.join(str(part) for part in e['loc'])}"
             for e in exc.errors()
         ]))
         raise HTTPBadRequest(
