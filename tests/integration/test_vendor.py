@@ -99,7 +99,8 @@ async def test_vendor_get(api, vendor):
     assert resp.status == 200
     result = await resp.json()
     assert set(result.keys()) == {'data'}
-    assert set(result["data"].keys()) == {'categories', 'id', 'vendor', 'isActive', 'dateCreated', 'dateModified'}
+    assert set(result["data"].keys()) == {'categories', 'id', 'vendor', 'owner',
+                                          'isActive', 'dateCreated', 'dateModified'}
 
 
 async def test_vendor_list(api, vendor):
