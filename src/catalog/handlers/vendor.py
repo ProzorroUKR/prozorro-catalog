@@ -21,6 +21,7 @@ class VendorView(View):
             offset=offset,
             limit=limit,
             reverse=reverse,
+            filters={"isActive": True}
         )
         return response
 

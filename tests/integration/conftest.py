@@ -134,6 +134,7 @@ async def offer(api, product):
 async def vendor(api, category):
     data = get_fixture_json('vendor')
     data['categories'] = [{"id": category["data"]["id"]}]
+    data["isActive"] = True
     resp = await api.post(
         f"/api/vendors",
         json={"data": data},

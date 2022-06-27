@@ -141,10 +141,10 @@ async def find_objects(collection, ids):
     return items
 
 
-async def paginated_result(collection, *_, offset, limit, reverse):
+async def paginated_result(collection, *_, offset, limit, reverse, filters=None):
     limit = min(limit, MAX_LIST_LIMIT)
     limit = max(limit, 1)
-    filters = {}
+    filters = filters or {}
     if offset:
         if offset and offset[:2] != '20':
             offset = urlsafe_b64decode(offset).decode()
@@ -505,7 +505,12 @@ def get_vendor_collection():
 
 
 async def init_vendor_indexes():
-    modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    modified_index = IndexModel(
+        [("dateModified", ASCENDING)],
+        partialFilterExpression={"isActive": True},
+        background=True,
+        name="active_vendors"
+    )
     try:
         await get_vendor_collection().create_indexes([modified_index])
     except PyMongoError as e:

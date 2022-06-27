@@ -99,8 +99,18 @@ async def test_vendor_create(api):
     assert data["isActive"] is False
 
 
-async def test_vendor_patch(api, vendor):
-    vendor, access = vendor["data"], vendor["access"]
+async def test_vendor_patch(api, category):
+    data = api.get_fixture_json('vendor')
+    data['categories'] = [{"id": category["data"]["id"]}]
+    data["isActive"] = False
+    resp = await api.post(
+        f"/api/vendors",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    vendor, access = result["data"], result["access"]
 
     patch_data = {"isActive": False}
     resp = await api.patch(
@@ -189,3 +199,23 @@ async def test_vendor_list(api, vendor):
     assert len(result["data"]) == 1
     assert set(result["data"][0].keys()) == {'dateModified', 'id'}
     assert result["data"][0]["id"] == vendor["id"]
+
+    # adding inactive one
+    test_vendor = api.get_fixture_json('vendor')
+    test_vendor["categories"] = vendor["categories"]
+    test_vendor["isActive"] = False
+    resp = await api.post(
+        '/api/vendors',
+        json={"data": test_vendor},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    assert result["data"]["isActive"] is False
+
+    # still only one
+    resp = await api.get(f'/api/vendors')
+    assert resp.status == 200
+    result = await resp.json()
+    assert len(result["data"]) == 1
+    assert vendor["id"] == result["data"][0]["id"]
