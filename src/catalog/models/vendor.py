@@ -13,7 +13,7 @@ class CategoryLink(BaseModel):
 class VendorPostData(BaseModel):
     isActive: bool = False
     vendor: Organization
-    categories: List[CategoryLink]
+    categories: List[CategoryLink] = Field(..., min_items=1, max_items=1)
 
 
 class VendorPatchData(BaseModel):

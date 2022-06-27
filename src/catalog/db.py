@@ -229,9 +229,11 @@ async def find_categories(**kwargs):
     return result
 
 
-async def read_category(profile_id):
+async def read_category(category_id, projection=None):
+    projection = projection or {}
     category = await get_category_collection().find_one(
-        {'_id': profile_id},
+        {'_id': category_id},
+        projection=projection,
         session=session_var.get(),
     )
     if not category:

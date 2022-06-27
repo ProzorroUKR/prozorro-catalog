@@ -1,11 +1,79 @@
-from copy import deepcopy
-from random import randint
-from urllib.parse import quote
-from .base import TEST_AUTH_NO_PERMISSION, TEST_AUTH, TEST_AUTH_ANOTHER
+from .base import TEST_AUTH, TEST_AUTH_ANOTHER
+
+
+async def test_vendor_create_without_category(api):
+    test_vendor = api.get_fixture_json('vendor')
+    test_vendor.pop("categories")
+    resp = await api.post(
+        '/api/vendors',
+        json={"data": test_vendor},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': ['field required: data.categories']} == result
+
+    test_vendor["categories"] = []
+    resp = await api.post(
+        '/api/vendors',
+        json={"data": test_vendor},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': ['ensure this value has at least 1 items: data.categories']} == result
+
+
+async def test_vendor_create_with_404_category(api):
+    test_vendor = api.get_fixture_json('vendor')
+    resp = await api.post(
+        '/api/vendors',
+        json={"data": test_vendor},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 404, result
+    assert {'errors': ['Category not found']} == result
+
+
+async def test_vendor_create_with_hidden_category(api):
+    data = api.get_fixture_json('category')
+    data["status"] = "hidden"
+    resp = await api.put(
+        f"/api/categories/{data['id']}",
+        json={"data": data},
+        auth=TEST_AUTH
+    )
+    assert resp.status == 201
+    category = await resp.json()
+    assert category["data"]["status"] == "hidden"
+    category_id = category["data"]["id"]
+
+    test_vendor = api.get_fixture_json('vendor')
+    test_vendor["categories"] = [{"id": category_id}]
+
+    resp = await api.post(
+        '/api/vendors',
+        json={"data": test_vendor},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': [f'Category {category_id} is not active']} == result
 
 
 async def test_vendor_create(api):
+    data = api.get_fixture_json('category')
+    resp = await api.put(
+        f"/api/categories/{data['id']}",
+        json={"data": data},
+        auth=TEST_AUTH
+    )
+    assert resp.status == 201
+    category = await resp.json()
+
     test_vendor = api.get_fixture_json('vendor')
+    test_vendor["categories"] = [{"id": category["data"]["id"]}]
     resp = await api.post(
         '/api/vendors',
         json={"data": test_vendor},

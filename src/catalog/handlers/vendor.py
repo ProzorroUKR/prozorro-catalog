@@ -1,7 +1,7 @@
 import random
 from uuid import uuid4
 from aiohttp.web_urldispatcher import View
-from aiohttp.web import HTTPConflict
+from aiohttp.web import HTTPConflict, HTTPBadRequest
 from pymongo.errors import OperationFailure
 from catalog import db
 from catalog.swagger import class_view_swagger_path
@@ -37,6 +37,12 @@ class VendorView(View):
         body = VendorPostInput(**json)
 
         data = body.data.dict_without_none()
+
+        for cat in data.get("categories", ""):
+            category = await db.read_category(cat["id"], projection={"status": 1})
+            if category["status"] != "active":
+                raise HTTPBadRequest(text=f"Category {cat['id']} is not active")
+
         access = set_access_token(request, data)
         data['id'] = uuid4().hex
         data['dateCreated'] = data['dateModified'] = get_now().isoformat()
