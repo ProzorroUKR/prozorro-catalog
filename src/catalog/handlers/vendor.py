@@ -61,7 +61,6 @@ class VendorView(View):
             # update profile with valid data
             initial_data = dict(vendor)
             vendor.update(data)
-
             if initial_data != vendor:
-                data['dateModified'] = get_now().isoformat()
+                vendor['dateModified'] = get_now().isoformat()
         return {"data": RootSerializer(vendor).data}

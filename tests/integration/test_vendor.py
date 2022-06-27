@@ -92,6 +92,15 @@ async def test_vendor_patch(api, vendor):
     assert result["data"]["dateModified"] > vendor["dateModified"]
     assert result["data"]["dateCreated"] == vendor["dateCreated"]
 
+    resp = await api.patch(
+        f'/api/vendors/{uid}?access_token={access["token"]}',
+        json={"data": patch_data},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 200
+    result2 = await resp.json()
+    assert result["data"]["dateModified"] == result2["data"]["dateModified"]
+
 
 async def test_vendor_get(api, vendor):
     vendor, access = vendor["data"], vendor["access"]
