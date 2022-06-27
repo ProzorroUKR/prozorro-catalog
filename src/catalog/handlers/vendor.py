@@ -59,7 +59,9 @@ class VendorView(View):
             # export data back to dict
             data = body.data.dict_without_none()
             # update profile with valid data
-            data['dateModified'] = get_now().isoformat()
+            initial_data = dict(vendor)
             vendor.update(data)
 
+            if initial_data != vendor:
+                data['dateModified'] = get_now().isoformat()
         return {"data": RootSerializer(vendor).data}
