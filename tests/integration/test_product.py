@@ -244,19 +244,11 @@ async def test_430_product_limit_offset(api, profile):
     assert len(test_product_map) == 0
 
 
-async def test_vendor_product_create(api, profile):
+async def test_vendor_product_create(api, profile, vendor):
     profile_id = profile['data']['id']
-    test_vendor = api.get_fixture_json('vendor')
-    resp = await api.post(
-        '/api/vendors',
-        json={"data": test_vendor},
-        auth=TEST_AUTH,
-    )
-    result = await resp.json()
 
-    assert resp.status == 201, result
-    vendor = result['data']
-    vendor_token = result['access']['token']
+    vendor_token = vendor['access']['token']
+    vendor = vendor['data']
 
     test_product = api.get_fixture_json('product')
     test_product['relatedProfile'] = profile_id
