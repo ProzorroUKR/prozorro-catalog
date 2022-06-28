@@ -44,8 +44,6 @@ def validate_url_signature(url, doc_hash):
 
     # get verifier
     keyid = parsed_query["KeyID"]
-    print([keyid])
-    print([verifiers_keyring])
     if keyid not in verifiers_keyring:
         raise ValueError("Signed by an unknown key")  # "Document url expired" in CDB
     verifier = verifiers_keyring[keyid]

@@ -1,4 +1,5 @@
 from .base import TEST_AUTH, TEST_AUTH_ANOTHER
+from catalog.doc_service import generate_test_url
 
 
 async def test_vendor_create_without_category(api):
@@ -233,6 +234,39 @@ async def test_vendor_get(api, vendor):
     assert set(result.keys()) == {'data'}
     assert set(result["data"].keys()) == {'categories', 'id', 'vendor', 'owner',
                                           'isActive', 'dateCreated', 'dateModified'}
+
+
+async def test_vendor_get_for_sign(api, vendor):
+    vendor, access = vendor["data"], vendor["access"]
+
+    doc_hash = "0" * 32
+    doc_data = {
+        "title": "name.doc",
+        "url": generate_test_url(doc_hash),
+        "hash": f"md5:{doc_hash}",
+        "format": "application/msword",
+    }
+    resp = await api.post(
+        f'/api/vendors/{vendor["id"]}/documents',
+        json={
+            "data": doc_data,
+            "access": access,
+        },
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    doc_data = result["data"]
+
+    resp = await api.get(f'/api/sign/vendors/{vendor["id"]}')
+    assert resp.status == 200
+    result = await resp.json()
+    print(result)
+    assert set(result.keys()) == {'data'}
+    assert set(result["data"].keys()) == {'categories', 'vendor', 'documents'}
+
+    doc_result = result["data"]["documents"][0]
+    assert {"url", "title", "format", "hash"} == set(doc_result.keys())
 
 
 async def test_vendor_list(api, vendor):

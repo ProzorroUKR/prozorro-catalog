@@ -36,7 +36,15 @@ class Document(DocumentPostData):
     datePublished: datetime
 
 
+class DocumentSign(BaseModel):
+    hash: str
+    title: str
+    format: str
+    url: str
+
+
 DocumentPostInput = AuthorizedInput[DocumentPostData]
 DocumentPatchInput = AuthorizedInput[DocumentPatchData]
 DocumentList = ListResponse[Document]
 DocumentResponse = Response[Document]
+DocumentSignResponse = Response[DocumentSign]

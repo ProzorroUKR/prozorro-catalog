@@ -241,6 +241,12 @@ def create_application(on_cleanup=None):
         VendorView.get,
         name="read_vendor",
     )
+    app.router.add_get(
+        r"/api/sign/vendors/{vendor_id:[\w]{32}}",
+        VendorView.sign_get,
+        name="read_sign_vendor",
+        allow_head=False
+    )
     app.router.add_post(
         r"/api/vendors",
         VendorView.post,

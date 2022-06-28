@@ -11,3 +11,7 @@ class DocumentSerializer(BaseSerializer):
     serializers = {
         "url": absolute_url_serializer,
     }
+
+
+class DocumentSignSerializer(BaseSerializer):
+    whitelist = {"url", "hash", "title", "format"}

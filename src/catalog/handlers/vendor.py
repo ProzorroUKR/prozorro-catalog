@@ -9,6 +9,7 @@ from catalog.auth import set_access_token, validate_accreditation, validate_acce
 from catalog.utils import pagination_params, get_now, async_retry
 from catalog.models.vendor import VendorPostInput, VendorPatchInput
 from catalog.serializers.base import RootSerializer
+from catalog.serializers.vendor import VendorSignSerializer
 
 
 @class_view_swagger_path('/app/swagger/vendors')
@@ -29,6 +30,11 @@ class VendorView(View):
     async def get(cls, request, vendor_id):
         obj = await db.read_vendor(vendor_id)
         return {"data": RootSerializer(obj).data}
+
+    @classmethod
+    async def sign_get(cls, request, vendor_id):
+        obj = await db.read_vendor(vendor_id)
+        return {"data": VendorSignSerializer(obj).data}
 
     @classmethod
     async def post(cls, request):

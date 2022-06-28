@@ -4,6 +4,7 @@ from pydantic import Field, validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse, AuthorizedInput
 from catalog.models.common import Organization, ContactPoint
+from catalog.models.document import Document, DocumentSign
 
 
 class CategoryLink(BaseModel):
@@ -38,9 +39,17 @@ class Vendor(VendorPostData):
     dateModified: datetime
     dateCreated: datetime
     owner: str
+    documents: List[Document]
+
+
+class VendorSign(VendorPostData):
+    vendor: VendorOrganization
+    categories: List[CategoryLink]
+    documents: List[DocumentSign]
 
 
 VendorPostInput = Input[VendorPostData]
 VendorPatchInput = AuthorizedInput[VendorPatchData]
 VendorResponse = Response[Vendor]
+VendorSignResponse = Response[VendorSign]
 VendorCreateResponse = CreateResponse[Vendor]
