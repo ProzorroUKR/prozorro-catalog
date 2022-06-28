@@ -21,12 +21,14 @@ from catalog.handlers.profile import (
     ProfileCriteriaRGRequirementView,
 )
 from catalog.handlers.category import CategoryView
-from catalog.handlers.product import ProductView, VendorProductView
+from catalog.handlers.product import ProductView
 from catalog.handlers.offer import OfferView
 from catalog.handlers.image import ImageView
 from catalog.handlers.search import SearchView
 from catalog.handlers.vendor import VendorView
 from catalog.handlers.vendor_document import VendorDocumentView
+from catalog.handlers.vendor_product import VendorProductView
+from catalog.handlers.vendor_product_document import VendorProductDocumentView
 from catalog.settings import SENTRY_DSN, IMG_PATH, IMG_DIR, CLIENT_MAX_SIZE
 from catalog.migration import import_data_job
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
@@ -249,11 +251,6 @@ def create_application(on_cleanup=None):
         VendorView.patch,
         name="update_vendor"
     )
-    app.router.add_post(
-        r"/api/vendors/{vendor_id:[\w]{32}}/products",
-        VendorProductView.post,
-        name="create_vendor_product",
-    )
 
     # vendor docs
     app.router.add_get(
@@ -281,6 +278,41 @@ def create_application(on_cleanup=None):
         r"/api/vendors/{vendor_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
         VendorDocumentView.patch,
         name="update_vendor_document",
+    )
+
+    # vendor product
+    app.router.add_post(
+        r"/api/vendors/{vendor_id:[\w]{32}}/products",
+        VendorProductView.post,
+        name="create_vendor_product",
+    )
+
+    # vendor product docs
+    app.router.add_get(
+        r"/api/vendors/{vendor_id:[\w]{32}}/products/{product_id:[\w]{32}}/documents",
+        VendorProductDocumentView.collection_get,
+        name="read_vendor_product_document_registry",
+        allow_head=False,
+    )
+    app.router.add_get(
+        r"/api/vendors/{vendor_id:[\w]{32}}/products/{product_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
+        VendorProductDocumentView.get,
+        name="read_vendor_product_document",
+    )
+    app.router.add_post(
+        r"/api/vendors/{vendor_id:[\w]{32}}/products/{product_id:[\w]{32}}/documents",
+        VendorProductDocumentView.post,
+        name="create_vendor_product_document"
+    )
+    app.router.add_put(
+        r"/api/vendors/{vendor_id:[\w]{32}}/products/{product_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
+        VendorProductDocumentView.put,
+        name="replace_vendor_product_document",
+    )
+    app.router.add_patch(
+        r"/api/vendors/{vendor_id:[\w]{32}}/products/{product_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
+        VendorProductDocumentView.patch,
+        name="update_vendor_product_document",
     )
 
     # search

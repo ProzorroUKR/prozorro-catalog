@@ -426,9 +426,11 @@ async def find_products(**kwargs):
     return result
 
 
-async def read_product(uid):
+async def read_product(uid, filters=None):
+    if filters is None:
+        filters = {}
     data = await get_products_collection().find_one(
-        {'_id': uid},
+        {'_id': uid, **filters},
         session=session_var.get(),
     )
     if not data:
@@ -441,8 +443,8 @@ async def update_product(obj):
 
 
 @asynccontextmanager
-async def read_and_update_product(uid):
-    obj = await read_product(uid)
+async def read_and_update_product(uid, filters=None):
+    obj = await read_product(uid, filters)
     yield obj
     await update_product(obj)
 
