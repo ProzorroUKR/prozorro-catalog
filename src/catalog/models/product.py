@@ -9,12 +9,13 @@ from catalog.utils import get_now
 from enum import Enum
 
 
-VENDOR_PRODUCT_IDENTIFIER_SCHEME = "EAN-13"
-
-
 class ProductStatus(str, Enum):
     active = 'active'
     hidden = 'hidden'
+
+
+class VendorProductIdentifierScheme(str, Enum):
+    ean_13 = "EAN-13"
 
 
 class ProductProperty(BaseModel):
@@ -31,17 +32,18 @@ class ProductIdentifier(BaseModel):
 
 class VendorProductIdentifier(BaseModel):
     id: str = Field(..., min_length=1, max_length=30)
+    scheme: VendorProductIdentifierScheme = VendorProductIdentifierScheme.ean_13
     uri: Optional[str] = Field(None, min_length=1, max_length=250)
-
-    @property
-    def scheme(self):
-        return VENDOR_PRODUCT_IDENTIFIER_SCHEME
 
 
 class Brand(BaseModel):
     name: constr(max_length=250)
     uri: constr(max_length=250)
     alternativeNames: Optional[List[constr(max_length=250)]]
+
+
+class VendorProductBrand(Brand):
+    uri: Optional[constr(max_length=250)]
 
 
 class Manufacturer(BaseModel):
@@ -76,7 +78,7 @@ class VendorProductCreateData(BaseModel):
     classification: Classification
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
     identifier: VendorProductIdentifier
-    brand: Brand
+    brand: VendorProductBrand
     product: ProductInfo
     requirementResponses: Optional[List[RequirementResponse]] = Field(None, max_items=100)
     status: ProductStatus = ProductStatus.active
