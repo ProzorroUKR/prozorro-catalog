@@ -7,11 +7,11 @@ from pymongo.errors import OperationFailure
 
 from catalog import db
 from catalog.models.product import ProductCreateInput, ProductUpdateInput
-from catalog.models.profile import Profile
 from catalog.swagger import class_view_swagger_path
 from catalog.utils import pagination_params, get_now, async_retry
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
 from catalog.serializers.product import ProductSerializer
+from catalog.validations import validate_product_to_profile
 
 
 @class_view_swagger_path('/app/swagger/products')
@@ -49,15 +49,7 @@ class ProductView(View):
         profile_id = data['relatedProfile']
         profile = await db.read_profile(profile_id)  # ensure exists
         validate_access_token(request, profile, body.access)
-        if data['classification']['id'][:4] != profile['classification']['id'][:4]:
-            raise HTTPBadRequest(text='product and profile classification mismatch')
-
-        ###
-        try:
-            Profile.validate_product(profile, data)
-        except ValueError as e:
-            raise HTTPBadRequest(text=e.args[0])
-        ##
+        validate_product_to_profile(profile, data)
 
         access = set_access_token(request, data)
         data['dateModified'] = get_now().isoformat()

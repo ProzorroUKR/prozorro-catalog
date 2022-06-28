@@ -1,6 +1,7 @@
 from catalog.models.product import VendorProductIdentifierScheme
 
 from .base import TEST_AUTH
+from .conftest import set_requirements_to_responses
 
 
 async def test_vendor_product_create(api, vendor, profile):
@@ -12,7 +13,7 @@ async def test_vendor_product_create(api, vendor, profile):
 
     test_product = api.get_fixture_json('vendor_product')
     test_product['relatedProfile'] = profile_id
-    del test_product['requirementResponses']
+    set_requirements_to_responses(test_product['requirementResponses'], profile)
 
     resp = await api.post(
         '/api/vendors/some_vendor/products',
