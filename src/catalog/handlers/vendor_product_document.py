@@ -57,7 +57,7 @@ class VendorProductDocumentView(View):
             # import and validate data
             json = await request.json()
             body = DocumentPostInput(**json)
-            vendor = db.read_vendor(vendor_id)
+            vendor = await db.read_vendor(vendor_id)
             validate_access_token(request, vendor, body.access)
             # find & append doc
             for d in product.get("documents", ""):
@@ -80,7 +80,7 @@ class VendorProductDocumentView(View):
             # import and validate data
             json = await request.json()
             body = DocumentPatchInput(**json)
-            vendor = db.read_vendor(vendor_id)
+            vendor = await db.read_vendor(vendor_id)
             validate_access_token(request, vendor, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
