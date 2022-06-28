@@ -28,7 +28,8 @@ class DocumentPostData(BaseModel):
 
 
 class DocumentPatchData(BaseModel):
-    title: str = Field(..., min_length=1)
+    title: Optional[str] = Field(None, min_length=1)
+    description: Optional[str]
 
 
 class Document(DocumentPostData):
