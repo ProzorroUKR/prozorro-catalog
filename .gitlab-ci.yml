@@ -49,7 +49,9 @@ test:
       --cov-report term
   artifacts:
     reports:
-      cobertura: coverage.xml
+      coverage_report:
+        path: coverage.xml
+        coverage_format: cobertura
   coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
 
 
