@@ -46,6 +46,7 @@ class VendorView(View):
 
         access = set_access_token(request, data)
         data['id'] = uuid4().hex
+        data['isActive'] = False
         data['dateCreated'] = data['dateModified'] = get_now().isoformat()
         await db.insert_vendor(data)
         response = {"data": RootSerializer(data).data,
@@ -70,4 +71,22 @@ class VendorView(View):
             vendor.update(data)
             if initial_data != vendor:
                 vendor['dateModified'] = get_now().isoformat()
+
+                # validate activation is allowed
+                if vendor.get("isActive") and not initial_data.get("isActive"):
+                    identifier_id = vendor["vendor"]["identifier"]["id"]
+                    existing = await db.find_vendors(
+                        offset=None,
+                        limit=1,
+                        reverse=False,
+                        filters={
+                            "isActive": True,
+                            "vendor.identifier.id": identifier_id,
+                        }
+                    )
+                    if existing["data"]:
+                        dup_id = existing["data"][0]["id"]
+                        raise HTTPBadRequest(
+                            text=f"Cannot activate vendor.identifier.id {identifier_id} already exists: {dup_id}"
+                        )
         return {"data": RootSerializer(vendor).data}

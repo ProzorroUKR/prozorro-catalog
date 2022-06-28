@@ -102,7 +102,6 @@ async def test_vendor_create(api):
 async def test_vendor_patch(api, category):
     data = api.get_fixture_json('vendor')
     data['categories'] = [{"id": category["data"]["id"]}]
-    data["isActive"] = False
     resp = await api.post(
         f"/api/vendors",
         json={"data": data},
@@ -180,6 +179,52 @@ async def test_vendor_patch(api, category):
     assert result["data"]["dateModified"] == result2["data"]["dateModified"]
 
 
+async def test_vendor_duplicate(api, category):
+    data = api.get_fixture_json('vendor')
+    data['categories'] = [{"id": category["data"]["id"]}]
+    resp = await api.post(
+        f"/api/vendors",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    vendor, access = result["data"], result["access"]
+
+    patch_data = {"isActive": True}
+    assert vendor["isActive"] is False
+    resp = await api.patch(
+        f'/api/vendors/{vendor["id"]}?access_token={access["token"]}',
+        json={"data": patch_data},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 200
+    result = await resp.json()
+    assert result["data"]["isActive"] is True
+
+    # try activation another one
+    resp = await api.post(
+        '/api/vendors',
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    access = result["access"]
+
+    resp = await api.patch(
+        f'/api/vendors/{result["data"]["id"]}?access_token={access["token"]}',
+        json={"data": patch_data},
+        auth=TEST_AUTH,
+    )
+    result_duplicate = await resp.json()
+    assert resp.status == 400, result_duplicate
+
+    identifier_id = data["vendor"]["identifier"]["id"]
+    expected = {'errors': [f'Cannot activate vendor.identifier.id {identifier_id} already exists: {vendor["id"]}']}
+    assert expected == result_duplicate
+
+
 async def test_vendor_get(api, vendor):
     vendor, access = vendor["data"], vendor["access"]
     resp = await api.get(f'/api/vendors/{vendor["id"]}')
@@ -203,7 +248,6 @@ async def test_vendor_list(api, vendor):
     # adding inactive one
     test_vendor = api.get_fixture_json('vendor')
     test_vendor["categories"] = vendor["categories"]
-    test_vendor["isActive"] = False
     resp = await api.post(
         '/api/vendors',
         json={"data": test_vendor},

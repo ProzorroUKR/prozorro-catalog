@@ -134,11 +134,20 @@ async def offer(api, product):
 async def vendor(api, category):
     data = get_fixture_json('vendor')
     data['categories'] = [{"id": category["data"]["id"]}]
-    data["isActive"] = True
     resp = await api.post(
         f"/api/vendors",
         json={"data": data},
         auth=TEST_AUTH,
     )
-    assert resp.status == 201, await resp.json()
-    return await resp.json()
+    result = await resp.json()
+    assert resp.status == 201, result
+    uid, access = result["data"]["id"], result["access"]
+
+    patch_data = {"isActive": True}
+    resp = await api.patch(
+        f'/api/vendors/{uid}?access_token={access["token"]}',
+        json={"data": patch_data},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 200
+    return result
