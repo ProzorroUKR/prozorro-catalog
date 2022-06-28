@@ -21,9 +21,10 @@ class DocumentPostData(BaseModel):
 
     @root_validator
     def process_url(cls, values):
-        validate_url_from_doc_service(values["url"])
-        validate_url_signature(values["url"], values["hash"])
-        values["url"] = build_api_document_url(values["id"], values["url"])
+        if 'url' in values and 'hash' in values:
+            validate_url_from_doc_service(values["url"])
+            validate_url_signature(values["url"], values["hash"])
+            values["url"] = build_api_document_url(values["id"], values["url"])
         return values
 
 
