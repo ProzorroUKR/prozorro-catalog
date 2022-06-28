@@ -13,6 +13,7 @@ class DocumentPostData(BaseModel):
     title: str = Field(..., min_length=1)
     format: str
     url: str
+    description: Optional[str]
 
     @validator("id", always=True)
     def generate_id(cls, v, values, **kwargs):
@@ -32,7 +33,7 @@ class DocumentPatchData(BaseModel):
 
 class Document(DocumentPostData):
     dateModified: datetime
-    dateCreated: datetime
+    datePublished: datetime
 
 
 DocumentPostInput = AuthorizedInput[DocumentPostData]
