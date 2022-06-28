@@ -24,6 +24,7 @@ class ListSerializer:
 class BaseSerializer:
     _data: dict
     serializers = {}
+    calculated = {}
     private_fields = None
     whitelist = None
 
@@ -49,6 +50,10 @@ class BaseSerializer:
             k: self.serialize_value(k, v)
             for k, v in items
         }
+        for k, v in self.calculated.items():
+            value = v(data)
+            if value is not None:
+                data[k] = v(data)
         return data
 
     def serialize_value(self, key, value):

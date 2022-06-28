@@ -96,8 +96,9 @@ async def test_vendor_create(api):
 
     # check generated data
     additional_fields = {k: v for k, v in data.items() if k not in test_vendor}
-    assert set(additional_fields.keys()) == {'id', 'dateCreated', 'dateModified', 'owner', 'isActive'}
+    assert set(additional_fields.keys()) == {'id', 'dateCreated', 'dateModified', 'owner', 'isActive', "status"}
     assert data["isActive"] is False
+    assert data["status"] == "pending"
 
 
 async def test_vendor_patch(api, category):
@@ -192,6 +193,17 @@ async def test_vendor_duplicate(api, category):
     assert resp.status == 201, result
     vendor, access = result["data"], result["access"]
 
+    # try create second draft
+    resp2 = await api.post(
+        '/api/vendors',
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    result2 = await resp2.json()
+    assert resp2.status == 201, result2
+    vendor2, access2 = result2["data"], result2["access"]
+
+    # first vendor activation
     patch_data = {"isActive": True}
     assert vendor["isActive"] is False
     resp = await api.patch(
@@ -203,27 +215,28 @@ async def test_vendor_duplicate(api, category):
     result = await resp.json()
     assert result["data"]["isActive"] is True
 
-    # try activation another one
+    # try to activate second draft
+    resp = await api.patch(
+        f'/api/vendors/{result2["data"]["id"]}?access_token={access2["token"]}',
+        json={"data": patch_data},
+        auth=TEST_AUTH,
+    )
+    result_duplicate = await resp.json()
+    assert resp.status == 400, result_duplicate
+    identifier_id = data["vendor"]["identifier"]["id"]
+    expected = {'errors': [f'Cannot activate vendor.identifier.id {identifier_id} already exists: {vendor["id"]}']}
+    assert expected == result_duplicate
+
+    # try create third draft
     resp = await api.post(
         '/api/vendors',
         json={"data": data},
         auth=TEST_AUTH,
     )
     result = await resp.json()
-    assert resp.status == 201, result
-    access = result["access"]
-
-    resp = await api.patch(
-        f'/api/vendors/{result["data"]["id"]}?access_token={access["token"]}',
-        json={"data": patch_data},
-        auth=TEST_AUTH,
-    )
-    result_duplicate = await resp.json()
-    assert resp.status == 400, result_duplicate
-
-    identifier_id = data["vendor"]["identifier"]["id"]
-    expected = {'errors': [f'Cannot activate vendor.identifier.id {identifier_id} already exists: {vendor["id"]}']}
-    assert expected == result_duplicate
+    expected = {'errors': [f'Cannot create vendor.identifier.id {identifier_id} already exists: {vendor["id"]}']}
+    assert resp.status == 400, result
+    assert expected == result
 
 
 async def test_vendor_get(api, vendor):
@@ -232,8 +245,9 @@ async def test_vendor_get(api, vendor):
     assert resp.status == 200
     result = await resp.json()
     assert set(result.keys()) == {'data'}
-    assert set(result["data"].keys()) == {'categories', 'id', 'vendor', 'owner',
+    assert set(result["data"].keys()) == {'categories', 'id', 'vendor', 'owner', "status",
                                           'isActive', 'dateCreated', 'dateModified'}
+    assert result["data"]["status"] == "active"
 
 
 async def test_vendor_get_for_sign(api, vendor):
@@ -261,7 +275,6 @@ async def test_vendor_get_for_sign(api, vendor):
     resp = await api.get(f'/api/sign/vendors/{vendor["id"]}')
     assert resp.status == 200
     result = await resp.json()
-    print(result)
     assert set(result.keys()) == {'data'}
     assert set(result["data"].keys()) == {'categories', 'vendor', 'documents'}
 
@@ -282,6 +295,7 @@ async def test_vendor_list(api, vendor):
     # adding inactive one
     test_vendor = api.get_fixture_json('vendor')
     test_vendor["categories"] = vendor["categories"]
+    test_vendor["vendor"]["identifier"]["id"] = "1234"
     resp = await api.post(
         '/api/vendors',
         json={"data": test_vendor},
