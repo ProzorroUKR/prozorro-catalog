@@ -1,4 +1,4 @@
-from catalog.models.product import VENDOR_PRODUCT_IDENTIFIER_SCHEME
+from catalog.models.product import VendorProductIdentifierScheme
 
 from .base import TEST_AUTH
 
@@ -42,7 +42,7 @@ async def test_vendor_product_create(api, vendor, profile):
     assert 'data' in result
     # assert "access" in result
     assert 'vendor' in product
-    assert product['identifier']['scheme'] == VENDOR_PRODUCT_IDENTIFIER_SCHEME
+    assert product['identifier']['scheme'] == VendorProductIdentifierScheme.ean_13
     assert vendor['id'] == product['vendor']['id']
     assert vendor['vendor']['name'] == product['vendor']['name']
     assert vendor['vendor']['identifier'] == product['vendor']['identifier']
@@ -69,7 +69,7 @@ async def test_vendor_product_create(api, vendor, profile):
     assert resp.status == 400
     result = await resp.json()
     assert result == {'errors': [
-        'extra fields not permitted: data.identifier.scheme',
+        "value is not a valid enumeration member; permitted: 'EAN-13': data.identifier.scheme",
         'extra fields not permitted: data.additionalProperties',
         'extra fields not permitted: data.alternativeIdentifiers',
         'extra fields not permitted: data.images',
@@ -91,7 +91,7 @@ async def test_vendor_product_create(api, vendor, profile):
 
     assert resp.status == 400
     result = await resp.json()
-    assert result == {"errors": ["relatedProfile should be in `active` status"]}
+    assert result == {"errors": ["relatedProfile should be in `active` status."]}
 
     test_product["relatedProfile"] = "0" * 32
     resp = await api.post(

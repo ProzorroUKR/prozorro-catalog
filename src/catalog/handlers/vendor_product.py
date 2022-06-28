@@ -8,7 +8,7 @@ from catalog.swagger import class_view_swagger_path
 from catalog.utils import get_now
 from catalog.auth import validate_access_token
 from catalog.serializers.product import ProductSerializer
-from catalog.validations import validate_related_profile
+from catalog.validations import validate_related_profile, validate_active_vendor
 
 
 @class_view_swagger_path('/app/swagger/vendors/products')
@@ -22,6 +22,7 @@ class VendorProductView(View):
         validate_access_token(request, vendor, body.access)
         data = body.data.dict_without_none()
         profile = await db.read_profile(data["relatedProfile"])
+        validate_active_vendor(vendor)
         validate_related_profile(profile)
         data['id'] = uuid4().hex
         data['vendor'] = {"id": vendor_id}
