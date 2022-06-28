@@ -4,8 +4,12 @@ from pydantic import Field, validator, constr, StrictInt, StrictFloat, StrictBoo
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, CreateResponse, AuthorizedInput
 from catalog.models.common import Image, Classification, Address, ContactPoint, Identifier
+from catalog.models.document import Document
 from catalog.utils import get_now
 from enum import Enum
+
+
+VENDOR_PRODUCT_IDENTIFIER_SCHEME = "EAN-13"
 
 
 class ProductStatus(str, Enum):
@@ -23,6 +27,15 @@ class ProductIdentifier(BaseModel):
     id: str = Field(..., min_length=1, max_length=250)
     scheme: str = Field(..., min_length=1, max_length=80)
     uri: Optional[str] = Field(None, min_length=1, max_length=250)
+
+
+class VendorProductIdentifier(BaseModel):
+    id: str = Field(..., min_length=1, max_length=30)
+    uri: Optional[str] = Field(None, min_length=1, max_length=250)
+
+    @property
+    def scheme(self):
+        return VENDOR_PRODUCT_IDENTIFIER_SCHEME
 
 
 class Brand(BaseModel):
@@ -56,19 +69,15 @@ class RequirementResponse(BaseModel):
     values: List[Union[StrictInt, StrictFloat, StrictBool, StrictStr]] = Field(None, max_items=100)
 
 
-class ProductCreateData(BaseModel):
+class VendorProductCreateData(BaseModel):
     title: str = Field(..., min_length=1, max_length=80)
     relatedProfile: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     description: str = Field(..., min_length=1, max_length=1000)
     classification: Classification
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
-    additionalProperties: Optional[List[ProductProperty]] = Field(None, max_items=100)
-    identifier: ProductIdentifier
-    alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_items=100)
+    identifier: VendorProductIdentifier
     brand: Brand
     product: ProductInfo
-    manufacturers: Optional[List[Manufacturer]] = Field(None, max_items=100)
-    images: Optional[List[Image]] = Field(None, max_items=100)
     requirementResponses: Optional[List[RequirementResponse]] = Field(None, max_items=100)
     status: ProductStatus = ProductStatus.active
 
@@ -79,6 +88,14 @@ class ProductCreateData(BaseModel):
             if len(requirements) != len(set(requirements)):
                 raise ValueError("not unique requirements")
         return v
+
+
+class ProductCreateData(VendorProductCreateData):
+    additionalProperties: Optional[List[ProductProperty]] = Field(None, max_items=100)
+    identifier: ProductIdentifier
+    alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_items=100)
+    manufacturers: Optional[List[Manufacturer]] = Field(None, max_items=100)
+    images: Optional[List[Image]] = Field(None, max_items=100)
 
 
 class ProductUpdateData(BaseModel):
@@ -102,9 +119,11 @@ class Product(ProductCreateData):
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     owner: str
     vendor: Optional[VendorInfo]
+    documents: Optional[Document]
 
 
 ProductCreateInput = AuthorizedInput[ProductCreateData]
+VendorProductCreateInput = AuthorizedInput[VendorProductCreateData]
 ProductUpdateInput = AuthorizedInput[ProductUpdateData]
 ProductResponse = Response[Product]
 ProductCreateResponse = CreateResponse[Product]

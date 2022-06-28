@@ -50,6 +50,15 @@ async def create_criteria(api, profile):
     return data
 
 
+def set_requirements_to_responses(requirement_responses, profile):
+    for item, rr in enumerate(requirement_responses):
+        if item < 5:
+            rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["id"]
+        elif item == 5:
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["id"]
+        elif item == 6:
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["id"]
+
 @pytest.fixture
 async def db(event_loop):
     try:
@@ -100,13 +109,7 @@ async def profile(api, category):
 async def product(api, profile):
     data = get_fixture_json('product')
     data['relatedProfile'] = profile["data"]["id"]
-    for item, rr in enumerate(data["requirementResponses"]):
-        if item < 5:
-            rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["id"]
-        elif item == 5:
-            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["id"]
-        elif item == 6:
-            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["id"]
+    set_requirements_to_responses(data["requirementResponses"], profile)
 
     resp = await api.post(
         "/api/products",
@@ -151,3 +154,18 @@ async def vendor(api, category):
     )
     assert resp.status == 200
     return result
+
+
+@pytest.fixture
+async def vendor_product(api, vendor, profile):
+    data = get_fixture_json('vendor_product')
+    data['relatedProfile'] = profile["data"]["id"]
+    set_requirements_to_responses(data["requirementResponses"], profile)
+
+    resp = await api.post(
+        f"/api/vendors/{vendor['data']['id']}/products?access_token={vendor['access']['token']}",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 201, await resp.json()
+    return await resp.json()

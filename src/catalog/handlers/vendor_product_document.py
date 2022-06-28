@@ -11,17 +11,17 @@ from catalog.serializers.document import DocumentSerializer
 from catalog.doc_service import get_doc_download_url
 
 
-@class_view_swagger_path('/app/swagger/vendors/documents')
-class VendorDocumentView(View):
+@class_view_swagger_path('/app/swagger/vendors/products/documents')
+class VendorProductDocumentView(View):
 
     @classmethod
-    async def collection_get(cls, request, vendor_id):
-        obj = await db.read_vendor(vendor_id)
+    async def collection_get(cls, request, vendor_id, product_id):
+        obj = await db.read_product(product_id, {"vendor.id": vendor_id})
         return {"data": [DocumentSerializer(d).data for d in obj.get("documents", "")]}
 
     @classmethod
-    async def get(cls, request, vendor_id, doc_id):
-        obj = await db.read_vendor(vendor_id)
+    async def get(cls, request, vendor_id, product_id, doc_id):
+        obj = await db.read_product(product_id, {"vendor.id": vendor_id})
         for d in obj.get("documents", ""):
             if d["id"] == doc_id:
                 if request.query.get("download"):
@@ -32,40 +32,40 @@ class VendorDocumentView(View):
             raise HTTPNotFound(text="Document not found")
 
     @classmethod
-    async def post(cls, request, vendor_id):
-        # validate_accreditation(request, "vendor")
-        # import and validate data
+    async def post(cls, request, vendor_id, product_id):
+
         json = await request.json()
         body = DocumentPostInput(**json)
         data = body.data.dict_without_none()
+        data['datePublished'] = data['dateModified'] = get_now().isoformat()
+        vendor = await db.read_vendor(vendor_id)
+        validate_access_token(request, vendor, body.access)
 
-        async with db.read_and_update_vendor(vendor_id) as vendor:
-            validate_access_token(request, vendor, body.access)
+        async with db.read_and_update_product(product_id,  {"vendor.id": vendor_id}) as product:
+            if "documents" not in product:
+                product["documents"] = []
+            product["documents"].append(data)
 
-            if "documents" not in vendor:
-                vendor["documents"] = []
-            vendor["documents"].append(data)
-
-        response = {"data": DocumentSerializer(data).data}
-        return response
+        return {"data": DocumentSerializer(data).data}
 
     @classmethod
     @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
                  fail_exception=HTTPConflict(text="Try again later"))
-    async def put(cls, request, vendor_id, doc_id):
+    async def put(cls, request, vendor_id, product_id, doc_id):
         # validate_accreditation(request, "category")
-        async with db.read_and_update_vendor(vendor_id) as vendor:
+        async with db.read_and_update_product(product_id, {"vendor.id": vendor_id}) as product:
             # import and validate data
             json = await request.json()
             body = DocumentPostInput(**json)
+            vendor = db.read_vendor(vendor_id)
             validate_access_token(request, vendor, body.access)
             # find & append doc
-            for d in vendor.get("documents", ""):
+            for d in product.get("documents", ""):
                 if d["id"] == doc_id:
                     data = body.data.dict_without_none()
                     data["id"] = doc_id
                     data['datePublished'] = data['dateModified'] = get_now().isoformat()
-                    vendor["documents"].append(data)
+                    product["documents"].append(data)
                     break
             else:
                 raise HTTPNotFound(text="Document not found")
@@ -74,17 +74,18 @@ class VendorDocumentView(View):
     @classmethod
     @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
                  fail_exception=HTTPConflict(text="Try again later"))
-    async def patch(cls, request, vendor_id, doc_id):
+    async def patch(cls, request, vendor_id, product_id, doc_id):
         # validate_accreditation(request, "category")
-        async with db.read_and_update_vendor(vendor_id) as vendor:
+        async with db.read_and_update_product(product_id, {"vendor.id": vendor_id}) as product:
             # import and validate data
             json = await request.json()
             body = DocumentPatchInput(**json)
+            vendor = db.read_vendor(vendor_id)
             validate_access_token(request, vendor, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
             # find & update doc
-            for d in vendor.get("documents", ""):
+            for d in product.get("documents", ""):
                 if d["id"] == doc_id:
                     initial = dict(d)
                     d.update(data)
