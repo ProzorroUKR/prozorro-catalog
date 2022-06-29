@@ -6,7 +6,7 @@ from catalog import db
 from catalog.models.product import VendorProductCreateInput
 from catalog.swagger import class_view_swagger_path
 from catalog.utils import get_now
-from catalog.auth import validate_access_token
+from catalog.auth import validate_access_token, validate_accreditation
 from catalog.serializers.product import ProductSerializer
 from catalog.validations import (
     validate_product_related_profile,
@@ -20,6 +20,7 @@ class VendorProductView(View):
 
     @classmethod
     async def post(cls, request, vendor_id: str) -> dict:
+        validate_accreditation(request, "vendor_products")
         vendor = await db.read_vendor(vendor_id)
         json = await request.json()
         body = VendorProductCreateInput(**json)

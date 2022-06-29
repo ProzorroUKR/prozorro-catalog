@@ -1,5 +1,5 @@
 import random
-from aiohttp.web import HTTPConflict, HTTPBadRequest
+from aiohttp.web import HTTPConflict
 from pymongo.errors import OperationFailure
 from catalog import db
 from catalog.swagger import class_view_swagger_path
@@ -38,7 +38,7 @@ class VendorView(BaseView):
 
     @classmethod
     async def post(cls, request):
-        # validate_accreditation(request, "vendor")
+        validate_accreditation(request, "vendors")
         # import and validate data
         json = await request.json()
         body = VendorPostInput(**json)

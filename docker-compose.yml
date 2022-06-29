@@ -59,6 +59,7 @@ services:
 #    web:
 #        image: nginx
 #        volumes:
+#            - ./htpasswd:/etc/nginx/conf.d/htpasswd
 #            - ./nginx.conf:/etc/nginx/conf.d/default.conf
 #            - ./images:/etc/nginx/html/static/images
 #        ports:

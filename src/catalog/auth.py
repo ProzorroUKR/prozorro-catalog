@@ -7,6 +7,7 @@ from secrets import compare_digest, token_hex
 
 
 def login_user(request, allow_anonymous=True):
+    # TODO use request.headers.get("X-Username") ?
     authorization = request.headers.get("Authorization")
     if authorization:
         auth = BasicAuth.decode(authorization)

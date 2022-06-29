@@ -1,5 +1,18 @@
-from .base import TEST_AUTH, TEST_AUTH_ANOTHER
+from .base import TEST_AUTH, TEST_AUTH_ANOTHER, TEST_AUTH_NO_PERMISSION
 from catalog.doc_service import generate_test_url
+
+
+async def test_vendor_create_no_permission(api):
+    test_vendor = api.get_fixture_json('vendor')
+    test_vendor.pop("categories")
+    resp = await api.post(
+        '/api/vendors',
+        json={"data": test_vendor},
+        auth=TEST_AUTH_NO_PERMISSION,
+    )
+    result = await resp.json()
+    assert resp.status == 403, result
+    assert {'errors': ["Forbidden 'vendors' write operation"]} == result
 
 
 async def test_vendor_create_without_category(api):
