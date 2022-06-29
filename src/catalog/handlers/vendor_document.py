@@ -38,7 +38,7 @@ class VendorDocumentView(View):
         json = await request.json()
         body = DocumentPostInput(**json)
         data = body.data.dict_without_none()
-
+        data['datePublished'] = data['dateModified'] = get_now().isoformat()
         async with db.read_and_update_vendor(vendor_id) as vendor:
             validate_access_token(request, vendor, body.access)
 
