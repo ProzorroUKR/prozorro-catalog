@@ -102,14 +102,18 @@ async def test_311_profile_limit_offset(api, category):
         profile_map[profile_id] = resp_json['data']['dateModified']
 
     offset = ''
+    pre_next_page = None
     for i in range(4):
         resp = await api.get(f"/api/profiles?limit=5&offset={quote(offset)}")
         assert resp.status == 200
         resp_json = await resp.json()
+
         if i == 3:
             assert len(resp_json['data']) == 0
-            assert 'next_page' not in resp_json
+            assert pre_next_page == resp_json['next_page']
             break
+        pre_next_page = resp_json["next_page"]
+
         assert len(resp_json['data']) > 0
         assert len(resp_json['data']) <= 5
         assert 'next_page' in resp_json

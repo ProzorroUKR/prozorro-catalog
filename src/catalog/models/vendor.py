@@ -5,6 +5,7 @@ from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse, AuthorizedInput
 from catalog.models.common import Organization, ContactPoint
 from catalog.models.document import Document, DocumentSign
+from enum import Enum
 
 
 class CategoryLink(BaseModel):
@@ -33,12 +34,18 @@ class VendorPatchData(BaseModel):
         return v
 
 
+class VendorStatus(str, Enum):
+    pending = "pending"
+    active = "active"
+
+
 class Vendor(VendorPostData):
     id: str = Field(..., min_length=32, max_length=32)
     isActive: bool = False
     dateModified: datetime
     dateCreated: datetime
     owner: str
+    status: VendorStatus = VendorStatus.pending
     documents: List[Document]
 
 

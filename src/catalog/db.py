@@ -17,6 +17,8 @@ from catalog.settings import (
     DB_NAME,
     MAX_LIST_LIMIT,
 )
+from urllib.parse import urlparse, parse_qsl, unquote, urlencode
+from catalog.context import get_request
 
 logger = logging.getLogger(__name__)
 
@@ -162,11 +164,39 @@ async def paginated_result(collection, *_, offset, limit, reverse, filters=None)
         [("dateModified",
           DESCENDING if reverse else ASCENDING)]
     ).limit(limit).to_list(None)
-
     result = {"data": [rename_id(i) for i in items]}
+
+    # generate forward & back links
+    request = get_request()
+    base_url = f"{request.scheme}://{request.host}"
+
+    # next page
+    next_params = {
+        "offset": offset,
+        "limit": limit,
+    }
+    prev_params = dict(next_params)
     if items:
-        result["next_page"] = {
-            "offset": urlsafe_b64encode(items[-1]['dateModified'].encode()).decode()
+        next_params["offset"] = items[-1]['dateModified']
+        prev_params["offset"] = items[0]['dateModified']
+    if reverse:
+        next_params["descending"] = "1"
+    next_path = f"{request.path}?{urlencode(next_params)}"
+    result["next_page"] = {
+        "offset": next_params["offset"],
+        "path": next_path,
+        "uri": f"{base_url}{next_path}"
+    }
+
+    # prev page
+    if offset:
+        if not reverse:
+            prev_params["descending"] = "1"
+        prev_path = f"{request.path}?{urlencode(prev_params)}"
+        result["prev_page"] = {
+            "offset": prev_params["offset"],
+            "path": prev_path,
+            "uri": f"{base_url}{prev_path}"
         }
     return result
 

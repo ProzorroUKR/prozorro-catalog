@@ -223,14 +223,16 @@ async def test_430_product_limit_offset(api, profile):
         assert test_product_map[item['id']] == item['dateModified']
 
     offset = ''
+    prev_resp_next = None
     while True:
         resp = await api.get('/api/products?limit=5&offset=' + quote(offset))
         assert resp.status == 200
         resp_json = await resp.json()
         if len(resp_json['data']) == 0:
-            assert 'next_page' not in resp_json
+            assert prev_resp_next == resp_json["next_page"]
             break
         assert 'next_page' in resp_json
+        prev_resp_next = resp_json['next_page']
         assert 'offset' in resp_json['next_page']
         offset = resp_json['next_page']['offset']
 

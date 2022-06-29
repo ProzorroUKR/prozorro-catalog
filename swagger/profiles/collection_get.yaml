@@ -14,7 +14,7 @@ parameters:
     type: int
   description: Limit
 - in: query
-  name: reverse
+  name: descending
   schema:
     type: int
   description: Descending order

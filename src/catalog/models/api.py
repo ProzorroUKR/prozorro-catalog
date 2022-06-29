@@ -49,13 +49,16 @@ class ListItem(BaseModel):
     dateModified: str
 
 
-class NextPage(BaseModel):
+class PageLink(BaseModel):
     offset: str
+    path: str
+    uri: str
 
 
 class PaginatedList(BaseModel):
     data: List[ListItem]
-    next_page: Optional[NextPage]
+    next_page: PageLink
+    prev_page: Optional[PageLink]
 
 
 AnyInput = Input[Any]

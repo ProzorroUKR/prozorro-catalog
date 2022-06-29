@@ -167,6 +167,7 @@ async def test_111_limit_offset(api):
         assert test_category_map[item['id']] == item['dateModified']
     assert 'next_page' in resp_json
     assert 'offset' in resp_json['next_page']
+    prev_resp_json = resp_json
     offset_normal = resp_json['next_page']['offset']
 
     # third page forward (must be empty)
@@ -174,7 +175,7 @@ async def test_111_limit_offset(api):
     assert resp.status == 200
     resp_json = await resp.json()
     assert len(resp_json['data']) == 0
-    assert 'next_page' not in resp_json
+    assert prev_resp_json['next_page'] == resp_json['next_page']
 
     # second page backward
     resp = await api.get('/api/categories?limit=8&reverse=1&offset=' + quote(offset_reverse))
