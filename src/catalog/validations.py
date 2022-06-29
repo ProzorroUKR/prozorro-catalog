@@ -9,7 +9,7 @@ def validate_product_related_profile(profile):
 
 
 def validate_product_active_vendor(vendor):
-    if not vendor['isActive']:
+    if not vendor['isActivated']:
         raise HTTPBadRequest(text="Vendor should be activated.")
 
 

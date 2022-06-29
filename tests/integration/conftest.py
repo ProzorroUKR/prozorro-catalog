@@ -146,7 +146,7 @@ async def vendor(api, category):
     assert resp.status == 201, result
     uid, access = result["data"]["id"], result["access"]
 
-    patch_data = {"isActive": True}
+    patch_data = {"isActivated": True}
     resp = await api.patch(
         f'/api/vendors/{uid}?access_token={access["token"]}',
         json={"data": patch_data},

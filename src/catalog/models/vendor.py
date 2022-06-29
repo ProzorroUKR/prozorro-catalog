@@ -26,9 +26,9 @@ class VendorPostData(BaseModel):
 
 
 class VendorPatchData(BaseModel):
-    isActive: Optional[bool]
+    isActivated: Optional[bool]
 
-    @validator('isActive')
+    @validator('isActivated')
     def activation_only(cls, v, values, **kwargs):
         assert v is True, "activation is only allowed action"
         return v
@@ -41,7 +41,7 @@ class VendorStatus(str, Enum):
 
 class Vendor(VendorPostData):
     id: str = Field(..., min_length=32, max_length=32)
-    isActive: bool = False
+    isActivated: bool = False
     dateModified: datetime
     dateCreated: datetime
     owner: str

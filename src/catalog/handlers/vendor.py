@@ -22,7 +22,7 @@ class VendorView(BaseView):
             offset=offset,
             limit=limit,
             reverse=reverse,
-            filters={"isActive": True}
+            filters={"isActivated": True}
         )
         return response
 

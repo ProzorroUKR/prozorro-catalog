@@ -18,7 +18,7 @@ class VendorState(BaseState):
             identifier_id=data["vendor"]["identifier"]["id"],
         )
         data['id'] = uuid4().hex
-        data['isActive'] = False
+        data['isActivated'] = False
         data['dateCreated'] = data['dateModified'] = get_now().isoformat()
 
         super().on_post(data)
@@ -29,7 +29,7 @@ class VendorState(BaseState):
             after['dateModified'] = get_now().isoformat()
 
             # validate activation is allowed
-            if after.get("isActive") and not before.get("isActive"):
+            if after.get("isActivated") and not before.get("isActivated"):
                 await cls.validate_vendor_identifier(action="activate",
                                                      identifier_id=after["vendor"]["identifier"]["id"])
         super().on_patch(before, after)
@@ -41,7 +41,7 @@ class VendorState(BaseState):
             limit=1,
             reverse=False,
             filters={
-                "isActive": True,
+                "isActivated": True,
                 "vendor.identifier.id": identifier_id,
             }
         )
@@ -53,4 +53,4 @@ class VendorState(BaseState):
 
     @classmethod
     def always(cls, data):
-        data["status"] = "active" if data.get("isActive") else "pending"
+        data["status"] = "active" if data.get("isActivated") else "pending"

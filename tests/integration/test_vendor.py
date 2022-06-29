@@ -109,8 +109,8 @@ async def test_vendor_create(api):
 
     # check generated data
     additional_fields = {k: v for k, v in data.items() if k not in test_vendor}
-    assert set(additional_fields.keys()) == {'id', 'dateCreated', 'dateModified', 'owner', 'isActive', "status"}
-    assert data["isActive"] is False
+    assert set(additional_fields.keys()) == {'id', 'dateCreated', 'dateModified', 'owner', 'isActivated', "status"}
+    assert data["isActivated"] is False
     assert data["status"] == "pending"
 
 
@@ -126,7 +126,7 @@ async def test_vendor_patch(api, category):
     assert resp.status == 201, result
     vendor, access = result["data"], result["access"]
 
-    patch_data = {"isActive": False}
+    patch_data = {"isActivated": False}
     resp = await api.patch(
         '/api/vendors/1',
         json={"data": patch_data},
@@ -142,9 +142,9 @@ async def test_vendor_patch(api, category):
     )
     assert resp.status == 400
     result = await resp.json()
-    assert result == {'errors': ['activation is only allowed action: data.isActive']}
+    assert result == {'errors': ['activation is only allowed action: data.isActivated']}
 
-    patch_data = {"isActive": True}
+    patch_data = {"isActivated": True}
     resp = await api.patch(
         f'/api/vendors/{uid}',
         json={"data": patch_data},
@@ -172,7 +172,7 @@ async def test_vendor_patch(api, category):
     result = await resp.json()
     assert result == {'errors': ['Owner mismatch']}
 
-    assert vendor["isActive"] is False
+    assert vendor["isActivated"] is False
     resp = await api.patch(
         f'/api/vendors/{uid}?access_token={access["token"]}',
         json={"data": patch_data},
@@ -180,7 +180,7 @@ async def test_vendor_patch(api, category):
     )
     assert resp.status == 200
     result = await resp.json()
-    assert result["data"]["isActive"] is True
+    assert result["data"]["isActivated"] is True
     assert result["data"]["dateModified"] > vendor["dateModified"]
     assert result["data"]["dateCreated"] == vendor["dateCreated"]
 
@@ -217,8 +217,8 @@ async def test_vendor_duplicate(api, category):
     vendor2, access2 = result2["data"], result2["access"]
 
     # first vendor activation
-    patch_data = {"isActive": True}
-    assert vendor["isActive"] is False
+    patch_data = {"isActivated": True}
+    assert vendor["isActivated"] is False
     resp = await api.patch(
         f'/api/vendors/{vendor["id"]}?access_token={access["token"]}',
         json={"data": patch_data},
@@ -226,7 +226,7 @@ async def test_vendor_duplicate(api, category):
     )
     assert resp.status == 200
     result = await resp.json()
-    assert result["data"]["isActive"] is True
+    assert result["data"]["isActivated"] is True
 
     # try to activate second draft
     resp = await api.patch(
@@ -259,7 +259,7 @@ async def test_vendor_get(api, vendor):
     result = await resp.json()
     assert set(result.keys()) == {'data'}
     assert set(result["data"].keys()) == {'categories', 'id', 'vendor', 'owner', "status",
-                                          'isActive', 'dateCreated', 'dateModified'}
+                                          'isActivated', 'dateCreated', 'dateModified'}
     assert result["data"]["status"] == "active"
 
 
@@ -316,7 +316,7 @@ async def test_vendor_list(api, vendor):
     )
     result = await resp.json()
     assert resp.status == 201, result
-    assert result["data"]["isActive"] is False
+    assert result["data"]["isActivated"] is False
 
     # still only one
     resp = await api.get(f'/api/vendors')

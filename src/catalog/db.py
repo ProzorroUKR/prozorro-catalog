@@ -539,9 +539,9 @@ def get_vendor_collection():
 async def init_vendor_indexes():
     modified_index = IndexModel(
         [("dateModified", ASCENDING)],
-        partialFilterExpression={"isActive": True},
+        partialFilterExpression={"isActivated": True},
         background=True,
-        name="active_vendors"
+        name="activated_vendors"
     )
     try:
         await get_vendor_collection().create_indexes([modified_index])
