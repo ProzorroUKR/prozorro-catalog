@@ -80,11 +80,11 @@ class Classification(BaseModel):
 
 
 class Address(BaseModel):
-    countryName: str = Field(..., max_length=80)
-    locality: str = Field(..., max_length=80)
-    postalCode: str = Field(..., max_length=20)
-    region: str = Field(..., max_length=80)
-    streetAddress: str = Field(..., max_length=250)
+    countryName: str = Field(..., min_length=1, max_length=80)
+    locality: str = Field(..., min_length=1, max_length=80)
+    postalCode: str = Field(..., min_length=1, max_length=20)
+    region: str = Field(..., min_length=1, max_length=80)
+    streetAddress: str = Field(..., min_length=1, max_length=250)
 
     @validator('region')
     def region_standard(cls, v, values):
@@ -119,7 +119,7 @@ class OfferDeliveryAddress(Address):  # only countryName is required
 
 
 class ContactPoint(BaseModel):
-    name: str = Field(..., max_length=250)
+    name: str = Field(..., min_length=1, max_length=250)
     telephone: str = Field(..., max_length=250)
     url: Optional[str] = Field(None, max_length=250)
     email: Optional[str] = Field(None, max_length=250)
@@ -134,8 +134,8 @@ class ContactPoint(BaseModel):
 
 class Identifier(BaseModel):
     id: str = Field(..., min_length=4, max_length=50)
-    legalName: str = Field(..., max_length=250)
-    scheme: str = Field(..., max_length=20)
+    legalName: str = Field(..., min_length=1, max_length=250)
+    scheme: str = Field(..., min_length=1, max_length=20)
 
 
 class ProcuringEntityKind(str, Enum):
@@ -144,7 +144,7 @@ class ProcuringEntityKind(str, Enum):
 
 
 class Organization(BaseModel):
-    name: constr(max_length=250)
+    name: str = Field(..., min_length=1, max_length=250)
     address: Address
     contactPoint: ContactPoint
     identifier: Identifier
