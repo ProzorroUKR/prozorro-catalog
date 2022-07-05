@@ -37,7 +37,7 @@ class VendorProductIdentifier(BaseModel):
 
 
 class Brand(BaseModel):
-    name: constr(max_length=250)
+    name: constr(min_length=1, max_length=250)
     uri: constr(max_length=250)
     alternativeNames: Optional[List[constr(max_length=250)]]
 
@@ -60,7 +60,7 @@ class VendorInfo(BaseModel):
 
 
 class ProductInfo(BaseModel):
-    name: constr(max_length=250)
+    name: constr(min_length=1, max_length=250)
     uri: Optional[constr(max_length=250)]
     alternativeNames: Optional[List[constr(max_length=250)]]
 
