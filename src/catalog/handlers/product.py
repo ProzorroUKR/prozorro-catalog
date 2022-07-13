@@ -67,8 +67,10 @@ class ProductView(View):
             # import and validate data
             json = await request.json()
             body = ProductUpdateInput(**json)
-
+            profile_id = product['relatedProfile']
+            profile = await db.read_profile(profile_id)
             validate_access_token(request, product, body.access)
+            validate_product_to_profile(profile, product)
             # export data back to dict
             data = body.data.dict_without_none()
             # update profile with valid data
