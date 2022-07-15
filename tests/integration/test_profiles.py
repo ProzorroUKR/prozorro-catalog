@@ -294,7 +294,7 @@ async def test_330_requirement_create(api, profile):
     ]
 
     del requirement_data["data"]["expectedValues"]
-    requirement_data["data"]["maxValue"] = "3"
+    requirement_data["data"]["maxValue"] = ""
     resp = await api.post(
         f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
         json=requirement_data,

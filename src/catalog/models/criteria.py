@@ -76,7 +76,10 @@ class RequirementBaseValidators(BaseModel):
         }
 
         for k, v in error_map.items():
-            if values[k] and any(values[i] for i in v):
+            if (
+                    values.get(k) is not None
+                    and any(values.get(i) is not None for i in v)
+            ):
                 raise ValueError(f"{k} couldn't exists together with one of {v}")
         return values
 

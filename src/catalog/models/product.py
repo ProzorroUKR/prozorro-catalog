@@ -71,17 +71,8 @@ class RequirementResponse(BaseModel):
     values: List[Union[StrictInt, StrictFloat, StrictBool, StrictStr]] = Field(None, max_items=100)
 
 
-class VendorProductCreateData(BaseModel):
-    title: str = Field(..., min_length=1, max_length=80)
-    relatedProfile: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
-    description: str = Field(..., min_length=1, max_length=1000)
-    classification: Classification
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
-    identifier: VendorProductIdentifier
-    brand: VendorProductBrand
-    product: ProductInfo
+class ProductRequirementResponses(BaseModel):
     requirementResponses: Optional[List[RequirementResponse]] = Field(None, max_items=100)
-    status: ProductStatus = ProductStatus.active
 
     @validator('requirementResponses')
     def unique_responses_ids(cls, v):
@@ -92,6 +83,18 @@ class VendorProductCreateData(BaseModel):
         return v
 
 
+class VendorProductCreateData(ProductRequirementResponses):
+    title: str = Field(..., min_length=1, max_length=80)
+    relatedProfile: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
+    description: str = Field(..., min_length=1, max_length=1000)
+    classification: Classification
+    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
+    identifier: VendorProductIdentifier
+    brand: VendorProductBrand
+    product: ProductInfo
+    status: ProductStatus = ProductStatus.active
+
+
 class ProductCreateData(VendorProductCreateData):
     additionalProperties: Optional[List[ProductProperty]] = Field(None, max_items=100)
     identifier: ProductIdentifier
@@ -100,7 +103,7 @@ class ProductCreateData(VendorProductCreateData):
     images: Optional[List[Image]] = Field(None, max_items=100)
 
 
-class ProductUpdateData(BaseModel):
+class ProductUpdateData(ProductRequirementResponses):
     title: Optional[str] = Field(None, min_length=1, max_length=80)
     description: Optional[str] = Field(None, min_length=1, max_length=1000)
     classification: Optional[Classification]
@@ -112,7 +115,6 @@ class ProductUpdateData(BaseModel):
     product: Optional[ProductInfo]
     manufacturers: Optional[List[Manufacturer]] = Field(None, max_items=100)
     images: Optional[List[Image]] = Field(None, max_items=100)
-    requirementResponses: Optional[List[RequirementResponse]] = Field(None, max_items=100)
     status: Optional[ProductStatus]
 
 
