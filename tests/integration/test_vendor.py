@@ -76,6 +76,31 @@ async def test_vendor_create_with_hidden_category(api):
     assert {'errors': [f'Category {category_id} is not active']} == result
 
 
+async def test_vendor_without_region(api, category):
+    data = api.get_fixture_json('vendor')
+    data['categories'] = [{"id": category["data"]["id"]}]
+    # 1
+    data['vendor']["address"].pop("region")
+    resp = await api.post(
+        f"/api/vendors",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': ["region is required if countryName == 'Україна': data.vendor.address.__root__"]} == result
+
+    # 2
+    data['vendor']["address"]["countryName"] = "Антарктика"
+    resp = await api.post(
+        f"/api/vendors",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+
+
 async def test_vendor_create(api):
     data = api.get_fixture_json('category')
     resp = await api.put(

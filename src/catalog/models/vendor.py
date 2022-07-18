@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import Field, validator
+from pydantic import Field, validator, root_validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse, AuthorizedInput
 from catalog.models.common import Organization, ContactPoint, Address
@@ -16,7 +16,18 @@ class VendorContactPoint(ContactPoint):
     email: str = Field(..., max_length=250)
 
 
+class VendorAddress(Address):
+    region: Optional[str] = Field(None, min_length=1, max_length=80)
+
+    @root_validator
+    def process_url(cls, values):
+        if values["countryName"] == "Україна" and not values.get("region"):
+            raise ValueError("region is required if countryName == 'Україна'")
+        return values
+
+
 class VendorOrganization(Organization):
+    address: VendorAddress
     contactPoint: VendorContactPoint
 
 
