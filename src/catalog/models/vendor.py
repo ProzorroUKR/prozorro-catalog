@@ -3,7 +3,7 @@ from typing import Optional, List
 from pydantic import Field, validator, root_validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse, AuthorizedInput
-from catalog.models.common import Organization, ContactPoint, Address
+from catalog.models.common import Organization, ContactPoint, Address, UKRAINE_COUNTRY_NAME_UK
 from catalog.models.document import Document, DocumentSign
 from enum import Enum
 
@@ -20,8 +20,9 @@ class VendorAddress(Address):
     region: Optional[str] = Field(None, min_length=1, max_length=80)
 
     @root_validator
-    def process_url(cls, values):
-        if values["countryName"] == "Україна" and not values.get("region"):
+    def validate_address(cls, values):
+        country_name = values.get("countryName")
+        if country_name == UKRAINE_COUNTRY_NAME_UK and not values.get("region"):
             raise ValueError("region is required if countryName == 'Україна'")
         return values
 
