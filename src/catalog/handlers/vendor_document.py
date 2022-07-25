@@ -38,10 +38,11 @@ class VendorDocumentView(View):
         json = await request.json()
         body = DocumentPostInput(**json)
         data = body.data.dict_without_none()
-        data['datePublished'] = data['dateModified'] = get_now().isoformat()
+
         async with db.read_and_update_vendor(vendor_id) as vendor:
             validate_access_token(request, vendor, body.access)
 
+            vendor['dateModified'] = data['datePublished'] = data['dateModified'] = get_now().isoformat()
             if "documents" not in vendor:
                 vendor["documents"] = []
             vendor["documents"].append(data)
@@ -64,7 +65,7 @@ class VendorDocumentView(View):
                 if d["id"] == doc_id:
                     data = body.data.dict_without_none()
                     data["id"] = doc_id
-                    data['datePublished'] = data['dateModified'] = get_now().isoformat()
+                    vendor['dateModified'] = data['datePublished'] = data['dateModified'] = get_now().isoformat()
                     vendor["documents"].append(data)
                     break
             else:
@@ -89,7 +90,7 @@ class VendorDocumentView(View):
                     initial = dict(d)
                     d.update(data)
                     if initial != d:
-                        data['dateModified'] = get_now().isoformat()
+                        vendor['dateModified'] = data['dateModified'] = get_now().isoformat()
                     break
             else:
                 raise HTTPNotFound(text="Document not found")

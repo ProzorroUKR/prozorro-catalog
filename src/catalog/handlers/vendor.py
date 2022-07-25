@@ -6,7 +6,7 @@ from catalog.swagger import class_view_swagger_path
 from catalog.handlers.base import BaseView
 from catalog.state.vendor import VendorState
 from catalog.auth import set_access_token, validate_accreditation, validate_access_token
-from catalog.utils import pagination_params, async_retry
+from catalog.utils import pagination_params, async_retry, get_now
 from catalog.models.vendor import VendorPostInput, VendorPatchInput
 from catalog.serializers.vendor import VendorSignSerializer, VendorSerializer
 
@@ -62,6 +62,7 @@ class VendorView(BaseView):
             validate_access_token(request, vendor, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
+            data['dateModified'] = get_now().isoformat()
             # update profile with valid data
             initial_data = dict(vendor)
             vendor.update(data)
