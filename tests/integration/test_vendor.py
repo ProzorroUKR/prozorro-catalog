@@ -349,3 +349,19 @@ async def test_vendor_list(api, vendor):
     result = await resp.json()
     assert len(result["data"]) == 1
     assert vendor["id"] == result["data"][0]["id"]
+
+
+async def test_create_vendor_with_invalid_identifier(api):
+    test_vendor = api.get_fixture_json('vendor')
+    test_vendor['vendor']['identifier']['scheme'] = 'SOME_CODE'
+    resp = await api.post(
+        '/api/vendors',
+        json={"data": test_vendor},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': [
+        'must be one of organizations/identifier_scheme.json codes: data.vendor.identifier.scheme'
+    ]} == result
+
