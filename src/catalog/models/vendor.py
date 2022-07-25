@@ -1,11 +1,16 @@
 from datetime import datetime
 from typing import Optional, List
 from pydantic import Field, validator, root_validator
+from enum import Enum
+
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse, AuthorizedInput
-from catalog.models.common import Organization, ContactPoint, Address, UKRAINE_COUNTRY_NAME_UK
+from catalog.models.common import Identifier, Organization, ContactPoint, Address, UKRAINE_COUNTRY_NAME_UK
 from catalog.models.document import Document, DocumentSign
-from enum import Enum
+import standards
+
+
+ORA_CODES = [i["code"] for i in standards.load("organizations/identifier_scheme.json")["data"]]
 
 
 class CategoryLink(BaseModel):
@@ -27,9 +32,18 @@ class VendorAddress(Address):
         return values
 
 
+class VendorIdentifier(Identifier):
+    @validator("scheme")
+    def scheme_standard(cls, v):
+        if v not in ORA_CODES:
+            raise ValueError("must be one of organizations/identifier_scheme.json codes")
+        return v
+
+
 class VendorOrganization(Organization):
     address: VendorAddress
     contactPoint: VendorContactPoint
+    identifier: VendorIdentifier
 
 
 class VendorPostData(BaseModel):
