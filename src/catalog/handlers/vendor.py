@@ -62,7 +62,6 @@ class VendorView(BaseView):
             validate_access_token(request, vendor, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
-            data['dateModified'] = get_now().isoformat()
             # update profile with valid data
             initial_data = dict(vendor)
             vendor.update(data)
