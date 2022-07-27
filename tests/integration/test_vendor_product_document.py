@@ -30,6 +30,18 @@ async def test_vendor_product_doc_create(api, vendor, vendor_product):
         f"/api/vendors/{vendor['id']}/products/{product['id']}/documents/{data['id']}?download={ds_uid}"
     assert expected == data["url"]
 
+    resp = await api.patch(
+        f'{req_path}/{data["id"]}',
+        json={
+            "data": {"title": "Updated title"},
+            "access": access,
+        },
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 200, result
+    assert result["data"]["title"] == "Updated title"
+
 
 async def test_vendor_product_doc_invalid_signature(api, vendor, vendor_product):
     vendor, access = vendor["data"], vendor["access"]
