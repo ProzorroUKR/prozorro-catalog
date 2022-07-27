@@ -1,10 +1,11 @@
 from catalog.serializers.base import BaseSerializer
-from catalog.context import get_request
+from catalog.context import get_request, get_request_scheme
 
 
 def absolute_url_serializer(_, url):
     request = get_request()
-    return f"{request.scheme}://{request.host}{url}"
+    req_scheme = get_request_scheme()
+    return f"{req_scheme}://{request.host}{url}"
 
 
 class DocumentSerializer(BaseSerializer):

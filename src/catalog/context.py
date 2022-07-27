@@ -10,6 +10,11 @@ def get_request():
     return request_var.get()
 
 
+def get_request_scheme():
+    request = get_request()
+    return request.headers.get('X-Forwarded-Proto', request.scheme)
+
+
 def set_request(request):
     request_var.set(request)
 
