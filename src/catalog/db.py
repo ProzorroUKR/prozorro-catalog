@@ -18,7 +18,7 @@ from catalog.settings import (
     MAX_LIST_LIMIT,
 )
 from urllib.parse import urlparse, parse_qsl, unquote, urlencode
-from catalog.context import get_request
+from catalog.context import get_request, get_request_scheme
 
 logger = logging.getLogger(__name__)
 
@@ -168,7 +168,8 @@ async def paginated_result(collection, *_, offset, limit, reverse, filters=None)
 
     # generate forward & back links
     request = get_request()
-    base_url = f"{request.scheme}://{request.host}"
+    req_scheme = get_request_scheme()
+    base_url = f"{req_scheme}://{request.host}"
 
     # next page
     next_params = {
