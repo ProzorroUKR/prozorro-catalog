@@ -1,10 +1,14 @@
 from catalog.api import create_application
 from catalog.db import flush_database, init_mongo, get_database
+from catalog.doc_service import generate_test_url
 from json import loads
 from .base import TEST_AUTH
 from uuid import uuid4
 import os.path
 import pytest
+
+
+pytest_plugins = 'aiohttp.pytest_plugin'
 
 
 def get_fixture_json(name):
@@ -169,3 +173,26 @@ async def vendor_product(api, vendor, profile):
     )
     assert resp.status == 201, await resp.json()
     return await resp.json()
+
+@pytest.fixture
+async def vendor_document(api, vendor, profile):
+    vendor, access = vendor["data"], vendor["access"]
+    doc_hash = "0" * 32
+    doc_data = {
+        "title": "name.doc",
+        "url": generate_test_url(doc_hash),
+        "hash": f"md5:{doc_hash}",
+        "format": "application/msword",
+    }
+    resp = await api.post(
+        f'/api/vendors/{vendor["id"]}/documents',
+        json={
+            "data": doc_data,
+            "access": access,
+        },
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    return result
+

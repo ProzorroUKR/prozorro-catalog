@@ -29,6 +29,66 @@ async def test_vendor_doc_create(api, vendor):
     assert expected == data["url"]
 
 
+async def test_vendor_doc_put(api, vendor, vendor_document):
+    vendor, access = vendor["data"], vendor["access"]
+    doc_before_put = vendor_document["data"]
+
+    doc_hash = "1" * 32
+    doc_data = {
+        "title": "name1.doc",
+        "url": generate_test_url(doc_hash),
+        "hash": f"md5:{doc_hash}",
+        "format": "application/msword",
+    }
+    resp = await api.put(
+        f'/api/vendors/{vendor["id"]}/documents/{doc_before_put["id"]}',
+        json={
+            "data": doc_data,
+            "access": access,
+        },
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    doc_after_put = result["data"]
+
+    assert doc_before_put["dateModified"] != doc_after_put["dateModified"]
+    assert doc_before_put["url"] != doc_after_put["url"]
+    assert doc_after_put["url"].split("/")[-2] == "documents"
+
+    resp = await api.get(
+        f'/api/vendors/{vendor["id"]}/documents/{doc_before_put["id"]}',
+    )
+    assert resp.status == 200, result
+    assert result["data"] == doc_after_put
+
+
+async def test_vendor_doc_patch(api, vendor, vendor_document):
+    vendor, access = vendor["data"], vendor["access"]
+    doc_before_patch = vendor_document["data"]
+
+    resp = await api.patch(
+        f'/api/vendors/{vendor["id"]}/documents/{doc_before_patch["id"]}',
+        json={
+            "data": {"title": "changed"},
+            "access": access,
+        },
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 200, result
+    doc_after_patch = result["data"]
+
+    assert doc_before_patch["title"] != doc_after_patch["title"]
+    assert doc_before_patch["dateModified"] != doc_after_patch["dateModified"]
+
+    resp = await api.get(
+        f'/api/vendors/{vendor["id"]}/documents/{doc_before_patch["id"]}',
+    )
+    assert resp.status == 200, result
+    assert result["data"] == doc_after_patch
+
+
 async def test_vendor_doc_invalid_signature(api, vendor):
     vendor, access = vendor["data"], vendor["access"]
 

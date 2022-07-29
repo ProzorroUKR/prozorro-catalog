@@ -31,7 +31,7 @@ class BaseDocumentView(View):
     async def get(cls, request, **kwargs):
         obj = await cls.get_parent_obj(**kwargs)
         doc_id = kwargs.get("doc_id")
-        for d in obj.get("documents", ""):
+        for d in obj.get("documents", "")[::-1]:
             if d["id"] == doc_id:
                 if request.query.get("download"):
                     redirect_url = get_doc_download_url(d)
@@ -68,7 +68,7 @@ class BaseDocumentView(View):
             doc_id = kwargs.get("doc_id")
             await cls.validate_data(request, body, obj, **kwargs)
             # find & append doc
-            for d in obj.get("documents", ""):
+            for d in obj.get("documents", "")[::-1]:
                 if d["id"] == doc_id:
                     data = body.data.dict_without_none()
                     data["id"] = doc_id
@@ -77,7 +77,7 @@ class BaseDocumentView(View):
                     break
             else:
                 raise HTTPNotFound(text="Document not found")
-        return {"data": DocumentSerializer(d).data}
+        return {"data": DocumentSerializer(data).data}
 
     @classmethod
     @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
@@ -93,12 +93,12 @@ class BaseDocumentView(View):
             # export data back to dict
             data = body.data.dict_without_none()
             # find & update doc
-            for d in obj.get("documents", ""):
+            for d in obj.get("documents", "")[::-1]:
                 if d["id"] == doc_id:
                     initial = dict(d)
                     d.update(data)
                     if initial != d:
-                        obj['dateModified'] = data['dateModified'] = get_now().isoformat()
+                        obj['dateModified'] = d['dateModified'] = get_now().isoformat()
                     break
             else:
                 raise HTTPNotFound(text="Document not found")

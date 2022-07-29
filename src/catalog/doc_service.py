@@ -14,6 +14,9 @@ from .settings import (
     DOC_SERVICE_DEP_URL,
 )
 
+
+URL_DOC_KEY = "documents"
+
 signer = SigningKey(DOC_SERVICE_SIGNING_SEED, encoder=HexEncoder)
 signer_keyid = signer.verify_key.encode(encoder=HexEncoder)[:8].decode()
 
@@ -84,7 +87,10 @@ def generate_test_url(doc_hash):
 def build_api_document_url(api_uid, doc_service_url):
     r = get_request()
     doc_service_uid = get_doc_service_uid_from_url(doc_service_url)
-    return f"{r.path}/{api_uid}?download={doc_service_uid}"
+    doc_path = r.path
+    if URL_DOC_KEY in doc_path:
+        doc_path = doc_path[:doc_path.find(URL_DOC_KEY)+len(URL_DOC_KEY)]
+    return f"{doc_path}/{api_uid}?download={doc_service_uid}"
 
 
 def get_doc_service_uid_from_url(url):
