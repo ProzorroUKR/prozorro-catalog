@@ -8,9 +8,6 @@ import os.path
 import pytest
 
 
-pytest_plugins = 'aiohttp.pytest_plugin'
-
-
 def get_fixture_json(name):
     fixture_file = os.path.join("tests/fixtures", f"{name}.json")
     with open(fixture_file) as f:
