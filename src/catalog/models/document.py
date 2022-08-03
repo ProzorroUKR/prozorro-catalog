@@ -28,6 +28,12 @@ class DocumentPostData(BaseModel):
         return values
 
 
+class DocumentPutData(DocumentPostData):
+    @validator("id", always=True)
+    def generate_id(cls, v, values, **kwargs):
+        return v or uuid4().hex
+
+
 class DocumentPatchData(BaseModel):
     title: Optional[str] = Field(None, min_length=1)
     description: Optional[str]
@@ -46,6 +52,7 @@ class DocumentSign(BaseModel):
 
 
 DocumentPostInput = AuthorizedInput[DocumentPostData]
+DocumentPutInput = AuthorizedInput[DocumentPutData]
 DocumentPatchInput = AuthorizedInput[DocumentPatchData]
 DocumentList = ListResponse[Document]
 DocumentResponse = Response[Document]

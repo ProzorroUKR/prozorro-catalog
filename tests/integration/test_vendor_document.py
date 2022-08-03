@@ -51,8 +51,8 @@ async def test_vendor_doc_put(api, vendor, vendor_document):
     result = await resp.json()
     assert resp.status == 201, result
     doc_after_put = result["data"]
-
     assert doc_before_put["dateModified"] != doc_after_put["dateModified"]
+    assert doc_before_put["url"].split("?")[0] == doc_after_put["url"].split("?")[0]
     assert doc_before_put["url"] != doc_after_put["url"]
     assert doc_before_put["datePublished"] == doc_after_put["datePublished"]
     assert doc_after_put["url"].split("/")[-2] == "documents"

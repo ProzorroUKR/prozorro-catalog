@@ -3,7 +3,7 @@ from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPConflict, HTTPFound, HTTPNotFound
 from pymongo.errors import OperationFailure
 from catalog.utils import get_now, async_retry
-from catalog.models.document import DocumentPostInput, DocumentPatchInput
+from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput
 from catalog.serializers.document import DocumentSerializer
 from catalog.doc_service import get_doc_download_url
 
@@ -64,8 +64,9 @@ class BaseDocumentView(View):
         async with cls.read_and_update_object(**kwargs) as obj:
             # import and validate data
             json = await request.json()
-            body = DocumentPostInput(**json)
             doc_id = kwargs.get("doc_id")
+            json["data"]["id"] = doc_id
+            body = DocumentPutInput(**json)
             await cls.validate_data(request, body, obj, **kwargs)
             # find & append doc
             for d in obj.get("documents", "")[::-1]:
@@ -73,7 +74,7 @@ class BaseDocumentView(View):
                     data = body.data.dict_without_none()
                     data["id"] = doc_id
                     data["datePublished"] = d["datePublished"]
-                    obj['dateModified'] = data['dateModified'] = get_now().isoformat()
+                    obj["dateModified"] = data["dateModified"] = get_now().isoformat()
                     obj["documents"].append(data)
                     break
             else:
