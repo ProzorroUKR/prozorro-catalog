@@ -99,20 +99,22 @@ def get_doc_service_uid_from_url(url):
     return doc_service_uid
 
 
-def get_doc_download_url(doc, temporary=True):
+def get_ds_id_from_api_url(doc):
     doc_url = urlparse(doc["url"])
-    doc_service_uid = dict(parse_qsl(doc_url.query)).get("download")  # we do not take it from request, but from the DB
-    # TODO: check if it's possible to download a different doc from api CDB
+    doc_service_uid = dict(parse_qsl(doc_url.query)).get("download")
+    return doc_service_uid
 
+
+def get_doc_download_url(ds_id, temporary=True):
     query = {"KeyID": signer_keyid}
     if temporary:
         expires = int(time()) + 300  # EXPIRES
-        mess = "{}\0{}".format(doc_service_uid, expires)
+        mess = f"{ds_id}\0{expires}"
         query["Expires"] = expires
     else:
-        mess = doc_service_uid
+        mess = ds_id
     query["Signature"] = b64encode(signer.sign(mess.encode()).signature)
-    return f"{DOC_SERVICE_URL}/get/{doc_service_uid}?{urlencode(query)}"
+    return f"{DOC_SERVICE_URL}/get/{ds_id}?{urlencode(query)}"
 
 
 

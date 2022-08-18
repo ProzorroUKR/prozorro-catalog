@@ -5,7 +5,7 @@ from pymongo.errors import OperationFailure
 from catalog.utils import get_now, async_retry
 from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput
 from catalog.serializers.document import DocumentSerializer
-from catalog.doc_service import get_doc_download_url
+from catalog.doc_service import get_doc_download_url, get_ds_id_from_api_url
 
 
 class BaseDocumentView(View):
@@ -31,12 +31,16 @@ class BaseDocumentView(View):
     async def get(cls, request, **kwargs):
         obj = await cls.get_parent_obj(**kwargs)
         doc_id = kwargs.get("doc_id")
+        request_ds_id = request.query.get("download")
         for d in obj.get("documents", "")[::-1]:
             if d["id"] == doc_id:
-                if request.query.get("download"):
-                    redirect_url = get_doc_download_url(d)
-                    raise HTTPFound(location=redirect_url)
-                return {"data": DocumentSerializer(d).data}
+                if request_ds_id:
+                    ds_id = get_ds_id_from_api_url(d)
+                    if ds_id == request_ds_id:
+                        redirect_url = get_doc_download_url(ds_id)
+                        raise HTTPFound(location=redirect_url)
+                else:
+                    return {"data": DocumentSerializer(d).data}
         else:
             raise HTTPNotFound(text="Document not found")
 
