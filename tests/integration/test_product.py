@@ -182,6 +182,15 @@ async def test_420_product_patch(api, product):
     resp_json = await resp.json()
     assert resp_json['data']['status'] == 'active'
 
+    patch_product = {
+        "data": {
+            "relatedProfile": "1"*32,
+        },
+        "access": product['access']
+    }
+    resp = await api.patch('/api/products/%s' % product_id, json=patch_product, auth=TEST_AUTH)
+    assert resp.status == 404
+
 
 async def test_430_product_limit_offset(api, profile):
     profile_id = profile["data"]['id']

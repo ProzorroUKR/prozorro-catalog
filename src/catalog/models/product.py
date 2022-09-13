@@ -105,6 +105,7 @@ class ProductCreateData(VendorProductCreateData):
 
 class ProductUpdateData(ProductRequirementResponses):
     title: Optional[str] = Field(None, min_length=1, max_length=80)
+    relatedProfile: Optional[str] = Field(None, regex=r"^[0-9A-Za-z_-]{1,32}$")
     description: Optional[str] = Field(None, min_length=1, max_length=1000)
     classification: Optional[Classification]
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
