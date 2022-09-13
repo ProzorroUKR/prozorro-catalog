@@ -1,4 +1,4 @@
-from aiohttp.web import HTTPBadRequest
+from aiohttp.web import HTTPBadRequest, HTTPForbidden
 
 from catalog.models.profile import ProfileStatus, Profile
 
@@ -21,3 +21,8 @@ def validate_product_to_profile(profile, product):
         Profile.validate_product(profile, product)
     except ValueError as e:
         raise HTTPBadRequest(text=e.args[0])
+
+
+def validate_patch_vendor_product(product: dict) -> None:
+    if product.get("vendor"):
+        raise HTTPForbidden(text="Patch vendor product is disallowed")

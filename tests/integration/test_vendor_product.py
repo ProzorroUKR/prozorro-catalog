@@ -102,3 +102,18 @@ async def test_vendor_product_create(api, vendor, profile):
     )
 
     assert resp.status == 404
+
+
+async def test_vendor_product_update(api, vendor, profile, vendor_product):
+    vendor_token = vendor['access']['token']
+    vendor_product = vendor_product['data']
+    resp = await api.patch(
+        f'/api/products/{vendor_product["id"]}?access_token={vendor_token}',
+        json={'data': {"status": "active"}},
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 403
+    result = await resp.json()
+    assert 'errors' in result
+    assert result['errors'][0] == 'Patch vendor product is disallowed'
