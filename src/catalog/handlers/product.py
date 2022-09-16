@@ -11,7 +11,7 @@ from catalog.swagger import class_view_swagger_path
 from catalog.utils import pagination_params, get_now, async_retry
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
 from catalog.serializers.product import ProductSerializer
-from catalog.validations import validate_product_to_profile
+from catalog.validations import validate_product_to_profile, validate_patch_vendor_product
 
 
 @class_view_swagger_path('/app/swagger/products')
@@ -67,6 +67,7 @@ class ProductView(View):
             # import and validate data
             json = await request.json()
             body = ProductUpdateInput(**json)
+            validate_patch_vendor_product(product)
             validate_access_token(request, product, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
