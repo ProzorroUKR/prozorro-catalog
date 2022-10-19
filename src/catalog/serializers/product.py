@@ -14,3 +14,6 @@ class ProductSerializer(RootSerializer):
                 'name': vendor['vendor']['name'],
                 'identifier': vendor['vendor']['identifier'],
             })
+
+        if "relatedProfiles" in data:
+            data["relatedProfile"] = data["relatedProfiles"][0]

@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional, List, Union
 from pydantic import Field, validator, constr, StrictInt, StrictFloat, StrictBool, StrictStr
+
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, CreateResponse, AuthorizedInput
 from catalog.models.common import Image, Classification, Address, ContactPoint, Identifier
@@ -85,7 +86,8 @@ class ProductRequirementResponses(BaseModel):
 
 class VendorProductCreateData(ProductRequirementResponses):
     title: str = Field(..., min_length=1, max_length=80)
-    relatedProfile: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
+    # When we will have moved to new logic, we should remove max_items validation
+    relatedProfiles: List[str] = Field(..., min_items=1, max_items=1)
     description: str = Field(..., min_length=1, max_length=1000)
     classification: Classification
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
@@ -105,7 +107,7 @@ class ProductCreateData(VendorProductCreateData):
 
 class ProductUpdateData(ProductRequirementResponses):
     title: Optional[str] = Field(None, min_length=1, max_length=80)
-    relatedProfile: Optional[str] = Field(None, regex=r"^[0-9A-Za-z_-]{1,32}$")
+    relatedProfiles: Optional[List[str]] = Field(None, max_items=1)
     description: Optional[str] = Field(None, min_length=1, max_length=1000)
     classification: Optional[Classification]
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)

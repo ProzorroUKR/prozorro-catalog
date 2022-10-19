@@ -109,9 +109,8 @@ async def profile(api, category):
 @pytest.fixture
 async def product(api, profile):
     data = get_fixture_json('product')
-    data['relatedProfile'] = profile["data"]["id"]
+    data['relatedProfiles'] = [profile["data"]["id"]]
     set_requirements_to_responses(data["requirementResponses"], profile)
-
     resp = await api.post(
         "/api/products",
         json={"data": data, "access": profile["access"]},
@@ -160,7 +159,7 @@ async def vendor(api, category):
 @pytest.fixture
 async def vendor_product(api, vendor, profile):
     data = get_fixture_json('vendor_product')
-    data['relatedProfile'] = profile["data"]["id"]
+    data['relatedProfiles'] = [profile["data"]["id"]]
     set_requirements_to_responses(data["requirementResponses"], profile)
 
     resp = await api.post(

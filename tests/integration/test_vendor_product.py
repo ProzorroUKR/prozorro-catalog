@@ -12,7 +12,7 @@ async def test_vendor_product_create(api, vendor, profile):
     vendor = vendor['data']
 
     test_product = api.get_fixture_json('vendor_product')
-    test_product['relatedProfile'] = profile_id
+    test_product['relatedProfiles'] = [profile_id]
     set_requirements_to_responses(test_product['requirementResponses'], profile)
 
     resp = await api.post(
@@ -58,7 +58,7 @@ async def test_vendor_product_create(api, vendor, profile):
     assert vendor['vendor']['identifier'] == result['data']['vendor']['identifier']
 
     failure_product = api.get_fixture_json('product')
-    failure_product['relatedProfile'] = profile_id
+    failure_product['relatedProfiles'] = [profile_id]
     del failure_product['requirementResponses']
 
     resp = await api.post(
@@ -94,7 +94,7 @@ async def test_vendor_product_create(api, vendor, profile):
     result = await resp.json()
     assert result == {"errors": ["relatedProfile should be in `active` status."]}
 
-    test_product["relatedProfile"] = "0" * 32
+    test_product["relatedProfiles"] = ["0" * 32]
     resp = await api.post(
         f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',
         json={'data': test_product},

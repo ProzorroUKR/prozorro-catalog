@@ -46,7 +46,7 @@ class ProductView(View):
         data = body.data.dict_without_none()
         data['id'] = uuid4().hex
 
-        profile_id = data['relatedProfile']
+        profile_id = data['relatedProfiles'][0]
         profile = await db.read_profile(profile_id)  # ensure exists
         validate_access_token(request, profile, body.access)
         validate_product_to_profile(profile, data)
@@ -71,8 +71,8 @@ class ProductView(View):
             validate_access_token(request, product, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
-            profile_id = data.get("relatedProfile") or product['relatedProfile']
-            profile = await db.read_profile(profile_id)
+            profile_ids = data.get("relatedProfiles") or product['relatedProfiles']
+            profile = await db.read_profile(profile_ids[0])
 
             # update profile with valid data
             data['dateModified'] = get_now().isoformat()
