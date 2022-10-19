@@ -26,7 +26,7 @@ class VendorProductView(View):
         body = VendorProductCreateInput(**json)
         validate_access_token(request, vendor, body.access)
         data = body.data.dict_without_none()
-        profile = await db.read_profile(data["relatedProfile"])
+        profile = await db.read_profile(data["relatedProfiles"][0])
         # validations
         validate_product_active_vendor(vendor)
         validate_product_related_profile(profile)

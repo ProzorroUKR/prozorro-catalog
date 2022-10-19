@@ -8,7 +8,7 @@ async def test_410_product_create(api, profile):
     profile_id = profile['data']['id']
 
     test_product = {"data": api.get_fixture_json('product')}
-    test_product["data"]["relatedProfile"] = profile["data"]["id"]
+    test_product["data"]["relatedProfiles"] = [profile["data"]["id"]]
     for item, rr in enumerate(test_product["data"]["requirementResponses"]):
         if item < 5:
             rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["id"]
@@ -19,7 +19,7 @@ async def test_410_product_create(api, profile):
 
     cpv = test_product['data']['classification']['id']
     test_product['data']['classification']['id'] = '12345678'
-    test_product['data']['relatedProfile'] = profile_id
+    test_product['data']['relatedProfiles'] = [profile_id]
     test_product['access'] = profile['access']
 
     resp = await api.patch(
@@ -88,7 +88,7 @@ async def test_410_product_create(api, profile):
 async def test_411_product_rr_create(api, profile):
     profile_id = profile['data']['id']
     test_product = {"data": api.get_fixture_json('product')}
-    test_product["data"]["relatedProfile"] = profile["data"]["id"]
+    test_product["data"]["relatedProfiles"] = [profile["data"]["id"]]
     for item, rr in enumerate(test_product["data"]["requirementResponses"]):
         if item < 5:
             rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["id"]
@@ -105,7 +105,7 @@ async def test_411_product_rr_create(api, profile):
 
     test_product['data']['requirementResponses'][2]["value"] = 49.91
 
-    test_product['data']['relatedProfile'] = profile_id
+    test_product['data']['relatedProfiles'] = [profile_id]
     test_product['access'] = profile['access']
 
     resp = await api.post('/api/products', json=test_product, auth=TEST_AUTH)
@@ -184,7 +184,7 @@ async def test_420_product_patch(api, product):
 
     patch_product = {
         "data": {
-            "relatedProfile": "1"*32,
+            "relatedProfiles": ["1"*32],
         },
         "access": product['access']
     }
@@ -195,7 +195,7 @@ async def test_420_product_patch(api, product):
 async def test_430_product_limit_offset(api, profile):
     profile_id = profile["data"]['id']
     test_product = {"data": api.get_fixture_json('product')}
-    test_product["data"]["relatedProfile"] = profile["data"]["id"]
+    test_product["data"]["relatedProfiles"] = [profile["data"]["id"]]
     for item, rr in enumerate(test_product["data"]["requirementResponses"]):
         if item < 5:
             rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["id"]
@@ -208,7 +208,7 @@ async def test_430_product_limit_offset(api, profile):
     for i in range(11):
 
         test_product_copy = deepcopy(test_product)
-        test_product_copy['data']['relatedProfile'] = profile_id
+        test_product_copy['data']['relatedProfiles'] = [profile_id]
         test_product_copy['access'] = profile['access']
 
         resp = await api.post('/api/products', json=test_product_copy, auth=TEST_AUTH)
