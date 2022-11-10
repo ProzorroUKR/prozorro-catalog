@@ -43,11 +43,11 @@ async def test_search(api):
         product['relatedProfiles'] = [resp["data"]["id"]]
         for item, rr in enumerate(product["requirementResponses"]):
             if item < 5:
-                rr["requirement"] = resp["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["id"]
+                rr["requirement"] = resp["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]
             elif item == 5:
-                rr["requirement"] = resp["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["id"]
+                rr["requirement"] = resp["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["title"]
             elif item == 6:
-                rr["requirement"] = resp["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["id"]
+                rr["requirement"] = resp["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["title"]
 
         resp = await api.post(
             "/api/products",

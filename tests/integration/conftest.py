@@ -54,11 +54,11 @@ async def create_criteria(api, profile):
 def set_requirements_to_responses(requirement_responses, profile):
     for item, rr in enumerate(requirement_responses):
         if item < 5:
-            rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["id"]
+            rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]
         elif item == 5:
-            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["id"]
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["title"]
         elif item == 6:
-            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["id"]
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["title"]
 
 @pytest.fixture
 async def db(event_loop):

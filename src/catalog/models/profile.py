@@ -104,31 +104,31 @@ class Profile(BaseModel):
     @classmethod
     def _validate_req_response_value(cls, requirement, value, key):
         if value is None:
-            raise ValueError(f'requirement {key} should have value')
+            raise ValueError(f'requirement "{key}" should have value')
         if (
             'expectedValue' in requirement
             and value != requirement['expectedValue']
         ):
-            raise ValueError(f'requirement {key} unexpected value')
+            raise ValueError(f'requirement "{key}" unexpected value')
         if 'minValue' in requirement and value < requirement['minValue']:
-            raise ValueError(f'requirement {key} minValue')
+            raise ValueError(f'requirement "{key}" minValue')
         if 'maxValue' in requirement and value > requirement['maxValue']:
-            raise ValueError(f'requirement {key} maxValue')
+            raise ValueError(f'requirement "{key}" maxValue')
         if 'pattern' in requirement and not re.match(
                 requirement['pattern'], str(value)
         ):
-            raise ValueError(f'requirement {key} pattern')
+            raise ValueError(f'requirement "{key}" pattern')
 
     @classmethod
     def _validate_req_response_values(cls, requirement, values, key):
         if not values:
-            raise ValueError(f'requirement {key} should have values')
+            raise ValueError(f'requirement "{key}" should have values')
         if not set(values).issubset(set(requirement['expectedValues'])):
-            raise ValueError(f'requirement {key} expectedValues')
+            raise ValueError(f'requirement "{key}" expectedValues')
         if 'expectedMinItems' in requirement and len(values) < requirement['expectedMinItems']:
-            raise ValueError(f'requirement {key} expectedMinItems')
+            raise ValueError(f'requirement "{key}" expectedMinItems')
         if 'expectedMaxItems' in requirement and len(values) > requirement['expectedMaxItems']:
-            raise ValueError(f'requirement {key} expectedMaxItems')
+            raise ValueError(f'requirement "{key}" expectedMaxItems')
 
     @classmethod
     def _validate_product_req_response(cls, req_response, requirement):
@@ -145,7 +145,7 @@ class Profile(BaseModel):
     @classmethod
     def validate_product(cls, profile, data):  # TODO redesign this ?
         profile_requirements = {
-            r["id"]: r
+            r["title"]: r
             for c in profile.get("criteria", "")
             for group in c["requirementGroups"]
             for r in group["requirements"]
@@ -156,7 +156,7 @@ class Profile(BaseModel):
             responded_requirements.add(key)
 
             if key not in profile_requirements:
-                raise ValueError(f'requirement {key} not found')
+                raise ValueError(f'requirement "{key}" not found')
 
             requirement = profile_requirements[key]
             cls._validate_product_req_response(req_response, requirement)
@@ -164,12 +164,12 @@ class Profile(BaseModel):
         for cr in profile['criteria']:
             group_found = 0
             for rg in cr['requirementGroups']:
-                requirement_found = sum(req['id'] in responded_requirements for req in rg['requirements'])
+                requirement_found = sum(req['title'] in responded_requirements for req in rg['requirements'])
 
                 if requirement_found == len(rg['requirements']):
                     group_found += 1
             if group_found == 0:
-                raise ValueError('criteria %s not satisfied' % cr['id'])
+                raise ValueError(f'criteria {cr["id"]} not satisfied')
 
 
 ProfileCreateInput = AuthorizedInput[ProfileCreateData]
