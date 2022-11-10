@@ -11,11 +11,11 @@ async def test_410_product_create(api, profile):
     test_product["data"]["relatedProfiles"] = [profile["data"]["id"]]
     for item, rr in enumerate(test_product["data"]["requirementResponses"]):
         if item < 5:
-            rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["id"]
+            rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]
         elif item == 5:
-            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["id"]
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["title"]
         elif item == 6:
-            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["id"]
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["title"]
 
     cpv = test_product['data']['classification']['id']
     test_product['data']['classification']['id'] = '12345678'
@@ -91,11 +91,11 @@ async def test_411_product_rr_create(api, profile):
     test_product["data"]["relatedProfiles"] = [profile["data"]["id"]]
     for item, rr in enumerate(test_product["data"]["requirementResponses"]):
         if item < 5:
-            rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["id"]
+            rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]
         elif item == 5:
-            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["id"]
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["title"]
         elif item == 6:
-            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["id"]
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["title"]
 
     product_id = '{}-{}-{}-{}'.format(
         test_product['data']['classification']['id'][:4],
@@ -198,11 +198,11 @@ async def test_430_product_limit_offset(api, profile):
     test_product["data"]["relatedProfiles"] = [profile["data"]["id"]]
     for item, rr in enumerate(test_product["data"]["requirementResponses"]):
         if item < 5:
-            rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["id"]
+            rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]
         elif item == 5:
-            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["id"]
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["title"]
         elif item == 6:
-            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["id"]
+            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["title"]
 
     test_product_map = dict()
     for i in range(11):

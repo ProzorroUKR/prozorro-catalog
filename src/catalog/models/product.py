@@ -67,7 +67,7 @@ class ProductInfo(BaseModel):
 
 
 class RequirementResponse(BaseModel):
-    requirement: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
+    requirement: str
     value: Optional[Union[StrictInt, StrictFloat, StrictBool, StrictStr]] = None
     values: List[Union[StrictInt, StrictFloat, StrictBool, StrictStr]] = Field(None, max_items=100)
 
