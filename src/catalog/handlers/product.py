@@ -2,7 +2,7 @@ import random
 from uuid import uuid4
 
 from aiohttp.web_urldispatcher import View
-from aiohttp.web import HTTPBadRequest, HTTPConflict
+from aiohttp.web import HTTPConflict, HTTPNotFound
 from pymongo.errors import OperationFailure
 
 from catalog import db
@@ -32,7 +32,10 @@ class ProductView(View):
         product = await db.read_product(product_id)
         vendor = None
         if "vendor" in product:
-            vendor = await db.read_vendor(product["vendor"]["id"])
+            try:
+                vendor = await db.read_vendor(product["vendor"]["id"])
+            except HTTPNotFound:
+                pass
 
         return {"data": ProductSerializer(product, vendor=vendor).data}
 

@@ -1,4 +1,5 @@
 from copy import deepcopy
+from uuid import UUID
 
 from catalog.migrations.cs_13182_product_requirements_id_to_title import migrate
 from tests.integration.base import TEST_AUTH
@@ -43,12 +44,21 @@ async def test_migrate_products(db, api, profile):
     product_data_3["relatedProfiles"] = [profile["data"]["id"]]
     set_requirements_to_responses(product_data_3["requirementResponses"], profile)
     await db.products.insert_one(product_data_3)
+
+    product_data_4 = deepcopy(product_fixture)
+    product_data_4["_id"] = "4" * 32
+    product_data_4["relatedProfiles"] = [profile["data"]["id"]]
+    set_requirements_to_responses(product_data_4["requirementResponses"], profile)
+    product_data_4["requirementResponses"][0]["requirement"] = UUID("0" * 32, version=4).hex
+    await db.products.insert_one(product_data_4)
     counters = await migrate()
 
-    assert counters.total_products == 3
-    assert counters.updated_products == 2
+    assert counters.total_products == 4
+    assert counters.updated_products == 3
     assert counters.skipped_products == 1
-    assert counters.responses == 14
+    assert counters.total_responses == 21
+    assert counters.updated_responses == 20
+    assert counters.deleted_responses == 1
 
     resp = await api.get(f'/api/products/{product_data_1["_id"]}')
     assert resp.status == 200

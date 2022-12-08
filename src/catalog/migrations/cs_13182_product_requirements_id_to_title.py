@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from uuid import UUID
 import asyncio
 import logging
+import re
 
 from pymongo.errors import PyMongoError
 from pymongo import UpdateOne
@@ -22,12 +24,19 @@ class Counters:
     total_products: int = 0
     updated_products: int = 0
     skipped_products: int = 0
-    responses: int = 0
+    total_responses: int = 0
+    updated_responses: int = 0
+    deleted_responses: int = 0
 
     def __post_init__(self):
         self.total_products = self.total_products or (
             self.updated_products +
             self.skipped_products
+        )
+
+        self.total_responses = self.total_responses or (
+            self.updated_responses +
+            self.deleted_responses
         )
 
     def __add__(self, other):
@@ -36,7 +45,9 @@ class Counters:
             self.total_products + other.total_products,
             self.updated_products + other.updated_products,
             self.skipped_products + other.skipped_products,
-            self.responses + other.responses
+            self.total_responses + other.total_responses,
+            self.updated_responses + other.updated_responses,
+            self.deleted_responses + other.deleted_responses,
         )
 
 
@@ -84,7 +95,7 @@ async def migrate_products(profile_id: str):
                                                     projection={"requirementResponses": 1},
                                                     session=session):
                 new_responses = get_new_responses(counters, titles_map, p)
-                if new_responses:
+                if new_responses is not None:
                     bulk.append(
                         UpdateOne(
                             filter={"_id": p["_id"]},
@@ -108,17 +119,28 @@ async def migrate_products(profile_id: str):
 
 
 #   --- model operations
-def get_new_responses(counters, titles_map, product):
+def get_new_responses(counters: Counters, titles_map: dict, product: dict):
     update_product = False
-    for response in product.get("requirementResponses", ""):
+    req_responses = product.get("requirementResponses", "")
+
+    for response in req_responses[:]:
         requirement_title = titles_map.get(response["requirement"])
         if requirement_title:
             response["requirement"] = requirement_title
-            counters.responses += 1
+            counters.updated_responses += 1
             update_product = True
+        elif check_uuid(response["requirement"]):
+            req_responses.remove(response)
+            counters.deleted_responses += 1
+            update_product = True
+        counters.total_responses += 1
 
     if update_product:
-        return product["requirementResponses"]
+        return req_responses
+
+
+def check_uuid(req_id):
+    return bool(re.match(r"^[0-9A-Za-z_-]{1,32}$", req_id))
 
 
 def main():
