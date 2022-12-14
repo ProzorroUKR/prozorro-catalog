@@ -336,6 +336,7 @@ async def test_330_requirement_create(api, profile):
 
     requirement_data["data"]["expectedMinItems"] = 1
     requirement_data["data"]["expectedMaxItems"] = 3
+    requirement_data["data"]["title"] = "Requirement with expectedValues 2 "
     resp = await api.post(
         f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
         json=requirement_data,
@@ -346,6 +347,7 @@ async def test_330_requirement_create(api, profile):
     assert "expectedMinItems" in resp_json["data"][0]
     assert "expectedMaxItems" in resp_json["data"][0]
     assert "expectedValues" in resp_json["data"][0]
+    assert resp_json["data"][0]["title"] == "Requirement with expectedValues 2"
 
 
 async def test_331_requirement_patch(api, profile):
