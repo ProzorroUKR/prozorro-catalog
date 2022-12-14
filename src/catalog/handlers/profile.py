@@ -18,6 +18,7 @@ from catalog.swagger import class_view_swagger_path
 from catalog.utils import pagination_params, get_now, async_retry, find_item_by_id
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
 from catalog.serializers.base import RootSerializer, BaseSerializer
+from catalog.validations import validate_requirement_title_uniq
 
 
 @class_view_swagger_path('/app/swagger/profiles')
@@ -220,7 +221,9 @@ class ProfileCriteriaRGRequirementView(View):
     @classmethod
     async def post(cls, request, profile_id, criterion_id, rg_id):
         validate_accreditation(request, "profile")
-        async with db.read_and_update_profile_criterion(profile_id, criterion_id) as profile:
+        async with db.read_and_update_profile(profile_id) as profile:
+            criterion = find_item_by_id(profile["criteria"], criterion_id, "criteria")
+            rg = find_item_by_id(criterion["requirementGroups"], rg_id, "requirementGroups")
             # import and validate data
             json = await request.json()
             if isinstance(json.get("data", {}), dict):
@@ -233,16 +236,20 @@ class ProfileCriteriaRGRequirementView(View):
             # export data back to dict
             data = [r.dict_without_none() for r in body.data]
             # update profile with valid data
-            rg = find_item_by_id(profile["criteria"]["requirementGroups"], rg_id, "requirementGroups")
+
             rg["requirements"].extend(data)
+            validate_requirement_title_uniq(profile)
             profile["dateModified"] = get_now().isoformat()
         return {"data": [BaseSerializer(r).data for r in data]}
 
     @classmethod
     async def patch(cls, request, profile_id, criterion_id, rg_id, requirement_id):
         validate_accreditation(request, "profile")
-        async with db.read_and_update_profile_criterion(profile_id, criterion_id) as profile:
+        async with db.read_and_update_profile(profile_id) as profile:
             # import and validate data
+            criterion = find_item_by_id(profile["criteria"], criterion_id, "criteria")
+            rg = find_item_by_id(criterion["requirementGroups"], rg_id, "requirementGroups")
+            requirement = find_item_by_id(rg["requirements"], requirement_id, "requirements")
             json = await request.json()
             body = RequirementUpdateInput(**json)
 
@@ -250,10 +257,9 @@ class ProfileCriteriaRGRequirementView(View):
             # export data back to dict
             data = body.data.dict_without_none()
             # update profile with valid data
-            rg = find_item_by_id(profile["criteria"]["requirementGroups"], rg_id, "requirementGroups")
-            requirement = find_item_by_id(rg["requirements"], requirement_id, "requirements")
             requirement.update(data)
             Requirement(**requirement)
+            validate_requirement_title_uniq(profile)
             profile["dateModified"] = get_now().isoformat()
 
         return {"data": BaseSerializer(requirement).data}

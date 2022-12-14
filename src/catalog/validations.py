@@ -26,3 +26,14 @@ def validate_product_to_profile(profile, product):
 def validate_patch_vendor_product(product: dict) -> None:
     if product.get("vendor"):
         raise HTTPForbidden(text="Patch vendor product is disallowed")
+
+
+def validate_requirement_title_uniq(profile: dict):
+    req_titles = [
+        req["title"]
+        for criterion in profile.get("criteria", "")
+        for rg in criterion.get("requirementGroups", "")
+        for req in rg.get("requirements")
+    ]
+    if len(req_titles) != len(set(req_titles)):
+        raise HTTPForbidden(text="Requirement title should be unique")

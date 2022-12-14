@@ -1,6 +1,15 @@
 from typing import Optional, Set, Union, List
 from uuid import uuid4
-from pydantic import Field, root_validator,  StrictInt, StrictFloat, StrictBool, StrictStr, PositiveInt
+from pydantic import (
+    Field,
+    root_validator,
+    StrictInt,
+    StrictFloat,
+    StrictBool,
+    StrictStr,
+    PositiveInt,
+    constr,
+)
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, BulkInput, ListResponse, AuthorizedInput
 from catalog.models.common import Unit, DataTypeEnum, Period
@@ -85,7 +94,7 @@ class RequirementBaseValidators(BaseModel):
 
 
 class RequirementCreateData(RequirementBaseValidators):
-    title: str = Field(..., min_length=1, max_length=250)
+    title: constr(strip_whitespace=True, min_length=1, max_length=250)
     dataType: DataTypeEnum = Field(..., max_length=100)
 
     unit: Optional[Unit] = None
@@ -109,7 +118,7 @@ class RequirementCreateData(RequirementBaseValidators):
 
 
 class RequirementUpdateData(BaseModel):
-    title: str = Field(None, min_length=1, max_length=250)
+    title: constr(strip_whitespace=True, min_length=1, max_length=250) = None
     dataType: DataTypeEnum = Field(None, max_length=100)
 
     unit: Optional[Unit] = None
