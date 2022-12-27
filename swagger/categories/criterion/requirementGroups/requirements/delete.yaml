@@ -1,7 +1,20 @@
 tags:
-- Profile/Criteria
-description: Get a profile criterion
-operationId: collection_get_profile_criterion
+- Category/Criteria/RequirementGroups/Requirements
+description: Delete a requirement
+operationId: collection_delete_category_requirement
+security:
+  - Basic: []
+parameters:
+- in: query
+  name: access_token
+  schema:
+    type: string
+  description: Токен від створенного об'єкта
+- in: headers
+  name: X-Access-Token
+  schema:
+    type: string
+  description: Токен від створенного об'єкта
 produces:
 - application/json
 responses:
@@ -10,7 +23,9 @@ responses:
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/Response_Criterion_'
+          type: object
+          example:
+            result: success
   "404":
     description: Not found
     content:

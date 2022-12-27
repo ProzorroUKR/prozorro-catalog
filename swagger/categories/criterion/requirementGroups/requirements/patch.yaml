@@ -1,7 +1,7 @@
 tags:
-- Profile/Criteria
-description: Profile criterion update
-operationId: collection_patch_profile_criterion
+- Category/Criteria/RequirementGroups/Requirements
+description: Requirement update
+operationId: collection_patch_category_requirement
 security:
   - Basic: []
 parameters:
@@ -16,19 +16,19 @@ parameters:
     type: string
   description: Токен від створенного об'єкта
 requestBody:
-  description: Criterion data
+  description: Requirement data
   required: true
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/AuthorizedInput_CriterionUpdateData_'
+        $ref: '#/components/schemas/AuthorizedInput_RequirementUpdateData_'
 responses:
   "200":
     description: successful operation
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/Response_Criterion_'
+          $ref: '#/components/schemas/Response_Requirement_'
   "400":
     description: validation errors
     content:

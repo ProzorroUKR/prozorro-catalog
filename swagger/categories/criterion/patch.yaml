@@ -1,7 +1,7 @@
 tags:
-- Profile/Criteria
+- Category/Criteria
 description: Profile criterion update
-operationId: collection_patch_profile_criterion
+operationId: collection_patch_category_criterion
 security:
   - Basic: []
 parameters:

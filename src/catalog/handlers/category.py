@@ -8,6 +8,11 @@ from catalog.auth import set_access_token, validate_accreditation, validate_acce
 from catalog.utils import pagination_params, get_now, async_retry
 from catalog.models.category import CategoryCreateInput, CategoryUpdateInput
 from catalog.serializers.base import RootSerializer
+from catalog.handlers.base_criteria import (
+    BaseCriteriaView,
+    BaseCriteriaRGView,
+    BaseCriteriaRGRequirementView,
+)
 
 
 @class_view_swagger_path('/app/swagger/categories')
@@ -65,3 +70,27 @@ class CategoryView(View):
             category.update(data)
 
         return {"data": RootSerializer(category, show_owner=False).data}
+
+
+class CategoryCriteriaViewMixin:
+
+    obj_name = "category"
+
+    @classmethod
+    def read_and_update_parent_obj(cls, obj_id):
+        return db.read_and_update_category(obj_id)
+
+
+@class_view_swagger_path('/app/swagger/categories/criterion')
+class CategoryCriteriaView(CategoryCriteriaViewMixin, BaseCriteriaView):
+    pass
+
+
+@class_view_swagger_path('/app/swagger/categories/criterion/requirementGroups')
+class CategoryCriteriaRGView(CategoryCriteriaViewMixin, BaseCriteriaRGView):
+    pass
+
+
+@class_view_swagger_path('/app/swagger/categories/criterion/requirementGroups/requirements')
+class CategoryCriteriaRGRequirementView(CategoryCriteriaViewMixin, BaseCriteriaRGRequirementView):
+    pass

@@ -1,7 +1,7 @@
 tags:
-- Profile/Criteria
+- Category/Criteria
 description: Get a profile criterion
-operationId: collection_get_profile_criterion
+operationId: collection_get_category_criterion
 produces:
 - application/json
 responses:

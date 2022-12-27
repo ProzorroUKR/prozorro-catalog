@@ -1,7 +1,7 @@
 tags:
-- Profile/Criteria
-description: Get a list of profile criteria
-operationId: collection_get_profile_criteria
+- Category/Criteria/RequirementGroups
+description: Get a list of requirementGroups
+operationId: collection_get_category_rg
 produces:
 - application/json
 responses:
@@ -10,7 +10,7 @@ responses:
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/ListResponse_Criterion_'
+          $ref: '#/components/schemas/ListResponse_RequirementGroup_'
   "500":
     description: Server error
     content:

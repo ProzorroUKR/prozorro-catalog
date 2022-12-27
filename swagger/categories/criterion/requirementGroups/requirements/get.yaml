@@ -1,7 +1,7 @@
 tags:
-- Profile/Criteria
-description: Get a profile criterion
-operationId: collection_get_profile_criterion
+- Category/Criteria/RequirementGroups/Requirements
+description: Get a requirement
+operationId: collection_get_category_requirement
 produces:
 - application/json
 responses:
@@ -10,7 +10,7 @@ responses:
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/Response_Criterion_'
+          $ref: '#/components/schemas/Response_Requirement_'
   "404":
     description: Not found
     content:

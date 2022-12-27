@@ -1,7 +1,7 @@
 tags:
 - Profile/Criteria
-description: Criteria create
-operationId: collection_post_criteria
+description: Profile criteria create
+operationId: collection_post_profile_criteria
 security:
   - Basic: []
 parameters:

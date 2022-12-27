@@ -20,7 +20,12 @@ from catalog.handlers.profile import (
     ProfileCriteriaRGView,
     ProfileCriteriaRGRequirementView,
 )
-from catalog.handlers.category import CategoryView
+from catalog.handlers.category import (
+    CategoryView,
+    CategoryCriteriaView,
+    CategoryCriteriaRGView,
+    CategoryCriteriaRGRequirementView,
+)
 from catalog.handlers.product import ProductView
 from catalog.handlers.offer import OfferView
 from catalog.handlers.image import ImageView
@@ -76,6 +81,91 @@ def create_application(on_cleanup=None):
         name="update_category"
     )
 
+    # category criteria
+
+    app.router.add_get(
+        r"/api/categories/{obj_id:[\w-]+}/criteria",
+        CategoryCriteriaView.collection_get,
+        name="read_category_criteria_registry",
+    )
+    app.router.add_get(
+        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}",
+        CategoryCriteriaView.get,
+        name="read_category_criteria",
+        allow_head=False,
+    )
+    app.router.add_post(
+        r"/api/categories/{obj_id:[\w-]+}/criteria",
+        CategoryCriteriaView.post,
+        name="create_category_criteria"
+    )
+    app.router.add_patch(
+        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}",
+        CategoryCriteriaView.patch,
+        name="update_category_criteria"
+    )
+    app.router.add_delete(
+        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}",
+        CategoryCriteriaView.delete,
+        name="delete_category_criteria"
+    )
+
+    # profile criteria RG
+    app.router.add_get(
+        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups",
+        CategoryCriteriaRGView.collection_get,
+        name="read_category_criteria_rg_registry",
+    )
+    app.router.add_get(
+        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}",
+        CategoryCriteriaRGView.get,
+        name="read_category_criteria_rg",
+        allow_head=False,
+    )
+    app.router.add_post(
+        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups",
+        CategoryCriteriaRGView.post,
+        name="create_category_criteria_rg"
+    )
+    app.router.add_patch(
+        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}",
+        CategoryCriteriaRGView.patch,
+        name="update_category_criteria_rg"
+    )
+    app.router.add_delete(
+        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}",
+        CategoryCriteriaRGView.delete,
+        name="delete_category_criteria_rg"
+    )
+
+    # profile criteria RG requirements
+    app.router.add_get(
+        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements",
+        CategoryCriteriaRGRequirementView.collection_get,
+        name="read_category_criteria_rg_requirement_registry",
+    )
+    app.router.add_get(
+        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
+        CategoryCriteriaRGRequirementView.get,
+        name="read_category_criteria_rg_requirement",
+        allow_head=False,
+    )
+    app.router.add_post(
+        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements",
+        CategoryCriteriaRGRequirementView.post,
+        name="create_category_criteria_rg_requirement"
+    )
+    app.router.add_patch(
+        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
+        CategoryCriteriaRGRequirementView.patch,
+        name="update_category_criteria_rg_requirement"
+    )
+    app.router.add_delete(
+        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
+        CategoryCriteriaRGRequirementView.delete,
+        name="delete_category_criteria_rg_requirement"
+    )
+
     # risk profiles
     app.router.add_get(
         "/api/profiles",
@@ -101,87 +191,87 @@ def create_application(on_cleanup=None):
 
     # profile criteria
     app.router.add_get(
-        r"/api/profiles/{profile_id:[\w-]+}/criteria",
+        r"/api/profiles/{obj_id:[\w-]+}/criteria",
         ProfileCriteriaView.collection_get,
         name="read_profile_criteria_registry",
     )
     app.router.add_get(
-        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}",
+        r"/api/profiles/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}",
         ProfileCriteriaView.get,
         name="read_profile_criteria",
         allow_head=False,
     )
     app.router.add_post(
-        r"/api/profiles/{profile_id:[\w-]+}/criteria",
+        r"/api/profiles/{obj_id:[\w-]+}/criteria",
         ProfileCriteriaView.post,
         name="create_profile_criteria"
     )
     app.router.add_patch(
-        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}",
+        r"/api/profiles/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}",
         ProfileCriteriaView.patch,
         name="update_profile_criteria"
     )
     app.router.add_delete(
-        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}",
+        r"/api/profiles/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}",
         ProfileCriteriaView.delete,
         name="delete_profile_criteria"
     )
 
     # profile criteria RG
     app.router.add_get(
-        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups",
+        r"/api/profiles/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups",
         ProfileCriteriaRGView.collection_get,
         name="read_profile_criteria_rg_registry",
     )
     app.router.add_get(
-        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}",
+        r"/api/profiles/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}",
         ProfileCriteriaRGView.get,
         name="read_profile_criteria_rg",
         allow_head=False,
     )
     app.router.add_post(
-        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups",
+        r"/api/profiles/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups",
         ProfileCriteriaRGView.post,
         name="create_profile_criteria_rg"
     )
     app.router.add_patch(
-        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}",
+        r"/api/profiles/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}",
         ProfileCriteriaRGView.patch,
         name="update_profile_criteria_rg"
     )
     app.router.add_delete(
-        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}",
+        r"/api/profiles/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}",
         ProfileCriteriaRGView.delete,
         name="delete_profile_criteria_rg"
     )
 
     # profile criteria RG requirements
     app.router.add_get(
-        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements",
+        r"/api/profiles/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements",
         ProfileCriteriaRGRequirementView.collection_get,
         name="read_profile_criteria_rg_requirement_registry",
     )
     app.router.add_get(
-        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
+        r"/api/profiles/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
         ProfileCriteriaRGRequirementView.get,
         name="read_profile_criteria_rg_requirement",
         allow_head=False,
     )
     app.router.add_post(
-        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements",
+        r"/api/profiles/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements",
         ProfileCriteriaRGRequirementView.post,
         name="create_profile_criteria_rg_requirement"
     )
     app.router.add_patch(
-        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
+        r"/api/profiles/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
         ProfileCriteriaRGRequirementView.patch,
         name="update_profile_criteria_rg_requirement"
     )
     app.router.add_delete(
-        r"/api/profiles/{profile_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
+        r"/api/profiles/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
         ProfileCriteriaRGRequirementView.delete,
         name="delete_profile_criteria_rg_requirement"
-    )
+    ),
 
     # products
     app.router.add_get(

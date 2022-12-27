@@ -15,12 +15,12 @@ def get_fixture_json(name):
     return data
 
 
-async def create_criteria(api, profile):
+async def create_criteria(api, obj_path, profile):
     criteria = get_fixture_json('criteria')
     for criterion in criteria["criteria"]:
         rgs = criterion.pop("requirementGroups")
         resp = await api.post(
-            f"/api/profiles/{profile['data']['id']}/criteria",
+            f"/api/{obj_path}/{profile['data']['id']}/criteria",
             json={"data": criterion, "access": profile["access"]},
             auth=TEST_AUTH,
         )
@@ -30,20 +30,20 @@ async def create_criteria(api, profile):
         for rg in rgs:
             reqs = rg.pop("requirements")
             rg_resp = await api.post(
-                f"/api/profiles/{profile['data']['id']}/criteria/{criterion_id}/requirementGroups",
+                f"/api/{obj_path}/{profile['data']['id']}/criteria/{criterion_id}/requirementGroups",
                 json={"data": rg, "access": profile["access"]},
                 auth=TEST_AUTH,
             )
             rg_data = await rg_resp.json()
             rg_id = rg_data["data"]["id"]
             await api.post(
-                f"/api/profiles/{profile['data']['id']}/criteria/{criterion_id}/requirementGroups/{rg_id}/requirements",
+                f"/api/{obj_path}/{profile['data']['id']}/criteria/{criterion_id}/requirementGroups/{rg_id}/requirements",
                 json={"data": reqs, "access": profile["access"]},
                 auth=TEST_AUTH,
             )
 
     resp = await api.get(
-        f"/api/profiles/{profile['data']['id']}",
+        f"/api/{obj_path}/{profile['data']['id']}",
         auth=TEST_AUTH,
     )
     data = await resp.json()
@@ -86,7 +86,9 @@ async def category(api):
         auth=TEST_AUTH
     )
     assert resp.status == 201
-    return await resp.json()
+    data = await resp.json()
+    category = await create_criteria(api, "categories", data)
+    return category
 
 
 @pytest.fixture
@@ -102,7 +104,7 @@ async def profile(api, category):
     )
     assert resp.status == 201
     data = await resp.json()
-    profile = await create_criteria(api, data)
+    profile = await create_criteria(api, "profiles", data)
     return profile
 
 
