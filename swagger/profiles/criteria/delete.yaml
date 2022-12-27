@@ -1,7 +1,7 @@
 tags:
 - Profile/Criteria
-description: Delete a criterion
-operationId: collection_delete_criterion
+description: Delete a profile criterion
+operationId: collection_delete_profile_criterion
 security:
   - Basic: []
 parameters:

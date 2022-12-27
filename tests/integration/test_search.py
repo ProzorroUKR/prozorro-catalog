@@ -35,7 +35,7 @@ async def test_search(api):
         )
         assert resp.status == 201, await resp.json()
         resp = await resp.json()
-        resp = await api.create_criteria(api, resp)
+        resp = await api.create_criteria(api, "profiles", resp)
         profile_access = (resp)["access"]
 
         ids["profile"].append(profile_id)

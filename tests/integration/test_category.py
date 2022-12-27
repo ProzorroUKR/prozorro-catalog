@@ -278,3 +278,262 @@ async def test_120_category_patch(api, category):
     assert resp.status == 200
     resp_json = await resp.json()
     assert resp_json['data']['status'] == 'active'
+
+
+async def test_130_requirement_create(api, category):
+    category_id = category["data"]["id"]
+    criteria_id = category["data"]["criteria"][0]["id"]
+    rg_id = category["data"]["criteria"][0]["requirementGroups"][0]["id"]
+    requirement_data = {
+        "access": category["access"],
+        "data": {
+            "title": "Requirement with expectedValues",
+            "dataType": "string",
+            "expectedMinItems": 3,
+        }
+    }
+
+
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedMinItems and expectedMaxItems couldn't exist without expectedValues: data.__root__"
+    ]
+
+    requirement_data["data"]["expectedMaxItems"] = 2
+
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedMinItems and expectedMaxItems couldn't exist without expectedValues: data.__root__"
+    ]
+
+    requirement_data["data"]["expectedValues"] = ["value1", "value2", "value3", "value4"]
+
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedMinItems couldn't be greater then expectedMaxItems: data.__root__"
+    ]
+
+    requirement_data["data"]["expectedMaxItems"] = 6
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedMaxItems couldn't be greater then count of items in expectedValues: data.__root__"
+    ]
+
+    requirement_data["data"]["expectedMinItems"] = 5
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedMinItems couldn't be greater then count of items in expectedValues: data.__root__"
+    ]
+
+    del requirement_data["data"]["expectedMinItems"]
+    del requirement_data["data"]["expectedMaxItems"]
+    requirement_data["data"]["expectedValue"] = "someValue"
+
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data.__root__"
+    ]
+
+    del requirement_data["data"]["expectedValues"]
+    requirement_data["data"]["maxValue"] = ""
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data.__root__"
+    ]
+
+    del requirement_data["data"]["expectedValue"]
+    requirement_data["data"]["expectedValues"] = ["value1", "value2", "value3", "value4"]
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedValues couldn't exists together with one of ['minValue', 'maxValue', 'expectedValue']: data.__root__"
+    ]
+
+    del requirement_data["data"]["maxValue"]
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 201
+    resp_json = await resp.json()
+    assert "expectedMinItems" not in resp_json["data"][0]
+    assert "expectedMaxItems" not in resp_json["data"][0]
+    assert "expectedValue" not in resp_json["data"][0]
+    assert "minValue" not in resp_json["data"][0]
+    assert "maxValue" not in resp_json["data"][0]
+    assert "expectedValues" in resp_json["data"][0]
+
+    requirement_data["data"]["expectedMinItems"] = 1
+    requirement_data["data"]["expectedMaxItems"] = 3
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 201
+    resp_json = await resp.json()
+    assert "expectedMinItems" in resp_json["data"][0]
+    assert "expectedMaxItems" in resp_json["data"][0]
+    assert "expectedValues" in resp_json["data"][0]
+
+
+async def test_131_requirement_patch(api, category):
+    access = category["access"]
+    category_id = category["data"]["id"]
+    criteria_id = category["data"]["criteria"][0]["id"]
+    rg_id = category["data"]["criteria"][0]["requirementGroups"][0]["id"]
+    requirement_data = {
+        "access": category["access"],
+        "data": {
+            "title": "Requirement with expectedValues",
+            "dataType": "string",
+            "expectedValues": ["value1", "value2", "value3", "value4"],
+        }
+    }
+
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 201
+    resp_json = await resp.json()
+    requirement_id = resp_json["data"][0]["id"]
+
+    resp = await api.patch(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
+        json={"data": {"expectedMinItems": 3, "expectedValues": []}, "access": access},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedMinItems and expectedMaxItems couldn't exist without expectedValues: __root__"
+    ]
+
+    resp = await api.patch(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
+        json={"data": {"expectedMinItems": 5}, "access": access},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedMinItems couldn't be greater then count of items in expectedValues: __root__"
+    ]
+
+    resp = await api.patch(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
+        json={"data": {"expectedMaxItems": 5}, "access": access},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedMaxItems couldn't be greater then count of items in expectedValues: __root__"
+    ]
+
+    resp = await api.patch(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
+        json={"data": {"expectedMinItems": 6, "expectedMaxItems": 5}, "access": access},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedMinItems couldn't be greater then expectedMaxItems: __root__"
+    ]
+
+    resp = await api.patch(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
+        json={"data": {"expectedValue": "value"}, "access": access},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: __root__"
+    ]
+
+    resp = await api.patch(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
+        json={"data": {"minValue": "value"}, "access": access},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedValues couldn't exists together with one of ['minValue', 'maxValue', 'expectedValue']: __root__"
+    ]
+
+    resp = await api.patch(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
+        json={"data": {"expectedMinItems": 0}, "access": access},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "ensure this value is greater than 0: data.expectedMinItems"
+    ]
+
+    resp = await api.patch(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
+        json={"data": {"expectedMinItems": 3}, "access": category["access"]},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 200
+    resp_json = await resp.json()
+    assert resp_json["data"]["expectedMinItems"] == 3
+    assert resp_json["data"]["expectedValues"] == requirement_data["data"]["expectedValues"]
