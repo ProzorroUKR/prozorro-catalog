@@ -74,6 +74,8 @@ class BaseCriteriaView(View):
             # export data back to dict
             data = body.data.dict_without_none()
             # update profile with valid data
+            if "criteria" not in parent_obj:
+                parent_obj["criteria"] = []
 
             parent_obj["criteria"].append(data)
             parent_obj["dateModified"] = get_now().isoformat()
