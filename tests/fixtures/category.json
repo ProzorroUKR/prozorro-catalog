@@ -44,5 +44,9 @@
     "kind": "central"
   },
   "title": "Респіратори та маски без клапану",
+  "unit": {
+    "code": "H87",
+    "name": "штуки"
+  },
   "status": "active"
 }
