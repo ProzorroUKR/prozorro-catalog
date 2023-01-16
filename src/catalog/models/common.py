@@ -29,7 +29,7 @@ class DataTypeEnum(str, Enum):
 
 class Unit(BaseModel):
     code: str = Field(..., min_length=1, max_length=80)
-    name: str = Field(..., min_length=1, max_length=250)
+    name: constr(strip_whitespace=True, min_length=1, max_length=256)
 
     @validator('code')
     def code_standard(cls, v):
