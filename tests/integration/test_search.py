@@ -20,38 +20,41 @@ async def test_search(api):
             json={"data": category},
             auth=TEST_AUTH
         )
-        assert resp.status == 201, await resp.json()
+        assert resp.status == 201
+        category_data = await resp.json()
         category_access = (await resp.json())["access"]
         ids["category"].append(category_id)
 
         profile_id = '{}-{}'.format(randint(100000, 900000), category_id)
         profile['id'] = profile_id
-        profile['relatedCategory'] = category["id"]
+        profile['relatedCategory'] = category_id
         resp = await api.put(
             f"/api/profiles/{profile_id}",
             json={"data": profile,
                   "access": category_access},
             auth=TEST_AUTH,
         )
-        assert resp.status == 201, await resp.json()
-        resp = await resp.json()
-        resp = await api.create_criteria(api, "profiles", resp)
-        profile_access = (resp)["access"]
+        assert resp.status == 201
+        profile_data = await resp.json()
+        profile_access = profile_data["access"]
+        cat_resp = await api.create_criteria(api, "categories", category_data)
+        profile_resp = await api.create_criteria(api, "profiles", profile_data)
 
         ids["profile"].append(profile_id)
 
-        product['relatedProfiles'] = [resp["data"]["id"]]
+        product['relatedCategory'] = category_id
+        product['relatedProfiles'] = [profile_id]
         for item, rr in enumerate(product["requirementResponses"]):
             if item < 5:
-                rr["requirement"] = resp["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]
+                rr["requirement"] = cat_resp["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]
             elif item == 5:
-                rr["requirement"] = resp["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["title"]
+                rr["requirement"] = cat_resp["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["title"]
             elif item == 6:
-                rr["requirement"] = resp["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["title"]
+                rr["requirement"] = cat_resp["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["title"]
 
         resp = await api.post(
             "/api/products",
-            json={"data": product, "access": profile_access},
+            json={"data": product, "access": category_access},
             auth=TEST_AUTH,
         )
         assert resp.status == 201

@@ -372,7 +372,6 @@ async def read_obj_criterion(obj_name, obj_id, criterion_id):
             {"$match": {"_id": obj_id}},
             {"$unwind": "$criteria"},
             {"$match": {"criteria.id": criterion_id}},
-            {"$project": {"criteria": 1, "access": 1, "dateModified": 1}}
         ],
         session=session_var.get()
     ):
@@ -396,9 +395,9 @@ async def update_obj_criterion(obj_name, obj_id, data, criterion_id, dateModifie
 
 @asynccontextmanager
 async def read_and_update_obj_criterion(obj_name, obj_id, criterion_id):
-    profile = await read_obj_criterion(obj_name, obj_id, criterion_id)
-    yield profile
-    await update_obj_criterion(obj_name, obj_id, profile["criteria"], criterion_id, profile["dateModified"])
+    obj = await read_obj_criterion(obj_name, obj_id, criterion_id)
+    yield obj
+    await update_obj_criterion(obj_name, obj_id, obj["criteria"], criterion_id, obj["dateModified"])
 
 
 async def delete_obj_criterion(obj_name, obj_id, criterion_id, dateModified):

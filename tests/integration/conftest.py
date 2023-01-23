@@ -37,7 +37,8 @@ async def create_criteria(api, obj_path, profile):
             rg_data = await rg_resp.json()
             rg_id = rg_data["data"]["id"]
             await api.post(
-                f"/api/{obj_path}/{profile['data']['id']}/criteria/{criterion_id}/requirementGroups/{rg_id}/requirements",
+                f"/api/{obj_path}/{profile['data']['id']}/criteria/"
+                f"{criterion_id}/requirementGroups/{rg_id}/requirements",
                 json={"data": reqs, "access": profile["access"]},
                 auth=TEST_AUTH,
             )
@@ -51,14 +52,14 @@ async def create_criteria(api, obj_path, profile):
     return data
 
 
-def set_requirements_to_responses(requirement_responses, profile):
+def set_requirements_to_responses(requirement_responses, category):
     for item, rr in enumerate(requirement_responses):
         if item < 5:
-            rr["requirement"] = profile["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]
+            rr["requirement"] = category["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]
         elif item == 5:
-            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["title"]
+            rr["requirement"] = category["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["title"]
         elif item == 6:
-            rr["requirement"] = profile["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["title"]
+            rr["requirement"] = category["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["title"]
 
 @pytest.fixture
 async def db(event_loop):
@@ -92,7 +93,7 @@ async def category(api):
 
 
 @pytest.fixture
-async def profile(api, category):
+async def profile_without_criteria(api, category):
     data = get_fixture_json('profile')
     profile_id = f'0000000-{category["data"]["id"]}'
     data['id'] = profile_id
@@ -104,21 +105,28 @@ async def profile(api, category):
     )
     assert resp.status == 201
     data = await resp.json()
-    profile = await create_criteria(api, "profiles", data)
+    return data
+
+
+@pytest.fixture
+async def profile(api, profile_without_criteria):
+    profile = await create_criteria(api, "profiles", profile_without_criteria)
     return profile
 
 
 @pytest.fixture
-async def product(api, profile):
+async def product(api, category, profile):
     data = get_fixture_json('product')
     data['relatedProfiles'] = [profile["data"]["id"]]
-    set_requirements_to_responses(data["requirementResponses"], profile)
+    data['relatedCategory'] = category["data"]["id"]
+    set_requirements_to_responses(data["requirementResponses"], category)
+
     resp = await api.post(
         "/api/products",
-        json={"data": data, "access": profile["access"]},
+        json={"data": data, "access": category["access"]},
         auth=TEST_AUTH,
     )
-    assert resp.status == 201, await resp.json()
+    assert resp.status == 201
     return await resp.json()
 
 
@@ -159,10 +167,11 @@ async def vendor(api, category):
 
 
 @pytest.fixture
-async def vendor_product(api, vendor, profile):
+async def vendor_product(api, vendor, category, profile):
     data = get_fixture_json('vendor_product')
     data['relatedProfiles'] = [profile["data"]["id"]]
-    set_requirements_to_responses(data["requirementResponses"], profile)
+    data['relatedCategory'] = category["data"]["id"]
+    set_requirements_to_responses(data["requirementResponses"], category)
 
     resp = await api.post(
         f"/api/vendors/{vendor['data']['id']}/products?access_token={vendor['access']['token']}",
@@ -171,6 +180,7 @@ async def vendor_product(api, vendor, profile):
     )
     assert resp.status == 201, await resp.json()
     return await resp.json()
+
 
 @pytest.fixture
 async def vendor_document(api, vendor, profile):

@@ -406,6 +406,8 @@ async def test_130_requirement_create(api, category):
     )
     assert resp.status == 201
     resp_json = await resp.json()
+    assert "isArchived" in resp_json["data"][0]
+    assert resp_json["data"][0]["isArchived"] is False
     assert "expectedMinItems" not in resp_json["data"][0]
     assert "expectedMaxItems" not in resp_json["data"][0]
     assert "expectedValue" not in resp_json["data"][0]
@@ -415,6 +417,7 @@ async def test_130_requirement_create(api, category):
 
     requirement_data["data"]["expectedMinItems"] = 1
     requirement_data["data"]["expectedMaxItems"] = 3
+    requirement_data["data"]["title"] = "Requirement with expectedValues 2"
     resp = await api.post(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
         json=requirement_data,

@@ -1,4 +1,5 @@
 import random
+from copy import deepcopy
 from uuid import uuid4
 
 from aiohttp.web_urldispatcher import View
@@ -11,7 +12,11 @@ from catalog.swagger import class_view_swagger_path
 from catalog.utils import pagination_params, get_now, async_retry
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
 from catalog.serializers.product import ProductSerializer
-from catalog.validations import validate_product_to_profile, validate_patch_vendor_product
+from catalog.validations import (
+    validate_product_to_category,
+    validate_product_to_profile,
+    validate_patch_vendor_product,
+)
 
 
 @class_view_swagger_path('/app/swagger/products')
@@ -47,15 +52,19 @@ class ProductView(View):
         body = ProductCreateInput(**json)
         # export data back to dict
         data = body.data.dict_without_none()
-        data['id'] = uuid4().hex
+        data["id"] = uuid4().hex
 
-        profile_id = data['relatedProfiles'][0]
-        profile = await db.read_profile(profile_id)  # ensure exists
-        validate_access_token(request, profile, body.access)
-        validate_product_to_profile(profile, data)
+        category_id = data["relatedCategory"]
+        profile_ids = data.get("relatedProfiles", "")
+        category = await db.read_category(category_id)  # ensure exists
+        validate_access_token(request, category, body.access)
+        validate_product_to_category(category, data)
+        for profile_id in profile_ids:
+            profile = await db.read_profile(profile_id)
+            validate_product_to_profile(profile, data)
 
         access = set_access_token(request, data)
-        data['dateModified'] = get_now().isoformat()
+        data["dateModified"] = get_now().isoformat()
         await db.insert_product(data)
 
         return {"data": ProductSerializer(data).data,
@@ -74,12 +83,17 @@ class ProductView(View):
             validate_access_token(request, product, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
-            profile_ids = data.get("relatedProfiles") or product['relatedProfiles']
-            profile = await db.read_profile(profile_ids[0])
+            category_id = data.get("relatedCategory") or product['relatedCategory']
+            category = await db.read_category(category_id)
 
             # update profile with valid data
             data['dateModified'] = get_now().isoformat()
+            product_before = deepcopy(product)
             product.update(data)
-            validate_product_to_profile(profile, product)
+            validate_product_to_category(category, product, product_before)
+            profile_ids = product.get("relatedProfiles", "")
+            for profile_id in profile_ids:
+                profile = await db.read_profile(profile_id)
+                validate_product_to_profile(profile, product)
 
         return {"data": ProductSerializer(product).data}

@@ -7,13 +7,18 @@ from catalog.models.profile import ProfileCreateInput, ProfileUpdateInput
 from catalog.swagger import class_view_swagger_path
 from catalog.utils import pagination_params, get_now, async_retry, find_item_by_id
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
-from catalog.serializers.base import RootSerializer, BaseSerializer
+from catalog.serializers.base import RootSerializer
 from catalog.handlers.base_criteria import (
     BaseCriteriaView,
     BaseCriteriaRGView,
     BaseCriteriaRGRequirementView,
 )
-from catalog.validations import validate_requirement_title_uniq
+from catalog.models.criteria import (
+    ProfileRequirementCreateInput,
+    ProfileBulkRequirementCreateInput,
+    ProfileRequirementUpdateInput,
+)
+from catalog.validations import validate_profile_requirements
 
 
 @class_view_swagger_path('/app/swagger/profiles')
@@ -88,14 +93,59 @@ class ProfileCriteriaMixin:
 
 @class_view_swagger_path('/app/swagger/profiles/criteria')
 class ProfileCriteriaView(ProfileCriteriaMixin, BaseCriteriaView):
-    pass
+    @classmethod
+    async def delete(cls, request, obj_id, criterion_id):
+        cls.validations(request)
+        obj = await db.get_access_token(cls.obj_name, obj_id)
+        validate_access_token(request, obj, None)
+        dateModified = get_now().isoformat()
+        await cls.delete_obj_criterion(obj_id, criterion_id, dateModified)
+        return {"result": "success"}
 
 
 @class_view_swagger_path('/app/swagger/profiles/criteria/requirementGroups')
 class ProfileCriteriaRGView(ProfileCriteriaMixin, BaseCriteriaRGView):
-    pass
+    @classmethod
+    async def delete(cls, request, obj_id, criterion_id, rg_id):
+        cls.validations(request)
+        async with cls.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
+            validate_access_token(request, parent_obj, None)
+            rg = find_item_by_id(parent_obj["criteria"]["requirementGroups"], rg_id, "requirementGroups")
+            parent_obj["criteria"]["requirementGroups"].remove(rg)
+            parent_obj["dateModified"] = get_now().isoformat()
+        return {"result": "success"}
 
 
 @class_view_swagger_path('/app/swagger/profiles/criteria/requirementGroups/requirements')
 class ProfileCriteriaRGRequirementView(ProfileCriteriaMixin, BaseCriteriaRGRequirementView):
-    pass
+
+    @classmethod
+    async def get_body_from_model(cls, request):
+        json = await request.json()
+        body = None
+        if request.method == "POST":
+            if isinstance(json.get("data", {}), dict):
+                body = ProfileRequirementCreateInput(**json)
+                body.data = [body.data]
+            elif isinstance(json["data"], list):
+                body = ProfileBulkRequirementCreateInput(**json)
+        elif request.method == "PATCH":
+            return ProfileRequirementUpdateInput(**json)
+        return body
+
+    @classmethod
+    async def requirement_validations(cls, parent_obj, data):
+        category = await db.read_category(parent_obj["relatedCategory"])
+        validate_profile_requirements(data, category)
+
+    @classmethod
+    async def delete(cls, request, obj_id, criterion_id, rg_id, requirement_id):
+        validate_accreditation(request, "profile")
+        async with cls.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
+            validate_access_token(request, parent_obj, None)
+            rg = find_item_by_id(parent_obj["criteria"]["requirementGroups"], rg_id, "requirementGroups")
+            requirement = find_item_by_id(rg["requirements"], requirement_id, "requirements")
+            rg["requirements"].remove(requirement)
+            parent_obj["dateModified"] = get_now().isoformat()
+        return {"result": "success"}
+

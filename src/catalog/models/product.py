@@ -73,7 +73,7 @@ class RequirementResponse(BaseModel):
 
 
 class ProductRequirementResponses(BaseModel):
-    requirementResponses: Optional[List[RequirementResponse]] = Field(None, max_items=100)
+    requirementResponses: Optional[List[RequirementResponse]] = Field(None, min_items=1, max_items=100)
 
     @validator('requirementResponses')
     def unique_responses_ids(cls, v):
@@ -87,7 +87,8 @@ class ProductRequirementResponses(BaseModel):
 class VendorProductCreateData(ProductRequirementResponses):
     title: str = Field(..., min_length=1, max_length=80)
     # When we will have moved to new logic, we should remove max_items validation
-    relatedProfiles: List[str] = Field(..., min_items=1, max_items=1)
+    relatedProfiles: Optional[List[str]] = Field(None, max_items=1)
+    relatedCategory: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     description: str = Field(..., min_length=1, max_length=1000)
     classification: Classification
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
@@ -107,6 +108,7 @@ class ProductCreateData(VendorProductCreateData):
 
 class ProductUpdateData(ProductRequirementResponses):
     title: Optional[str] = Field(None, min_length=1, max_length=80)
+    relatedCategory: Optional[str] = Field(None, regex=r"^[0-9A-Za-z_-]{1,32}$")
     relatedProfiles: Optional[List[str]] = Field(None, max_items=1)
     description: Optional[str] = Field(None, min_length=1, max_length=1000)
     classification: Optional[Classification]
