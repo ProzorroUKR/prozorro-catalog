@@ -93,9 +93,9 @@ class RequirementBaseValidators(BaseModel):
         return values
 
 
-class RequirementCreateData(RequirementBaseValidators):
+class ProfileRequirementCreateData(RequirementBaseValidators):
     title: constr(strip_whitespace=True, min_length=1, max_length=250)
-    dataType: DataTypeEnum = Field(..., max_length=100)
+    dataType: DataTypeEnum = Field(None, max_length=100)
 
     unit: Optional[Unit] = None
     description: Optional[str] = Field(None, max_length=1000)
@@ -117,7 +117,11 @@ class RequirementCreateData(RequirementBaseValidators):
         return new_id
 
 
-class RequirementUpdateData(BaseModel):
+class RequirementCreateData(ProfileRequirementCreateData):
+    isArchived: bool = False
+
+
+class ProfileRequirementUpdateData(BaseModel):
     title: constr(strip_whitespace=True, min_length=1, max_length=250) = None
     dataType: DataTypeEnum = Field(None, max_length=100)
 
@@ -135,6 +139,10 @@ class RequirementUpdateData(BaseModel):
     expectedMaxItems: Optional[PositiveInt] = None
 
 
+class RequirementUpdateData(ProfileRequirementUpdateData):
+    isArchived: Optional[bool] = None
+
+
 class Requirement(RequirementBaseValidators):
     id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     title: str = Field(..., min_length=1, max_length=250)
@@ -143,6 +151,7 @@ class Requirement(RequirementBaseValidators):
     unit: Optional[Unit] = None
     description: Optional[str] = Field(None, max_length=1000)
     period: Optional[Period] = None
+    isArchived: Optional[bool]
 
     pattern: Optional[str] = Field(None, max_length=250)
     expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
@@ -214,7 +223,10 @@ RGListResponse = ListResponse[RequirementGroup]
 
 RequirementCreateInput = AuthorizedInput[RequirementCreateData]
 RequirementUpdateInput = AuthorizedInput[RequirementUpdateData]
+ProfileRequirementCreateInput = AuthorizedInput[ProfileRequirementCreateData]
+ProfileRequirementUpdateInput = AuthorizedInput[ProfileRequirementUpdateData]
 BulkRequirementCreateInput = BulkInput[RequirementCreateData]
+ProfileBulkRequirementCreateInput = BulkInput[ProfileRequirementCreateData]
 RequirementResponse = Response[Requirement]
 RequirementListResponse = ListResponse[Requirement]
 

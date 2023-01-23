@@ -13,12 +13,18 @@ from catalog.models.criteria import (
     RequirementUpdateInput,
     Requirement,
 )
-from catalog.serializers.base import RootSerializer, BaseSerializer
+from catalog.serializers.base import RootSerializer
+from catalog.validations import validate_requirement_title_uniq
 
 
 class View(BaseView):
 
     obj_name: str
+    serializer_class = RootSerializer
+
+    @classmethod
+    async def get_body_from_model(cls, request):
+        raise NotImplementedError("provide `get_model_cls` method")
 
     @classmethod
     async def get_parent_obj(cls, obj_id: str) -> dict:
@@ -51,15 +57,23 @@ class BaseCriteriaView(View):
     """
 
     @classmethod
+    async def get_body_from_model(cls, request):
+        json = await request.json()
+        if request.method == "POST":
+            return CriterionCreateInput(**json)
+        elif request.method == "PATCH":
+            return CriterionUpdateInput(**json)
+
+    @classmethod
     async def collection_get(cls, request, obj_id):
         obj_criteria = await cls.get_parent_obj(obj_id=obj_id)
-        data = RootSerializer(obj_criteria, show_owner=False).data
+        data = cls.serializer_class(obj_criteria, show_owner=False).data
         return {"data": data["criteria"]}
 
     @classmethod
     async def get(cls, request, obj_id, criterion_id):
         criterion = await cls.get_criterion(obj_id, criterion_id)
-        data = RootSerializer(criterion, show_owner=False).data
+        data = cls.serializer_class(criterion, show_owner=False).data
         return {"data": data["criteria"]}
 
     @classmethod
@@ -67,8 +81,7 @@ class BaseCriteriaView(View):
         cls.validations(request)
         async with cls.read_and_update_parent_obj(obj_id) as parent_obj:
             # import and validate data
-            json = await request.json()
-            body = CriterionCreateInput(**json)
+            body = await cls.get_body_from_model(request)
 
             validate_access_token(request, parent_obj, body.access)
             # export data back to dict
@@ -79,7 +92,7 @@ class BaseCriteriaView(View):
 
             parent_obj["criteria"].append(data)
             parent_obj["dateModified"] = get_now().isoformat()
-        return {"data": BaseSerializer(data).data}
+        return {"data": cls.serializer_class(data).data}
 
     @classmethod
     async def patch(cls, request, obj_id, criterion_id):
@@ -87,7 +100,7 @@ class BaseCriteriaView(View):
         async with cls.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
             # import and validate data
             json = await request.json()
-            body = CriterionUpdateInput(**json)
+            body = await cls.get_body_from_model(request)
 
             validate_access_token(request, parent_obj, body.access)
             # export data back to dict
@@ -97,16 +110,7 @@ class BaseCriteriaView(View):
             parent_obj["criteria"].update(data)
             parent_obj["dateModified"] = get_now().isoformat()
 
-        return {"data": BaseSerializer(parent_obj["criteria"]).data}
-
-    @classmethod
-    async def delete(cls, request, obj_id, criterion_id):
-        cls.validations(request)
-        obj = await db.get_access_token(cls.obj_name, obj_id)
-        validate_access_token(request, obj, None)
-        dateModified = get_now().isoformat()
-        await cls.delete_obj_criterion(obj_id, criterion_id, dateModified)
-        return {"result": "success"}
+        return {"data": cls.serializer_class(parent_obj["criteria"]).data}
 
 
 class BaseCriteriaRGView(View):
@@ -115,61 +119,59 @@ class BaseCriteriaRGView(View):
     """
 
     @classmethod
+    async def get_body_from_model(cls, request):
+        json = await request.json()
+        if request.method == "POST":
+            return RGCreateInput(**json)
+        elif request.method == "PATCH":
+            return RGUpdateInput(**json)
+
+    @classmethod
     async def collection_get(cls, request, obj_id, criterion_id):
         parent_criteria = await cls.get_criterion(obj_id, criterion_id)
         data = RootSerializer(parent_criteria, show_owner=False).data
-        return {"data": data["criteria"]["requirementGroups"]}
+        return {"data": [
+            cls.serializer_class(rg, show_owner=False).data
+            for rg in data["criteria"]["requirementGroups"]
+        ]}
 
     @classmethod
     async def get(cls, request, obj_id, criterion_id, rg_id):
         parent_criterion = await cls.get_criterion(obj_id, criterion_id)
-        data = RootSerializer(parent_criterion, show_owner=False).data
-        response = find_item_by_id(data["criteria"]["requirementGroups"], rg_id, "requirementGroups")
-        return {"data": response}
+        rg = find_item_by_id(parent_criterion, rg_id, "requirementGroups")
+        return {"data": cls.serializer_class(rg, show_owner=False).data}
 
     @classmethod
     async def post(cls, request, obj_id, criterion_id):
         cls.validations(request)
         async with cls.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
             # import and validate data
-            json = await request.json()
-            body = RGCreateInput(**json)
+            body = await cls.get_body_from_model(request)
 
             validate_access_token(request, parent_obj, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
-            # update profile with valid data
+            # update obj with valid data
             parent_obj["criteria"]["requirementGroups"].append(data)
             parent_obj["dateModified"] = get_now().isoformat()
-        return {"data": BaseSerializer(data).data}
+        return {"data": cls.serializer_class(data).data}
 
     @classmethod
     async def patch(cls, request, obj_id, criterion_id, rg_id):
         cls.validations(request)
         async with cls.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
             # import and validate data
-            json = await request.json()
-            body = RGUpdateInput(**json)
+            body = await cls.get_body_from_model(request)
 
             validate_access_token(request, parent_obj, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
-            # update profile with valid data
+            # update object with valid data
             rg = find_item_by_id(parent_obj["criteria"]["requirementGroups"], rg_id, "requirementGroups")
             rg.update(data)
             parent_obj["dateModified"] = get_now().isoformat()
 
-        return {"data": BaseSerializer(rg).data}
-
-    @classmethod
-    async def delete(cls, request, obj_id, criterion_id, rg_id):
-        cls.validations(request)
-        async with cls.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
-            validate_access_token(request, parent_obj, None)
-            rg = find_item_by_id(parent_obj["criteria"]["requirementGroups"], rg_id, "requirementGroups")
-            parent_obj["criteria"]["requirementGroups"].remove(rg)
-            parent_obj["dateModified"] = get_now().isoformat()
-        return {"result": "success"}
+        return {"data": cls.serializer_class(rg).data}
 
 
 class BaseCriteriaRGRequirementView(View):
@@ -178,68 +180,73 @@ class BaseCriteriaRGRequirementView(View):
     """
 
     @classmethod
-    async def collection_get(cls, request, obj_id, criterion_id, rg_id):
-        criteria = await cls.get_criterion(obj_id, criterion_id)
-        data = RootSerializer(criteria, show_owner=False).data
-        rg = find_item_by_id(data["criteria"]["requirementGroups"], rg_id, "requirementGroups")
-        return {"data": rg.get("requirements", [])}
-
-    @classmethod
-    async def get(cls, request, obj_id, criterion_id, rg_id, requirement_id):
-        criterion = await cls.get_criterion(obj_id, criterion_id)
-        data = RootSerializer(criterion, show_owner=False).data
-        rg = find_item_by_id(data["criteria"]["requirementGroups"], rg_id, "requirementGroups")
-        requirement = find_item_by_id(rg["requirements"], requirement_id, "requirements")
-        return {"data": requirement}
-
-    @classmethod
-    async def post(cls, request, obj_id, criterion_id, rg_id):
-        cls.validations(request)
-        async with cls.read_and_update_criterion(obj_id, criterion_id) as profile:
-            # import and validate data
-            json = await request.json()
+    async def get_body_from_model(cls, request):
+        json = await request.json()
+        body = None
+        if request.method == "POST":
             if isinstance(json.get("data", {}), dict):
                 body = RequirementCreateInput(**json)
                 body.data = [body.data]
             elif isinstance(json["data"], list):
                 body = BulkRequirementCreateInput(**json)
+        elif request.method == "PATCH":
+            return RequirementUpdateInput(**json)
 
-            validate_access_token(request, profile, body.access)
+        return body
+
+    @classmethod
+    async def requirement_validations(cls, parent_obj, data):
+        pass
+
+    @classmethod
+    async def collection_get(cls, request, obj_id, criterion_id, rg_id):
+        criteria = await cls.get_criterion(obj_id, criterion_id)
+        rg = find_item_by_id(criteria["criteria"]["requirementGroups"], rg_id, "requirementGroups")
+        return {"data": [cls.serializer_class(i, show_owner=False).data for i in rg.get("requirements", [])]}
+
+    @classmethod
+    async def get(cls, request, obj_id, criterion_id, rg_id, requirement_id):
+        criterion = await cls.get_criterion(obj_id, criterion_id)
+        rg = find_item_by_id(criterion["criteria"]["requirementGroups"], rg_id, "requirementGroups")
+        requirement = find_item_by_id(rg["requirements"], requirement_id, "requirements")
+        return {"data": cls.serializer_class(requirement, show_owner=False).data}
+
+    @classmethod
+    async def post(cls, request, obj_id, criterion_id, rg_id):
+        cls.validations(request)
+        async with cls.read_and_update_parent_obj(obj_id) as obj:
+            # import and validate data
+            criterion = find_item_by_id(obj["criteria"], criterion_id, "criteria")
+            rg = find_item_by_id(criterion["requirementGroups"], rg_id, "requirementGroups")
+            body = await cls.get_body_from_model(request)
+            validate_access_token(request, obj, body.access)
             # export data back to dict
             data = [r.dict_without_none() for r in body.data]
-            # update profile with valid data
-            rg = find_item_by_id(profile["criteria"]["requirementGroups"], rg_id, "requirementGroups")
+            # update obj with valid data
+            await cls.requirement_validations(obj, data)
             rg["requirements"].extend(data)
-            profile["dateModified"] = get_now().isoformat()
-        return {"data": [BaseSerializer(r).data for r in data]}
+            validate_requirement_title_uniq(obj)
+            obj["dateModified"] = get_now().isoformat()
+        return {"data": [cls.serializer_class(r).data for r in data]}
 
     @classmethod
     async def patch(cls, request, obj_id, criterion_id, rg_id, requirement_id):
         cls.validations(request)
-        async with cls.read_and_update_criterion(obj_id, criterion_id) as profile:
+        async with cls.read_and_update_parent_obj(obj_id) as obj:
             # import and validate data
-            json = await request.json()
-            body = RequirementUpdateInput(**json)
+            criterion = find_item_by_id(obj["criteria"], criterion_id, "criteria")
+            rg = find_item_by_id(criterion["requirementGroups"], rg_id, "requirementGroups")
+            requirement = find_item_by_id(rg["requirements"], requirement_id, "requirements")
+            body = await cls.get_body_from_model(request)
 
-            validate_access_token(request, profile, body.access)
+            validate_access_token(request, obj, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
             # update profile with valid data
-            rg = find_item_by_id(profile["criteria"]["requirementGroups"], rg_id, "requirementGroups")
-            requirement = find_item_by_id(rg["requirements"], requirement_id, "requirements")
             requirement.update(data)
             Requirement(**requirement)
-            profile["dateModified"] = get_now().isoformat()
+            await cls.requirement_validations(obj, [requirement])
+            validate_requirement_title_uniq(obj)
+            obj["dateModified"] = get_now().isoformat()
 
-        return {"data": BaseSerializer(requirement).data}
-
-    @classmethod
-    async def delete(cls, request, obj_id, criterion_id, rg_id, requirement_id):
-        cls.validations(request)
-        async with cls.read_and_update_criterion(obj_id, criterion_id) as profile:
-            validate_access_token(request, profile, None)
-            rg = find_item_by_id(profile["criteria"]["requirementGroups"], rg_id, "requirementGroups")
-            requirement = find_item_by_id(rg["requirements"], requirement_id, "requirements")
-            rg["requirements"].remove(requirement)
-            profile["dateModified"] = get_now().isoformat()
-        return {"result": "success"}
+        return {"data": cls.serializer_class(requirement).data}

@@ -9,8 +9,9 @@ from catalog.utils import get_now
 from catalog.auth import validate_access_token, validate_accreditation
 from catalog.serializers.product import ProductSerializer
 from catalog.validations import (
-    validate_product_related_profile,
+    validate_product_related_category,
     validate_product_active_vendor,
+    validate_product_to_category,
     validate_product_to_profile,
 )
 
@@ -26,11 +27,15 @@ class VendorProductView(View):
         body = VendorProductCreateInput(**json)
         validate_access_token(request, vendor, body.access)
         data = body.data.dict_without_none()
-        profile = await db.read_profile(data["relatedProfiles"][0])
+        category = await db.read_category(data["relatedCategory"])
+        profile_ids = data.get("relatedProfiles", "")
         # validations
         validate_product_active_vendor(vendor)
-        validate_product_related_profile(profile)
-        validate_product_to_profile(profile, data)
+        validate_product_related_category(category)
+        validate_product_to_category(category, data)
+        for profile_id in profile_ids:
+            profile = await db.read_profile(profile_id)
+            validate_product_to_profile(profile, data)
 
         data['id'] = uuid4().hex
         data['vendor'] = {"id": vendor_id}

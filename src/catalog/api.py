@@ -104,11 +104,6 @@ def create_application(on_cleanup=None):
         CategoryCriteriaView.patch,
         name="update_category_criteria"
     )
-    app.router.add_delete(
-        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}",
-        CategoryCriteriaView.delete,
-        name="delete_category_criteria"
-    )
 
     # profile criteria RG
     app.router.add_get(
@@ -132,11 +127,6 @@ def create_application(on_cleanup=None):
         CategoryCriteriaRGView.patch,
         name="update_category_criteria_rg"
     )
-    app.router.add_delete(
-        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}",
-        CategoryCriteriaRGView.delete,
-        name="delete_category_criteria_rg"
-    )
 
     # profile criteria RG requirements
     app.router.add_get(
@@ -159,11 +149,6 @@ def create_application(on_cleanup=None):
         r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
         CategoryCriteriaRGRequirementView.patch,
         name="update_category_criteria_rg_requirement"
-    )
-    app.router.add_delete(
-        r"/api/categories/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
-        CategoryCriteriaRGRequirementView.delete,
-        name="delete_category_criteria_rg_requirement"
     )
 
     # risk profiles
@@ -271,7 +256,7 @@ def create_application(on_cleanup=None):
         r"/api/profiles/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
         ProfileCriteriaRGRequirementView.delete,
         name="delete_profile_criteria_rg_requirement"
-    ),
+    )
 
     # products
     app.router.add_get(

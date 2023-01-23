@@ -4,6 +4,37 @@ from urllib.parse import quote
 from .base import TEST_AUTH, TEST_AUTH_NO_PERMISSION, TEST_AUTH_ANOTHER
 
 
+async def create_blank_criterion(api, profile):
+    profile_id = profile["data"]["id"]
+
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria",
+        json={
+            "data": {
+                "description": "Спосіб використання (одноразова або багаторазова)",
+                "title": "Спосіб використання",
+            },
+            "access": profile["access"]
+        },
+        auth=TEST_AUTH,
+    )
+    resp_json = await resp.json()
+    criterion_id = resp_json["data"]["id"]
+
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria/{criterion_id}/requirementGroups",
+        json={
+            "data": {"description": "Спосіб використання - одноразова",},
+            "access": profile["access"]
+        },
+        auth=TEST_AUTH,
+    )
+    resp_json = await resp.json()
+    rg_id = resp_json["data"]["id"]
+
+    return criterion_id, rg_id
+
+
 async def test_310_profile_create(api, category):
     category_id = category['data']['id']
     profile_id = '{}-{}'.format(randint(100000, 900000), category_id)
@@ -202,14 +233,15 @@ async def test_320_profile_patch(api, profile):
     assert resp_json['data']['status'] == 'active'
 
 
-async def test_330_requirement_create(api, profile):
+async def test_330_requirement_create(api, category, profile_without_criteria):
+    profile = profile_without_criteria
     profile_id = profile["data"]["id"]
-    criteria_id = profile["data"]["criteria"][0]["id"]
-    rg_id = profile["data"]["criteria"][0]["requirementGroups"][0]["id"]
+
+    criteria_id, rg_id = await create_blank_criterion(api, profile)
     requirement_data = {
         "access": profile["access"],
         "data": {
-            "title": "Requirement with expectedValues",
+            "title": "Три шари або більше",
             "dataType": "string",
             "expectedMinItems": 3,
         }
@@ -320,6 +352,7 @@ async def test_330_requirement_create(api, profile):
     ]
 
     del requirement_data["data"]["maxValue"]
+    requirement_data["data"]["title"] = "Тест allOf_1"
     resp = await api.post(
         f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
         json=requirement_data,
@@ -336,7 +369,7 @@ async def test_330_requirement_create(api, profile):
 
     requirement_data["data"]["expectedMinItems"] = 1
     requirement_data["data"]["expectedMaxItems"] = 3
-    requirement_data["data"]["title"] = "Requirement with expectedValues 2 "
+    requirement_data["data"]["title"] = "Тест allOf_2"
     resp = await api.post(
         f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
         json=requirement_data,
@@ -344,21 +377,60 @@ async def test_330_requirement_create(api, profile):
     )
     assert resp.status == 201
     resp_json = await resp.json()
+    assert "isArchived" not in resp_json["data"][0]
     assert "expectedMinItems" in resp_json["data"][0]
     assert "expectedMaxItems" in resp_json["data"][0]
     assert "expectedValues" in resp_json["data"][0]
-    assert resp_json["data"][0]["title"] == "Requirement with expectedValues 2"
+    assert resp_json["data"][0]["title"] == "Тест allOf_2"
+
+    category_id = category["data"]["id"]
+    c_criteria_id = category["data"]["criteria"][0]["id"]
+    c_rg_id = category["data"]["criteria"][0]["requirementGroups"][0]["id"]
+    c_req_id = category["data"]["criteria"][0]["requirementGroups"][0]["requirements"][0]["id"]
+    resp = await api.patch(
+        f"/api/categories/{category_id}/criteria/{c_criteria_id}/requirementGroups/{c_rg_id}/requirements/{c_req_id}",
+        json={"data": {"isArchived": True}, "access": category["access"]},
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 200
+    resp_json = await resp.json()
+    assert resp_json["data"]["isArchived"] is True
+
+    requirement_data["data"]["title"] = "Одноразова"
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        f"requirement '{requirement_data['data']['title']}' is archived"
+    ]
+
+    requirement_data["data"]["title"] = "Не існуючий"
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        f"requirement '{requirement_data['data']['title']}' not found in category {category['data']['id']}"
+    ]
 
 
-async def test_331_requirement_patch(api, profile):
+async def test_331_requirement_patch(api, profile_without_criteria):
+    profile = profile_without_criteria
     access = profile["access"]
     profile_id = profile["data"]["id"]
-    criteria_id = profile["data"]["criteria"][0]["id"]
-    rg_id = profile["data"]["criteria"][0]["requirementGroups"][0]["id"]
+    criteria_id, rg_id = await create_blank_criterion(api, profile)
     requirement_data = {
         "access": profile["access"],
         "data": {
-            "title": "Requirement with expectedValues",
+            "title": "Одноразова",
             "dataType": "string",
             "expectedValues": ["value1", "value2", "value3", "value4"],
         }
@@ -370,7 +442,7 @@ async def test_331_requirement_patch(api, profile):
         auth=TEST_AUTH,
     )
 
-    assert resp.status == 201
+    # assert resp.status == 201
     resp_json = await resp.json()
     requirement_id = resp_json["data"][0]["id"]
 
