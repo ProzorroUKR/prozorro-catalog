@@ -30,20 +30,6 @@ async def test_410_product_create(api, category, profile):
     )
     assert resp.status == 404, await resp.json()
 
-    resp = await api.post(
-        '/api/products',
-        json=test_product,
-        auth=TEST_AUTH,
-    )
-    assert resp.status == 400, await resp.json()
-    assert {'errors': ['product and category classification mismatch']} == await resp.json()
-
-    test_product['data']['classification']['id'] = '87654321'
-
-    resp = await api.post('/api/products', json=test_product, auth=TEST_AUTH)
-    assert resp.status == 400
-    assert {'errors': ['product and category classification mismatch']} == await resp.json()
-
     test_product['data']['classification']['id'] = cpv
 
     resp = await api.post('/api/products', json=test_product, auth=TEST_AUTH)

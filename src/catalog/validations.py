@@ -114,8 +114,8 @@ def validate_product_req_response_to_profile(profile: dict, product: dict):
 
 
 def validate_product_to_category(category, product, product_before=None):
-    if product['classification']['id'][:4] != category['classification']['id'][:4]:
-        raise HTTPBadRequest(text='product and category classification mismatch')
+    if category.get("status", CategoryStatus.active) != CategoryStatus.active:
+        raise HTTPBadRequest(text=f"relatedProfiles should be in `{CategoryStatus.active}` status.")
 
     validate_product_req_responses_to_category(category, product, product_before)
 
@@ -124,7 +124,7 @@ def validate_product_to_profile(profile, product):
     if product["relatedCategory"] != profile["relatedCategory"]:
         raise HTTPBadRequest(text='product and profile should be related with the same category')
     if profile["status"] != ProfileStatus.active:
-        raise HTTPBadRequest(text="relatedProfiles should be in `active` status.")
+        raise HTTPBadRequest(text=f"relatedProfiles should be in `{ProfileStatus.active}` status.")
 
     validate_product_req_response_to_profile(profile, product)
 
