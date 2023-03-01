@@ -91,8 +91,26 @@ class ProfileCriteriaMixin:
         return db.read_and_update_profile(obj_id)
 
 
-@class_view_swagger_path('/app/swagger/profiles/criteria')
+@class_view_swagger_path('/app/swagger/profiles/criterion')
 class ProfileCriteriaView(ProfileCriteriaMixin, BaseCriteriaView):
+
+    @classmethod
+    async def collection_get(cls, request, obj_id):
+        # That was made for swagger, maybe exist better solution
+        return await super().collection_get(request, obj_id)
+
+    @classmethod
+    async def get(cls, request, obj_id, criterion_id):
+        return await super().get(request, obj_id, criterion_id)
+
+    @classmethod
+    async def post(cls, request, obj_id):
+        return await super().post(request, obj_id)
+
+    @classmethod
+    async def patch(cls, request, obj_id, criterion_id):
+        return await super().patch(request, obj_id, criterion_id)
+
     @classmethod
     async def delete(cls, request, obj_id, criterion_id):
         cls.validations(request)
@@ -103,8 +121,25 @@ class ProfileCriteriaView(ProfileCriteriaMixin, BaseCriteriaView):
         return {"result": "success"}
 
 
-@class_view_swagger_path('/app/swagger/profiles/criteria/requirementGroups')
+@class_view_swagger_path('/app/swagger/profiles/criterion/requirementGroups')
 class ProfileCriteriaRGView(ProfileCriteriaMixin, BaseCriteriaRGView):
+
+    @classmethod
+    async def collection_get(cls, request, obj_id, criterion_id):
+        return await super().collection_get(request, obj_id, criterion_id)
+
+    @classmethod
+    async def get(cls, request, obj_id, criterion_id, rg_id):
+        return await super().get(request, obj_id, criterion_id, rg_id)
+
+    @classmethod
+    async def post(cls, request, obj_id, criterion_id):
+        return await super().post(request, obj_id, criterion_id)
+
+    @classmethod
+    async def patch(cls, request, obj_id, criterion_id, rg_id):
+        return await super().patch(request, obj_id, criterion_id, rg_id)
+
     @classmethod
     async def delete(cls, request, obj_id, criterion_id, rg_id):
         cls.validations(request)
@@ -116,7 +151,7 @@ class ProfileCriteriaRGView(ProfileCriteriaMixin, BaseCriteriaRGView):
         return {"result": "success"}
 
 
-@class_view_swagger_path('/app/swagger/profiles/criteria/requirementGroups/requirements')
+@class_view_swagger_path('/app/swagger/profiles/criterion/requirementGroups/requirements')
 class ProfileCriteriaRGRequirementView(ProfileCriteriaMixin, BaseCriteriaRGRequirementView):
 
     @classmethod
@@ -137,6 +172,22 @@ class ProfileCriteriaRGRequirementView(ProfileCriteriaMixin, BaseCriteriaRGRequi
     async def requirement_validations(cls, parent_obj, data):
         category = await db.read_category(parent_obj["relatedCategory"])
         validate_profile_requirements(data, category)
+
+    @classmethod
+    async def collection_get(cls, request, obj_id, criterion_id, rg_id):
+        return await super().collection_get(request, obj_id, criterion_id, rg_id)
+
+    @classmethod
+    async def get(cls, request, obj_id, criterion_id, rg_id, requirement_id):
+        return await super().get(request, obj_id, criterion_id, rg_id, requirement_id)
+
+    @classmethod
+    async def post(cls, request, obj_id, criterion_id, rg_id):
+        return await super().post(request, obj_id, criterion_id, rg_id)
+
+    @classmethod
+    async def patch(cls, request, obj_id, criterion_id, rg_id, requirement_id):
+        return await super().patch(request, obj_id, criterion_id, rg_id, requirement_id)
 
     @classmethod
     async def delete(cls, request, obj_id, criterion_id, rg_id, requirement_id):
