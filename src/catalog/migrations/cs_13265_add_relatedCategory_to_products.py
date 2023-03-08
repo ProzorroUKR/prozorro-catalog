@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import timedelta
 import asyncio
 import logging
 
@@ -66,6 +67,7 @@ async def migrate_products(profile: dict):
         bulk = []
         query = {"relatedProfiles": {"$in": [profile["_id"]]}}
         async for p in products_collection.find(query, session=session):
+            now += timedelta(10)
             bulk.append(
                 UpdateOne(
                     filter={"_id": p["_id"]},
