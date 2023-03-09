@@ -8,6 +8,7 @@ from tests.integration.conftest import (
     db,
     category,
     profile,
+    profile_without_criteria,
 )
 
 
@@ -40,6 +41,14 @@ async def test_migrate_products(db, api, profile):
     resp = await api.get(f'/api/products/{product_data_1["_id"]}')
     assert resp.status == 200
     resp_json = await resp.json()
-    product = resp_json["data"]
+    product_1 = resp_json["data"]
 
-    assert product["relatedCategory"] == profile["data"]["relatedCategory"]
+    assert product_1["relatedCategory"] == profile["data"]["relatedCategory"]
+
+    resp = await api.get(f'/api/products/{product_data_2["_id"]}')
+    assert resp.status == 200
+    resp_json = await resp.json()
+    product_2 = resp_json["data"]
+
+    assert product_1["dateModified"] < product_2["dateModified"]
+    import pdb; pdb.set_trace()
