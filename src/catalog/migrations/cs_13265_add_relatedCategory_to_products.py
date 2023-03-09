@@ -63,7 +63,7 @@ async def migrate_products(profile: dict):
 
     products_collection = get_products_collection()
     async with transaction_context_manager() as session:
-        now = get_now().isoformat()
+        now = get_now()
         bulk = []
         query = {"relatedProfiles": {"$in": [profile["_id"]]}}
         async for p in products_collection.find(query, session=session):
@@ -71,7 +71,7 @@ async def migrate_products(profile: dict):
             bulk.append(
                 UpdateOne(
                     filter={"_id": p["_id"]},
-                    update={"$set": {"relatedCategory": profile["relatedCategory"], "dateModified": now}}
+                    update={"$set": {"relatedCategory": profile["relatedCategory"], "dateModified": now.isoformat()}}
                 )
             )
             counters.updated_products += 1
