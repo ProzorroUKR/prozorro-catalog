@@ -130,13 +130,13 @@ class ProfileRequirementUpdateData(BaseModel):
     period: Optional[Period] = None
 
     pattern: Optional[str] = Field(None, max_length=250)
-    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
-    maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
-    minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
+    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]
+    maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]
+    minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]
 
-    expectedValues: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
-    expectedMinItems: Optional[PositiveInt] = None
-    expectedMaxItems: Optional[PositiveInt] = None
+    expectedValues: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]]
+    expectedMinItems: Optional[PositiveInt]
+    expectedMaxItems: Optional[PositiveInt]
 
 
 class RequirementUpdateData(ProfileRequirementUpdateData):
@@ -158,7 +158,7 @@ class Requirement(RequirementBaseValidators):
     maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
     minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
 
-    expectedValues: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(None, max_items=100)
+    expectedValues: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]]
     expectedMinItems: Optional[PositiveInt] = None
     expectedMaxItems: Optional[PositiveInt] = None
 

@@ -2,7 +2,7 @@ from aiohttp.web_urldispatcher import View as BaseView
 
 from catalog import db
 from catalog.auth import validate_accreditation, validate_access_token
-from catalog.utils import get_now, find_item_by_id
+from catalog.utils import get_now, find_item_by_id, delete_sent_none_values
 from catalog.models.criteria import (
     CriterionCreateInput,
     CriterionUpdateInput,
@@ -238,12 +238,14 @@ class BaseCriteriaRGRequirementView(View):
             rg = find_item_by_id(criterion["requirementGroups"], rg_id, "requirementGroups")
             requirement = find_item_by_id(rg["requirements"], requirement_id, "requirements")
             body = await cls.get_body_from_model(request)
+            json = await request.json()
 
             validate_access_token(request, obj, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
             # update profile with valid data
             requirement.update(data)
+            delete_sent_none_values(requirement, json["data"])
             Requirement(**requirement)
             await cls.requirement_validations(obj, [requirement])
             validate_requirement_title_uniq(obj)

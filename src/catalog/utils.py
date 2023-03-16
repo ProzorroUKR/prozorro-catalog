@@ -132,3 +132,9 @@ def find_item_by_id(items, item_id, item_name):
         if item["id"] == item_id:
             return item
     raise HTTPNotFound(text=f"{item_name} with id {item_id} not found")
+
+
+def delete_sent_none_values(data, json):
+    for key in json:
+        if key in data and json[key] is None:
+            del data[key]
