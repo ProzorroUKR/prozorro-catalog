@@ -456,7 +456,7 @@ async def test_131_requirement_patch(api, category):
 
     resp = await api.patch(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
-        json={"data": {"expectedMinItems": 3, "expectedValues": []}, "access": access},
+        json={"data": {"expectedMinItems": 3, "expectedValues": None}, "access": access},
         auth=TEST_AUTH,
     )
     assert resp.status == 400
