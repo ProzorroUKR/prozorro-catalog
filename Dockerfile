@@ -8,6 +8,8 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 COPY swagger /app/swagger
 COPY migrations /app/migrations
+COPY cron /app/cron
+RUN /usr/bin/crontab cron/cron.txt
 EXPOSE 8000
 
 FROM base as test_base

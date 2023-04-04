@@ -14,6 +14,3 @@ class ProductSerializer(RootSerializer):
                 'name': vendor['vendor']['name'],
                 'identifier': vendor['vendor']['identifier'],
             })
-
-        if data.get("relatedProfiles"):
-            data["relatedProfile"] = data["relatedProfiles"][0]

@@ -43,7 +43,6 @@ async def test_search(api):
         ids["profile"].append(profile_id)
 
         product['relatedCategory'] = category_id
-        product['relatedProfiles'] = [profile_id]
         for item, rr in enumerate(product["requirementResponses"]):
             if item < 5:
                 rr["requirement"] = cat_resp["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]

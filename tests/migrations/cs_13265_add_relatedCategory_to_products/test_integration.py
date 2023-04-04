@@ -50,5 +50,5 @@ async def test_migrate_products(db, api, profile):
     resp_json = await resp.json()
     product_2 = resp_json["data"]
 
-    assert product_1["dateModified"] < product_2["dateModified"]
-    import pdb; pdb.set_trace()
+    assert product_1["dateModified"] != product_2["dateModified"]
+

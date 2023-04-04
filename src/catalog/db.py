@@ -501,9 +501,10 @@ def get_offers_collection():
 
 async def init_offers_indexes():
     modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    category_index = IndexModel([("relatedCategory", ASCENDING)], background=True)
     try:
         await get_offers_collection().create_indexes(
-            [modified_index]
+            [modified_index, category_index]
         )
     except PyMongoError as e:
         logger.exception(e)

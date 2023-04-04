@@ -12,7 +12,6 @@ async def test_vendor_product_create(api, vendor, category, profile):
     vendor = vendor['data']
 
     test_product = api.get_fixture_json('vendor_product')
-    test_product['relatedProfiles'] = [profile['data']['id']]
     test_product['relatedCategory'] = category_id
     set_requirements_to_responses(test_product['requirementResponses'], category)
 
@@ -60,7 +59,6 @@ async def test_vendor_product_create(api, vendor, category, profile):
 
     failure_product = api.get_fixture_json('product')
     failure_product['relatedCategory'] = category_id
-    failure_product['relatedProfiles'] = [profile['data']['id']]
     del failure_product['requirementResponses']
 
     resp = await api.post(
