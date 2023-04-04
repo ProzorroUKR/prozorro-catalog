@@ -1,0 +1,1 @@
+0 0 * * * PYTHONPATH=/app python /app/cron/related_profiles_task.py

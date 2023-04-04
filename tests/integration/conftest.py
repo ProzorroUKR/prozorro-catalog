@@ -15,8 +15,10 @@ def get_fixture_json(name):
     return data
 
 
-async def create_criteria(api, obj_path, profile):
-    criteria = get_fixture_json('criteria')
+async def create_criteria(api, obj_path, profile, criteria=None):
+    if not criteria:
+        criteria = get_fixture_json('criteria')
+
     for criterion in criteria["criteria"]:
         rgs = criterion.pop("requirementGroups")
         resp = await api.post(
@@ -115,9 +117,8 @@ async def profile(api, profile_without_criteria):
 
 
 @pytest.fixture
-async def product(api, category, profile):
+async def product(api, category):
     data = get_fixture_json('product')
-    data['relatedProfiles'] = [profile["data"]["id"]]
     data['relatedCategory'] = category["data"]["id"]
     set_requirements_to_responses(data["requirementResponses"], category)
 
@@ -169,7 +170,6 @@ async def vendor(api, category):
 @pytest.fixture
 async def vendor_product(api, vendor, category, profile):
     data = get_fixture_json('vendor_product')
-    data['relatedProfiles'] = [profile["data"]["id"]]
     data['relatedCategory'] = category["data"]["id"]
     set_requirements_to_responses(data["requirementResponses"], category)
 

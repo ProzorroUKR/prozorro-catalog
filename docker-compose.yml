@@ -23,6 +23,22 @@ services:
             - ./swagger:/app/swagger
             - ./auth.ini:/app/auth.ini
             - ./migrations:/app/migrations
+            - ./cron:/app/cron
+        depends_on:
+            - mongo
+
+    cron:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: test
+        command: /usr/sbin/crond -f -l 8
+        environment:
+            MONGODB_URI: 'mongodb://root:example@mongo:27017/?replicaSet=rs0'
+            PYTHONUNBUFFERED: '1'
+        volumes:
+            - ./src/catalog:/app/catalog
+            - ./cron:/app/cron
         depends_on:
             - mongo
 

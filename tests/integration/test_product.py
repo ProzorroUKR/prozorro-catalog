@@ -1,6 +1,7 @@
 from random import randint
 from copy import deepcopy
 from urllib.parse import quote
+from catalog.db import get_profiles_collection
 from .base import TEST_AUTH, TEST_AUTH_ANOTHER, TEST_AUTH_NO_PERMISSION
 
 
@@ -20,7 +21,6 @@ async def test_410_product_create(api, category, profile):
     cpv = test_product['data']['classification']['id']
     test_product['data']['classification']['id'] = '12345678'
     test_product['data']['relatedCategory'] = category_id
-    test_product['data']['relatedProfiles'] = [profile['data']['id']]
     test_product['access'] = category['access']
 
     resp = await api.patch(
@@ -70,7 +70,6 @@ async def test_411_product_rr_create(api, category, profile):
     category_id = category['data']['id']
     test_product = {"data": api.get_fixture_json('product')}
     test_product["data"]["relatedCategory"] = category["data"]["id"]
-    test_product["data"]["relatedProfiles"] = [profile["data"]["id"]]
     for item, rr in enumerate(test_product["data"]["requirementResponses"]):
         if item < 5:
             rr["requirement"] = category["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]
@@ -247,7 +246,6 @@ async def test_430_product_limit_offset(api, category, profile):
     category_id = category["data"]["id"]
     profile_id = profile["data"]["id"]
     test_product = {"data": api.get_fixture_json('product')}
-    test_product["data"]["relatedProfiles"] = [profile_id]
     test_product["data"]["relatedCategory"] = category["data"]["id"]
     for item, rr in enumerate(test_product["data"]["requirementResponses"]):
         if item < 5:
@@ -261,7 +259,6 @@ async def test_430_product_limit_offset(api, category, profile):
     for i in range(11):
 
         test_product_copy = deepcopy(test_product)
-        test_product["data"]["relatedProfiles"] = [profile_id]
         test_product_copy['data']['relatedCategory'] = category_id
         test_product_copy['access'] = category['access']
 

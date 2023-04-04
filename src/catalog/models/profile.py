@@ -1,14 +1,12 @@
 from datetime import datetime
-from typing import Optional, List, Set, Union
-from uuid import UUID
-from pydantic import Field, validator, AnyUrl
+from typing import Optional, List
+from pydantic import Field
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, CreateResponse, AuthorizedInput
 from catalog.models.common import Unit, Value, Image, Classification
 from catalog.models.criteria import Criterion
 from catalog.utils import get_now
 from enum import Enum
-import re
 import logging
 
 
