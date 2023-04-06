@@ -34,12 +34,21 @@ async def run_task():
     async for category in category_collection.find({}, projection={"_id": 1}):
         category_id = category["_id"]
         profiles = await profiles_collection.find(
-            {"relatedCategory": category_id, "status": {"$ne": ProfileStatus.hidden}},
+            {
+                "relatedCategory": category_id,
+                "status": {"$ne": ProfileStatus.hidden},
+                "criteria": {"$exists": True}
+            },
             projection={"criteria": 1}
         ).to_list(None)
 
         async for product in products_collection.find(
-            {"relatedCategory": category_id, "vendor": {"$exists": False}, "status": ProductStatus.active},
+            {
+                "relatedCategory": category_id,
+                "vendor": {"$exists": False},
+                "requirementResponses": {"$exists": True},
+                "status": ProductStatus.active
+            },
             projection={"requirementResponses": 1, "relatedProfiles": 1, "relatedCategory": 1},
         ):
 
@@ -74,12 +83,15 @@ async def get_product_relatedProfiles(product, profiles):
         profile_requirements = {
             r["title"]: r
             for c in profile.get("criteria", "")
-            for group in c["requirementGroups"]
-            for r in group["requirements"]
+            for group in c.get("requirementGroups", "")
+            for r in group.get("requirements", "")
         }
 
+        if not profile_requirements:
+            continue
+
         profile_requirements_ids = set(profile_requirements.keys())
-        if not profile_requirements_ids.issubset({rr["requirement"] for rr in product["requirementResponses"]}):
+        if not profile_requirements_ids.issubset({rr["requirement"] for rr in product.get("requirementResponses", "")}):
             logger.info(f"Product({product['_id']}) don't have responses for all profile({profile['_id']}) requirements")
             continue
 
