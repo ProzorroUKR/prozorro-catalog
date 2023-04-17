@@ -203,17 +203,6 @@ async def test_420_product_patch(api, category, profile, product):
     resp_json = await resp.json()
     assert resp_json['data']['isArchived'] is True
 
-    patch_product = {
-        "data": {
-            "status": "hidden",
-        },
-        "access": product['access']
-    }
-    resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH)
-    assert resp.status == 200
-    resp_json = await resp.json()
-    assert resp_json['data']['status'] == 'hidden'
-
     requirement_data = {
         "dataType": "number",
         "expectedValue": 1,
@@ -241,6 +230,17 @@ async def test_420_product_patch(api, category, profile, product):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json['errors'] == [f'requirement {req_title} is archived']
+
+    patch_product = {
+        "data": {
+            "status": "hidden",
+        },
+        "access": product['access']
+    }
+    resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH)
+    assert resp.status == 200
+    resp_json = await resp.json()
+    assert resp_json['data']['status'] == 'hidden'
 
 
 async def test_430_product_limit_offset(api, category, profile):

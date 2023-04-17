@@ -7,7 +7,7 @@ from aiohttp.web import HTTPConflict, HTTPNotFound
 from pymongo.errors import OperationFailure
 
 from catalog import db
-from catalog.models.product import ProductCreateInput, ProductUpdateInput
+from catalog.models.product import ProductStatus, ProductCreateInput, ProductUpdateInput
 from catalog.swagger import class_view_swagger_path
 from catalog.utils import pagination_params, get_now, async_retry
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
@@ -90,10 +90,11 @@ class ProductView(View):
             data['dateModified'] = get_now().isoformat()
             product_before = deepcopy(product)
             product.update(data)
-            validate_product_to_category(category, product, product_before)
-            profile_ids = product.get("relatedProfiles", "")
-            for profile_id in profile_ids:
-                profile = await db.read_profile(profile_id)
-                validate_product_to_profile(profile, product)
+            if product.get("status", ProductStatus.active) != ProductStatus.hidden:
+                validate_product_to_category(category, product, product_before)
+                profile_ids = product.get("relatedProfiles", "")
+                for profile_id in profile_ids:
+                    profile = await db.read_profile(profile_id)
+                    validate_product_to_profile(profile, product)
 
         return {"data": ProductSerializer(product).data}
