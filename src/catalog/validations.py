@@ -4,6 +4,7 @@ from aiohttp.web import HTTPBadRequest, HTTPForbidden
 
 from catalog.models.category import CategoryStatus
 from catalog.models.profile import ProfileStatus
+from catalog.models.criteria import TYPEMAP
 
 
 def validate_product_related_category(category):
@@ -20,6 +21,12 @@ def validate_product_active_vendor(vendor):
 def validate_req_response_value(requirement, value, key):
     if value is None:
         raise HTTPBadRequest(text=f'requirement {key} should have value')
+
+    data_type = requirement.get("dataType")
+    data_type = TYPEMAP.get(data_type)
+    if not data_type or not isinstance(value, data_type):
+        raise HTTPBadRequest(text=f'requirement {key} value has unexpected type')
+
     if (
         'expectedValue' in requirement
         and value != requirement['expectedValue']
