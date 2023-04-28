@@ -18,20 +18,20 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+TYPEMAP = {
+    DataTypeEnum.string.value: str,
+    DataTypeEnum.integer.value: int,
+    DataTypeEnum.number.value: (float, int),
+    DataTypeEnum.datetime.value: str,
+    DataTypeEnum.boolean.value: bool,
+}
+
 
 class RequirementBaseValidators(BaseModel):
 
-    _TYPEMAP = {
-        DataTypeEnum.string.value: str,
-        DataTypeEnum.integer.value: int,
-        DataTypeEnum.number.value: (float, int),
-        DataTypeEnum.datetime.value: str,
-        DataTypeEnum.boolean.value: bool,
-    }
-
     @classmethod
     def _check_value_type(cls, value, data_type_name):
-        data_type = cls._TYPEMAP.get(data_type_name)
+        data_type = TYPEMAP.get(data_type_name)
         if not data_type:
             raise ValueError(f"Invalid dataType '{data_type_name}'")
 

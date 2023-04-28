@@ -9,6 +9,7 @@ import sentry_sdk
 from catalog.db import get_category_collection, get_profiles_collection, get_products_collection, init_mongo
 from catalog.models.product import ProductStatus
 from catalog.models.profile import ProfileStatus
+from catalog.models.criteria import TYPEMAP
 from catalog.logging import setup_logging
 from catalog.utils import get_now
 from catalog.settings import SENTRY_DSN
@@ -122,6 +123,12 @@ async def get_product_relatedProfiles(product, profiles):
 def is_valid_req_response_value(requirement, value):
     if value is None:
         return False
+
+    data_type = requirement.get("dataType")
+    data_type = TYPEMAP.get(data_type)
+    if not data_type or not isinstance(value, data_type):
+        return False
+
     if (
         'expectedValue' in requirement
         and value != requirement['expectedValue']
