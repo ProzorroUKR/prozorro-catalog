@@ -134,9 +134,9 @@ def is_valid_req_response_value(requirement, value):
         and value != requirement['expectedValue']
     ):
         return False
-    if 'minValue' in requirement and float(value) < float(requirement['minValue']):
+    if 'minValue' in requirement and value < float(requirement['minValue']):
         return False
-    if 'maxValue' in requirement and float(value) > float(requirement['maxValue']):
+    if 'maxValue' in requirement and value > float(requirement['maxValue']):
         return False
     if 'pattern' in requirement and not re.match(
             requirement['pattern'], str(value)
