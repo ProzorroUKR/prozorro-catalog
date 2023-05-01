@@ -129,18 +129,21 @@ def is_valid_req_response_value(requirement, value):
     if not data_type or not isinstance(value, data_type):
         return False
 
-    if (
-        'expectedValue' in requirement
-        and value != requirement['expectedValue']
-    ):
-        return False
-    if 'minValue' in requirement and value < float(requirement['minValue']):
-        return False
-    if 'maxValue' in requirement and value > float(requirement['maxValue']):
-        return False
-    if 'pattern' in requirement and not re.match(
-            requirement['pattern'], str(value)
-    ):
+    try:
+        if (
+            'expectedValue' in requirement
+            and value != requirement['expectedValue']
+        ):
+            return False
+        if 'minValue' in requirement and value < float(requirement['minValue']):
+            return False
+        if 'maxValue' in requirement and value > float(requirement['maxValue']):
+            return False
+        if 'pattern' in requirement and not re.match(
+                requirement['pattern'], str(value)
+        ):
+            return False
+    except ValueError:
         return False
 
     return True
