@@ -1,4 +1,6 @@
 import random
+from copy import deepcopy
+
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPBadRequest, HTTPNotFound, HTTPConflict
 from pymongo.errors import OperationFailure
@@ -8,6 +10,7 @@ from catalog.auth import set_access_token, validate_accreditation, validate_acce
 from catalog.utils import pagination_params, get_now, async_retry
 from catalog.models.category import CategoryCreateInput, CategoryUpdateInput
 from catalog.serializers.base import RootSerializer
+from catalog.state.category import CategoryState
 from catalog.handlers.base_criteria import (
     BaseCriteriaView,
     BaseCriteriaRGView,
@@ -17,6 +20,7 @@ from catalog.handlers.base_criteria import (
 
 @class_view_swagger_path('/app/swagger/categories')
 class CategoryView(View):
+    state = CategoryState
 
     @classmethod
     async def collection_get(cls, request):
@@ -44,8 +48,8 @@ class CategoryView(View):
             raise HTTPBadRequest(text='id mismatch')
 
         data = body.data.dict_without_none()
+        await cls.state.on_put(data)
         access = set_access_token(request, data)
-        data['dateModified'] = get_now().isoformat()
         await db.insert_category(data)
 
         response = {"data": RootSerializer(data, show_owner=False).data,
@@ -66,8 +70,9 @@ class CategoryView(View):
             # export data back to dict
             data = body.data.dict_without_none()
             # update profile with valid data
-            data['dateModified'] = get_now().isoformat()
+            old_category = deepcopy(category)
             category.update(data)
+            await cls.state.on_patch(old_category, category)
 
         return {"data": RootSerializer(category, show_owner=False).data}
 

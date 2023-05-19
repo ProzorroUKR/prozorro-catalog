@@ -3,6 +3,7 @@ from copy import deepcopy
 from urllib.parse import quote
 from catalog.db import get_profiles_collection
 from .base import TEST_AUTH, TEST_AUTH_ANOTHER, TEST_AUTH_NO_PERMISSION
+from .conftest import set_requirements_to_responses
 
 
 async def test_410_product_create(api, category, profile):
@@ -10,13 +11,7 @@ async def test_410_product_create(api, category, profile):
 
     test_product = {"data": api.get_fixture_json('product')}
     test_product["data"]["relatedCategory"] = category["data"]["id"]
-    for item, rr in enumerate(test_product["data"]["requirementResponses"]):
-        if item < 5:
-            rr["requirement"] = category["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]
-        elif item == 5:
-            rr["requirement"] = category["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["title"]
-        elif item == 6:
-            rr["requirement"] = category["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["title"]
+    set_requirements_to_responses(test_product["data"]["requirementResponses"], category)
 
     cpv = test_product['data']['classification']['id']
     test_product['data']['classification']['id'] = '12345678'
@@ -70,13 +65,7 @@ async def test_411_product_rr_create(api, category, profile):
     category_id = category['data']['id']
     test_product = {"data": api.get_fixture_json('product')}
     test_product["data"]["relatedCategory"] = category["data"]["id"]
-    for item, rr in enumerate(test_product["data"]["requirementResponses"]):
-        if item < 5:
-            rr["requirement"] = category["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]
-        elif item == 5:
-            rr["requirement"] = category["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["title"]
-        elif item == 6:
-            rr["requirement"] = category["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["title"]
+    set_requirements_to_responses(test_product["data"]["requirementResponses"], category)
 
     product_id = '{}-{}-{}-{}'.format(
         test_product['data']['classification']['id'][:4],
@@ -247,13 +236,7 @@ async def test_430_product_limit_offset(api, category, profile):
     profile_id = profile["data"]["id"]
     test_product = {"data": api.get_fixture_json('product')}
     test_product["data"]["relatedCategory"] = category["data"]["id"]
-    for item, rr in enumerate(test_product["data"]["requirementResponses"]):
-        if item < 5:
-            rr["requirement"] = category["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]
-        elif item == 5:
-            rr["requirement"] = category["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["title"]
-        elif item == 6:
-            rr["requirement"] = category["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["title"]
+    set_requirements_to_responses(test_product["data"]["requirementResponses"], category)
 
     test_product_map = dict()
     for i in range(11):

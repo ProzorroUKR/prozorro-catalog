@@ -3,7 +3,7 @@ from typing import Optional, List
 from pydantic import Field, validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, AuthorizedInput, Response, CreateResponse
-from catalog.models.common import Classification, Image, ProcuringEntity, Unit
+from catalog.models.common import Classification, Image, ProcuringEntity, Unit, AGREEMENT_ID_REGEX
 from catalog.models.criteria import Criterion
 from catalog.utils import get_now
 from enum import Enum
@@ -25,6 +25,7 @@ class CategoryCreateData(BaseModel):
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
     status: CategoryStatus = CategoryStatus.active
     images: Optional[List[Image]] = Field(None, max_items=100)
+    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
 
     @validator('id')
     def id_format(cls, v, values, **kwargs):
@@ -49,6 +50,7 @@ class CategoryUpdateData(BaseModel):
     status: Optional[CategoryStatus]
     images: Optional[List[Image]] = Field(None, max_items=100)
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
+    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
 
 
 class Category(BaseModel):
@@ -65,7 +67,8 @@ class Category(BaseModel):
     status: CategoryStatus = CategoryStatus.active
     images: Optional[List[Image]] = Field(..., max_items=100)
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
-    criteria: List[Criterion] = Field(..., min_items=1, max_items=100)
+    criteria: List[Criterion] = Field(..., max_items=1)
+    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
     owner: str
 
 

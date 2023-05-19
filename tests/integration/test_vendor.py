@@ -50,7 +50,7 @@ async def test_vendor_create_with_404_category(api):
     assert {'errors': ['Category not found']} == result
 
 
-async def test_vendor_create_with_hidden_category(api):
+async def test_vendor_create_with_hidden_category(api, mock_agreement):
     data = api.get_fixture_json('category')
     data["status"] = "hidden"
     resp = await api.put(
@@ -101,7 +101,7 @@ async def test_vendor_without_region(api, category):
     assert resp.status == 201, result
 
 
-async def test_vendor_create(api):
+async def test_vendor_create(api, mock_agreement):
     data = api.get_fixture_json('category')
     resp = await api.put(
         f"/api/categories/{data['id']}",

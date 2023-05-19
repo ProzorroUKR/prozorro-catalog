@@ -1,67 +1,26 @@
+from uuid import uuid4
+from unittest.mock import patch, AsyncMock
+import pytest
+
 from catalog.api import create_application
 from catalog.db import flush_database, init_mongo, get_database
 from catalog.doc_service import generate_test_url
-from json import loads
 from .base import TEST_AUTH
-from uuid import uuid4
-import os.path
-import pytest
-
-
-def get_fixture_json(name):
-    fixture_file = os.path.join("tests/fixtures", f"{name}.json")
-    with open(fixture_file) as f:
-        data = loads(f.read())
-    return data
-
-
-async def create_criteria(api, obj_path, profile, criteria=None):
-    if not criteria:
-        criteria = get_fixture_json('criteria')
-
-    for criterion in criteria["criteria"]:
-        rgs = criterion.pop("requirementGroups")
-        resp = await api.post(
-            f"/api/{obj_path}/{profile['data']['id']}/criteria",
-            json={"data": criterion, "access": profile["access"]},
-            auth=TEST_AUTH,
-        )
-
-        criterion_data = await resp.json()
-        criterion_id = criterion_data["data"]["id"]
-        for rg in rgs:
-            reqs = rg.pop("requirements")
-            rg_resp = await api.post(
-                f"/api/{obj_path}/{profile['data']['id']}/criteria/{criterion_id}/requirementGroups",
-                json={"data": rg, "access": profile["access"]},
-                auth=TEST_AUTH,
-            )
-            rg_data = await rg_resp.json()
-            rg_id = rg_data["data"]["id"]
-            await api.post(
-                f"/api/{obj_path}/{profile['data']['id']}/criteria/"
-                f"{criterion_id}/requirementGroups/{rg_id}/requirements",
-                json={"data": reqs, "access": profile["access"]},
-                auth=TEST_AUTH,
-            )
-
-    resp = await api.get(
-        f"/api/{obj_path}/{profile['data']['id']}",
-        auth=TEST_AUTH,
-    )
-    data = await resp.json()
-    data["access"] = profile["access"]
-    return data
+from .utils import get_fixture_json, create_profile, create_criteria
 
 
 def set_requirements_to_responses(requirement_responses, category):
     for item, rr in enumerate(requirement_responses):
-        if item < 5:
-            rr["requirement"] = category["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]
-        elif item == 5:
-            rr["requirement"] = category["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["title"]
-        elif item == 6:
-            rr["requirement"] = category["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["title"]
+        rr["requirement"] = category["data"]["criteria"][0]["requirementGroups"][0]["requirements"][item]["title"]
+
+
+@pytest.fixture
+async def mock_agreement():
+    data = get_fixture_json('category')
+    with patch('catalog.state.category.CategoryState.validate_agreement') as m:
+        m.return_value = AsyncMock()
+        yield m
+
 
 @pytest.fixture
 async def db(event_loop):
@@ -81,7 +40,7 @@ async def api(event_loop, aiohttp_client):
 
 
 @pytest.fixture
-async def category(api):
+async def category(api, mock_agreement):
     data = get_fixture_json('category')
     resp = await api.put(
         f"/api/categories/{data['id']}",
@@ -96,17 +55,7 @@ async def category(api):
 
 @pytest.fixture
 async def profile_without_criteria(api, category):
-    data = get_fixture_json('profile')
-    profile_id = f'0000000-{category["data"]["id"]}'
-    data['id'] = profile_id
-    data['relatedCategory'] = category["data"]["id"]
-    resp = await api.put(
-        f"/api/profiles/{profile_id}",
-        json={"data": data, "access": category["access"]},
-        auth=TEST_AUTH,
-    )
-    assert resp.status == 201
-    data = await resp.json()
+    data = await create_profile(api, category)
     return data
 
 

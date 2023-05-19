@@ -106,7 +106,7 @@ class ProfileRequirementCreateData(RequirementBaseValidators):
     maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
     minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
 
-    expectedValues: Optional[List[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]]
+    expectedValues: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]]
     expectedMinItems: Optional[PositiveInt] = None
     expectedMaxItems: Optional[PositiveInt] = None
 

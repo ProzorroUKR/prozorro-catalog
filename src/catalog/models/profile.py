@@ -3,7 +3,7 @@ from typing import Optional, List
 from pydantic import Field
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, CreateResponse, AuthorizedInput
-from catalog.models.common import Unit, Value, Image, Classification
+from catalog.models.common import Unit, Value, Image, Classification, AGREEMENT_ID_REGEX
 from catalog.models.criteria import Criterion
 from catalog.utils import get_now
 from enum import Enum
@@ -11,7 +11,6 @@ import logging
 
 
 logger = logging.getLogger(__name__)
-AGREEMENT_ID_REGEX = r"^[a-f0-9]{32}$"
 
 
 class ProfileStatus(str, Enum):
@@ -40,17 +39,20 @@ class ProfileCreateData(BaseModel):
         max_length=1000,
     )
     status: ProfileStatus = ProfileStatus.active
-    unit: Unit
     value: Value
     relatedCategory: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     images: Optional[List[Image]] = Field(None, max_items=100)
-    classification: Classification
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
-    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
 
     @property
     def criteria(self):
         return []
+
+
+class LocalizationProfileCreateData(ProfileCreateData):
+    unit: Optional[Unit]
+    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
+    classification: Classification
 
 
 class ProfileUpdateData(BaseModel):
@@ -60,11 +62,13 @@ class ProfileUpdateData(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=250)
     description: Optional[str] = Field(None, min_length=1, max_length=1000)
     status: Optional[ProfileStatus]
-    unit: Optional[Unit]
-    value: Optional[Value]
     images: Optional[List[Image]] = Field(None, max_items=100)
-    classification: Optional[Classification]
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
+
+
+class LocalizationProfileUpdateData(ProfileUpdateData):
+    unit: Optional[Unit]
+    classification: Optional[Classification]
     agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
 
 
@@ -88,7 +92,7 @@ class Profile(BaseModel):
         max_length=1000,
     )
     status: ProfileStatus = ProfileStatus.active
-    unit: Unit
+    unit: Optional[Unit]
     value: Value
     relatedCategory: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     images: Optional[List[Image]] = Field(None, max_items=100)
@@ -97,10 +101,12 @@ class Profile(BaseModel):
     agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     owner: str
-    criteria: List[Criterion] = Field(..., min_items=1, max_items=100)
+    criteria: List[Criterion] = Field(..., max_items=1)
 
 
 ProfileCreateInput = AuthorizedInput[ProfileCreateData]
+LocalizationProfileInput = AuthorizedInput[LocalizationProfileCreateData]
 ProfileUpdateInput = AuthorizedInput[ProfileUpdateData]
+LocalizationProfileUpdateInput = AuthorizedInput[LocalizationProfileUpdateData]
 ProfileResponse = Response[Profile]
 ProfileCreateResponse = CreateResponse[Profile]

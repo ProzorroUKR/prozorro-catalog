@@ -69,7 +69,7 @@ class ProductInfo(BaseModel):
 class RequirementResponse(BaseModel):
     requirement: str
     value: Optional[Union[StrictInt, StrictFloat, StrictBool, StrictStr]] = None
-    values: List[Union[StrictInt, StrictFloat, StrictBool, StrictStr]] = Field(None, max_items=100)
+    values: Optional[List[Union[StrictInt, StrictFloat, StrictBool, StrictStr]]]
 
 
 class ProductRequirementResponses(BaseModel):
@@ -103,7 +103,8 @@ class VendorProductCreateData(BaseProductCreateData):
 
 class ProductCreateData(BaseProductCreateData):
     additionalProperties: Optional[List[ProductProperty]] = Field(None, max_items=100)
-    identifier: ProductIdentifier
+    identifier: Optional[ProductIdentifier]
+    brand: Optional[Brand]
     alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_items=100)
     manufacturers: Optional[List[Manufacturer]] = Field(None, max_items=100)
     images: Optional[List[Image]] = Field(None, max_items=100)

@@ -2,9 +2,10 @@ from random import randint
 from collections import defaultdict
 from uuid import uuid4
 from .base import TEST_AUTH
+from .conftest import set_requirements_to_responses
 
 
-async def test_search(api):
+async def test_search(api, mock_agreement):
     ids = defaultdict(list)
 
     # prepare objects
@@ -43,13 +44,7 @@ async def test_search(api):
         ids["profile"].append(profile_id)
 
         product['relatedCategory'] = category_id
-        for item, rr in enumerate(product["requirementResponses"]):
-            if item < 5:
-                rr["requirement"] = cat_resp["data"]["criteria"][item]["requirementGroups"][0]["requirements"][0]["title"]
-            elif item == 5:
-                rr["requirement"] = cat_resp["data"]["criteria"][4]["requirementGroups"][1]["requirements"][0]["title"]
-            elif item == 6:
-                rr["requirement"] = cat_resp["data"]["criteria"][4]["requirementGroups"][2]["requirements"][0]["title"]
+        set_requirements_to_responses(product["requirementResponses"], cat_resp)
 
         resp = await api.post(
             "/api/products",

@@ -1,9 +1,12 @@
 import random
+from copy import deepcopy
+
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPBadRequest, HTTPConflict
 from pymongo.errors import OperationFailure
+
 from catalog import db
-from catalog.models.profile import ProfileCreateInput, ProfileUpdateInput
+from catalog.models.profile import LocalizationProfileInput, LocalizationProfileUpdateInput, ProfileCreateInput, ProfileUpdateInput
 from catalog.swagger import class_view_swagger_path
 from catalog.utils import pagination_params, get_now, async_retry, find_item_by_id
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
@@ -19,10 +22,38 @@ from catalog.models.criteria import (
     ProfileRequirementUpdateInput,
 )
 from catalog.validations import validate_profile_requirements
+from catalog.state.profile import ProfileState, LocalizationProfileState
 
 
 @class_view_swagger_path('/app/swagger/profiles')
 class ProfileView(View):
+
+    @classmethod
+    def is_localized(cls, data):
+        return data.get("relatedCategory", "").startswith("99999999")
+
+    @classmethod
+    def get_state_class(cls, data):
+        if cls.is_localized(data):
+            return LocalizationProfileState
+        return ProfileState
+
+    @classmethod
+    async def get_input(cls, request, profile=None):
+        json = await request.json()
+        if not profile:
+            if cls.is_localized(json.get("data", {})):
+                input_class = LocalizationProfileInput
+            else:
+                input_class = ProfileCreateInput
+        else:
+            if cls.is_localized(profile):
+                input_class = LocalizationProfileUpdateInput
+            else:
+                input_class = ProfileUpdateInput
+
+        return input_class(**json)
+
 
     @classmethod
     async def collection_get(cls, request):
@@ -43,8 +74,8 @@ class ProfileView(View):
     async def put(cls, request, profile_id):
         validate_accreditation(request, "profile")
         # import and validate data
-        json = await request.json()
-        body = ProfileCreateInput(**json)
+
+        body = await cls.get_input(request)
         # export data back to dict
         data = body.data.dict_without_none()
         if profile_id != data['id']:
@@ -54,8 +85,9 @@ class ProfileView(View):
         category = await db.read_category(category_id)  # ensure exists
         validate_access_token(request, category, body.access)
 
+        await cls.get_state_class(data).on_put(data, category)
+
         access = set_access_token(request, data)
-        data['dateModified'] = get_now().isoformat()
         await db.insert_profile(data)
 
         response = {"data": RootSerializer(data).data,
@@ -68,16 +100,15 @@ class ProfileView(View):
     async def patch(cls, request, profile_id):
         validate_accreditation(request, "profile")
         async with db.read_and_update_profile(profile_id) as profile:
-            # import and validate data
-            json = await request.json()
-            body = ProfileUpdateInput(**json)
+            body = await cls.get_input(request, profile)
 
             validate_access_token(request, profile, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
             # update profile with valid data
-            data['dateModified'] = get_now().isoformat()
+            old_profile = deepcopy(profile)
             profile.update(data)
+            await cls.get_state_class(data).on_patch(old_profile, profile)
 
         return {"data": RootSerializer(profile).data}
 
