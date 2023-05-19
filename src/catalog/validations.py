@@ -171,3 +171,8 @@ def validate_requirement_title_uniq(profile: dict):
     ]
     if len(req_titles) != len(set(req_titles)):
         raise HTTPBadRequest(text="Requirement title should be unique")
+
+
+def validate_criteria_max_items_on_post(obj: dict, obj_title: str):
+    if len(obj.get(obj_title, "")) > 1:
+        raise HTTPBadRequest(text=f"Size of {obj_title} cannot be greater then 1")

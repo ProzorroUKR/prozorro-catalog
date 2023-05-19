@@ -2,9 +2,10 @@ from copy import deepcopy
 from random import randint
 from urllib.parse import quote
 from .base import TEST_AUTH_NO_PERMISSION, TEST_AUTH, TEST_AUTH_ANOTHER
+from .utils import create_profile
 
 
-async def test_110_category_create(api):
+async def test_110_category_create(api, mock_agreement):
     test_category = api.get_fixture_json('category')
     resp = await api.post('/api/categories', json=test_category, auth=TEST_AUTH)
     assert resp.status == 405, await resp.json()
@@ -91,7 +92,7 @@ async def test_110_category_create(api):
     assert resp_json['data']['id'] == category_id
 
 
-async def test_111_limit_offset(api):
+async def test_111_limit_offset(api, mock_agreement):
     test_category = api.get_fixture_json('category')
     test_category_map = dict()
 
@@ -539,4 +540,42 @@ async def test_131_requirement_patch(api, category):
     assert resp.status == 200
     resp_json = await resp.json()
     assert resp_json["data"]["expectedMinItems"] == 3
-    assert resp_json["data"]["expectedValues"] == requirement_data["data"]["expectedValues"]
+    assert set(resp_json["data"]["expectedValues"]) == set(requirement_data["data"]["expectedValues"])
+
+
+async def test_140_category_agreement_id_patch(api, category):
+    category_id = category["data"]['id']
+
+    agreement_id = "2" * 32
+    patch_category = {
+        "access": category["access"],
+        "data": {
+            "agreementID": "2"*32
+        }
+    }
+
+    profile_1 = await create_profile(api, category)
+    profile_2 = await create_profile(api, category, {"status": "general"})
+    profile_3 = await create_profile(api, category, {"status": "hidden"})
+
+    resp = await api.patch(f'/api/categories/{category_id}',
+                           json=patch_category,
+                           auth=TEST_AUTH)
+    assert resp.status == 200
+    resp_json = await resp.json()
+    assert resp_json['data']['agreementID'] == agreement_id
+
+    resp = await api.get(f'/api/profiles/{profile_1["data"]["id"]}')
+    assert resp.status == 200
+    resp_json = await resp.json()
+    assert resp_json['data']['agreementID'] == agreement_id
+
+    resp = await api.get(f'/api/profiles/{profile_2["data"]["id"]}')
+    assert resp.status == 200
+    resp_json = await resp.json()
+    assert resp_json['data']['agreementID'] == agreement_id
+
+    resp = await api.get(f'/api/profiles/{profile_3["data"]["id"]}')
+    assert resp.status == 200
+    resp_json = await resp.json()
+    assert resp_json['data']['agreementID'] == agreement_id

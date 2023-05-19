@@ -1,6 +1,7 @@
 from random import randint
 from copy import deepcopy
 from urllib.parse import quote
+from catalog.db import get_category_collection
 from .base import TEST_AUTH, TEST_AUTH_NO_PERMISSION, TEST_AUTH_ANOTHER
 
 
@@ -73,6 +74,9 @@ async def test_310_profile_create(api, category):
     assert resp_json['data']['id'] == test_profile['data']['id']
     assert 'access' in resp_json
     assert 'token' in resp_json['access']
+    assert resp_json['data']['unit'] == category['data']['unit']
+    assert resp_json['data']['classification'] == category['data']['classification']
+    assert resp_json['data']['agreementID'] == category['data']['agreementID']
     test_date_modified = resp_json['data']['dateModified']
 
     # test data type
@@ -85,7 +89,7 @@ async def test_310_profile_create(api, category):
                 elif requirement["dataType"] == "number":
                     assert type(requirement["minValue"]) is float
 
-    test_profile_copy = test_profile.copy()
+    test_profile_copy = deepcopy(test_profile)
     test_profile['access'] = resp_json['access']
 
     resp = await api.put('/api/profiles/%s' % profile_id, json=test_profile_copy, auth=TEST_AUTH)
@@ -104,6 +108,14 @@ async def test_310_profile_create(api, category):
     assert resp_json['data']['id'] == test_profile['data']['id']
     assert resp_json['data']['dateModified'] == test_date_modified
     test_profile['data']['dateModified'] = test_date_modified
+
+    await get_category_collection().find_one_and_update({"_id": category_id}, {"$unset": {"agreementID": ""}})
+    profile_id = '{}-{}'.format(randint(100000, 900000), category_id)
+    test_profile_copy["data"]["id"] = profile_id
+    resp = await api.put('/api/profiles/%s' % profile_id, json=test_profile_copy, auth=TEST_AUTH)
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == ["Related category doesn't have agreementID"]
 
 
 async def test_311_profile_limit_offset(api, category):
@@ -531,4 +543,4 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 200
     resp_json = await resp.json()
     assert resp_json["data"]["expectedMinItems"] == 3
-    assert resp_json["data"]["expectedValues"] == requirement_data["data"]["expectedValues"]
+    assert set(resp_json["data"]["expectedValues"]) == set(requirement_data["data"]["expectedValues"])

@@ -2,6 +2,7 @@ from copy import deepcopy
 
 from cron.related_profiles_task import run_task
 from tests.integration.base import TEST_AUTH
+from tests.integration.utils import create_criteria
 from tests.integration.conftest import (
     get_fixture_json,
     api,
@@ -10,7 +11,6 @@ from tests.integration.conftest import (
     product,
     profile,
     profile_without_criteria,
-    create_criteria,
 )
 
 

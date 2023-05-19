@@ -14,7 +14,7 @@ from catalog.models.criteria import (
     Requirement,
 )
 from catalog.serializers.base import RootSerializer
-from catalog.validations import validate_requirement_title_uniq
+from catalog.validations import validate_requirement_title_uniq, validate_criteria_max_items_on_post
 
 
 class View(BaseView):
@@ -91,6 +91,7 @@ class BaseCriteriaView(View):
                 parent_obj["criteria"] = []
 
             parent_obj["criteria"].append(data)
+            validate_criteria_max_items_on_post(parent_obj, "criteria")
             parent_obj["dateModified"] = get_now().isoformat()
         return {"data": cls.serializer_class(data).data}
 
@@ -153,6 +154,7 @@ class BaseCriteriaRGView(View):
             data = body.data.dict_without_none()
             # update obj with valid data
             parent_obj["criteria"]["requirementGroups"].append(data)
+            validate_criteria_max_items_on_post(parent_obj["criteria"], "requirementGroups")
             parent_obj["dateModified"] = get_now().isoformat()
         return {"data": cls.serializer_class(data).data}
 

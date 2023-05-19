@@ -17,6 +17,7 @@ COUNTRY_NAMES_UK = [names.get("name_uk") for names in COUNTRY_NAMES.values()]
 UNIT_CODES = UNIT_CODES.keys()
 
 UKRAINE_COUNTRY_NAME_UK = COUNTRY_NAMES.get("UA").get("name_uk")
+AGREEMENT_ID_REGEX = r"^[a-f0-9]{32}$"
 
 
 class DataTypeEnum(str, Enum):

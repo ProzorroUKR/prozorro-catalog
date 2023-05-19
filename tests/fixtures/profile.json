@@ -6,11 +6,6 @@
       "scheme": "KMU777"
     }
   ],
-  "classification": {
-    "description": "Медичне обладнання та вироби медичного призначення різні",
-    "id": "33190000-8",
-    "scheme": "ДК021"
-  },
   "description": "Маска медична захисна, гіпоалергенна, одноразова, з доставкою",
   "images": [
     {
@@ -20,14 +15,9 @@
   ],
   "status": "active",
   "title": "Маска медична захисна, гіпоалергенна, одноразова, з доставкою",
-  "unit": {
-    "code": "H87",
-    "name": "штуки"
-  },
   "value": {
     "amount": 50,
     "currency": "UAH",
     "valueAddedTaxIncluded": true
-  },
-  "agreementID": "c17b223523204a1b812c21837c7ac41a"
+  }
 }

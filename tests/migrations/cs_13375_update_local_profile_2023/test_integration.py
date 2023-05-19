@@ -5,13 +5,13 @@ from aiohttp.helpers import BasicAuth
 
 from catalog.migrations.cs_13375_update_local_profile_2023 import migrate
 from tests.integration.base import TEST_AUTH
+from tests.integration.utils import create_criteria
 from tests.integration.conftest import (
     get_fixture_json,
     api,
     db,
     category,
-    profile,
-    create_criteria,
+    profile
 )
 
 
