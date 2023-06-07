@@ -122,7 +122,7 @@ def validate_product_req_response_to_profile(profile: dict, product: dict):
 
 def validate_product_to_category(category, product, product_before=None):
     if category.get("status", CategoryStatus.active) != CategoryStatus.active:
-        raise HTTPBadRequest(text=f"relatedProfiles should be in `{CategoryStatus.active}` status.")
+        raise HTTPBadRequest(text=f"relatedCategory should be in `{CategoryStatus.active}` status.")
 
     validate_product_req_responses_to_category(category, product, product_before)
 
@@ -130,8 +130,9 @@ def validate_product_to_category(category, product, product_before=None):
 def validate_product_to_profile(profile, product):
     if product["relatedCategory"] != profile["relatedCategory"]:
         raise HTTPBadRequest(text='product and profile should be related with the same category')
-    if profile["status"] != ProfileStatus.active:
-        raise HTTPBadRequest(text=f"relatedProfiles should be in `{ProfileStatus.active}` status.")
+    if profile["status"] == ProfileStatus.hidden:
+        raise HTTPBadRequest(text=f"relatedProfiles should be in `{ProfileStatus.active}` or"
+                                  f"`{ProfileStatus.general}` status.")
 
     validate_product_req_response_to_profile(profile, product)
 

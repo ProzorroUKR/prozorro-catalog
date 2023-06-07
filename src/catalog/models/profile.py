@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class ProfileStatus(str, Enum):
     active = 'active'
     hidden = 'hidden'
-    deleted = 'general'
+    general = 'general'
 
 
 class ProfileCreateData(BaseModel):
