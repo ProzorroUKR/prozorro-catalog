@@ -1,6 +1,9 @@
 from random import randint
 from collections import defaultdict
 from uuid import uuid4
+
+from catalog.db import get_offers_collection, insert_object
+
 from .base import TEST_AUTH
 from .conftest import set_requirements_to_responses
 
@@ -56,14 +59,11 @@ async def test_search(api, mock_agreement):
         product_id = result["data"]["id"]
         ids["product"].append(product_id)
 
-        offer_id = uuid4().hex
+        offer['id'] = uuid4().hex
         offer['relatedProduct'] = product_id
-        resp = await api.put(
-            f"/api/offers/{offer_id}",
-            json={"data": offer},
-            auth=TEST_AUTH,
-        )
-        assert resp.status == 201, await resp.json()
+        offer_id = await insert_object(get_offers_collection(), offer)
+        resp = await api.get(f"/api/offers/{offer_id}")
+        assert resp.status == 200, await resp.json()
         ids["offer"].append(offer_id)
 
     # test

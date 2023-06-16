@@ -293,16 +293,6 @@ def create_application(on_cleanup=None):
         name="read_offer",
         allow_head=False
     )
-    app.router.add_put(
-        r"/api/offers/{offer_id:[\w-]+}",
-        OfferView.put,
-        name="create_offer"
-    )
-    app.router.add_patch(
-        r"/api/offers/{offer_id:[\w-]+}",
-        OfferView.patch,
-        name="update_offer"
-    )
 
     # vendors
     app.router.add_get(

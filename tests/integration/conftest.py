@@ -3,7 +3,7 @@ from unittest.mock import patch, AsyncMock
 import pytest
 
 from catalog.api import create_application
-from catalog.db import flush_database, init_mongo, get_database
+from catalog.db import flush_database, init_mongo, get_database, get_offers_collection, insert_object
 from catalog.doc_service import generate_test_url
 from .base import TEST_AUTH
 from .utils import get_fixture_json, create_profile, create_criteria
@@ -81,15 +81,13 @@ async def product(api, category):
 
 
 @pytest.fixture
-async def offer(api, product):
+async def offer(db, api, product):
     data = get_fixture_json('offer')
     data['relatedProduct'] = product["data"]["id"]
-    resp = await api.put(
-        f"/api/offers/{uuid4().hex}",
-        json={"data": data},
-        auth=TEST_AUTH,
-    )
-    assert resp.status == 201, await resp.json()
+    data['id'] = uuid4().hex
+    offer_id = await insert_object(get_offers_collection(), data)
+    resp = await api.get(f"/api/offers/{offer_id}")
+    assert resp.status == 200, await resp.json()
     return await resp.json()
 
 
