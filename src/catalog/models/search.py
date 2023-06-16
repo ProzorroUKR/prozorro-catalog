@@ -24,4 +24,4 @@ SearchInput = Input[SearchData]
 
 
 class SearchResponse(BaseModel):
-    data: Union[Category, Profile, Product, Offer]
+    data: Union[Category, Profile, Product]
