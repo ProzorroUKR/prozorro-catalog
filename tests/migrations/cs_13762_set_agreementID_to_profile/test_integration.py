@@ -15,8 +15,18 @@ async def test_migrate_profiles(db, api, mock_agreement, category):
         profile_data["relatedCategory"] = category["id"]
         await db.profiles.insert_one(profile_data)
 
+    category_without_agreement_data = get_fixture_json('category')
+    category_without_agreement_data["_id"] = "2" * 32
+    del category_without_agreement_data["agreementID"]
+    await db.category.insert_one(category_without_agreement_data)
+
+    profile_data = deepcopy(profile_fixture)
+    profile_data["_id"] = f"{5}" * 32
+    profile_data["relatedCategory"] = category_without_agreement_data["_id"]
+    await db.profiles.insert_one(profile_data)
+
     counters = await migrate()
-    assert counters.total_categories == 1
+    assert counters.total_categories == 2
     assert counters.total_profiles == 3
     assert counters.updated_profiles == 3
-    assert counters.skipped_profiles == 0
+    assert counters.skipped_profiles == 1
