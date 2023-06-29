@@ -62,6 +62,10 @@ async def migrate_profiles(category: dict):
     counters = Counters()
 
     profiles_collection = get_profiles_collection()
+    if not category.get("agreementID"):
+        skipped_profiles = await profiles_collection.count_documents({"relatedCategory": category["_id"]})
+        counters.skipped_profiles += skipped_profiles
+        return counters
     async with transaction_context_manager() as session:
         bulk = []
         async for p in profiles_collection.find({"relatedCategory": category["_id"]}, session=session):
