@@ -1,0 +1,63 @@
+@startuml
+allowmixing
+
+' hide the spot
+hide circle
+
+' avoid problems with angled crows feet
+skinparam linetype ortho
+
+
+actor ContributorUser
+actor CentralProcurementOrganisation
+
+rectangle ContributorBroker
+ContributorUser ..> ContributorBroker
+
+rectangle CPOBroker
+CentralProcurementOrganisation ..> CPOBroker
+
+
+cloud CatalogAPI {
+    component Product
+    component CrowdSourcingContributor
+    component CrowdSourcingContributorBan
+
+    CrowdSourcingContributorBan |o--|| CrowdSourcingContributor
+
+    component CrowdSourcingRequest [
+        CrowdSourcingRequest
+
+        Contains data on:
+        - product info
+        - signature
+        - status
+        - meta: owner, dates, ids
+    ]
+    CrowdSourcingContributor ||--o{ CrowdSourcingRequest
+    Product |o--l--o| CrowdSourcingRequest
+
+}
+
+ContributorBroker ...> CrowdSourcingContributor: Реєстрація
+ContributorBroker ...> CrowdSourcingRequest: Заявка на товар
+
+CPOBroker ...> CrowdSourcingContributorBan: бан користувача
+CPOBroker ...> CrowdSourcingRequest: рішення по заявці
+
+
+legend
+  1) Реєстрація
+      POST /crowd-sourcing/contributor
+  2) Заявка на товар
+      POST /crowd-sourcing/contributor/{сid}/requests
+  3) Рішення по заявці:
+    POST /crowd-sourcing/requests/{rid}/accept
+    OR
+    POST /crowd-sourcing/requests/{rid}/reject
+  4) Бан користувача
+    POST /crowd-sourcing/contributor/{сid}/bans
+
+endlegend
+
+@enduml

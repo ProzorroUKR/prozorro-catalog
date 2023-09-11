@@ -1,0 +1,42 @@
+@startuml
+
+==SignUp==
+Broker --> Catalog: POST /crowd-sourcing/contributor\n\
+{"data": {}}
+Broker <-- Catalog: 200 OK \n\
+{"access": {"token": "access-token"}}, \n\
+ "data": {"id": "contributor-id"}}}
+
+ Broker --> Catalog: POST /crowd-sourcing/contributor/{contributor-id}/documents \n\
+ {"data": {"url": ...}}}
+Broker <-- Catalog: 200 OK
+
+
+==Product Contribution Request==
+
+Broker --> Catalog: POST /crowd-sourcing/contributor/{contributor-id}/requests\n\
+HEADERS: X-Access-Token={access-token} \n\
+DATA: {"data": {"product": {"title": ...}}}}
+Broker <-- Catalog: 200 OK \n\
+{"data": {"id": "request-id", \n\
+             "dateCreated": "2023-..." \n\
+             "product": {"id": "product-id", "title": ...}}}}}
+             
+
+==Pending Request Product Not Found==
+
+Broker --> Catalog: GET /products/{product-id}
+Broker <-- Catalog: 404 NOT FOUND
+
+==Accept Product Request==
+Broker --> Catalog: POST /crowd-sourcing/requests/{request-id}/accept
+Broker <-- Catalog: 200 OK
+
+
+==Accepted Request Product Found==
+
+Broker --> Catalog: GET /products/{product-id}
+Broker <-- Catalog: 200 OK
+
+
+@enduml
