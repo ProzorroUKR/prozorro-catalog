@@ -28,25 +28,7 @@ POST /crowd-sourcing/contributor
             "email": "aa@aa.com"
           }
        },
-       "documents": [],
-       "reviewers": [
-            {
-                "identifier": {
-                  "id": "42574629",
-                  "scheme": "UA-EDR",
-                  "legalName_en": "STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
-                  "legalName_uk": "ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
-                },
-            },
-            {
-                "identifier": {
-                  "id": "12345678",
-                  "scheme": "UA-EDR",
-                  "legalName_en": "DERZhAVNA USTANOVA \"TEST Prozorro\"",
-                  "legalName_uk": "ДЕРЖАВНА УСТАНОВА \"Тест Прозорро\""
-                },
-            }
-       ],
+       "documents": []
    }
 }
 
@@ -56,29 +38,10 @@ POST /crowd-sourcing/contributor
    "data": {
        "id": "111111111111111111111111",
        "dateCreated": "2023-12-01T00:00:00+03:00",
+       "dateModified": "2023-12-01T00:00:00+03:00",
        "procuringEntity": {
           ...
-       },
-       "reviewers": [
-            {
-                "id": "333333333333333333333333",
-                "identifier": {
-                  "id": "42574629",
-                  "scheme": "UA-EDR",
-                  "legalName_en": "STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
-                  "legalName_uk": "ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
-                },
-            },
-            {
-                "id": "444444444444444444444444",
-                "identifier": {
-                  "id": "12345678",
-                  "scheme": "UA-EDR",
-                  "legalName_en": "DERZhAVNA USTANOVA \"TEST Prozorro\"",
-                  "legalName_uk": "ДЕРЖАВНА УСТАНОВА \"Тест Прозорро\""
-                },
-            }
-       ],
+       }
    },
    "access": {
        "token": "222222222222222222222222",
@@ -103,47 +66,6 @@ POST /crowd-sourcing/contributor/111111111111111111111111/documents?access_token
 
 201 Created
 ```
-
-Зміна переліку ЦЗО
-------------------
-
-Додаєм 
-```doctest
-POST /crowd-sourcing/contributor/111111111111111111111111/reviewers?access_token=222222222222222222222222
-{
-  "data": {
-    "identifier": {
-      "id": "32348248",
-      "scheme": "UA-EDR",
-      "legalName_en": "State Enterprise \"Ukrainian Special Systems\"",
-      "legalName_uk": "Державне підприємство \"Українські спеціальні системи\""
-    }
-  }
-}
-
-201 Created
-{
-  "data": {
-    "id": "555555555555555555555555",
-    "identifier": {
-      "id": "32348248",
-      "scheme": "UA-EDR",
-      "legalName_en": "State Enterprise \"Ukrainian Special Systems\"",
-      "legalName_uk": "Державне підприємство \"Українські спеціальні системи\""
-    }
-  }
-}
-```
-
-Прибираєм 
-```doctest
-DELETE /crowd-sourcing/contributor/111111111111111111111111/reviewers/333333333333333333333333?access_token=222222222222222222222222
-204 No Content
-```
-
-Прибирання/додавання ЦЗО не відміняє існуючі скасування реєстарції. 
-Активне скасування реєстрації все одно забороняє додавати продукти в категоріях, 
-за які відповідальне ЦЗО яке скасовувало реєстрацію.
 
 
 Скасування реєстарції (Бан)
@@ -278,6 +200,7 @@ POST /crowd-sourcing/contributor/111111111111111111111111/requests?access_token=
 {
   "data": {
      "id": "777777777777777777777777",
+     "contributor_id": "111111111111111111111111",
      "dateCreated": "2023-02-24T00:00:01+02:00",
      "documents": [],
      "product": {
@@ -296,9 +219,21 @@ POST /crowd-sourcing/contributor/111111111111111111111111/requests?access_token=
 Під час прийняття запиту, товар буде додаватися в каталог.
 ЦЗО отримує токен власника і інші деталі по товару у відповіді.
 
+
+TODO: Category access_token ????
+
 ```doctest
 POST /crowd-sourcing/requests/777777777777777777777777/accept
-{}
+{
+    "reviewer": {
+        "identifier": {
+          "id": "42574629",
+          "scheme": "UA-EDR",
+          "legalName_en": "STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
+          "legalName_uk": "ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
+        }
+    }
+}
 
 200 OK
 {
@@ -307,6 +242,14 @@ POST /crowd-sourcing/requests/777777777777777777777777/accept
         "dateCreated": "2023-02-24T00:00:01+02:00",
         "dateModified": "2023-03-09T17:19:45.908462+02:00",
         "acception": {
+            "reviewer": {
+                "identifier": {
+                  "id": "42574629",
+                  "scheme": "UA-EDR",
+                  "legalName_en": "STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
+                  "legalName_uk": "ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
+                }
+            },
             "date": "2023-03-09T17:19:45.908462+02:00",
         },
         "documents": [],
@@ -325,7 +268,7 @@ POST /crowd-sourcing/requests/777777777777777777777777/accept
 ```
 Після підтвердження продукт доступний в маркеті
 ```doctest
-GET /crowd-sourcing/requests/888888888888888888888888
+GET /products/888888888888888888888888
 
 200 OK 
 {
@@ -341,11 +284,19 @@ GET /crowd-sourcing/requests/888888888888888888888888
 
 При відхиленні заявки товар відповідно не створюєтся. 
 ```doctest
-POST /crowd-sourcing/requests/777777777777777777777777/accept
+POST /crowd-sourcing/requests/777777777777777777777777/reject
 {
     "data": {
         "reason": "INVALID",
         "description": "Невірно заповнені дані",
+        "reviewer": {
+            "identifier": {
+              "id": "42574629",
+              "scheme": "UA-EDR",
+              "legalName_en": "STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
+              "legalName_uk": "ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
+            }
+        }
     }
 }
 
@@ -359,6 +310,14 @@ POST /crowd-sourcing/requests/777777777777777777777777/accept
             "reason": "INVALID",
             "description": "Невірно заповнені дані",
             "date": "2023-02-25T00:00:01+02:00",
+            "reviewer": {
+                "identifier": {
+                  "id": "42574629",
+                  "scheme": "UA-EDR",
+                  "legalName_en": "STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
+                  "legalName_uk": "ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
+                }
+            }
         },
         "documents": [],
         "product": {
