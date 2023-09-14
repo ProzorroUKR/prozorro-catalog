@@ -8,7 +8,7 @@
 POST /crowd-sourcing/contributor
 {
    "data": {
-       "procuringEntity": {
+       "contributor": {
           "name": "Повна назва юридичної організації.",
           "identifier": {
             "scheme": "UA-EDR",
@@ -39,9 +39,10 @@ POST /crowd-sourcing/contributor
        "id": "111111111111111111111111",
        "dateCreated": "2023-12-01T00:00:00+03:00",
        "dateModified": "2023-12-01T00:00:00+03:00",
-       "procuringEntity": {
+       "contributor": {
           ...
-       }
+       },
+       ...
    },
    "access": {
        "token": "222222222222222222222222",
@@ -70,7 +71,7 @@ POST /crowd-sourcing/contributor/111111111111111111111111/documents?access_token
 
 Скасування реєстарції (Бан)
 ---------------------------
-Здійснюєтся від імені ЦЗО нявному в списку `reviewers` реєстрації. 
+Здійснюєтся від імені ЦЗО. 
 dueDate - опціональне, за відсутності бан постійний. 
 
 ```doctest
@@ -80,7 +81,7 @@ POST /crowd-sourcing/contributor/111111111111111111111111/bans
     "reason": "LANGUAGE",
     "description": "матюкався та розмовляв російською",
     "dueDate": "2024-02-29T00:00:01+02:00",
-    "reviewer": {
+    "administrator": {
         "id": "333333333333333333333333",
         "identifier": {
           "id": "42574629",
@@ -190,7 +191,8 @@ POST /crowd-sourcing/contributor/111111111111111111111111/requests?access_token=
               "name": "ТОВ \"ІГАР\""
             }
           ]
-     }
+     },
+     "documents": [],
   }
 }
 
@@ -201,10 +203,9 @@ POST /crowd-sourcing/contributor/111111111111111111111111/requests?access_token=
   "data": {
      "id": "777777777777777777777777",
      "contributor_id": "111111111111111111111111",
+     "owner": "test.broker",
      "dateCreated": "2023-02-24T00:00:01+02:00",
-     "documents": [],
      "product": {
-        "id": "888888888888888888888888",
         "title": "Маски медичні IGAR тришарові на гумках 50 шт./уп.",
         "description": ...
      },
@@ -225,7 +226,7 @@ TODO: Category access_token ????
 ```doctest
 POST /crowd-sourcing/requests/777777777777777777777777/accept
 {
-    "reviewer": {
+    "administrator": {
         "identifier": {
           "id": "42574629",
           "scheme": "UA-EDR",
@@ -242,20 +243,20 @@ POST /crowd-sourcing/requests/777777777777777777777777/accept
         "dateCreated": "2023-02-24T00:00:01+02:00",
         "dateModified": "2023-03-09T17:19:45.908462+02:00",
         "acception": {
-            "reviewer": {
+            "administrator": {
                 "identifier": {
                   "id": "42574629",
                   "scheme": "UA-EDR",
                   "legalName_en": "STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
                   "legalName_uk": "ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
                 }
-            },
+            }
             "date": "2023-03-09T17:19:45.908462+02:00",
         },
-        "documents": [],
         "product": {
             "id": "888888888888888888888888",
-            "dateCreated": "2023-02-25T00:00:01+02:00",
+            "dateCreated": "2023-03-09T17:19:45.908462+02:00",
+            "owner": "test.broker",
             "title": "Маски медичні IGAR тришарові на гумках 50 шт./уп.",
             "description": ...
         },
@@ -275,6 +276,8 @@ GET /products/888888888888888888888888
     "data": {
         "id": "888888888888888888888888",
         "dateCreated": "2023-02-25T00:00:01+02:00",
+        "dateModified": "2023-02-25T00:00:01+02:00",
+        "owner": "test.broker",
         "title": "Маски медичні IGAR тришарові на гумках 50 шт./уп.",
         "description": ...
     }
@@ -289,7 +292,7 @@ POST /crowd-sourcing/requests/777777777777777777777777/reject
     "data": {
         "reason": "INVALID",
         "description": "Невірно заповнені дані",
-        "reviewer": {
+        "administrator": {
             "identifier": {
               "id": "42574629",
               "scheme": "UA-EDR",
@@ -321,7 +324,6 @@ POST /crowd-sourcing/requests/777777777777777777777777/reject
         },
         "documents": [],
         "product": {
-            "id": "888888888888888888888888",
             "title": "Маски медичні IGAR тришарові на гумках 50 шт./уп.",
             "description": ...
         },
@@ -346,7 +348,7 @@ GET /crowd-sourcing/requests
     ],
     "next_page": {
         "offset": "2023-03-09T17:19:45.908462+02:00",
-        "path": "/api/products?offset=2023-03-09T17%3A19%3A45.908462%2B02%3A00&limit=1",
+        "path": "/api/crowd-sourcing/requests?offset=2023-03-09T17%3A19%3A45.908462%2B02%3A00&limit=1",
         "uri": "https://market-api.prozorro.gov.ua/api/crowd-sourcing/requests?offset=2023-03-09T17%3A19%3A45.908462%2B02%3A00&limit=1"
     },
     "prev_page": {
