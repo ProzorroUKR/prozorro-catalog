@@ -39,6 +39,7 @@ POST /crowd-sourcing/contributor
        "id": "111111111111111111111111",
        "dateCreated": "2023-12-01T00:00:00+03:00",
        "dateModified": "2023-12-01T00:00:00+03:00",
+       "owner": "test.broker",
        "contributor": {
           ...
        },
