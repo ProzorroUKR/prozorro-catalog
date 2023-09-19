@@ -1,0 +1,21 @@
+{
+  "reason": "LANGUAGE",
+  "description": "матюкався та розмовляв російською",
+  "dueDate": "2024-02-29T00:00:01+02:00",
+  "administrator": {
+    "identifier": {
+      "id": "42574629",
+      "scheme": "UA-EDR",
+      "legalName_en": "STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
+      "legalName_uk": "ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
+    }
+  },
+  "documents": [
+    {
+      "title": "sign.p7s",
+      "url": "http://public-docs-sandbox.prozorro.gov.ua/...",
+      "hash": "md5:00000000000000000000000000000000",
+      "format": "application/pk7s"
+    }
+  ]
+}

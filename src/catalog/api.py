@@ -1,6 +1,10 @@
 from aiohttp import web
 from aiohttp_swagger import setup_swagger
 from catalog import version
+from catalog.handlers.crowd_sourcing.contributor import ContributorView
+from catalog.handlers.crowd_sourcing.contributor_ban import ContributorBanView
+from catalog.handlers.crowd_sourcing.contributor_document import ContributorDocumentView
+from catalog.handlers.crowd_sourcing.product_request import ProductRequestView
 from catalog.settings import SWAGGER_DOC_AVAILABLE
 from catalog.swagger import get_definitions
 from catalog.middleware import (
@@ -384,6 +388,77 @@ def create_application(on_cleanup=None):
         r"/api/vendors/{vendor_id:[\w]{32}}/products/{product_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
         VendorProductDocumentView.patch,
         name="update_vendor_product_document",
+    )
+
+    # contributors
+    app.router.add_get(
+        "/api/crowd-sourcing/contributors",
+        ContributorView.collection_get,
+        name="read_contributor_registry",
+        allow_head=False
+    )
+    app.router.add_get(
+        r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}",
+        ContributorView.get,
+        name="read_contributor",
+    )
+    app.router.add_post(
+        r"/api/crowd-sourcing/contributors",
+        ContributorView.post,
+        name="create_contributor"
+    )
+
+    # contributor ban
+    app.router.add_get(
+        "/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/bans",
+        ContributorBanView.collection_get,
+        name="read_contributor_ban_registry",
+        allow_head=False
+    )
+    app.router.add_get(
+        r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/bans/{ban_id:[\w]{32}}",
+        ContributorBanView.get,
+        name="read_contributor_ban",
+    )
+    app.router.add_post(
+        r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/bans",
+        ContributorBanView.post,
+        name="create_contributor_ban"
+    )
+
+    # contributor docs
+    app.router.add_get(
+        r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/documents",
+        ContributorDocumentView.collection_get,
+        name="read_contributor_document_registry",
+        allow_head=False,
+    )
+    app.router.add_get(
+        r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
+        ContributorDocumentView.get,
+        name="read_contributor_document",
+    )
+    app.router.add_post(
+        r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/documents",
+        ContributorDocumentView.post,
+        name="create_contributor_document"
+    )
+    app.router.add_put(
+        r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
+        ContributorDocumentView.put,
+        name="replace_contributor_document",
+    )
+    app.router.add_patch(
+        r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
+        ContributorDocumentView.patch,
+        name="update_contributor_document",
+    )
+
+    # product request
+    app.router.add_post(
+        r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/requests",
+        ProductRequestView.post,
+        name="create_contributor_product_request"
     )
 
     # search

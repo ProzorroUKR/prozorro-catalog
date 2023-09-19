@@ -1,10 +1,12 @@
 import re
+from datetime import datetime
 
 from aiohttp.web import HTTPBadRequest, HTTPForbidden
 
 from catalog.models.category import CategoryStatus
 from catalog.models.profile import ProfileStatus
 from catalog.models.criteria import TYPEMAP
+from catalog.utils import get_now
 
 
 def validate_product_related_category(category):
@@ -177,3 +179,12 @@ def validate_requirement_title_uniq(profile: dict):
 def validate_criteria_max_items_on_post(obj: dict, obj_title: str):
     if len(obj.get(obj_title, "")) > 1:
         raise HTTPBadRequest(text=f"Size of {obj_title} cannot be greater then 1")
+
+
+def validate_contributor_banned_categories(category: dict, contributor: dict):
+    category_administrator = category["procuringEntity"]["identifier"]["id"]
+    for ban in contributor.get("bans", []):
+        ban_administrator = ban["administrator"]["identifier"]["id"]
+        if ban_administrator == category_administrator\
+                and ("dueDate" not in ban or datetime.fromisoformat(ban["dueDate"]) > get_now()):
+            raise HTTPBadRequest(text="request for product with this relatedCategory is forbidden due to ban")

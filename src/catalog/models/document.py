@@ -44,6 +44,10 @@ class Document(DocumentPostData):
     datePublished: datetime
 
 
+class PublishedDocument(DocumentPostData):
+    datePublished: datetime
+
+
 class DocumentSign(BaseModel):
     hash: str
     title: str

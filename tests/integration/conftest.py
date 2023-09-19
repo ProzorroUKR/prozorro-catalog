@@ -1,3 +1,4 @@
+from copy import deepcopy
 from uuid import uuid4
 from unittest.mock import patch, AsyncMock
 import pytest
@@ -151,3 +152,56 @@ async def vendor_document(api, vendor, profile):
     assert resp.status == 201, result
     return result
 
+
+@pytest.fixture
+async def contributor(api):
+    data = deepcopy(get_fixture_json('contributor'))
+    data["contributor"]["identifier"]["id"] = "10037654"
+    resp = await api.post(
+        "/api/crowd-sourcing/contributors",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    return result
+
+
+@pytest.fixture
+async def contributor_document(api, contributor):
+    contributor, access = contributor["data"], contributor["access"]
+    doc_hash = "0" * 32
+    doc_data = {
+        "title": "name.doc",
+        "url": generate_test_url(doc_hash),
+        "hash": f"md5:{doc_hash}",
+        "format": "application/msword",
+    }
+    resp = await api.post(
+        f'/api/crowd-sourcing/contributors/{contributor["id"]}/documents',
+        json={
+            "data": doc_data,
+            "access": access,
+        },
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    return result
+
+
+@pytest.fixture
+async def ban(api, contributor):
+    contributor = contributor["data"]
+    data = get_fixture_json('ban')
+    doc_hash = "0" * 32
+    data['documents'][0]['url'] = generate_test_url(doc_hash)
+    data['documents'][0]['hash'] = f"md5:{doc_hash}"
+    resp = await api.post(
+        f'/api/crowd-sourcing/contributors/{contributor["id"]}/bans',
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    return result
