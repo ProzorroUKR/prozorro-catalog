@@ -1,16 +1,26 @@
-from catalog.auth import validate_access_token
+from aiohttp.web_urldispatcher import View
+from catalog.auth import validate_access_token, set_access_token
 
 from catalog import db
-from catalog.models.product_request import ProductRequestPostInput
+from catalog.models.product_request import (
+    ProductRequestPostInput,
+    ProductRequestRejectionPostInput,
+    ProductRequestAcceptionPostInput,
+)
 from catalog.serializers.product_request import ProductRequestSerializer
 from catalog.state.product_request import ProductRequestState
 from catalog.swagger import class_view_swagger_path
 from catalog.handlers.base import BaseView
-from catalog.validations import validate_product_to_category, validate_contributor_banned_categories
+from catalog.validations import (
+    validate_product_to_category,
+    validate_contributor_banned_categories,
+    validate_previous_product_reviews,
+)
+from catalog.utils import pagination_params, get_now
 
 
 @class_view_swagger_path('/app/swagger/crowd_sourcing/contributors/product_request')
-class ProductRequestView(BaseView):
+class ContributorProductRequestView(BaseView):
     state = ProductRequestState
 
     @classmethod
@@ -32,3 +42,76 @@ class ProductRequestView(BaseView):
         await db.insert_product_request(data)
 
         return {"data": ProductRequestSerializer(data).data}
+
+
+@class_view_swagger_path('/app/swagger/crowd_sourcing/product_requests')
+class ProductRequestView(View):
+    @classmethod
+    async def collection_get(cls, request):
+        opt_fields = request.query.get("opt_fields")
+        if opt_fields:
+            opt_fields = opt_fields.split(",")
+        offset, limit, reverse = pagination_params(request)
+        response = await db.find_product_requests(
+            offset=offset,
+            limit=limit,
+            reverse=reverse,
+            opt_fields=opt_fields,
+        )
+        return response
+
+    @classmethod
+    async def get(cls, request, request_id):
+        obj = await db.read_product_request(request_id)
+        return {"data": ProductRequestSerializer(obj).data}
+
+
+@class_view_swagger_path('/app/swagger/crowd_sourcing/product_requests/accept')
+class ProductRequestAcceptionView(BaseView):
+    state = ProductRequestState
+
+    @classmethod
+    async def post(cls, request, **kwargs):
+        request_id = kwargs.get("request_id")
+        async with db.read_and_update_product_request(request_id) as product_request:
+            # import and validate data
+            json = await request.json()
+            body = ProductRequestAcceptionPostInput(**json)
+            validate_previous_product_reviews(product_request)
+            # export data back to dict
+            data = body.data.dict_without_none()
+            # update product request with valid data
+            data["date"] = get_now().isoformat()
+            product_request.update({"acception": data})
+            await cls.state.on_accept(product_request)
+
+        # add product to the market
+        access = set_access_token(request, product_request["product"])
+        await db.insert_product(product_request["product"])
+
+        return {
+            "data": ProductRequestSerializer(product_request).data,
+            "access": access,
+        }
+
+
+@class_view_swagger_path('/app/swagger/crowd_sourcing/product_requests/reject')
+class ProductRequestRejectionView(BaseView):
+    state = ProductRequestState
+
+    @classmethod
+    async def post(cls, request, **kwargs):
+        request_id = kwargs.get("request_id")
+        async with db.read_and_update_product_request(request_id) as product_request:
+            # import and validate data
+            json = await request.json()
+            body = ProductRequestRejectionPostInput(**json)
+            validate_previous_product_reviews(product_request)
+            # export data back to dict
+            data = body.data.dict_without_none()
+            # update product request with valid data
+            data["date"] = get_now().isoformat()
+            product_request.update({"rejection": data})
+            cls.state.always(product_request)
+
+        return {"data": ProductRequestSerializer(product_request).data}

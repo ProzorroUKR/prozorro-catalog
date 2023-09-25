@@ -205,3 +205,62 @@ async def ban(api, contributor):
     result = await resp.json()
     assert resp.status == 201, result
     return result
+
+
+@pytest.fixture
+async def ban_document(api, ban, contributor):
+    contributor = contributor["data"]
+    ban = ban["data"]
+    doc_hash = "0" * 32
+    doc_data = {
+        "title": "name.doc",
+        "url": generate_test_url(doc_hash),
+        "hash": f"md5:{doc_hash}",
+        "format": "application/msword",
+    }
+    resp = await api.post(
+        f'/api/crowd-sourcing/contributors/{contributor["id"]}/bans/{ban["id"]}/documents',
+        json={"data": doc_data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    return result
+
+
+@pytest.fixture
+async def product_request(api, contributor, category):
+    contributor, access = contributor["data"], contributor["access"]
+    test_request = get_fixture_json('product_request')
+    category_id = category['data']['id']
+    set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
+    test_request["product"]['relatedCategory'] = category_id
+
+    resp = await api.post(
+        f"api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+        json={"data": test_request},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    return result
+
+
+@pytest.fixture
+async def product_request_document(api, product_request):
+    product_request = product_request["data"]
+    doc_hash = "0" * 32
+    doc_data = {
+        "title": "name.doc",
+        "url": generate_test_url(doc_hash),
+        "hash": f"md5:{doc_hash}",
+        "format": "application/msword",
+    }
+    resp = await api.post(
+        f'/api/crowd-sourcing/requests/{product_request["id"]}/documents',
+        json={"data": doc_data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    return result

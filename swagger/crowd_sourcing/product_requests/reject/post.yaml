@@ -1,28 +1,23 @@
 tags:
-- CrowdSourcing/ContriibutorProductRequest
-description: Product request creation by contributor
-operationId: collection_post_product_request
+- CrowdSourcing/ProductRequests
+description: Product request rejection by procuring entity
+operationId: collection_post_product_request_reject
 parameters:
 - in: path
-  name: contributor_id
+  name: request_id
   schema:
     type: string
   required: true
-  description: ID of the contributor
-- in: query
-  name: access_token
-  schema:
-    type: string
-  description: Токен від створенного об'єкта
+  description: ID of the product request
 security:
   - Basic: []
 requestBody:
-  description: Product request data
+  description: Product request rejection data
   required: true
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/AuthorizedInput_ProductRequestPostData_'
+        $ref: '#/components/schemas/Input_RequestRejectionPostData_'
 responses:
   "200":
     description: successful operation

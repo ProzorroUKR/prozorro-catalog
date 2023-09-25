@@ -30,7 +30,6 @@ async def test_ban_create_invalid_fields(api, contributor):
         'field required: data.reason',
         'field required: data.description',
         'field required: data.administrator',
-        'field required: data.documents',
     ]
     assert {'errors': errors} == result
 

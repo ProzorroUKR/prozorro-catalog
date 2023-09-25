@@ -145,7 +145,7 @@ async def find_objects(collection, ids):
     return items
 
 
-async def paginated_result(collection, *_, offset, limit, reverse, filters=None, projection_fields=None):
+async def paginated_result(collection, *_, offset, limit, reverse, filters=None, opt_fields=None):
     limit = min(limit, MAX_LIST_LIMIT)
     limit = max(limit, 1)
     filters = filters or {}
@@ -160,8 +160,8 @@ async def paginated_result(collection, *_, offset, limit, reverse, filters=None,
             filters["dateModified"] = {"$gt": offset}
 
     projection = {"dateModified": True}
-    if projection_fields is not None:
-        for field in projection_fields:
+    if opt_fields is not None:
+        for field in opt_fields:
             projection[field] = True
 
     items = await collection.find(

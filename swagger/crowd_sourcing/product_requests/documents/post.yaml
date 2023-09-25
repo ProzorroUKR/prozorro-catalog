@@ -1,35 +1,30 @@
 tags:
-- CrowdSourcing/ContriibutorProductRequest
-description: Product request creation by contributor
-operationId: collection_post_product_request
+- CrowdSourcing/ProductRequests
+description: Create document
+operationId: post_product_request_doc
 parameters:
 - in: path
-  name: contributor_id
+  name: request_id
   schema:
     type: string
   required: true
-  description: ID of the contributor
-- in: query
-  name: access_token
-  schema:
-    type: string
-  description: Токен від створенного об'єкта
+  description: ID of the product request
 security:
   - Basic: []
 requestBody:
-  description: Product request data
+  description: Document data
   required: true
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/AuthorizedInput_ProductRequestPostData_'
+        $ref: '#/components/schemas/AuthorizedInput_DocumentPostData_'
 responses:
   "200":
     description: successful operation
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/Response_ProductRequest_'
+          $ref: '#/components/schemas/Response_Document_'
   "400":
     description: validation errors
     content:

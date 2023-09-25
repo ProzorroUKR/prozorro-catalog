@@ -1,7 +1,7 @@
 tags:
-- CrowdSourcing/ContriibutorProductRequest
-description: Product request creation by contributor
-operationId: collection_post_product_request
+- CrowdSourcing/ContributorBans
+description: Create document
+operationId: post_contributor_ban_doc
 parameters:
 - in: path
   name: contributor_id
@@ -9,27 +9,28 @@ parameters:
     type: string
   required: true
   description: ID of the contributor
-- in: query
-  name: access_token
+- in: path
+  name: ban_id
   schema:
     type: string
-  description: Токен від створенного об'єкта
+  required: true
+  description: ID of the contributor ban
 security:
   - Basic: []
 requestBody:
-  description: Product request data
+  description: Document data
   required: true
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/AuthorizedInput_ProductRequestPostData_'
+        $ref: '#/components/schemas/AuthorizedInput_DocumentPostData_'
 responses:
   "200":
     description: successful operation
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/Response_ProductRequest_'
+          $ref: '#/components/schemas/Response_Document_'
   "400":
     description: validation errors
     content:

@@ -5,7 +5,7 @@ from pydantic import Field, validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse
 from catalog.models.common import MarketAdministrator
-from catalog.models.document import DocumentPostData, PublishedDocument
+from catalog.models.document import DocumentPostData, Document
 
 
 class BanPostData(BaseModel):
@@ -13,7 +13,7 @@ class BanPostData(BaseModel):
     description: str
     dueDate: Optional[datetime]
     administrator: MarketAdministrator
-    documents: List[DocumentPostData]
+    documents: Optional[List[DocumentPostData]]
 
     @validator('dueDate')
     def validate_date(cls, v):
@@ -24,8 +24,9 @@ class BanPostData(BaseModel):
 class Ban(BanPostData):
     id: str = Field(..., min_length=32, max_length=32)
     dateCreated: datetime
+    dateModified: datetime
     owner: str
-    documents: List[PublishedDocument]
+    documents: Optional[List[Document]]
 
 
 BanPostInput = Input[BanPostData]

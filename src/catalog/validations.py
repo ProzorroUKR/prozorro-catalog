@@ -188,3 +188,8 @@ def validate_contributor_banned_categories(category: dict, contributor: dict):
         if ban_administrator == category_administrator\
                 and ("dueDate" not in ban or datetime.fromisoformat(ban["dueDate"]) > get_now()):
             raise HTTPBadRequest(text="request for product with this relatedCategory is forbidden due to ban")
+
+
+def validate_previous_product_reviews(product_request: dict):
+    if product_request.get("acception") or product_request.get("rejection"):
+        raise HTTPBadRequest(text="product request is already reviewed")

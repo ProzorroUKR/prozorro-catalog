@@ -138,3 +138,11 @@ def delete_sent_none_values(data, json):
     for key in json:
         if key in data and json[key] is None:
             del data[key]
+
+
+def find_contributor_ban(contributor, ban_id):
+    for ban in contributor.get("bans", ""):
+        if ban["id"] == ban_id:
+            return ban
+    else:
+        raise HTTPNotFound(text="Ban not found")

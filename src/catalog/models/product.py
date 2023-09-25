@@ -85,7 +85,7 @@ class ProductRequirementResponses(BaseModel):
 
 
 class BaseProductCreateData(ProductRequirementResponses):
-    title: str = Field(..., min_length=1, max_length=80)
+    title: str = Field(..., min_length=1, max_length=160)
     # When we will have moved to new logic, we should remove max_items validation
     relatedCategory: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     description: str = Field(..., min_length=1, max_length=1000)
@@ -107,11 +107,12 @@ class ProductCreateData(BaseProductCreateData):
     brand: Optional[Brand]
     alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_items=100)
     manufacturers: Optional[List[Manufacturer]] = Field(None, max_items=100)
-    images: Optional[List[Image]] = Field(None, max_items=100)
+    images: List[Image] = Field(None, max_items=20)
+    product: Optional[ProductInfo]
 
 
 class ProductUpdateData(ProductRequirementResponses):
-    title: Optional[str] = Field(None, min_length=1, max_length=80)
+    title: Optional[str] = Field(None, min_length=1, max_length=160)
     relatedCategory: Optional[str] = Field(None, regex=r"^[0-9A-Za-z_-]{1,32}$")
     description: Optional[str] = Field(None, min_length=1, max_length=1000)
     classification: Optional[Classification]
@@ -122,17 +123,19 @@ class ProductUpdateData(ProductRequirementResponses):
     brand: Optional[Brand]
     product: Optional[ProductInfo]
     manufacturers: Optional[List[Manufacturer]] = Field(None, max_items=100)
-    images: Optional[List[Image]] = Field(None, max_items=100)
+    images: Optional[List[Image]] = Field(None, max_items=20)
     status: Optional[ProductStatus]
 
 
 class Product(ProductCreateData):
     id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
+    dateCreated: Optional[datetime]  # creation product with request by contributor
     relatedProfiles: Optional[List[str]]
     owner: str
     vendor: Optional[VendorInfo]
     documents: Optional[Document]
+    images: Optional[List[Image]] = Field(None, max_items=100)
 
 
 ProductCreateInput = AuthorizedInput[ProductCreateData]

@@ -42,6 +42,7 @@ if not os.path.exists(IMG_DIR):
 IMG_PATH = os.getenv('IMG_PATH', '/static/images')
 
 ALLOWED_IMG_TYPES = os.getenv('ALLOWED_IMG_TYPES', 'jpeg,png').split(",")
+IMG_SIZE_LIMIT = os.getenv('IMG_SIZE_LIMIT', 1000000)  # default limit 1 Mb
 
 IMG_STORE_DIR_NAME_LEN = int(os.getenv('IMG_STORE_DIR_NAME_LEN', 2))
 IMG_STORE_DIR_LEVELS = int(os.getenv('IMG_STORE_DIR_LEVELS', 3))

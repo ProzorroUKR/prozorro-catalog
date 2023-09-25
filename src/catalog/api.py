@@ -3,8 +3,15 @@ from aiohttp_swagger import setup_swagger
 from catalog import version
 from catalog.handlers.crowd_sourcing.contributor import ContributorView
 from catalog.handlers.crowd_sourcing.contributor_ban import ContributorBanView
+from catalog.handlers.crowd_sourcing.contributor_ban_document import ContributorBanDocumentView
 from catalog.handlers.crowd_sourcing.contributor_document import ContributorDocumentView
-from catalog.handlers.crowd_sourcing.product_request import ProductRequestView
+from catalog.handlers.crowd_sourcing.product_request import (
+    ProductRequestView,
+    ContributorProductRequestView,
+    ProductRequestAcceptionView,
+    ProductRequestRejectionView,
+)
+from catalog.handlers.crowd_sourcing.product_request_document import ProductRequestDocumentView
 from catalog.settings import SWAGGER_DOC_AVAILABLE
 from catalog.swagger import get_definitions
 from catalog.middleware import (
@@ -410,7 +417,7 @@ def create_application(on_cleanup=None):
 
     # contributor ban
     app.router.add_get(
-        "/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/bans",
+        r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/bans",
         ContributorBanView.collection_get,
         name="read_contributor_ban_registry",
         allow_head=False
@@ -454,11 +461,91 @@ def create_application(on_cleanup=None):
         name="update_contributor_document",
     )
 
+    # contributor ban docs
+    app.router.add_get(
+        r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/bans/{ban_id:[\w]{32}}/documents",
+        ContributorBanDocumentView.collection_get,
+        name="read_contributor_ban_document_registry",
+        allow_head=False,
+    )
+    app.router.add_get(
+        r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/bans/{ban_id:[\w]{32}}"
+        r"/documents/{doc_id:[\w]{32}}",
+        ContributorBanDocumentView.get,
+        name="read_contributor_ban_document",
+    )
+    app.router.add_post(
+        r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/bans/{ban_id:[\w]{32}}/documents",
+        ContributorBanDocumentView.post,
+        name="create_contributor_ban_document"
+    )
+    app.router.add_put(
+        r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/bans/{ban_id:[\w]{32}}"
+        r"/documents/{doc_id:[\w]{32}}",
+        ContributorBanDocumentView.put,
+        name="replace_contributor_ban_document",
+    )
+    app.router.add_patch(
+        r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/bans/{ban_id:[\w]{32}}"
+        r"/documents/{doc_id:[\w]{32}}",
+        ContributorBanDocumentView.patch,
+        name="update_contributor_ban_document",
+    )
+
     # product request
     app.router.add_post(
         r"/api/crowd-sourcing/contributors/{contributor_id:[\w]{32}}/requests",
-        ProductRequestView.post,
+        ContributorProductRequestView.post,
         name="create_contributor_product_request"
+    )
+    app.router.add_get(
+        r"/api/crowd-sourcing/requests",
+        ProductRequestView.collection_get,
+        name="read_product_request_registry",
+        allow_head=False,
+    )
+    app.router.add_get(
+        r"/api/crowd-sourcing/requests/{request_id:[\w]{32}}",
+        ProductRequestView.get,
+        name="read_product_request",
+    )
+    app.router.add_post(
+        r"/api/crowd-sourcing/requests/{request_id:[\w]{32}}/accept",
+        ProductRequestAcceptionView.post,
+        name="accept_product_request"
+    )
+    app.router.add_post(
+        r"/api/crowd-sourcing/requests/{request_id:[\w]{32}}/reject",
+        ProductRequestRejectionView.post,
+        name="reject_product_request"
+    )
+
+    # product request docs
+    app.router.add_get(
+        r"/api/crowd-sourcing/requests/{request_id:[\w]{32}}/documents",
+        ProductRequestDocumentView.collection_get,
+        name="read_product_request_document_registry",
+        allow_head=False,
+    )
+    app.router.add_get(
+        r"/api/crowd-sourcing/requests/{request_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
+        ProductRequestDocumentView.get,
+        name="read_product_request_document",
+    )
+    app.router.add_post(
+        r"/api/crowd-sourcing/requests/{request_id:[\w]{32}}/documents",
+        ProductRequestDocumentView.post,
+        name="create_product_request_document"
+    )
+    app.router.add_put(
+        r"/api/crowd-sourcing/requests/{request_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
+        ProductRequestDocumentView.put,
+        name="replace_product_request_document",
+    )
+    app.router.add_patch(
+        r"/api/crowd-sourcing/requests/{request_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
+        ProductRequestDocumentView.patch,
+        name="update_product_request_document",
     )
 
     # search

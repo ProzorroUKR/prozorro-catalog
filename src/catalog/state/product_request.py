@@ -18,3 +18,11 @@ class ProductRequestState(BaseState):
     @classmethod
     def always(cls, data):
         data['dateModified'] = get_now().isoformat()
+
+    @classmethod
+    async def on_accept(cls, data):
+        data["product"]['id'] = uuid4().hex
+        data["product"]['dateModified'] = data["product"]['dateCreated'] = get_now().isoformat()
+        data["product"]["owner"] = get_request().user.name
+
+        super().always(data)

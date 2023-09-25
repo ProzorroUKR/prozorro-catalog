@@ -1,12 +1,12 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Union
 from pydantic import Field
 
 from catalog.models.base import BaseModel
-from catalog.models.api import AuthorizedInput, Input, Response
+from catalog.models.api import AuthorizedInput, Input, Response, CreateResponse
 from catalog.models.common import MarketAdministrator
-from catalog.models.product import ProductCreateData
-from catalog.models.document import DocumentPostData, PublishedDocument
+from catalog.models.product import ProductCreateData, Product
+from catalog.models.document import DocumentPostData, Document
 
 
 class RequestReviewPostData(BaseModel):
@@ -39,10 +39,12 @@ class ProductRequest(ProductRequestPostData):
     owner: str
     acception: Optional[RequestReview]
     rejection: Optional[RequestRejection]
-    documents: Optional[List[PublishedDocument]]
+    documents: Optional[List[Document]]
+    product: Union[ProductCreateData, Product]
 
 
 ProductRequestPostInput = AuthorizedInput[ProductRequestPostData]
 ProductRequestResponse = Response[ProductRequest]
 ProductRequestAcceptionPostInput = Input[RequestReviewPostData]
 ProductRequestRejectionPostInput = Input[RequestRejectionPostData]
+ProductRequestReviewCreateResponse = CreateResponse[ProductRequest]
