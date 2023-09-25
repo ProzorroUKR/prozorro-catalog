@@ -83,7 +83,6 @@ POST /crowd-sourcing/contributor/111111111111111111111111/bans
     "description": "матюкався та розмовляв російською",
     "dueDate": "2024-02-29T00:00:01+02:00",
     "administrator": {
-        "id": "333333333333333333333333",
         "identifier": {
           "id": "42574629",
           "scheme": "UA-EDR",
@@ -114,7 +113,7 @@ POST /crowd-sourcing/contributor/111111111111111111111111/bans
 ```
 
 
-Створення заявоки на додавання товару
+Створення заявки на додавання товару
 -------------------------------------
 ```doctest
 POST /crowd-sourcing/contributor/111111111111111111111111/requests?access_token=222222222222222222222222
@@ -123,13 +122,11 @@ POST /crowd-sourcing/contributor/111111111111111111111111/requests?access_token=
      "product": {
           "title": "Маски медичні IGAR тришарові на гумках 50 шт./уп.",
           "description": "Маски медичні IGAR тришарові на гумках 50 шт./уп. Гарантія від виробника.",
-          "product": {
-            "name": "Маска тришарова на гумках"
-          },
           "identifier": {
             "id": "463234567819",
             "scheme": "UPC"
           },
+          "relatedCategory": "33190000-0000-10033300",
           "images": [
             {
               "sizes": "500x175",
@@ -143,55 +140,25 @@ POST /crowd-sourcing/contributor/111111111111111111111111/requests?access_token=
               "scheme": "KMU777"
             }
           ],
-          "additionalProperties": [
-            {
-              "code": "ocds-color",
-              "name": "Колір",
-              "value": "білий"
-            },
-            {
-              "code": "ocds-warranty",
-              "name": "гарантія від виробника",
-              "value": true
-            }
-          ],
           "alternativeIdentifiers": [
             {
               "id": "0463234567819",
               "scheme": "EAN-13"
             }
           ],
-          "brand": {
-            "name": "IGAR",
-            "uri": "igar.ua"
-          },
           "classification": {
             "description": "Медичне обладнання та вироби медичного призначення різні",
             "id": "33190000-8",
             "scheme": "ДК021"
           },
-          "manufacturers": [
+          "requirementResponses": [
             {
-              "address": {
-                "countryName": "Україна",
-                "locality": "м.Київ",
-                "postalCode": "01024",
-                "region": "Київська область",
-                "streetAddress": "вул. Приблизна 1, копус 20"
-              },
-              "contactPoint": {
-                "email": "igar@igar.ua",
-                "name": "Анакун Анастасия",
-                "telephone": "+380442342414"
-              },
-              "identifier": {
-                "id": "39454432",
-                "legalName": "ТОВ \"Ігар\"",
-                "scheme": "UA-EDR"
-              },
-              "name": "ТОВ \"ІГАР\""
-            }
-          ]
+              "value": "одноразова"
+            },
+            {
+              "value": 3
+            },
+          ],
      },
      "documents": [],
   }
@@ -354,7 +321,7 @@ GET /crowd-sourcing/requests
     },
     "prev_page": {
         "offset": "2023-03-09T17:19:45.908462+02:00",
-        "path": "/api/products?offset=2023-03-09T17%3A19%3A45.908462%2B02%3A00&limit=1&descending=1",
+        "path": "/api/crowd-sourcing/requests?offset=2023-03-09T17%3A19%3A45.908462%2B02%3A00&limit=1&descending=1",
         "uri": "https://market-api.prozorro.gov.ua/api/crowd-sourcing/requests?offset=2023-03-09T17%3A19%3A45.908462%2B02%3A00&limit=1&descending=1"
     }
 }
