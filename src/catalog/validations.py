@@ -193,3 +193,10 @@ def validate_contributor_banned_categories(category: dict, contributor: dict):
 def validate_previous_product_reviews(product_request: dict):
     if product_request.get("acception") or product_request.get("rejection"):
         raise HTTPBadRequest(text="product request is already reviewed")
+
+
+def validate_contributor_ban_already_exists(contributor: dict, administrator_id):
+    for ban in contributor.get("bans", []):
+        if ban["administrator"]["identifier"]["id"] == administrator_id \
+                and ("dueDate" not in ban or datetime.fromisoformat(ban["dueDate"]) > get_now()):
+            raise HTTPBadRequest(text="ban from this market administrator already exists")

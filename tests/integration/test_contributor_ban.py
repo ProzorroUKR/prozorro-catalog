@@ -1,4 +1,9 @@
+from copy import deepcopy
+from datetime import timedelta
+from freezegun import freeze_time
+
 from catalog.doc_service import generate_test_url
+from catalog.utils import get_now
 from .base import TEST_AUTH
 
 
@@ -33,7 +38,7 @@ async def test_ban_create_invalid_fields(api, contributor):
     ]
     assert {'errors': errors} == result
 
-    data = api.get_fixture_json('ban')
+    data = deepcopy(api.get_fixture_json('ban'))
     resp = await api.post(
         f"/api/crowd-sourcing/contributors/{contributor['data']['id']}/bans",
         json={"data": data},
@@ -75,6 +80,18 @@ async def test_ban_create_invalid_fields(api, contributor):
     assert resp.status == 400, result
     assert {'errors': ['must equal Порушення правил роботи в каталозі: data.description']} == result
 
+    data = deepcopy(api.get_fixture_json('ban'))
+    data["dueDate"] = (get_now() - timedelta(days=1)).isoformat()
+    del data["documents"]
+    resp = await api.post(
+        f"/api/crowd-sourcing/contributors/{contributor['data']['id']}/bans",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': ['should be greater than now: data.dueDate']} == result
+
 
 async def test_ban_create(api, contributor):
     contributor = contributor["data"]
@@ -100,6 +117,7 @@ async def test_ban_create(api, contributor):
 
     # create ban without dueDate
     del test_ban["dueDate"]
+    test_ban["administrator"]["identifier"]["id"] = "40996564"
     resp = await api.post(
         f"api/crowd-sourcing/contributors/{contributor['id']}/bans",
         json={"data": test_ban},
@@ -138,3 +156,68 @@ async def test_bans_list(api, contributor, ban):
         'id', 'reason', 'owner', 'dateCreated', 'description', 'administrator', 'documents', 'dueDate'
     }
     assert result["data"][0]["id"] == ban["data"]["id"]
+
+
+async def test_ban_already_exists(api, contributor):
+    # create ban from administrator 42574629 with dueDate
+    contributor = contributor["data"]
+    test_ban = api.get_fixture_json('ban')
+    doc_hash = "0" * 32
+    test_ban['documents'][0]['url'] = generate_test_url(doc_hash)
+    test_ban['documents'][0]['hash'] = f"md5:{doc_hash}"
+    test_ban["dueDate"] = (get_now() + timedelta(days=1)).isoformat()
+    resp = await api.post(
+        f"api/crowd-sourcing/contributors/{contributor['id']}/bans",
+        json={"data": test_ban},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+
+    assert resp.status == 201, result
+
+    # add new ban from administrator 42574629 before dueDate
+    resp = await api.post(
+        f"api/crowd-sourcing/contributors/{contributor['id']}/bans",
+        json={"data": test_ban},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': ['ban from this market administrator already exists']} == result
+
+    # add new ban from administrator 42574629 after dueDate
+    del test_ban["dueDate"]
+    with freeze_time((get_now() + timedelta(days=2)).isoformat()):
+        resp = await api.post(
+            f"api/crowd-sourcing/contributors/{contributor['id']}/bans",
+            json={"data": test_ban},
+            auth=TEST_AUTH,
+        )
+        result = await resp.json()
+        assert resp.status == 201, result
+
+    # create ban from administrator 40996564 without dueDate
+    test_ban = api.get_fixture_json('ban')
+    doc_hash = "0" * 32
+    test_ban['documents'][0]['url'] = generate_test_url(doc_hash)
+    test_ban['documents'][0]['hash'] = f"md5:{doc_hash}"
+    del test_ban["dueDate"]
+    test_ban["administrator"]["identifier"]["id"] = "40996564"
+    resp = await api.post(
+        f"api/crowd-sourcing/contributors/{contributor['id']}/bans",
+        json={"data": test_ban},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+
+    assert resp.status == 201, result
+
+    # add new ban from administrator 40996564 before dueDate
+    resp = await api.post(
+        f"api/crowd-sourcing/contributors/{contributor['id']}/bans",
+        json={"data": test_ban},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': ['ban from this market administrator already exists']} == result

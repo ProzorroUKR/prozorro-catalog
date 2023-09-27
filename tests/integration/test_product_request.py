@@ -1,5 +1,6 @@
 from copy import deepcopy
 from datetime import timedelta
+from freezegun import freeze_time
 
 from catalog.utils import get_now
 from catalog.doc_service import generate_test_url
@@ -219,7 +220,7 @@ async def test_product_request_in_banned_category_with_expired_due_date(api, moc
 
     # create ban without dueDate
     ban = api.get_fixture_json('ban')
-    ban["dueDate"] = (get_now() - timedelta(days=10)).isoformat()
+    ban["dueDate"] = (get_now() + timedelta(days=1)).isoformat()
     doc_hash = "0" * 32
     ban['documents'][0]['url'] = generate_test_url(doc_hash)
     ban['documents'][0]['hash'] = f"md5:{doc_hash}"
@@ -249,12 +250,13 @@ async def test_product_request_in_banned_category_with_expired_due_date(api, moc
     set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
     test_request["product"]['relatedCategory'] = category_id
 
-    resp = await api.post(
-        f"api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
-        json={"data": test_request},
-        auth=TEST_AUTH,
-    )
-    assert resp.status == 201
+    with freeze_time((get_now() + timedelta(days=2)).isoformat()):
+        resp = await api.post(
+            f"api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+            json={"data": test_request},
+            auth=TEST_AUTH,
+        )
+        assert resp.status == 201
 
 
 async def test_product_request_acception_validations(api, product_request):

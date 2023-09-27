@@ -7,6 +7,7 @@ from catalog.serializers.base import BaseSerializer
 from catalog.state.ban import BanState
 from catalog.swagger import class_view_swagger_path
 from catalog.handlers.base import BaseView
+from catalog.validations import validate_contributor_ban_already_exists
 
 
 @class_view_swagger_path('/app/swagger/crowd_sourcing/contributors/bans')
@@ -35,6 +36,8 @@ class ContributorBanView(BaseView):
         body = BanPostInput(**json)
         data = body.data.dict_without_none()
         async with db.read_and_update_contributor(kwargs.get("contributor_id")) as obj:
+            administrator_id = data.get("administrator", {}).get("identifier", {}).get("id")
+            validate_contributor_ban_already_exists(obj, administrator_id)
             await cls.state.on_post(data)
             obj["dateModified"] = get_now().isoformat()
             if "bans" not in obj:

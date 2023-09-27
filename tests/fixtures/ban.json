@@ -1,7 +1,7 @@
 {
   "reason": "rulesViolation",
   "description": "Порушення правил роботи в каталозі",
-  "dueDate": "2024-02-29T00:00:01+02:00",
+  "dueDate": "2028-02-29T00:00:01+02:00",
   "administrator": {
     "identifier": {
       "id": "42574629",

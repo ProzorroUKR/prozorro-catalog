@@ -6,6 +6,7 @@ from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse
 from catalog.models.common import MarketAdministrator
 from catalog.models.document import DocumentPostData, Document
+from catalog.utils import get_now
 import standards
 
 
@@ -22,6 +23,8 @@ class BanPostData(BaseModel):
     @validator('dueDate')
     def validate_date(cls, v):
         if v and isinstance(v, datetime):
+            if v < get_now():
+                raise ValueError("should be greater than now")
             return v.isoformat()
 
     @validator('reason')
