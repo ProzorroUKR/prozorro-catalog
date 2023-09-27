@@ -53,6 +53,28 @@ async def test_ban_create_invalid_fields(api, contributor):
     assert resp.status == 400, result
     assert {'errors': ['Document url signature is invalid: data.documents.0.__root__']} == result
 
+    del data["documents"]
+    data["reason"] = "some other reason"
+    resp = await api.post(
+        f"/api/crowd-sourcing/contributors/{contributor['data']['id']}/bans",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': ['must be one of market/ban_reason.json keys: data.reason']} == result
+
+    data["reason"] = "rulesViolation"
+    data["description"] = "test"
+    resp = await api.post(
+        f"/api/crowd-sourcing/contributors/{contributor['data']['id']}/bans",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': ['must equal Порушення правил роботи в каталозі: data.description']} == result
+
 
 async def test_ban_create(api, contributor):
     contributor = contributor["data"]

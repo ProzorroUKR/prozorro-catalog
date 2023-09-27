@@ -10,4 +10,4 @@ aiofiles>=0.7.0
 python-json-logger==2.0.1
 PyNaCl>=1.5.0, <2
 sentry-sdk
-git+https://github.com/ProzorroUKR/standards.git@6090aad5f1bdf23405be78369d91b78f7e4dacda#egg=standards
+git+https://github.com/ProzorroUKR/standards.git@9cf93af8be93ded27c70488fd99b83d07f40765e#egg=standards

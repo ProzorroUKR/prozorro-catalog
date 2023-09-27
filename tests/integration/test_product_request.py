@@ -337,7 +337,7 @@ async def test_product_request_acception(api, product_request):
 
 async def test_product_request_rejection_validations(api, product_request):
     rejection_data = deepcopy(request_review_data)
-    rejection_data.update({"reason": "INVALID", "description": "Невірно заповнені дані"})
+    rejection_data.update({"reason": "invalidTitle", "description": "Невірно зазначена назва товару"})
     resp = await api.post(
         "api/crowd-sourcing/requests/some_id/reject",
         json={"data": rejection_data},
@@ -371,10 +371,32 @@ async def test_product_request_rejection_validations(api, product_request):
     assert resp.status == 400, result
     assert {'errors': ['must be one of market administrators: data.administrator.identifier']} == result
 
+    rejection_data = deepcopy(request_review_data)
+    rejection_data.update({"reason": "some other reason", "description": "Невірно зазначена назва товару"})
+    resp = await api.post(
+        f"api/crowd-sourcing/requests/{product_request['data']['id']}/reject",
+        json={"data": rejection_data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': ['must be one of market/product_reject_reason.json keys: data.reason']} == result
+
+    rejection_data["reason"] = "invalidTitle"
+    rejection_data["description"] = "test"
+    resp = await api.post(
+        f"api/crowd-sourcing/requests/{product_request['data']['id']}/reject",
+        json={"data": rejection_data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': ['must equal Невірно зазначена назва товару: data.description']} == result
+
 
 async def test_product_request_rejection(api, product_request):
     rejection_data = deepcopy(request_review_data)
-    rejection_data.update({"reason": "INVALID", "description": "Невірно заповнені дані"})
+    rejection_data.update({"reason": "invalidTitle", "description": "Невірно зазначена назва товару"})
     resp = await api.post(
         f"api/crowd-sourcing/requests/{product_request['data']['id']}/reject",
         json={"data": rejection_data},
@@ -414,7 +436,7 @@ async def test_product_request_second_review(api, product_request):
 
     # reject already reviewed request
     rejection_data = deepcopy(request_review_data)
-    rejection_data.update({"reason": "INVALID", "description": "Невірно заповнені дані"})
+    rejection_data.update({"reason": "invalidTitle", "description": "Невірно зазначена назва товару"})
     resp = await api.post(
         f"api/crowd-sourcing/requests/{product_request['data']['id']}/reject",
         json={"data": rejection_data},

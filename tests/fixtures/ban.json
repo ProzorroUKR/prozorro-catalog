@@ -1,6 +1,6 @@
 {
-  "reason": "LANGUAGE",
-  "description": "матюкався та розмовляв російською",
+  "reason": "rulesViolation",
+  "description": "Порушення правил роботи в каталозі",
   "dueDate": "2024-02-29T00:00:01+02:00",
   "administrator": {
     "identifier": {
