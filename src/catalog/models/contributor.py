@@ -5,12 +5,21 @@ from pydantic import Field
 from catalog.models.ban import Ban
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse
+from catalog.models.common import ContactPoint
 from catalog.models.vendor import VendorOrganization
 from catalog.models.document import Document, DocumentPostData
 
 
+class ContributorContactPoint(ContactPoint):
+    email: str = Field(..., min_length=1, max_length=250)
+
+
+class ContributorOrganization(VendorOrganization):
+    contactPoint: ContributorContactPoint
+
+
 class ContributorPostData(BaseModel):
-    contributor: VendorOrganization
+    contributor: ContributorOrganization
     documents: Optional[List[DocumentPostData]]
 
 
