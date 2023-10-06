@@ -125,6 +125,8 @@ def validate_product_req_response_to_profile(profile: dict, product: dict):
 def validate_product_to_category(category, product, product_before=None):
     if category.get("status", CategoryStatus.active) != CategoryStatus.active:
         raise HTTPBadRequest(text=f"relatedCategory should be in `{CategoryStatus.active}` status.")
+    if product["classification"]["id"] != category["classification"]["id"]:
+        raise HTTPBadRequest(text="product classification should be the same as in related category.")
 
     validate_product_req_responses_to_category(category, product, product_before)
 

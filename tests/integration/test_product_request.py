@@ -103,6 +103,18 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
     assert {'errors': ['Document url signature is invalid: data.documents.0.__root__']} == result
 
     del data["documents"]
+
+    data["product"]["classification"]["id"] = "0000000000"
+    resp = await api.post(
+        f"/api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': ['product classification should be the same as in related category.']} == result
+
+    data["product"]["classification"]["id"] = category["data"]["classification"]["id"]
     data["product"]['relatedCategory'] = "some_id"
     resp = await api.post(
         f"/api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
