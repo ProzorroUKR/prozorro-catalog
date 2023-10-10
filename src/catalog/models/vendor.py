@@ -14,7 +14,7 @@ class CategoryLink(BaseModel):
 
 
 class VendorContactPoint(ContactPoint):
-    email: str = Field(..., max_length=250)
+    email: str = Field(..., min_length=1, max_length=250)
 
 
 class VendorAddress(Address):

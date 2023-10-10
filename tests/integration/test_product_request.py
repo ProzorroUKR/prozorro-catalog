@@ -112,7 +112,9 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['product classification should be the same as in related category.']} == result
+    assert {'errors': [
+        'product classification should have the same digits at the beginning as in related category.'
+    ]} == result
 
     data["product"]["classification"]["id"] = category["data"]["classification"]["id"]
     data["product"]['relatedCategory'] = "some_id"
@@ -426,6 +428,58 @@ async def test_product_request_rejection(api, product_request):
     additional_fields = {k: v for k, v in data.items() if k not in product_request["data"]}
     assert set(additional_fields.keys()) == {'rejection'}
     assert "date" in data["rejection"]
+
+
+async def test_product_request_moderation_by_non_related_administrator(api, contributor, mock_agreement):
+    # create category
+    category_data = deepcopy(api.get_fixture_json('category'))
+    category_data["id"] = category_data["procuringEntity"]["identifier"]["id"] = "33190000-0000-40996564"
+    resp = await api.put(
+        f"/api/categories/{category_data['id']}",
+        json={"data": category_data},
+        auth=TEST_AUTH
+    )
+    assert resp.status == 201
+    data = await resp.json()
+    category = await create_criteria(api, "categories", data)
+
+    # create product request
+    contributor, access = contributor["data"], contributor["access"]
+    test_request = api.get_fixture_json('product_request')
+    category_id = category['data']['id']
+    set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
+    test_request["product"]['relatedCategory'] = category_id
+
+    resp = await api.post(
+        f"api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+        json={"data": test_request},
+        auth=TEST_AUTH,
+    )
+    product_request = await resp.json()
+    assert resp.status == 201, product_request
+
+    # reject product request by another administrator
+    rejection_data = deepcopy(request_review_data)
+    rejection_data["administrator"]["identifier"]["id"] = "42574629"
+    rejection_data.update({"reason": "invalidTitle", "description": "Невірно зазначена назва товару"})
+    resp = await api.post(
+        f"api/crowd-sourcing/requests/{product_request['data']['id']}/reject",
+        json={"data": rejection_data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {"errors": ["only administrator who is related to product category can moderate product request."]} == result
+
+    # accept product request by another administrator
+    resp = await api.post(
+        f"api/crowd-sourcing/requests/{product_request['data']['id']}/accept",
+        json={"data": request_review_data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {"errors": ["only administrator who is related to product category can moderate product request."]} == result
 
 
 async def test_product_request_second_review(api, product_request):

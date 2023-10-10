@@ -32,7 +32,7 @@ class VendorProductView(View):
         # validations
         validate_product_active_vendor(vendor)
         validate_product_related_category(category)
-        validate_product_to_category(category, data)
+        validate_product_to_category(category, data, check_classification=False)
         for profile_id in profile_ids:
             profile = await db.read_profile(profile_id)
             validate_product_to_profile(profile, data)

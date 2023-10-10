@@ -122,11 +122,16 @@ def validate_product_req_response_to_profile(profile: dict, product: dict):
         raise HTTPBadRequest(text=f"should be responded at least on one profile({profile['id']}) requirement")
 
 
-def validate_product_to_category(category, product, product_before=None):
+def validate_product_to_category(category, product, product_before=None, check_classification=True):
     if category.get("status", CategoryStatus.active) != CategoryStatus.active:
         raise HTTPBadRequest(text=f"relatedCategory should be in `{CategoryStatus.active}` status.")
-    if product["classification"]["id"] != category["classification"]["id"]:
-        raise HTTPBadRequest(text="product classification should be the same as in related category.")
+    if check_classification:
+        category_class = category["classification"]["id"]
+        if (category_class[:3] == "336" and product["classification"]["id"][:3] != category_class[:3]) or \
+                (category_class[:3] != "336" and product["classification"]["id"][:4] != category_class[:4]):
+            raise HTTPBadRequest(
+                text="product classification should have the same digits at the beginning as in related category."
+            )
 
     validate_product_req_responses_to_category(category, product, product_before)
 
@@ -202,3 +207,8 @@ def validate_contributor_ban_already_exists(contributor: dict, administrator_id)
         if ban["administrator"]["identifier"]["id"] == administrator_id \
                 and ("dueDate" not in ban or datetime.fromisoformat(ban["dueDate"]) > get_now()):
             raise HTTPBadRequest(text="ban from this market administrator already exists")
+
+
+def validate_category_administrator(administrator_data: dict, product_request: dict):
+    if administrator_data["administrator"]["identifier"]["id"] != product_request["product"]["relatedCategory"][-8:]:
+        raise HTTPBadRequest(text="only administrator who is related to product category can moderate product request.")

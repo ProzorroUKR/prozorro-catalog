@@ -15,6 +15,7 @@ from catalog.validations import (
     validate_product_to_category,
     validate_contributor_banned_categories,
     validate_previous_product_reviews,
+    validate_category_administrator,
 )
 from catalog.utils import pagination_params, get_now
 
@@ -80,6 +81,7 @@ class ProductRequestAcceptionView(BaseView):
             validate_previous_product_reviews(product_request)
             # export data back to dict
             data = body.data.dict_without_none()
+            validate_category_administrator(data, product_request)
             # update product request with valid data
             data["date"] = get_now().isoformat()
             product_request.update({"acception": data})
@@ -109,6 +111,7 @@ class ProductRequestRejectionView(BaseView):
             validate_previous_product_reviews(product_request)
             # export data back to dict
             data = body.data.dict_without_none()
+            validate_category_administrator(data, product_request)
             # update product request with valid data
             data["date"] = get_now().isoformat()
             product_request.update({"rejection": data})
