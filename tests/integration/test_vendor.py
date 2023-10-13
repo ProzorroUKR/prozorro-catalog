@@ -88,7 +88,7 @@ async def test_vendor_without_region(api, category):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ["region is required if countryName == 'Україна': data.vendor.address.__root__"]} == result
+    assert {'errors': ['field required: data.vendor.address.region']} == result
 
     # 2
     data['vendor']["address"]["countryName"] = "Антарктика"
@@ -98,7 +98,25 @@ async def test_vendor_without_region(api, category):
         auth=TEST_AUTH,
     )
     result = await resp.json()
-    assert resp.status == 201, result
+    assert resp.status == 400, result
+    assert {'errors': ['field required: data.vendor.address.region']} == result
+
+
+async def test_vendor_ukrainian_region_dictionary(api, category):
+    data = api.get_fixture_json('vendor')
+    data['categories'] = [{"id": category["data"]["id"]}]
+    data['vendor']["address"] = {
+      "countryName": "Україна",
+      "region": "невідомий"
+    }
+    resp = await api.post(
+        f"/api/vendors",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': ['must be one of classifiers/ua_regions.json: data.vendor.address.region']} == result
 
 
 async def test_vendor_create(api, mock_agreement):

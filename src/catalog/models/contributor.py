@@ -5,17 +5,18 @@ from pydantic import Field
 from catalog.models.ban import Ban
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse
-from catalog.models.vendor import VendorOrganization
+from catalog.models.vendor import PostVendorOrganization, VendorOrganization
 from catalog.models.document import Document, DocumentPostData
 
 
 class ContributorPostData(BaseModel):
-    contributor: VendorOrganization
+    contributor: PostVendorOrganization
     documents: Optional[List[DocumentPostData]]
 
 
 class Contributor(ContributorPostData):
     id: str = Field(..., min_length=32, max_length=32)
+    contributor: VendorOrganization
     dateModified: datetime
     dateCreated: datetime
     owner: str

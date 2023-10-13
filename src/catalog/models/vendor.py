@@ -17,15 +17,14 @@ class VendorContactPoint(ContactPoint):
     email: str = Field(..., min_length=1, max_length=250)
 
 
-class VendorAddress(Address):
-    region: Optional[str] = Field(None, min_length=1, max_length=80)
+class PostVendorAddress(Address):
+    locality: Optional[str] = Field(None, min_length=1, max_length=80)
+    postalCode: Optional[str] = Field(None, min_length=1, max_length=20)
+    streetAddress: Optional[str] = Field(None, min_length=1, max_length=250)
 
-    @root_validator
-    def validate_address(cls, values):
-        country_name = values.get("countryName")
-        if country_name == UKRAINE_COUNTRY_NAME_UK and not values.get("region"):
-            raise ValueError("region is required if countryName == 'Україна'")
-        return values
+
+class VendorAddress(PostVendorAddress):
+    region: Optional[str] = Field(None, min_length=1, max_length=80)
 
 
 class VendorIdentifier(Identifier):
@@ -36,14 +35,18 @@ class VendorIdentifier(Identifier):
         return v
 
 
-class VendorOrganization(Organization):
-    address: VendorAddress
+class PostVendorOrganization(Organization):
+    address: PostVendorAddress
     contactPoint: VendorContactPoint
     identifier: VendorIdentifier
 
 
+class VendorOrganization(PostVendorAddress):
+    address: VendorAddress
+
+
 class VendorPostData(BaseModel):
-    vendor: VendorOrganization
+    vendor: PostVendorOrganization
     categories: List[CategoryLink] = Field(..., min_items=1, max_items=1)
 
 
@@ -63,6 +66,7 @@ class VendorStatus(str, Enum):
 
 class Vendor(VendorPostData):
     id: str = Field(..., min_length=32, max_length=32)
+    vendor: VendorOrganization
     isActivated: bool = False
     dateModified: datetime
     dateCreated: datetime
