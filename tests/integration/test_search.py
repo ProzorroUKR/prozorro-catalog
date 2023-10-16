@@ -17,7 +17,7 @@ async def test_search(api, mock_agreement):
     product = api.get_fixture_json('product')
     offer = api.get_fixture_json('offer')
     for i in range(10):
-        category_id = f"33190000-000{i}-10033300"
+        category_id = f"33190000-000{i}-42574629"
         category['id'] = category_id
         resp = await api.put(
             f"/api/categories/{category_id}",

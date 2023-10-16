@@ -12,12 +12,18 @@ import re
 UNIT_CODES = standards.load("unit_codes/recommended.json")
 UA_REGIONS = standards.load("classifiers/ua_regions.json")
 COUNTRY_NAMES = standards.load("classifiers/countries.json")
+ORA_CODES = [i["code"] for i in standards.load("organizations/identifier_scheme.json")["data"]]
 
 COUNTRY_NAMES_UK = [names.get("name_uk") for names in COUNTRY_NAMES.values()]
 UNIT_CODES = UNIT_CODES.keys()
 
 UKRAINE_COUNTRY_NAME_UK = COUNTRY_NAMES.get("UA").get("name_uk")
 AGREEMENT_ID_REGEX = r"^[a-f0-9]{32}$"
+ADMINISTRATOR_IDENTIFIERS = [
+    cpb["identifier"]["id"]
+    for cpb in standards.load("organizations/authorized_cpb.json")
+    if cpb.get("marketAdministrator")
+]
 
 
 class DataTypeEnum(str, Enum):
@@ -153,3 +159,27 @@ class Organization(BaseModel):
 
 class ProcuringEntity(Organization):
     kind: ProcuringEntityKind
+
+
+class MarketAdministratorIdentifier(BaseModel):
+    id: str = Field(..., min_length=4, max_length=50)
+    scheme: str = Field(..., min_length=1, max_length=20)
+    legalName_en: str = Field(..., min_length=1, max_length=250)
+    legalName_uk: str = Field(..., min_length=1, max_length=250)
+
+    @validator("scheme")
+    def scheme_standard(cls, v):
+        if v not in ORA_CODES:
+            raise ValueError("must be one of organizations/identifier_scheme.json codes")
+        return v
+
+
+class MarketAdministrator(BaseModel):
+    identifier: MarketAdministratorIdentifier
+
+    @validator('identifier')
+    def entity_is_market_administrator(cls, value):
+        identifier = value.id
+        if identifier not in ADMINISTRATOR_IDENTIFIERS:
+            raise ValueError("must be one of market administrators")
+        return value

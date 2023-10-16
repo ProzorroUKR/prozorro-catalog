@@ -1,0 +1,56 @@
+tags:
+- CrowdSourcing/ContriibutorProductRequest
+description: Product request creation by contributor
+operationId: collection_post_product_request
+parameters:
+- in: path
+  name: contributor_id
+  schema:
+    type: string
+  required: true
+  description: ID of the contributor
+- in: query
+  name: access_token
+  schema:
+    type: string
+  description: Токен від створенного об'єкта
+security:
+  - Basic: []
+requestBody:
+  description: Product request data
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/AuthorizedInput_ProductRequestPostData_'
+responses:
+  "200":
+    description: successful operation
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/Response_ProductRequest_'
+  "400":
+    description: validation errors
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'
+  "401":
+    description: Authorization header or access_token not provided
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            errors:
+              type: array
+              items:
+                type: string
+                example: Authorization header not found
+  "500":
+    description: Server error
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'

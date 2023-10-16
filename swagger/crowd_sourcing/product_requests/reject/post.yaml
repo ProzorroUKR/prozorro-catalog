@@ -1,0 +1,51 @@
+tags:
+- CrowdSourcing/ProductRequests
+description: Product request rejection by procuring entity
+operationId: collection_post_product_request_reject
+parameters:
+- in: path
+  name: request_id
+  schema:
+    type: string
+  required: true
+  description: ID of the product request
+security:
+  - Basic: []
+requestBody:
+  description: Product request rejection data
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Input_RequestRejectionPostData_'
+responses:
+  "200":
+    description: successful operation
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/Response_ProductRequest_'
+  "400":
+    description: validation errors
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'
+  "401":
+    description: Authorization header or access_token not provided
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            errors:
+              type: array
+              items:
+                type: string
+                example: Authorization header not found
+  "500":
+    description: Server error
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'

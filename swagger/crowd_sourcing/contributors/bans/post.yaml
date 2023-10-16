@@ -1,0 +1,51 @@
+tags:
+- CrowdSourcing/ContributorBans
+description: Contributor ban creation
+operationId: collection_post_contributor_ban
+parameters:
+- in: path
+  name: contributor_id
+  schema:
+    type: string
+  required: true
+  description: ID of the contributor
+security:
+  - Basic: []
+requestBody:
+  description: Contributor ban data
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Input_BanPostData_'
+responses:
+  "200":
+    description: successful operation
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/CreateResponse_Ban_'
+  "400":
+    description: validation errors
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'
+  "401":
+    description: Authorization header or access_token not provided
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            errors:
+              type: array
+              items:
+                type: string
+                example: Authorization header not found
+  "500":
+    description: Server error
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'

@@ -1,0 +1,40 @@
+tags:
+- CrowdSourcing/ProductRequests
+description: Get a list of product requests
+operationId: collection_get_product_requests
+parameters:
+- in: query
+  name: offset
+  schema:
+    type: string
+  description: Offset
+- in: query
+  name: limit
+  schema:
+    type: int
+  description: Limit
+- in: query
+  name: descending
+  schema:
+    type: int
+  description: Descending order
+- in: query
+  name: opt_fields
+  schema:
+    type: string
+  description: Add additional fields of product requests to response. Fields should be separated by ',' (e.g. "product.identifier,contributor_id")
+produces:
+- application/json
+responses:
+  "200":
+    description: successful operation
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/PaginatedList'
+  "500":
+    description: Server error
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'

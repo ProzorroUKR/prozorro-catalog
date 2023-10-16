@@ -20,7 +20,7 @@ class BaseDocumentView(View):
 
     @classmethod
     async def validate_data(cls, request, body, parent_obj, **kwargs):
-       pass
+        pass
 
     @classmethod
     async def collection_get(cls, request, **kwargs):

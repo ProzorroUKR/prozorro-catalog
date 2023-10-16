@@ -1,7 +1,7 @@
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPBadRequest
 from catalog.swagger import class_view_swagger_path
-from catalog.settings import IMG_PATH, IMG_DIR, ALLOWED_IMG_TYPES
+from catalog.settings import IMG_PATH, IMG_DIR, ALLOWED_IMG_TYPES, IMG_SIZE_LIMIT
 from catalog.image import monkey_patch_jpeg_tests, generate_filename
 import aiofiles
 import aiofiles.os
@@ -47,6 +47,10 @@ class ImageView(View):
             if img_type not in ALLOWED_IMG_TYPES:
                 await aiofiles.os.remove(tmp_file)
                 raise HTTPBadRequest(text=f"Not allowed img type: '{img_type}'")
+
+            # check img size
+            if size > IMG_SIZE_LIMIT:
+                raise HTTPBadRequest(text=f"Image must be less than {IMG_SIZE_LIMIT} bites")
 
             # adding .png or .jpeg to the file
             filename = f"{tmp_file}.{img_type}"

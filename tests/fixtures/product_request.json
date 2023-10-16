@@ -1,0 +1,58 @@
+{
+  "product": {
+    "additionalClassifications": [
+      {
+        "description": "Засоби індивідуального захисту (респіратори та маски) без клапану",
+        "id": "5011020",
+        "scheme": "KMU777"
+      }
+    ],
+    "alternativeIdentifiers": [
+      {
+        "id": "0463234567819",
+        "scheme": "EAN-13"
+      }
+    ],
+    "classification": {
+      "description": "Медичне обладнання та вироби медичного призначення різні",
+      "id": "33190000-8",
+      "scheme": "ДК021"
+    },
+    "description": "Маски медичні IGAR тришарові на гумках 50 шт./уп. Гарантія від виробника.",
+    "identifier": {
+      "id": "463234567819",
+      "scheme": "UPC"
+    },
+    "images": [
+      {
+        "sizes": "500x175",
+        "url": "/static/images/619890.500x175.jpeg"
+      }
+    ],
+    "requirementResponses": [
+      {
+        "value": "одноразова"
+      },
+      {
+        "value": 3
+      },
+      {
+        "value": 50
+      },
+      {
+        "value": true
+      },
+      {
+        "values": ["ALL_A", "ALL_B", "ALL_C"]
+      },
+      {
+        "values": ["ANY_A", "ANY_C"]
+      },
+      {
+        "values": ["ONE_B"]
+      }
+    ],
+    "status": "active",
+    "title": "Маски медичні IGAR тришарові на гумках 50 шт./уп."
+  }
+}

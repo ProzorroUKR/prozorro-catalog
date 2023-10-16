@@ -85,6 +85,8 @@ async def flush_database(*_):
         get_products_collection().delete_many({}),
         get_offers_collection().delete_many({}),
         get_vendor_collection().delete_many({}),
+        get_contributor_collection().delete_many({}),
+        get_product_request_collection().delete_many({}),
     )
 
 
@@ -143,7 +145,7 @@ async def find_objects(collection, ids):
     return items
 
 
-async def paginated_result(collection, *_, offset, limit, reverse, filters=None):
+async def paginated_result(collection, *_, offset, limit, reverse, filters=None, opt_fields=None):
     limit = min(limit, MAX_LIST_LIMIT)
     limit = max(limit, 1)
     filters = filters or {}
@@ -157,9 +159,14 @@ async def paginated_result(collection, *_, offset, limit, reverse, filters=None)
         else:
             filters["dateModified"] = {"$gt": offset}
 
+    projection = {"dateModified": True}
+    if opt_fields is not None:
+        for field in opt_fields:
+            projection[field] = True
+
     items = await collection.find(
         filters,
-        projection={"dateModified": True}
+        projection=projection,
     ).sort(
         [("dateModified",
           DESCENDING if reverse else ASCENDING)]
@@ -597,3 +604,97 @@ async def read_and_update_vendor(uid):
     data = await read_vendor(uid)
     yield data
     await update_vendor(data)
+
+
+# contributor
+def get_contributor_collection():
+    return get_collection("contributors")
+
+
+async def init_contributor_indexes():
+    modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    try:
+        await get_contributor_collection().create_indexes([modified_index])
+    except PyMongoError as e:
+        logger.exception(e)
+
+
+async def find_contributors(**kwargs):
+    collection = get_contributor_collection()
+    result = await paginated_result(
+        collection, **kwargs,
+    )
+    return result
+
+
+async def read_contributor(uid):
+    contributor = await get_contributor_collection().find_one(
+        {'_id': uid},
+        session=session_var.get(),
+    )
+    if not contributor:
+        raise web.HTTPNotFound(text="Contributor not found")
+    return rename_id(contributor)
+
+
+async def insert_contributor(data):
+    inserted_id = await insert_object(get_contributor_collection(), data)
+    return inserted_id
+
+
+async def update_contributor(data):
+    await update_object(get_contributor_collection(), data)
+
+
+@asynccontextmanager
+async def read_and_update_contributor(uid):
+    data = await read_contributor(uid)
+    yield data
+    await update_contributor(data)
+
+
+# product requests
+def get_product_request_collection():
+    return get_collection("requests")
+
+
+async def init_request_indexes():
+    modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    try:
+        await get_product_request_collection().create_indexes([modified_index])
+    except PyMongoError as e:
+        logger.exception(e)
+
+
+async def find_product_requests(**kwargs):
+    collection = get_product_request_collection()
+    result = await paginated_result(
+        collection, **kwargs,
+    )
+    return result
+
+
+async def read_product_request(uid):
+    contributor = await get_product_request_collection().find_one(
+        {'_id': uid},
+        session=session_var.get(),
+    )
+    if not contributor:
+        raise web.HTTPNotFound(text="Request not found")
+    return rename_id(contributor)
+
+
+async def insert_product_request(data):
+    inserted_id = await insert_object(get_product_request_collection(), data)
+    return inserted_id
+
+
+async def update_product_request(data):
+    await update_object(get_product_request_collection(), data)
+
+
+@asynccontextmanager
+async def read_and_update_product_request(uid):
+    data = await read_product_request(uid)
+    yield data
+    await update_product_request(data)
