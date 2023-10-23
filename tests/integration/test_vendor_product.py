@@ -1,7 +1,9 @@
+from copy import deepcopy
 from catalog.models.product import VendorProductIdentifierScheme
 
 from .base import TEST_AUTH
 from .conftest import set_requirements_to_responses
+from .utils import create_criteria, create_profile
 
 
 async def test_vendor_product_create(api, vendor, category, profile):
@@ -117,3 +119,142 @@ async def test_vendor_product_update(api, vendor, category, vendor_product):
     result = await resp.json()
     assert 'errors' in result
     assert result['errors'][0] == 'Patch vendor product is disallowed'
+
+
+async def test_vendor_product_with_different_formats_of_expected_values(api, vendor, mock_agreement):
+    # create category with expectedValues
+    data = deepcopy(api.get_fixture_json('category'))
+    data["id"] = "33190000-1000-42574629"
+    resp = await api.put(
+        f"/api/categories/{data['id']}",
+        json={"data": data},
+        auth=TEST_AUTH
+    )
+    assert resp.status == 201
+    data = await resp.json()
+    criteria_data = {"criteria": [{
+        "title": "Технічні характеристики предмета закупівлі",
+        "description": "Тести швидкі для визначення інфекційних захворювань",
+        "requirementGroups": [{
+            "description": "Технічні характеристики",
+            "requirements": [
+                {
+                    "title": "Метод аналізу",
+                    "dataType": "string",
+                    "expectedValues": ["ІХА", "FOO", "BAR"]
+                },
+                {
+                    "title": "Специфічність",
+                    "dataType": "integer",
+                    "unit": {
+                        "code": "P1",
+                        "name": "%"
+                    },
+                    "maxValue": 110,
+                }
+            ]
+        }]
+    }]}
+    category = await create_criteria(api, "categories", data, criteria=criteria_data)
+
+    # create profile with expectedValue
+    profile = await create_profile(api, category)
+    criteria_data = {"criteria": [{
+        "title": "Технічні характеристики предмета закупівлі",
+        "description": "Тести швидкі для визначення інфекційних захворювань",
+        "requirementGroups": [{
+            "description": "Технічні характеристики",
+            "requirements": [
+                {
+                    "title": "Метод аналізу",
+                    "dataType": "string",
+                    "expectedValue": "ІХА",
+                },
+                {
+                    "title": "Специфічність",
+                    "dataType": "integer",
+                    "unit": {
+                        "code": "P1",
+                        "name": "%"
+                    },
+                    "minValue": 95,
+                }
+            ]
+        }]
+    }]}
+    profile = await create_criteria(api, "profiles", profile, criteria=criteria_data)
+
+    # create product for this category and profile
+    category_id = category['data']['id']
+
+    vendor_token = vendor['access']['token']
+    vendor = vendor['data']
+
+    test_product = api.get_fixture_json('vendor_product')
+    test_product['relatedCategory'] = category_id
+    test_product['relatedProfiles'] = [profile['data']['id']]
+    del test_product['requirementResponses']
+
+    resp = await api.post(
+        f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',
+        json={'data': test_product},
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 400
+    result = await resp.json()
+    assert result == {'errors': ['should be responded at least on one category requirement']}
+
+    # response with both variants 'value' and 'values'
+    test_product['requirementResponses'] = [{
+        "value": "IXA",
+        "values": ["ІХА"],
+        "requirement": "Метод аналізу"
+    }]
+    resp = await api.post(
+        f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',
+        json={'data': test_product},
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 400
+    result = await resp.json()
+    assert result == {'errors': ["please leave only one field 'values'"]}
+
+    # response with values
+    test_product['requirementResponses'] = [
+        {
+            "values": ["ІХА"],
+            "requirement": "Метод аналізу"
+        },
+        {
+            "values": [95, 102, 98],
+            "requirement": "Специфічність"
+        },
+    ]
+    resp = await api.post(
+        f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',
+        json={'data': test_product},
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 201
+
+    # response with value
+    test_product['requirementResponses'] = [
+        {
+            "value": "ІХА",
+            "requirement": "Метод аналізу"
+        },
+        {
+            "value": 96,
+            "requirement": "Специфічність"
+        },
+    ]
+    resp = await api.post(
+        f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',
+        json={'data': test_product},
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 201
