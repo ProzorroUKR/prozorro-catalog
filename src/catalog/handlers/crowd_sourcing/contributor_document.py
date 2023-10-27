@@ -1,11 +1,12 @@
 import random
 from aiohttp.web import HTTPConflict
 from pymongo.errors import OperationFailure
+
+from catalog.auth import validate_accreditation
 from catalog.utils import async_retry
 from catalog import db
 from catalog.swagger import class_view_swagger_path
 from catalog.handlers.base_document import BaseDocumentView
-from catalog.auth import validate_access_token
 
 
 @class_view_swagger_path('/app/swagger/crowd_sourcing/contributors/documents')
@@ -20,11 +21,8 @@ class ContributorDocumentView(BaseDocumentView):
         return db.read_and_update_contributor(kwargs.get("contributor_id"))
 
     @classmethod
-    async def validate_data(cls, request, body, parent_obj, **kwargs):
-        validate_access_token(request, parent_obj, body.access)
-
-    @classmethod
     async def post(cls, request, **kwargs):
+        validate_accreditation(request, "contributors")
         return await super().post(request, **kwargs)
 
     @classmethod
@@ -39,10 +37,12 @@ class ContributorDocumentView(BaseDocumentView):
     @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
                  fail_exception=HTTPConflict(text="Try again later"))
     async def put(cls, request, **kwargs):
+        validate_accreditation(request, "contributors")
         return await super().put(request, **kwargs)
 
     @classmethod
     @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
                  fail_exception=HTTPConflict(text="Try again later"))
     async def patch(cls, request, **kwargs):
+        validate_accreditation(request, "contributors")
         return await super().patch(request, **kwargs)

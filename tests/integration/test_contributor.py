@@ -1,3 +1,5 @@
+from aiohttp import BasicAuth
+
 from .base import TEST_AUTH
 
 
@@ -10,6 +12,18 @@ async def test_contributor_create_no_authorization(api):
     result = await resp.json()
     assert resp.status == 401, result
     assert {'errors': ['Authorization header not found']} == result
+
+
+async def test_contributor_create_permission(api):
+    test_contributor = api.get_fixture_json('contributor')
+    resp = await api.post(
+        f"/api/crowd-sourcing/contributors",
+        json={"data": test_contributor},
+        auth=BasicAuth(login="boo"),
+    )
+    result = await resp.json()
+    assert resp.status == 403, result
+    assert {'errors': ["Forbidden 'contributors' write operation"]} == result
 
 
 async def test_contributor_without_region(api):
@@ -63,9 +77,6 @@ async def test_contributor_create(api):
     result = await resp.json()
 
     assert resp.status == 201, result
-    assert "access" in result
-    assert "owner" in result["access"]
-    assert "token" in result["access"]
 
     assert "data" in result
     data = result["data"]
@@ -88,7 +99,7 @@ async def test_contributor_duplicate(api):
     )
     result = await resp.json()
     assert resp.status == 201, result
-    contributor, access = result["data"], result["access"]
+    contributor = result["data"]
 
     # try create second contributor with the same identifier
     resp = await api.post(
@@ -106,7 +117,7 @@ async def test_contributor_duplicate(api):
 
 
 async def test_contributor_get(api, contributor):
-    contributor, access = contributor["data"], contributor["access"]
+    contributor = contributor["data"]
     resp = await api.get(f'/api/crowd-sourcing/contributors/{contributor["id"]}')
     assert resp.status == 200
     result = await resp.json()

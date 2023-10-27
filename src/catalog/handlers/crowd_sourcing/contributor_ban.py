@@ -1,4 +1,6 @@
 from aiohttp.web import HTTPNotFound
+
+from catalog.auth import validate_accreditation
 from catalog.context import get_now
 
 from catalog import db
@@ -31,6 +33,7 @@ class ContributorBanView(BaseView):
 
     @classmethod
     async def post(cls, request, **kwargs):
+        validate_accreditation(request, "category")
         # import and validate data
         json = await request.json()
         body = BanPostInput(**json)

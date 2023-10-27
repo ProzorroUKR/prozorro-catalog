@@ -1,5 +1,7 @@
 from copy import deepcopy
 from datetime import timedelta
+
+from aiohttp import BasicAuth
 from freezegun import freeze_time
 
 from catalog.utils import get_now
@@ -20,6 +22,20 @@ request_review_data = {
 }
 
 
+async def test_create_product_request_no_authorization(api, category, contributor):
+    test_request = api.get_fixture_json('product_request')
+    category_id = category['data']['id']
+    set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
+    test_request["product"]['relatedCategory'] = category_id
+    resp = await api.post(
+        f"/api/crowd-sourcing/contributors/{contributor['data']['id']}/requests",
+        json={"data": test_request},
+    )
+    result = await resp.json()
+    assert resp.status == 401, result
+    assert {'errors': ['Authorization header not found']} == result
+
+
 async def test_create_product_request_permission(api, category, contributor):
     test_request = api.get_fixture_json('product_request')
     category_id = category['data']['id']
@@ -28,22 +44,22 @@ async def test_create_product_request_permission(api, category, contributor):
     resp = await api.post(
         f"/api/crowd-sourcing/contributors/{contributor['data']['id']}/requests",
         json={"data": test_request},
-        auth=TEST_AUTH,
+        auth=BasicAuth(login="boo"),
     )
     result = await resp.json()
-    assert resp.status == 401, result
-    assert {'errors': ['Require access token']} == result
+    assert resp.status == 403, result
+    assert {'errors': ["Forbidden 'contributors' write operation"]} == result
 
 
 async def test_product_request_create(api, category, contributor):
-    contributor, access = contributor["data"], contributor["access"]
+    contributor = contributor["data"]
     test_request = api.get_fixture_json('product_request')
     category_id = category['data']['id']
     set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
     test_request["product"]['relatedCategory'] = category_id
 
     resp = await api.post(
-        f"api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+        f"api/crowd-sourcing/contributors/{contributor['id']}/requests",
         json={"data": test_request},
         auth=TEST_AUTH,
     )
@@ -61,9 +77,9 @@ async def test_product_request_create(api, category, contributor):
 
 
 async def test_product_request_create_invalid_fields(api, category, contributor):
-    contributor, access = contributor["data"], contributor["access"]
+    contributor = contributor["data"]
     resp = await api.post(
-        f"/api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+        f"/api/crowd-sourcing/contributors/{contributor['id']}/requests",
         json={"data": {}},
         auth=TEST_AUTH,
     )
@@ -84,7 +100,7 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
         }
     ]
     resp = await api.post(
-        f"/api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+        f"/api/crowd-sourcing/contributors/{contributor['id']}/requests",
         json={"data": data},
         auth=TEST_AUTH,
     )
@@ -94,7 +110,7 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
 
     data['documents'][0]['url'] = generate_test_url(data["documents"][0]["hash"])
     resp = await api.post(
-        f"/api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+        f"/api/crowd-sourcing/contributors/{contributor['id']}/requests",
         json={"data": data},
         auth=TEST_AUTH,
     )
@@ -106,7 +122,7 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
 
     data["product"]["classification"]["id"] = "0000000000"
     resp = await api.post(
-        f"/api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+        f"/api/crowd-sourcing/contributors/{contributor['id']}/requests",
         json={"data": data},
         auth=TEST_AUTH,
     )
@@ -119,7 +135,7 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
     data["product"]["classification"]["id"] = category["data"]["classification"]["id"]
     data["product"]['relatedCategory'] = "some_id"
     resp = await api.post(
-        f"/api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+        f"/api/crowd-sourcing/contributors/{contributor['id']}/requests",
         json={"data": data},
         auth=TEST_AUTH,
     )
@@ -130,7 +146,7 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
     data["product"]['relatedCategory'] = category_id
     del data["product"]["requirementResponses"]
     resp = await api.post(
-        f"/api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+        f"/api/crowd-sourcing/contributors/{contributor['id']}/requests",
         json={"data": data},
         auth=TEST_AUTH,
     )
@@ -140,7 +156,7 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
 
 
 async def test_product_request_in_banned_category(api, mock_agreement, contributor):
-    contributor, access = contributor["data"], contributor["access"]
+    contributor = contributor["data"]
 
     # create ban without dueDate
     ban = api.get_fixture_json('ban')
@@ -175,7 +191,7 @@ async def test_product_request_in_banned_category(api, mock_agreement, contribut
     test_request["product"]['relatedCategory'] = category_id
 
     resp = await api.post(
-        f"api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+        f"api/crowd-sourcing/contributors/{contributor['id']}/requests",
         json={"data": test_request},
         auth=TEST_AUTH,
     )
@@ -185,7 +201,7 @@ async def test_product_request_in_banned_category(api, mock_agreement, contribut
 
 
 async def test_product_request_in_banned_category_with_due_date(api, mock_agreement, contributor):
-    contributor, access = contributor["data"], contributor["access"]
+    contributor = contributor["data"]
 
     # create ban without dueDate
     ban = api.get_fixture_json('ban')
@@ -220,7 +236,7 @@ async def test_product_request_in_banned_category_with_due_date(api, mock_agreem
     test_request["product"]['relatedCategory'] = category_id
 
     resp = await api.post(
-        f"api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+        f"api/crowd-sourcing/contributors/{contributor['id']}/requests",
         json={"data": test_request},
         auth=TEST_AUTH,
     )
@@ -230,7 +246,7 @@ async def test_product_request_in_banned_category_with_due_date(api, mock_agreem
 
 
 async def test_product_request_in_banned_category_with_expired_due_date(api, mock_agreement, contributor):
-    contributor, access = contributor["data"], contributor["access"]
+    contributor = contributor["data"]
 
     # create ban without dueDate
     ban = api.get_fixture_json('ban')
@@ -266,11 +282,22 @@ async def test_product_request_in_banned_category_with_expired_due_date(api, moc
 
     with freeze_time((get_now() + timedelta(days=2)).isoformat()):
         resp = await api.post(
-            f"api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+            f"api/crowd-sourcing/contributors/{contributor['id']}/requests",
             json={"data": test_request},
             auth=TEST_AUTH,
         )
         assert resp.status == 201
+
+
+async def test_product_request_acception_permission(api, product_request):
+    resp = await api.post(
+        f"api/crowd-sourcing/requests/{product_request['data']['id']}/accept",
+        json={"data": request_review_data},
+        auth=BasicAuth(login="boo"),
+    )
+    result = await resp.json()
+    assert resp.status == 403, result
+    assert {'errors': ["Forbidden 'category' write operation"]} == result
 
 
 async def test_product_request_acception_validations(api, product_request):
@@ -349,6 +376,19 @@ async def test_product_request_acception(api, product_request):
     resp_json = await resp.json()
     for key, patch_value in patch_product['data'].items():
         assert resp_json['data'][key] == patch_value
+
+
+async def test_product_request_rejection_permission(api, product_request):
+    rejection_data = deepcopy(request_review_data)
+    rejection_data.update({"reason": "invalidTitle", "description": "Невірно зазначена назва товару"})
+    resp = await api.post(
+        f"api/crowd-sourcing/requests/{product_request['data']['id']}/reject",
+        json={"data": rejection_data},
+        auth=BasicAuth(login="boo"),
+    )
+    result = await resp.json()
+    assert resp.status == 403, result
+    assert {'errors': ["Forbidden 'category' write operation"]} == result
 
 
 async def test_product_request_rejection_validations(api, product_request):
@@ -444,14 +484,14 @@ async def test_product_request_moderation_by_non_related_administrator(api, cont
     category = await create_criteria(api, "categories", data)
 
     # create product request
-    contributor, access = contributor["data"], contributor["access"]
+    contributor = contributor["data"]
     test_request = api.get_fixture_json('product_request')
     category_id = category['data']['id']
     set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
     test_request["product"]['relatedCategory'] = category_id
 
     resp = await api.post(
-        f"api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+        f"api/crowd-sourcing/contributors/{contributor['id']}/requests",
         json={"data": test_request},
         auth=TEST_AUTH,
     )
