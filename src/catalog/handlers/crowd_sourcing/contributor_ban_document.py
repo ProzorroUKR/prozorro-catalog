@@ -4,6 +4,7 @@ from aiohttp.web import HTTPConflict
 from pymongo.errors import OperationFailure
 
 from catalog import db
+from catalog.auth import validate_accreditation
 from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput
 from catalog.serializers.document import DocumentSerializer
 from catalog.swagger import class_view_swagger_path
@@ -30,6 +31,7 @@ class ContributorBanDocumentView(BaseDocumentView):
 
     @classmethod
     async def post(cls, request, **kwargs):
+        validate_accreditation(request, "category")
         json = await request.json()
         body = DocumentPostInput(**json)
         data = body.data.dict_without_none()
@@ -47,6 +49,7 @@ class ContributorBanDocumentView(BaseDocumentView):
     @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
                  fail_exception=HTTPConflict(text="Try again later"))
     async def put(cls, request, **kwargs):
+        validate_accreditation(request, "category")
         async with db.read_and_update_contributor(kwargs.get("contributor_id")) as obj:
             # import and validate data
             json = await request.json()
@@ -71,7 +74,7 @@ class ContributorBanDocumentView(BaseDocumentView):
     @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
                  fail_exception=HTTPConflict(text="Try again later"))
     async def patch(cls, request, **kwargs):
-        # validate_accreditation(request, "category")
+        validate_accreditation(request, "category")
         async with db.read_and_update_contributor(kwargs.get("contributor_id")) as obj:
             doc_id = kwargs.get("doc_id")
             # import and validate data

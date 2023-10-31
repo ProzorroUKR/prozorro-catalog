@@ -4,7 +4,7 @@ from catalog.doc_service import generate_test_url, get_doc_service_uid_from_url
 
 
 async def test_contributor_doc_create(api, contributor):
-    contributor, access = contributor["data"], contributor["access"]
+    contributor = contributor["data"]
     doc_hash = "0" * 32
     doc_data = {
         "title": "name.doc",
@@ -14,10 +14,7 @@ async def test_contributor_doc_create(api, contributor):
     }
     resp = await api.post(
         f'/api/crowd-sourcing/contributors/{contributor["id"]}/documents',
-        json={
-            "data": doc_data,
-            "access": access,
-        },
+        json={"data": doc_data},
         auth=TEST_AUTH,
     )
     result = await resp.json()
@@ -30,7 +27,7 @@ async def test_contributor_doc_create(api, contributor):
 
 
 async def test_contributor_doc_put(api, contributor, contributor_document):
-    contributor, access = contributor["data"],  contributor["access"]
+    contributor = contributor["data"]
     doc_before_put = contributor_document["data"]
 
     doc_hash = "1" * 32
@@ -42,10 +39,7 @@ async def test_contributor_doc_put(api, contributor, contributor_document):
     }
     resp = await api.put(
         f'/api/crowd-sourcing/contributors/{contributor["id"]}/documents/{doc_before_put["id"]}',
-        json={
-            "data": doc_data,
-            "access": access,
-        },
+        json={"data": doc_data},
         auth=TEST_AUTH,
     )
     result = await resp.json()
@@ -65,15 +59,12 @@ async def test_contributor_doc_put(api, contributor, contributor_document):
 
 
 async def test_contributor_doc_patch(api, contributor, contributor_document):
-    contributor, access = contributor["data"], contributor["access"]
+    contributor = contributor["data"]
     doc_before_patch = contributor_document["data"]
 
     resp = await api.patch(
         f'/api/crowd-sourcing/contributors/{contributor["id"]}/documents/{doc_before_patch["id"]}',
-        json={
-            "data": {"title": "changed"},
-            "access": access,
-        },
+        json={"data": {"title": "changed"}},
         auth=TEST_AUTH,
     )
     result = await resp.json()
@@ -91,7 +82,7 @@ async def test_contributor_doc_patch(api, contributor, contributor_document):
 
 
 async def test_contributor_doc_invalid_signature(api, contributor):
-    contributor, access = contributor["data"], contributor["access"]
+    contributor = contributor["data"]
 
     doc_hash = "0" * 32
     valid_url = generate_test_url(doc_hash)
@@ -108,10 +99,7 @@ async def test_contributor_doc_invalid_signature(api, contributor):
     }
     resp = await api.post(
         f'/api/crowd-sourcing/contributors/{contributor["id"]}/documents',
-        json={
-            "data": doc_data,
-            "access": access,
-        },
+        json={"data": doc_data},
         auth=TEST_AUTH,
     )
     result = await resp.json()

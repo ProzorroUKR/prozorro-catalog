@@ -1,5 +1,5 @@
 from aiohttp.web_urldispatcher import View
-from catalog.auth import validate_access_token, set_access_token
+from catalog.auth import set_access_token, validate_accreditation
 
 from catalog import db
 from catalog.models.product_request import (
@@ -26,11 +26,11 @@ class ContributorProductRequestView(BaseView):
 
     @classmethod
     async def post(cls, request, **kwargs):
+        validate_accreditation(request, "contributors")
         contributor = await db.read_contributor(kwargs.get("contributor_id"))
         # import and validate data
         json = await request.json()
         body = ProductRequestPostInput(**json)
-        validate_access_token(request, contributor, body.access)
         data = body.data.dict_without_none()
 
         # category validations
@@ -73,6 +73,7 @@ class ProductRequestAcceptionView(BaseView):
 
     @classmethod
     async def post(cls, request, **kwargs):
+        validate_accreditation(request, "category")
         request_id = kwargs.get("request_id")
         async with db.read_and_update_product_request(request_id) as product_request:
             # import and validate data
@@ -103,6 +104,7 @@ class ProductRequestRejectionView(BaseView):
 
     @classmethod
     async def post(cls, request, **kwargs):
+        validate_accreditation(request, "category")
         request_id = kwargs.get("request_id")
         async with db.read_and_update_product_request(request_id) as product_request:
             # import and validate data
