@@ -98,6 +98,7 @@ review:
         --set image.tag=${TAG}
         --set environment.VERSION=${VERSION}
         --set ingress.hosts[0].host=catalog.${RELEASE}.k8s.prozorro.gov.ua,ingress.hosts[0].paths[0].path=/
+        --set ingress.hosts[0].paths[0].pathType=ImplementationSpecific
   only:
     - branches
   except:
