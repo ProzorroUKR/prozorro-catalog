@@ -97,7 +97,7 @@ review:
     - helm3 upgrade -i ${RELEASE} helm/prozorro-catalog --namespace dev-prozorro
         --set image.tag=${TAG}
         --set environment.VERSION=${VERSION}
-        --set ingress.hosts[0].host=catalog.${RELEASE}.k8s.prozorro.gov.ua,ingress.hosts[0].paths[0]=/
+        --set ingress.hosts[0].host=catalog.${RELEASE}.k8s.prozorro.gov.ua,ingress.hosts[0].paths[0].path=/
   only:
     - branches
   except:
