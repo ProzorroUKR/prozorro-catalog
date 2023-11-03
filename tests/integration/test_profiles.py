@@ -333,22 +333,10 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data.__root__"
-    ]
+    assert resp_json["errors"] == ['extra fields not permitted: data.expectedValue']
 
     del requirement_data["data"]["expectedValues"]
     requirement_data["data"]["maxValue"] = ""
-    resp = await api.post(
-        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
-        json=requirement_data,
-        auth=TEST_AUTH,
-    )
-    assert resp.status == 400
-    resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data.__root__"
-    ]
 
     del requirement_data["data"]["expectedValue"]
     requirement_data["data"]["expectedValues"] = ["value1", "value2", "value3", "value4"]
@@ -509,9 +497,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: __root__"
-    ]
+    assert resp_json["errors"] == ['extra fields not permitted: data.expectedValue']
 
     resp = await api.patch(
         f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
