@@ -1,10 +1,10 @@
 from catalog import db
+from catalog.auth import validate_accreditation
 from catalog.models.contributor import ContributorPostInput
 from catalog.serializers.contributor import ContributorSerializer
 from catalog.state.contributor import ContributorState
 from catalog.swagger import class_view_swagger_path
 from catalog.handlers.base import BaseView
-from catalog.auth import set_access_token
 from catalog.utils import pagination_params
 
 
@@ -29,15 +29,11 @@ class ContributorView(BaseView):
 
     @classmethod
     async def post(cls, request):
+        validate_accreditation(request, "contributors")
         # import and validate data
         json = await request.json()
         body = ContributorPostInput(**json)
         data = body.data.dict_without_none()
         await cls.state.on_post(data)
-        access = set_access_token(request, data)
         await db.insert_contributor(data)
-        response = {
-            "data": ContributorSerializer(data).data,
-            "access": access,
-        }
-        return response
+        return {"data": ContributorSerializer(data).data}

@@ -1,6 +1,8 @@
 import random
 from aiohttp.web import HTTPConflict
 from pymongo.errors import OperationFailure
+
+from catalog.auth import validate_accreditation
 from catalog.utils import async_retry
 from catalog import db
 from catalog.swagger import class_view_swagger_path
@@ -20,6 +22,7 @@ class ProductRequestDocumentView(BaseDocumentView):
 
     @classmethod
     async def post(cls, request, **kwargs):
+        validate_accreditation(request, "category")
         return await super().post(request, **kwargs)
 
     @classmethod
@@ -34,10 +37,12 @@ class ProductRequestDocumentView(BaseDocumentView):
     @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
                  fail_exception=HTTPConflict(text="Try again later"))
     async def put(cls, request, **kwargs):
+        validate_accreditation(request, "category")
         return await super().put(request, **kwargs)
 
     @classmethod
     @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
                  fail_exception=HTTPConflict(text="Try again later"))
     async def patch(cls, request, **kwargs):
+        validate_accreditation(request, "category")
         return await super().patch(request, **kwargs)

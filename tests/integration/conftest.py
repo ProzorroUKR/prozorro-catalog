@@ -169,7 +169,7 @@ async def contributor(api):
 
 @pytest.fixture
 async def contributor_document(api, contributor):
-    contributor, access = contributor["data"], contributor["access"]
+    contributor = contributor["data"]
     doc_hash = "0" * 32
     doc_data = {
         "title": "name.doc",
@@ -179,10 +179,7 @@ async def contributor_document(api, contributor):
     }
     resp = await api.post(
         f'/api/crowd-sourcing/contributors/{contributor["id"]}/documents',
-        json={
-            "data": doc_data,
-            "access": access,
-        },
+        json={"data": doc_data},
         auth=TEST_AUTH,
     )
     result = await resp.json()
@@ -230,14 +227,14 @@ async def ban_document(api, ban, contributor):
 
 @pytest.fixture
 async def product_request(api, contributor, category):
-    contributor, access = contributor["data"], contributor["access"]
+    contributor = contributor["data"]
     test_request = get_fixture_json('product_request')
     category_id = category['data']['id']
     set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
     test_request["product"]['relatedCategory'] = category_id
 
     resp = await api.post(
-        f"api/crowd-sourcing/contributors/{contributor['id']}/requests?access_token={access['token']}",
+        f"api/crowd-sourcing/contributors/{contributor['id']}/requests",
         json={"data": test_request},
         auth=TEST_AUTH,
     )

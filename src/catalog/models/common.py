@@ -81,7 +81,7 @@ class Image(BaseModel):
 
 
 class Classification(BaseModel):
-    id: str = Field(..., min_length=1, max_length=32)
+    id: str = Field(..., min_length=1, max_length=100)
     description: str = Field(..., min_length=1, max_length=250)
     scheme: str = Field(..., min_length=1, max_length=10)
 

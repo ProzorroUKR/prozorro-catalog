@@ -44,9 +44,6 @@ POST /crowd-sourcing/contributor
           ...
        },
        ...
-   },
-   "access": {
-       "token": "222222222222222222222222",
    }
 }
 
@@ -56,7 +53,7 @@ POST /crowd-sourcing/contributor
 -----------------------
 
 ```doctest
-POST /crowd-sourcing/contributor/111111111111111111111111/documents?access_token=222222222222222222222222
+POST /crowd-sourcing/contributor/111111111111111111111111/documents
 {
   "data": {
     "title": "Document.pdf",
@@ -116,7 +113,7 @@ POST /crowd-sourcing/contributor/111111111111111111111111/bans
 Створення заявки на додавання товару
 -------------------------------------
 ```doctest
-POST /crowd-sourcing/contributor/111111111111111111111111/requests?access_token=222222222222222222222222
+POST /crowd-sourcing/contributor/111111111111111111111111/requests
 {
   "data": {
      "product": {

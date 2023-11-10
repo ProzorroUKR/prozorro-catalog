@@ -1,5 +1,7 @@
 from copy import deepcopy
 from datetime import timedelta
+
+from aiohttp import BasicAuth
 from freezegun import freeze_time
 
 from catalog.doc_service import generate_test_url
@@ -21,6 +23,18 @@ async def test_create_ban_by_not_market_administrator(api, contributor):
     result = await resp.json()
     assert resp.status == 400, result
     assert {'errors': ['must be one of market administrators: data.administrator.identifier']} == result
+
+
+async def test_create_ban_permission(api, contributor):
+    data = api.get_fixture_json('ban')
+    resp = await api.post(
+        f"/api/crowd-sourcing/contributors/{contributor['data']['id']}/bans",
+        json={"data": data},
+        auth=BasicAuth(login="boo"),
+    )
+    result = await resp.json()
+    assert resp.status == 403, result
+    assert {'errors': ["Forbidden 'category' write operation"]} == result
 
 
 async def test_ban_create_invalid_fields(api, contributor):

@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from catalog import db
 from catalog.state.base import BaseState
-from catalog.context import get_now
+from catalog.context import get_now, get_request
 
 
 class ContributorState(BaseState):
@@ -13,6 +13,7 @@ class ContributorState(BaseState):
         await cls.validate_contributor_identifier(identifier_id=data["contributor"]["identifier"]["id"])
         data['id'] = uuid4().hex
         data['dateCreated'] = data['dateModified'] = get_now().isoformat()
+        data['owner'] = get_request().user.name
 
         super().on_post(data)
 
