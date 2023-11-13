@@ -9,7 +9,7 @@ from catalog.swagger import class_view_swagger_path
 from catalog.handlers.base_document import BaseDocumentView
 
 
-@class_view_swagger_path('/app/swagger/crowd_sourcing/product_requests/documents')
+# @class_view_swagger_path('/app/swagger/crowd_sourcing/product_requests/documents')
 class ProductRequestDocumentView(BaseDocumentView):
 
     @classmethod
@@ -22,7 +22,7 @@ class ProductRequestDocumentView(BaseDocumentView):
 
     @classmethod
     async def post(cls, request, **kwargs):
-        validate_accreditation(request, "category")
+        validate_accreditation(request, "contributors")
         return await super().post(request, **kwargs)
 
     @classmethod
@@ -37,12 +37,12 @@ class ProductRequestDocumentView(BaseDocumentView):
     @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
                  fail_exception=HTTPConflict(text="Try again later"))
     async def put(cls, request, **kwargs):
-        validate_accreditation(request, "category")
+        validate_accreditation(request, "contributors")
         return await super().put(request, **kwargs)
 
     @classmethod
     @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
                  fail_exception=HTTPConflict(text="Try again later"))
     async def patch(cls, request, **kwargs):
-        validate_accreditation(request, "category")
+        validate_accreditation(request, "contributors")
         return await super().patch(request, **kwargs)

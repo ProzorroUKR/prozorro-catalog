@@ -9,11 +9,6 @@ parameters:
     type: string
   required: true
   description: ID of the contributor
-- in: query
-  name: access_token
-  schema:
-    type: string
-  description: Токен від створенного об'єкта
 security:
   - Basic: []
 requestBody:
