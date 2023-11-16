@@ -17,7 +17,7 @@ responses:
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/CreateResponse_Contributor_'
+          $ref: '#/components/schemas/Response_Contributor_'
   "400":
     description: validation errors
     content:

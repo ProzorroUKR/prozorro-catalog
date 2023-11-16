@@ -4,7 +4,7 @@ from pydantic import Field
 
 from catalog.models.ban import Ban
 from catalog.models.base import BaseModel
-from catalog.models.api import Input, Response, CreateResponse
+from catalog.models.api import Input, Response
 from catalog.models.vendor import PostVendorOrganization, VendorOrganization
 from catalog.models.document import Document, DocumentPostData
 
@@ -26,4 +26,3 @@ class Contributor(ContributorPostData):
 
 ContributorPostInput = Input[ContributorPostData]
 ContributorResponse = Response[Contributor]
-ContributorCreateResponse = CreateResponse[Contributor]

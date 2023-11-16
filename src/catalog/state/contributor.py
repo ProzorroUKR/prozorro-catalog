@@ -14,6 +14,8 @@ class ContributorState(BaseState):
         data['id'] = uuid4().hex
         data['dateCreated'] = data['dateModified'] = get_now().isoformat()
         data['owner'] = get_request().user.name
+        for doc in data.get("documents", []):
+            doc["datePublished"] = doc["dateModified"] = get_now().isoformat()
 
         super().on_post(data)
 

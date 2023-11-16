@@ -17,7 +17,7 @@ responses:
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/PaginatedList'
+          $ref: '#/components/schemas/ListResponse_Ban_'
   "500":
     description: Server error
     content:

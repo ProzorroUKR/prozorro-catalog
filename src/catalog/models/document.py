@@ -54,6 +54,8 @@ class DocumentSign(BaseModel):
 DocumentPostInput = AuthorizedInput[DocumentPostData]
 DocumentPutInput = AuthorizedInput[DocumentPutData]
 DocumentPatchInput = AuthorizedInput[DocumentPatchData]
+DocumentNonAuthorizedInputPost = Input[DocumentPostData]
+DocumentNonAuthorizedInputPatch = Input[DocumentPatchData]
 DocumentList = ListResponse[Document]
 DocumentResponse = Response[Document]
 DocumentSignResponse = Response[DocumentSign]

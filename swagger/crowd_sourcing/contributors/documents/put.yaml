@@ -23,7 +23,7 @@ requestBody:
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/AuthorizedInput_DocumentPostData_'
+        $ref: '#/components/schemas/Input_DocumentPostData_'
 responses:
   "200":
     description: successful operation

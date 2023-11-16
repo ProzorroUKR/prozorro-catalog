@@ -11,7 +11,10 @@ def login_user(request, allow_anonymous=True):
     authorization = request.headers.get("Authorization")
     if authorization:
         auth = BasicAuth.decode(authorization)
-        return User(name=auth.login)  # whatever auth.password is 👍
+        # There is only login check in API (for permission validation),
+        # but DevOps check login with password via nginx before API request.
+        # So don't worry, password is being checked too.
+        return User(name=auth.login)
     else:
         if allow_anonymous:
             return User()
