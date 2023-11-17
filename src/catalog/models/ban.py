@@ -3,7 +3,7 @@ from typing import Optional, List
 from pydantic import Field, validator
 
 from catalog.models.base import BaseModel
-from catalog.models.api import Input, Response, CreateResponse
+from catalog.models.api import Input, Response, ListResponse
 from catalog.models.common import MarketAdministrator
 from catalog.models.document import DocumentPostData, Document
 from catalog.utils import get_now
@@ -51,4 +51,4 @@ class Ban(BanPostData):
 
 BanPostInput = Input[BanPostData]
 BanResponse = Response[Ban]
-BanCreateResponse = CreateResponse[Ban]
+BanList = ListResponse[Ban]

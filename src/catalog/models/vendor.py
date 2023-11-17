@@ -5,7 +5,7 @@ from enum import Enum
 
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse, AuthorizedInput
-from catalog.models.common import Identifier, Organization, ContactPoint, Address, UKRAINE_COUNTRY_NAME_UK, ORA_CODES
+from catalog.models.common import Identifier, Organization, ContactPoint, Address, ORA_CODES
 from catalog.models.document import Document, DocumentSign
 
 
@@ -41,7 +41,7 @@ class PostVendorOrganization(Organization):
     identifier: VendorIdentifier
 
 
-class VendorOrganization(PostVendorAddress):
+class VendorOrganization(PostVendorOrganization):
     address: VendorAddress
 
 

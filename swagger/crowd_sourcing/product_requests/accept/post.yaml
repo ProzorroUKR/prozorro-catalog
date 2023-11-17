@@ -24,7 +24,7 @@ responses:
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/CreateResponse_ProductRequest_'
+          $ref: '#/components/schemas/CreateResponse_ProductRequestSuccessful_'
   "400":
     description: validation errors
     content:
