@@ -7,8 +7,8 @@ class ProductRequestState(BaseState):
 
     @classmethod
     async def on_post(cls, data):
-        data['id'] = uuid4().hex
-        data['dateCreated'] = get_now().isoformat()
+        data["id"] = uuid4().hex
+        data["dateCreated"] = get_now().isoformat()
         data["owner"] = get_request().user.name
         for doc in data.get("documents", []):
             doc["datePublished"] = get_now().isoformat()
@@ -17,12 +17,10 @@ class ProductRequestState(BaseState):
 
     @classmethod
     def always(cls, data):
-        data['dateModified'] = get_now().isoformat()
+        data["dateModified"] = get_now().isoformat()
 
     @classmethod
-    async def on_accept(cls, data):
-        data["product"]['id'] = uuid4().hex
-        data["product"]['dateModified'] = data["product"]['dateCreated'] = get_now().isoformat()
+    async def on_accept(cls, data, acceptation_date):
+        data["product"]["id"] = uuid4().hex
+        data["product"]["dateModified"] = data["product"]["dateCreated"] = data["dateModified"] = acceptation_date
         data["product"]["owner"] = get_request().user.name
-
-        super().always(data)

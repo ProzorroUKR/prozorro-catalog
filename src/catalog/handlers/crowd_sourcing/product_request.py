@@ -84,9 +84,10 @@ class ProductRequestAcceptionView(BaseView):
             data = body.data.dict_without_none()
             validate_category_administrator(data, product_request)
             # update product request with valid data
-            data["date"] = get_now().isoformat()
+            acceptation_date = get_now().isoformat()
+            data["date"] = acceptation_date
             product_request.update({"acception": data})
-            await cls.state.on_accept(product_request)
+            await cls.state.on_accept(product_request, acceptation_date)
 
         # add product to the market
         access = set_access_token(request, product_request["product"])
@@ -115,8 +116,8 @@ class ProductRequestRejectionView(BaseView):
             data = body.data.dict_without_none()
             validate_category_administrator(data, product_request)
             # update product request with valid data
-            data["date"] = get_now().isoformat()
-            product_request.update({"rejection": data})
-            cls.state.always(product_request)
+            modified_date = get_now().isoformat()
+            data["date"] = modified_date
+            product_request.update({"rejection": data, "dateModified": modified_date})
 
         return {"data": ProductRequestSerializer(product_request).data}

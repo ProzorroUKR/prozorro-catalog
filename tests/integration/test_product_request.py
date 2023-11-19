@@ -350,6 +350,7 @@ async def test_product_request_acception(api, product_request):
     additional_fields = {k: v for k, v in data.items() if k not in product_request["data"]}
     assert set(additional_fields.keys()) == {'acception'}
     assert "date" in data["acception"]
+    assert data["dateModified"] == data["product"]["dateModified"] == data["acception"]["date"]
 
     for field_name in ("id", "dateModified", "owner"):
         assert field_name in data["product"].keys()
@@ -468,6 +469,7 @@ async def test_product_request_rejection(api, product_request):
     additional_fields = {k: v for k, v in data.items() if k not in product_request["data"]}
     assert set(additional_fields.keys()) == {'rejection'}
     assert "date" in data["rejection"]
+    assert data["dateModified"] == data["rejection"]["date"]
 
 
 async def test_product_request_moderation_by_non_related_administrator(api, contributor, mock_agreement):
