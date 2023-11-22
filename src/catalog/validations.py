@@ -19,35 +19,29 @@ def validate_product_active_vendor(vendor):
         raise HTTPBadRequest(text="Vendor should be activated.")
 
 
-# Validate product requirement responses
-def validate_req_response_value(requirement, value, key):
-    if value is None:
-        raise HTTPBadRequest(text=f'requirement {key} should have value')
-
-    data_type = requirement.get("dataType")
-    data_type = TYPEMAP.get(data_type)
-    if not data_type or not isinstance(value, data_type):
-        raise HTTPBadRequest(text=f'requirement {key} value has unexpected type')
-
-    if (
-        'expectedValue' in requirement
-        and value != requirement['expectedValue']
-    ):
-        raise HTTPBadRequest(text=f'requirement {key} unexpected value')
-    if 'minValue' in requirement and value < requirement['minValue']:
-        raise HTTPBadRequest(text=f'requirement {key} minValue')
-    if 'maxValue' in requirement and value > requirement['maxValue']:
-        raise HTTPBadRequest(text=f'requirement {key} maxValue')
-    if 'pattern' in requirement and not re.match(
-            requirement['pattern'], str(value)
-    ):
-        raise HTTPBadRequest(text=f'requirement {key} pattern')
-
-
 def validate_req_response_values(requirement, values, key):
     if not values:
         raise HTTPBadRequest(text=f'requirement {key} should have values')
-    if not set(values).issubset(set(requirement['expectedValues'])):
+    data_type = requirement.get("dataType")
+    data_type = TYPEMAP.get(data_type)
+    for value in values:
+        if not data_type or not isinstance(value, data_type):
+            raise HTTPBadRequest(text=f'requirement {key} value has unexpected type')
+
+        if (
+                'expectedValue' in requirement
+                and value != requirement['expectedValue']
+        ):
+            raise HTTPBadRequest(text=f'requirement {key} unexpected value')
+        if 'minValue' in requirement and value < requirement['minValue']:
+            raise HTTPBadRequest(text=f'requirement {key} minValue')
+        if 'maxValue' in requirement and value > requirement['maxValue']:
+            raise HTTPBadRequest(text=f'requirement {key} maxValue')
+        if 'pattern' in requirement and not re.match(
+                requirement['pattern'], str(value)
+        ):
+            raise HTTPBadRequest(text=f'requirement {key} pattern')
+    if 'expectedValues' in requirement and not set(values).issubset(set(requirement['expectedValues'])):
         raise HTTPBadRequest(text=f'requirement {key} expectedValues')
     if 'expectedMinItems' in requirement and len(values) < requirement['expectedMinItems']:
         raise HTTPBadRequest(text=f'requirement {key} expectedMinItems')
@@ -58,12 +52,12 @@ def validate_req_response_values(requirement, values, key):
 def validate_req_response(req_response, requirement):
     value = req_response.get('value')
     values = req_response.get('values')
+    if value and values:
+        raise HTTPBadRequest(text="please leave only one field 'values'")
+    values = [value] if value else values
     key = req_response.get('requirement')
 
-    if any(i in requirement for i in ('expectedValue', 'minValue', 'maxValue', 'pattern')):
-        validate_req_response_value(requirement, value, key)
-
-    elif 'expectedValues' in requirement:
+    if any(i in requirement for i in ('expectedValue', 'expectedValues', 'minValue', 'maxValue', 'pattern')):
         validate_req_response_values(requirement, values, key)
 
 
