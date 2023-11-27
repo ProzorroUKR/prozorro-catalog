@@ -1,7 +1,7 @@
 tags:
 - CrowdSourcing/ContributorDocuments
 description: Replace document
-operationId: put_contriibutor_doc
+operationId: put_contributor_doc
 parameters:
 - in: path
   name: contributor_id

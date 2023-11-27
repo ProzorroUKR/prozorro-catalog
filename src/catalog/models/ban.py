@@ -15,7 +15,7 @@ BAN_REASONS = standards.load("market/ban_reason.json")
 
 class BanPostData(BaseModel):
     reason: str
-    description: str
+    description: Optional[str] = Field(None, min_length=1, max_length=500)
     dueDate: Optional[datetime]
     administrator: MarketAdministrator
     documents: Optional[List[DocumentPostData]]
@@ -31,13 +31,6 @@ class BanPostData(BaseModel):
     def reason_standard(cls, v):
         if v not in BAN_REASONS:
             raise ValueError("must be one of market/ban_reason.json keys")
-        return v
-
-    @validator('description')
-    def validate_description(cls, v, values):
-        reason_description = BAN_REASONS.get(values.get("reason"), {})
-        if reason_description.get("title_uk") and v != reason_description["title_uk"]:
-            raise ValueError(f"must equal {reason_description['title_uk']}")
         return v
 
 

@@ -47,7 +47,6 @@ async def test_ban_create_invalid_fields(api, contributor):
     assert resp.status == 400, result
     errors = [
         'field required: data.reason',
-        'field required: data.description',
         'field required: data.administrator',
     ]
     assert {'errors': errors} == result
@@ -82,17 +81,6 @@ async def test_ban_create_invalid_fields(api, contributor):
     result = await resp.json()
     assert resp.status == 400, result
     assert {'errors': ['must be one of market/ban_reason.json keys: data.reason']} == result
-
-    data["reason"] = "rulesViolation"
-    data["description"] = "test"
-    resp = await api.post(
-        f"/api/crowd-sourcing/contributors/{contributor['data']['id']}/bans",
-        json={"data": data},
-        auth=TEST_AUTH,
-    )
-    result = await resp.json()
-    assert resp.status == 400, result
-    assert {'errors': ['must equal Порушення правил роботи в каталозі: data.description']} == result
 
     data = deepcopy(api.get_fixture_json('ban'))
     data["dueDate"] = (get_now() - timedelta(days=1)).isoformat()
