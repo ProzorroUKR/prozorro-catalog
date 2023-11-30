@@ -1,5 +1,5 @@
 tags:
-- CrowdSourcing/ContriibutorProductRequest
+- CrowdSourcing/ContributorProductRequest
 description: Product request creation by contributor
 operationId: collection_post_product_request
 parameters:

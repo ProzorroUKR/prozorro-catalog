@@ -76,7 +76,7 @@ dueDate - опціональне, за відсутності бан пості�
 POST /crowd-sourcing/contributor/111111111111111111111111/bans
 {
   "data": {
-    "reason": "LANGUAGE",
+    "reason": "rulesViolation",
     "description": "матюкався та розмовляв російською",
     "dueDate": "2024-02-29T00:00:01+02:00",
     "administrator": {
@@ -103,7 +103,7 @@ POST /crowd-sourcing/contributor/111111111111111111111111/bans
   "data": {
     "id": "666666666666666666666666",
     "dateCreated": "2023-02-24T00:00:01+02:00",
-    "reason": "LANGUAGE",
+    "reason": "rulesViolation",
     ....
   }
 }
@@ -255,7 +255,7 @@ GET /products/888888888888888888888888
 POST /crowd-sourcing/requests/777777777777777777777777/reject
 {
     "data": {
-        "reason": "INVALID",
+        "reason": ["invalidTitle", "invalidCharacteristics"],
         "description": "Невірно заповнені дані",
         "administrator": {
             "identifier": {
@@ -275,7 +275,7 @@ POST /crowd-sourcing/requests/777777777777777777777777/reject
         "dateCreated": "2023-02-24T00:00:01+02:00",
         "dateModified": "2023-03-09T17:19:45.908462+02:00",
         "rejection": {
-            "reason": "INVALID",
+            "reason": ["invalidTitle", "invalidCharacteristics"],
             "description": "Невірно заповнені дані",
             "date": "2023-02-25T00:00:01+02:00",
             "reviewer": {

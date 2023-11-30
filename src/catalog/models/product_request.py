@@ -18,21 +18,17 @@ class RequestReviewPostData(BaseModel):
 
 
 class RequestRejectionPostData(RequestReviewPostData):
-    reason: str
-    description: str
+    reason: List[str] = Field(..., min_items=1)
+    description: Optional[str] = Field(None, min_length=1, max_length=500)
 
     @validator('reason')
-    def reason_standard(cls, v):
-        if v not in REJECT_REASONS:
-            raise ValueError("must be one of market/product_reject_reason.json keys")
-        return v
-
-    @validator('description')
-    def validate_description(cls, v, values):
-        reason_description = REJECT_REASONS.get(values.get("reason"), {})
-        if reason_description.get("title_uk") and v != reason_description["title_uk"]:
-            raise ValueError(f"must equal {reason_description['title_uk']}")
-        return v
+    def reason_standard(cls, values):
+        for reason in values:
+            if reason not in REJECT_REASONS:
+                raise ValueError(f"invalid value: '{reason}'. Must be one of market/product_reject_reason.json keys")
+        if len(values) != len(set(values)):
+            raise ValueError("there are duplicated reasons")
+        return values
 
 
 class RequestReview(RequestReviewPostData):
