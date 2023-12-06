@@ -11,7 +11,7 @@ class ProductRequestState(BaseState):
         data["dateCreated"] = get_now().isoformat()
         data["owner"] = get_request().user.name
         for doc in data.get("documents", []):
-            doc["datePublished"] = get_now().isoformat()
+            doc["datePublished"] = doc["dateModified"] = get_now().isoformat()
 
         super().on_post(data)
 

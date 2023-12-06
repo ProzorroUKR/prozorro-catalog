@@ -38,7 +38,8 @@ class ContributorBanDocumentView(BaseDocumentView):
 
         async with db.read_and_update_contributor(kwargs.get("contributor_id")) as obj:
             ban = find_item_by_id(obj.get("bans", []), kwargs.get("ban_id"), "ban")
-            ban['dateModified'] = data['datePublished'] = data['dateModified'] = get_now().isoformat()
+            now = get_now().isoformat()
+            obj["dateModified"] = ban['dateModified'] = data['datePublished'] = data['dateModified'] = now
             if "documents" not in ban:
                 ban["documents"] = []
             ban["documents"].append(data)
@@ -63,7 +64,7 @@ class ContributorBanDocumentView(BaseDocumentView):
                     data = body.data.dict_without_none()
                     data["id"] = doc_id
                     data["datePublished"] = doc["datePublished"]
-                    ban["dateModified"] = data["dateModified"] = get_now().isoformat()
+                    obj["dateModified"] = ban["dateModified"] = data["dateModified"] = get_now().isoformat()
                     ban["documents"].append(data)
                     break
             else:
@@ -89,7 +90,7 @@ class ContributorBanDocumentView(BaseDocumentView):
                     initial = dict(doc)
                     doc.update(data)
                     if initial != doc:
-                        ban['dateModified'] = doc['dateModified'] = get_now().isoformat()
+                        obj["dateModified"] = ban['dateModified'] = doc['dateModified'] = get_now().isoformat()
                     break
             else:
                 raise HTTPNotFound(text="Document not found")

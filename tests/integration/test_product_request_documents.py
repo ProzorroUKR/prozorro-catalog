@@ -25,6 +25,10 @@ async def test_product_request_doc_create(api, product_request):
         f"/api/crowd-sourcing/requests/{product_request['id']}/documents/{data['id']}?download={ds_uid}"
     assert expected == data["url"]
 
+    resp = await api.get(f'/api/crowd-sourcing/requests/{product_request["id"]}')
+    assert resp.status == 200, result
+    assert result["data"]["dateModified"] == data["dateModified"]
+
 
 async def test_product_request_doc_put(api, product_request, product_request_document):
     product_request = product_request["data"]
@@ -57,6 +61,10 @@ async def test_product_request_doc_put(api, product_request, product_request_doc
     assert resp.status == 200, result
     assert result["data"] == doc_after_put
 
+    resp = await api.get(f'/api/crowd-sourcing/requests/{product_request["id"]}')
+    assert resp.status == 200, result
+    assert result["data"]["dateModified"] == doc_after_put["dateModified"]
+
 
 async def test_product_request_doc_patch(api, product_request, product_request_document):
     product_request = product_request["data"]
@@ -79,6 +87,10 @@ async def test_product_request_doc_patch(api, product_request, product_request_d
     )
     assert resp.status == 200, result
     assert result["data"] == doc_after_patch
+
+    resp = await api.get(f'/api/crowd-sourcing/requests/{product_request["id"]}')
+    assert resp.status == 200, result
+    assert result["data"]["dateModified"] == doc_after_patch["dateModified"]
 
 
 async def test_product_request_doc_invalid_signature(api, product_request):
