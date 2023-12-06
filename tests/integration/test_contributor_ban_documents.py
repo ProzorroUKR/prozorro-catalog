@@ -26,6 +26,10 @@ async def test_contributor_ban_doc_create(api, contributor, ban):
                f"/documents/{data['id']}?download={ds_uid}"
     assert expected == data["url"]
 
+    resp = await api.get(f'/api/crowd-sourcing/contributors/{contributor["id"]}')
+    assert resp.status == 200, result
+    assert result["data"]["dateModified"] == data["dateModified"]
+
 
 async def test_contributor_ban_doc_put(api, contributor, ban, ban_document):
     contributor = contributor["data"]
@@ -59,6 +63,10 @@ async def test_contributor_ban_doc_put(api, contributor, ban, ban_document):
     assert resp.status == 200, result
     assert result["data"] == doc_after_put
 
+    resp = await api.get(f'/api/crowd-sourcing/contributors/{contributor["id"]}')
+    assert resp.status == 200, result
+    assert result["data"]["dateModified"] == doc_after_put["dateModified"]
+
 
 async def test_contributor_ban_doc_patch(api, contributor, ban, ban_document):
     contributor = contributor["data"]
@@ -82,6 +90,10 @@ async def test_contributor_ban_doc_patch(api, contributor, ban, ban_document):
     )
     assert resp.status == 200, result
     assert result["data"] == doc_after_patch
+
+    resp = await api.get(f'/api/crowd-sourcing/contributors/{contributor["id"]}')
+    assert resp.status == 200, result
+    assert result["data"]["dateModified"] == doc_after_patch["dateModified"]
 
 
 async def test_contributor_ban_doc_invalid_signature(api, contributor, ban):
