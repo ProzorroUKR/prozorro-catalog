@@ -30,6 +30,7 @@ async def test_contributor_without_region(api):
     data = api.get_fixture_json('contributor')
     # 1
     data['contributor']["address"].pop("region")
+    data['contributor']["address"]["countryName"] = "Україна"
     resp = await api.post(
         "/api/crowd-sourcing/contributors",
         json={"data": data},
@@ -37,7 +38,7 @@ async def test_contributor_without_region(api):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['field required: data.contributor.address.region']} == result
+    assert {'errors': ['region is required for countryName Україна: data.contributor.address.__root__']} == result
 
     # 2
     data['contributor']["address"]["countryName"] = "Антарктика"
@@ -47,8 +48,7 @@ async def test_contributor_without_region(api):
         auth=TEST_AUTH,
     )
     result = await resp.json()
-    assert resp.status == 400, result
-    assert {'errors': ['field required: data.contributor.address.region']} == result
+    assert resp.status == 201, result
 
 
 async def test_contributor_ukrainian_region_dictionary(api, category):
