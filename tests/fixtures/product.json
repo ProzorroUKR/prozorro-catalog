@@ -71,16 +71,16 @@
   },
   "requirementResponses": [
     {
-      "value": "одноразова"
+      "values": ["одноразова"]
     },
     {
-      "value": 3
+      "values": [3]
     },
     {
-      "value": 50
+      "values": [50]
     },
     {
-      "value": true
+      "values": [true]
     },
     {
       "values": ["ALL_A", "ALL_B", "ALL_C"]

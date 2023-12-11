@@ -73,7 +73,7 @@ async def test_411_product_rr_create(api, category, profile):
         test_product['data']['identifier']['id'][:13],
         randint(100000, 900000))
 
-    test_product['data']['requirementResponses'][2]["value"] = 49.91
+    test_product['data']['requirementResponses'][2]["values"] = [49.91]
 
     test_product['data']['relatedCategory'] = category_id
     test_product['access'] = category['access']
@@ -193,7 +193,7 @@ async def test_420_product_patch(api, category, profile, product):
 
     requirement_data = {
         "dataType": "number",
-        "expectedValue": 1,
+        "expectedValues": [1],
         "title": "Дворазова",
         "isArchived": True
     }
@@ -209,7 +209,7 @@ async def test_420_product_patch(api, category, profile, product):
 
     new_req_response = {
         'requirement': req_title,
-        'value': 1,
+        'values': [1],
     }
     patch_product["data"] = {
         "requirementResponses": [new_req_response, *product['data']['requirementResponses']]
