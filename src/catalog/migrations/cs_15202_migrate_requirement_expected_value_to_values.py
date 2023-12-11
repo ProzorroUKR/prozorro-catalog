@@ -22,16 +22,19 @@ logger = logging.getLogger(__name__)
 def update_criteria(criteria: list) -> list:
     if not criteria:
         return []
-    updated_criteria = deepcopy(criteria[0])
+    updated_criteria = []
     updated = False
 
-    for req_group in updated_criteria.get("requirementGroups", []):
-        for requirement in req_group.get("requirements", []):
-            if "expectedValue" in requirement:
-                requirement["expectedValues"] = [requirement["expectedValue"]]
-                del requirement["expectedValue"]
-                updated = True
-    return [updated_criteria] if updated else []
+    for criterion in criteria:
+        updated_criterion = deepcopy(criterion)
+        for req_group in updated_criterion.get("requirementGroups", []):
+            for requirement in req_group.get("requirements", []):
+                if "expectedValue" in requirement:
+                    requirement["expectedValues"] = [requirement["expectedValue"]]
+                    del requirement["expectedValue"]
+                    updated = True
+        updated_criteria.append(updated_criterion)
+    return updated_criteria if updated else []
 
 
 async def migrate_categories_and_profiles(session):
