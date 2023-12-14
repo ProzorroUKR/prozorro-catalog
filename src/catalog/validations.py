@@ -54,7 +54,7 @@ def validate_req_response(req_response, requirement):
     values = req_response.get('values')
     if value and values:
         raise HTTPBadRequest(text="please leave only one field 'values'")
-    values = [value] if value else values
+    values = [value] if value is not None else values
     key = req_response.get('requirement')
 
     if any(i in requirement for i in ('expectedValue', 'expectedValues', 'minValue', 'maxValue', 'pattern')):
