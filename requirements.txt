@@ -2,7 +2,7 @@ aiohttp
 motor
 pytz
 aiohttp-swagger>=1.0.14, <2
-pydantic==1.7.3
+pydantic[email]==1.7.3
 aiocache>=0.11.1, <1
 ujson # requirements for aiocache
 msgpack # requirements for aiocache

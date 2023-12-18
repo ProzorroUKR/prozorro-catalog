@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import Field, validator, root_validator
+from pydantic import EmailStr, Field, validator, root_validator
 from enum import Enum
 
 from catalog.models.base import BaseModel
@@ -14,7 +14,7 @@ class CategoryLink(BaseModel):
 
 
 class VendorContactPoint(ContactPoint):
-    email: str = Field(..., min_length=1, max_length=250)
+    email: EmailStr
 
 
 class PostVendorAddress(Address):
