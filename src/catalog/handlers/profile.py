@@ -6,7 +6,12 @@ from aiohttp.web import HTTPBadRequest, HTTPConflict
 from pymongo.errors import OperationFailure
 
 from catalog import db
-from catalog.models.profile import LocalizationProfileInput, LocalizationProfileUpdateInput, ProfileCreateInput, ProfileUpdateInput
+from catalog.models.profile import (
+    LocalizationProfileInput,
+    LocalizationProfileUpdateInput,
+    ProfileCreateInput,
+    ProfileUpdateInput,
+)
 from catalog.swagger import class_view_swagger_path
 from catalog.utils import pagination_params, get_now, async_retry, find_item_by_id
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token

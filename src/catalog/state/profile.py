@@ -2,13 +2,12 @@ from aiohttp.web import HTTPBadRequest
 
 from catalog.state.base import BaseState
 from catalog.context import get_now
-from catalog.models.profile import ProfileStatus
 
 
 class LocalizationProfileState(BaseState):
     @classmethod
     async def on_put(cls, data, category):
-        data['dateModified'] = get_now().isoformat()
+        data['dateCreated'] = data['dateModified'] = get_now().isoformat()
         super().on_post(data)
 
     @classmethod

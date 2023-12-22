@@ -100,6 +100,7 @@ class Profile(BaseModel):
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
     agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
+    dateCreated: datetime
     owner: str
     criteria: List[Criterion] = Field(..., max_items=1)
 
