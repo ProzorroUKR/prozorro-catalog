@@ -14,7 +14,7 @@ imagePullSecrets:
   - name: prozorro-gitlab
 
 environment:
-  MONGODB_URI: mongodb://root:pass@mongodb-catalog.data.svc.cluster.local:27017/?replicaSet=rs0
+  MONGODB_URI: mongodb://root:yei6AhvaQuaiPa@mongodb-catalog-0.mongodb-catalog-headless.data.svc.cluster.local:27017,mongodb-catalog-1.mongodb-catalog-headless.data.svc.cluster.local:27017,mongodb-catalog-3.mongodb-catalog-headless.data.svc.cluster.local:27017/?replicaSet=rs0
   DB_NAME: catalogs-{{ .Release.Name }}
   AUTH_PATH: /app/etc/auth.ini
   VERSION: "1"
