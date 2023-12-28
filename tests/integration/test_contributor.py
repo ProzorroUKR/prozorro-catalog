@@ -26,6 +26,48 @@ async def test_contributor_create_permission(api):
     assert {'errors': ["Forbidden 'contributors' write operation"]} == result
 
 
+async def test_contributor_email_validation(api):
+    data = api.get_fixture_json('contributor')
+    data['contributor']["contactPoint"].pop("email")
+    resp = await api.post(
+        "/api/crowd-sourcing/contributors",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': ['field required: data.contributor.contactPoint.email']} == result
+
+    invalid_values = ("", "123", 10, True, "foobar.com", "test@test")
+    for value in invalid_values:
+        data['contributor']["contactPoint"]["email"] = value
+        resp = await api.post(
+            "/api/crowd-sourcing/contributors",
+            json={"data": data},
+            auth=TEST_AUTH,
+        )
+        result = await resp.json()
+        assert resp.status == 400, result
+        assert {'errors': ['value is not a valid email address: data.contributor.contactPoint.email']} == result
+
+    valid_values = (
+        "Abc@example.tld",
+        "user+mailbox/department=shipping@example.tld",
+        "!#$%&'*+-/=?^_`.{|}~@example.tld",
+        "jeff@臺網中心.tw",
+    )
+    for idx, value in enumerate(valid_values):
+        data["contributor"]["contactPoint"]["email"] = value
+        data["contributor"]["identifier"]["id"] = data["contributor"]["identifier"]["id"] + f"{idx}"
+        resp = await api.post(
+            "/api/crowd-sourcing/contributors",
+            json={"data": data},
+            auth=TEST_AUTH,
+        )
+        result = await resp.json()
+        assert resp.status == 201, result
+
+
 async def test_contributor_without_region(api):
     data = api.get_fixture_json('contributor')
     # 1

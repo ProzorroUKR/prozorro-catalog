@@ -5,7 +5,7 @@ from pydantic import Field, validator, root_validator
 from catalog.models.ban import Ban
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response
-from catalog.models.common import UKRAINE_COUNTRY_NAME_UK, UA_REGIONS, COUNTRY_NAMES_UK
+from catalog.models.common import UKRAINE_COUNTRY_NAME_UK
 from catalog.models.vendor import PostVendorOrganization, VendorOrganization, PostVendorAddress
 from catalog.models.document import Document, DocumentPostData
 
