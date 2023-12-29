@@ -102,6 +102,7 @@ class ProfileRequirementCreateData(RequirementBaseValidators):
     period: Optional[Period] = None
 
     pattern: Optional[str] = Field(None, max_length=250)
+    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
     maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
     minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
 
@@ -129,6 +130,7 @@ class ProfileRequirementUpdateData(BaseModel):
     period: Optional[Period] = None
 
     pattern: Optional[str] = Field(None, max_length=250)
+    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
     maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]
     minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]
 
