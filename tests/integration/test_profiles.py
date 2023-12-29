@@ -77,6 +77,7 @@ async def test_310_profile_create(api, category):
     assert resp_json['data']['unit'] == category['data']['unit']
     assert resp_json['data']['classification'] == category['data']['classification']
     assert resp_json['data']['agreementID'] == category['data']['agreementID']
+    assert resp_json['data']['dateCreated'] == resp_json['data']['dateModified']
     test_date_modified = resp_json['data']['dateModified']
 
     # test data type
@@ -231,6 +232,7 @@ async def test_320_profile_patch(api, profile):
 
     test_date_modified = resp_json['data']['dateModified']
     assert test_date_modified > profile["data"]["dateModified"]
+    assert test_date_modified > resp_json["data"]["dateCreated"]
 
     resp = await api.get(f'/api/profiles/{profile_id}')
     assert resp.status == 200
