@@ -8,7 +8,7 @@
           "requirements": [
             {
               "dataType": "string",
-              "expectedValues": ["одноразова"],
+              "expectedValue": "одноразова",
               "title": "Одноразова"
             },
             {
@@ -34,7 +34,7 @@
             {
               "dataType": "boolean",
               "description": "Виріб має бути оснащений носовим зажимом",
-              "expectedValues": [true],
+              "expectedValue": true,
               "title": "Виріб оснащений носовим зажимом"
             },
             {

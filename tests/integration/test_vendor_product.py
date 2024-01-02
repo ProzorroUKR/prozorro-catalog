@@ -157,7 +157,7 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
     }]}
     category = await create_criteria(api, "categories", data, criteria=criteria_data)
 
-    # create profile with expectedValues
+    # create profile with expectedValue
     profile = await create_profile(api, category)
     criteria_data = {"criteria": [{
         "title": "Технічні характеристики предмета закупівлі",
@@ -168,7 +168,7 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
                 {
                     "title": "Метод аналізу",
                     "dataType": "string",
-                    "expectedValues": ["ІХА"],
+                    "expectedValue": "ІХА",
                 },
                 {
                     "title": "Специфічність",
@@ -219,7 +219,7 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
 
     assert resp.status == 400
     result = await resp.json()
-    assert result == {'errors': ['extra fields not permitted: data.requirementResponses.0.value']}
+    assert result == {'errors': ["please leave only one field 'values'"]}
 
     # response with values
     test_product['requirementResponses'] = [
@@ -229,6 +229,25 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
         },
         {
             "values": [95, 102, 98],
+            "requirement": "Специфічність"
+        },
+    ]
+    resp = await api.post(
+        f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',
+        json={'data': test_product},
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 201
+
+    # response with value
+    test_product['requirementResponses'] = [
+        {
+            "value": "ІХА",
+            "requirement": "Метод аналізу"
+        },
+        {
+            "value": 96,
             "requirement": "Специфічність"
         },
     ]

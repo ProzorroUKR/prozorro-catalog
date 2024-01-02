@@ -66,18 +66,14 @@ class ProductInfo(BaseModel):
     alternativeNames: Optional[List[constr(max_length=250)]]
 
 
-# TODO Leave after migration only one class without value
-class RequirementResponseCreate(BaseModel):
+class RequirementResponse(BaseModel):
     requirement: str
+    value: Optional[Union[StrictInt, StrictFloat, StrictBool, StrictStr]] = None
     values: Optional[List[Union[StrictInt, StrictFloat, StrictBool, StrictStr]]]
 
 
-class RequirementResponse(RequirementResponseCreate):
-    value: Optional[Union[StrictInt, StrictFloat, StrictBool, StrictStr]] = None
-
-
 class ProductRequirementResponses(BaseModel):
-    requirementResponses: Optional[List[RequirementResponseCreate]] = Field(None, min_items=1, max_items=100)
+    requirementResponses: Optional[List[RequirementResponse]] = Field(None, min_items=1, max_items=100)
 
     @validator('requirementResponses')
     def unique_responses_ids(cls, v):
@@ -140,7 +136,6 @@ class Product(ProductCreateData):
     vendor: Optional[VendorInfo]
     documents: Optional[Document]
     images: Optional[List[Image]] = Field(None, max_items=100)
-    requirementResponses: Optional[List[RequirementResponse]] = Field(None, min_items=1, max_items=100)
 
 
 ProductCreateInput = AuthorizedInput[ProductCreateData]
