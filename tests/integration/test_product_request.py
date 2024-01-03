@@ -379,6 +379,44 @@ async def test_product_request_acception(api, product_request):
         assert resp_json['data'][key] == patch_value
 
 
+async def test_product_request_accept_if_category_id_diff_procuring_entity_identifier(api, contributor, mock_agreement):
+    # create category 33190000-0000-425746299 with procuringEntity.identifier.id 42574629
+    data = deepcopy(api.get_fixture_json('category'))
+    data["id"] = "33190000-0000-425746299"
+    resp = await api.put(
+        f"/api/categories/{data['id']}",
+        json={"data": data},
+        auth=TEST_AUTH
+    )
+    assert resp.status == 201
+    data = await resp.json()
+    category = await create_criteria(api, "categories", data)
+
+    # create product request with category ending with 425746299
+    contributor = contributor["data"]
+    test_request = api.get_fixture_json('product_request')
+    category_id = category['data']['id']
+    set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
+    test_request["product"]['relatedCategory'] = category_id
+
+    resp = await api.post(
+        f"api/crowd-sourcing/contributors/{contributor['id']}/requests",
+        json={"data": test_request},
+        auth=TEST_AUTH,
+    )
+    product_request = await resp.json()
+    assert resp.status == 201, product_request
+
+    # successfully accept product request: administrator.identifier.id == procuringEntity.identifier.id of category
+    resp = await api.post(
+        f"api/crowd-sourcing/requests/{product_request['data']['id']}/accept",
+        json={"data": request_review_data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+
+
 async def test_product_request_rejection_permission(api, product_request):
     rejection_data = deepcopy(request_review_data)
     rejection_data.update({"reason": ["invalidTitle"], "description": "Невірно зазначена назва товару"})
