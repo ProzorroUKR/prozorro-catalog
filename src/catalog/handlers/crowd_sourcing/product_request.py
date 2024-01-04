@@ -82,7 +82,8 @@ class ProductRequestAcceptionView(BaseView):
             validate_previous_product_reviews(product_request)
             # export data back to dict
             data = body.data.dict_without_none()
-            validate_category_administrator(data, product_request)
+            category = await db.read_category(product_request.get("product", {}).get("relatedCategory"))
+            validate_category_administrator(data, category)
             # update product request with valid data
             acceptation_date = get_now().isoformat()
             data["date"] = acceptation_date
@@ -114,7 +115,8 @@ class ProductRequestRejectionView(BaseView):
             validate_previous_product_reviews(product_request)
             # export data back to dict
             data = body.data.dict_without_none()
-            validate_category_administrator(data, product_request)
+            category = await db.read_category(product_request.get("product", {}).get("relatedCategory"))
+            validate_category_administrator(data, category)
             # update product request with valid data
             modified_date = get_now().isoformat()
             data["date"] = modified_date

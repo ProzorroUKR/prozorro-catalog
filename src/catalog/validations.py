@@ -183,9 +183,9 @@ def validate_criteria_max_items_on_post(obj: dict, obj_title: str):
 
 
 def validate_contributor_banned_categories(category: dict, contributor: dict):
-    category_administrator = category["procuringEntity"]["identifier"]["id"]
+    category_administrator = category.get("procuringEntity", {}).get("identifier", {}).get("id")
     for ban in contributor.get("bans", []):
-        ban_administrator = ban["administrator"]["identifier"]["id"]
+        ban_administrator = ban.get("administrator", {}).get("identifier", {}).get("id")
         if ban_administrator == category_administrator\
                 and ("dueDate" not in ban or datetime.fromisoformat(ban["dueDate"]) > get_now()):
             raise HTTPBadRequest(text="request for product with this relatedCategory is forbidden due to ban")
@@ -198,11 +198,12 @@ def validate_previous_product_reviews(product_request: dict):
 
 def validate_contributor_ban_already_exists(contributor: dict, administrator_id):
     for ban in contributor.get("bans", []):
-        if ban["administrator"]["identifier"]["id"] == administrator_id \
+        if ban.get("administrator", {}).get("identifier", {}).get("id") == administrator_id \
                 and ("dueDate" not in ban or datetime.fromisoformat(ban["dueDate"]) > get_now()):
             raise HTTPBadRequest(text="ban from this market administrator already exists")
 
 
-def validate_category_administrator(administrator_data: dict, product_request: dict):
-    if administrator_data["administrator"]["identifier"]["id"] != product_request["product"]["relatedCategory"][-8:]:
+def validate_category_administrator(administrator_data: dict, category: dict):
+    if administrator_data.get("administrator", {}).get("identifier", {}).get("id") != \
+            category.get("procuringEntity", {}).get("identifier", {}).get("id"):
         raise HTTPBadRequest(text="only administrator who is related to product category can moderate product request.")
