@@ -49,6 +49,8 @@ async def init_mongo(*app) -> AsyncIOMotorDatabase:
         init_products_indexes(),
         init_offers_indexes(),
         init_vendor_indexes(),
+        init_contributor_indexes(),
+        init_request_indexes(),
     )
     return DB
 
@@ -301,6 +303,7 @@ def get_profiles_collection():
 
 
 async def init_profile_indexes():
+    # db.contributors.createIndex({ "dateModified": 1 })
     modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
     try:
         await get_profiles_collection().create_indexes(
@@ -659,6 +662,7 @@ def get_product_request_collection():
 
 
 async def init_request_indexes():
+    # db.requests.createIndex({ "dateModified": 1 })
     modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
     try:
         await get_product_request_collection().create_indexes([modified_index])
