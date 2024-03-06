@@ -2,10 +2,12 @@ import re
 from datetime import datetime
 
 from aiohttp.web import HTTPBadRequest, HTTPForbidden
+from aiohttp_client_cache import CachedSession
 
 from catalog.models.category import CategoryStatus
 from catalog.models.profile import ProfileStatus
 from catalog.models.criteria import TYPEMAP
+from catalog.settings import CACHE_BACKEND, MEDICINE_API_URL, MEDICINE_SCHEMES
 from catalog.utils import get_now
 
 
@@ -207,3 +209,23 @@ def validate_category_administrator(administrator_data: dict, category: dict):
     if administrator_data.get("administrator", {}).get("identifier", {}).get("id") != \
             category.get("procuringEntity", {}).get("identifier", {}).get("id"):
         raise HTTPBadRequest(text="only administrator who is related to product category can moderate product request.")
+
+
+async def validate_medicine_additional_classifications(obj: dict):
+    med_values = {scheme: [] for scheme in MEDICINE_SCHEMES}
+    for classification in obj.get("additionalClassifications", []):
+        if classification["scheme"] in MEDICINE_SCHEMES:
+            med_values[classification["scheme"]].append(classification["id"])
+    for scheme, ids in med_values.items():
+        if ids:
+            async with CachedSession(cache=CACHE_BACKEND) as session:
+                async with session.get(f'{MEDICINE_API_URL}/registry/{scheme.lower()}.json') as resp:
+                    if resp.status != 200:
+                        raise HTTPBadRequest(text=f"Can't get classification {scheme} from medicine "
+                                                  f"registry, please make request later")
+                    response = await resp.json()
+                    data = response["data"]
+                    if diff_values := set(ids).difference(data.keys()):
+                        raise HTTPBadRequest(
+                            text=f"values {diff_values} don't exist in {scheme} dictionary"
+                        )

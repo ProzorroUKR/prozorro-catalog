@@ -16,6 +16,7 @@ from catalog.validations import (
     validate_product_to_category,
     validate_product_to_profile,
     validate_patch_vendor_product,
+    validate_medicine_additional_classifications,
 )
 
 
@@ -62,6 +63,7 @@ class ProductView(View):
         for profile_id in profile_ids:
             profile = await db.read_profile(profile_id)
             validate_product_to_profile(profile, data)
+        await validate_medicine_additional_classifications(data)
 
         access = set_access_token(request, data)
         data["dateModified"] = get_now().isoformat()
@@ -96,5 +98,7 @@ class ProductView(View):
                 for profile_id in profile_ids:
                     profile = await db.read_profile(profile_id)
                     validate_product_to_profile(profile, product)
+            if product_before.get("additionalClassifications", "") != product.get("additionalClassifications", ""):
+                await validate_medicine_additional_classifications(product)
 
         return {"data": ProductSerializer(product).data}

@@ -13,6 +13,7 @@ from catalog.validations import (
     validate_product_active_vendor,
     validate_product_to_category,
     validate_product_to_profile,
+    validate_medicine_additional_classifications,
 )
 
 
@@ -36,6 +37,7 @@ class VendorProductView(View):
         for profile_id in profile_ids:
             profile = await db.read_profile(profile_id)
             validate_product_to_profile(profile, data)
+        await validate_medicine_additional_classifications(data)
 
         data['id'] = uuid4().hex
         data['vendor'] = {"id": vendor_id}

@@ -1,3 +1,5 @@
+from aiohttp_client_cache.backends.mongodb import MongoDBBackend
+from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import ReadPreference
 from pymongo.write_concern import WriteConcern
 from pymongo.read_concern import ReadConcern
@@ -71,3 +73,10 @@ DOC_SERVICE_KEY_LENGTH = int(os.environ.get("DOC_SERVICE_KEY_LENGTH", 8))
 # it knows we come from this api
 # should be generated and put both here and to the doc service config
 DOC_SERVICE_SIGNING_SEED = os.environ.get("DOC_SERVICE_SIGNING_SEED", uuid4().hex * 2).encode()
+
+MEDICINE_API_URL = os.environ.get("MEDICINE_API_URL", "https://medicines-registry.prozorro.gov.ua/api/1.0")
+MEDICINE_SCHEMES = ("INN", "ATC")
+
+# cache settings
+EXPIRE_CACHE_AFTER = int(os.environ.get("EXPIRE_CACHE_AFTER", 3600))  # value in seconds, default 1 hour
+CACHE_BACKEND = MongoDBBackend(connection=AsyncIOMotorClient(MONGODB_URI), expire_after=EXPIRE_CACHE_AFTER)

@@ -1,4 +1,6 @@
 from copy import deepcopy
+from unittest.mock import AsyncMock, patch
+
 from catalog.models.product import VendorProductIdentifierScheme
 
 from .base import TEST_AUTH
@@ -78,6 +80,24 @@ async def test_vendor_product_create(api, vendor, category, profile):
         'extra fields not permitted: data.images',
         'extra fields not permitted: data.manufacturers',
     ]}
+
+    invalid_product = deepcopy(test_product)
+    invalid_product["additionalClassifications"] = [{
+        "id": "test",
+        "description": "test",
+        "scheme": "ATC",
+    }]
+    with patch('catalog.validations.CachedSession.get') as medicine_resp:
+        medicine_resp.return_value = AsyncMock()
+        medicine_resp.return_value.__aenter__.return_value.status = 200
+        medicine_resp.return_value.__aenter__.return_value.json.return_value = {"data": {"foo": "bar"}}
+        resp = await api.post(
+            f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',
+            json={'data': invalid_product},
+            auth=TEST_AUTH,
+        )
+        assert resp.status == 400
+        assert {"errors": ["values {'test'} don't exist in ATC dictionary"]} == await resp.json()
 
     resp = await api.patch(
         f'/api/categories/{category_id}?access_token={category_token}',

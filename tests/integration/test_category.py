@@ -56,6 +56,18 @@ async def test_110_category_create(api, mock_agreement):
     assert resp.status == 403
     assert {'errors': ["Forbidden 'category' write operation"]} == await resp.json()
 
+    invalid_data = deepcopy(test_category)
+    invalid_data["additionalClassifications"][0]["id"] = "test"
+    invalid_data["additionalClassifications"][0]["scheme"] = "INN"
+    resp = await api.put(
+        f'/api/categories/{category_id}',
+        json={"data": invalid_data},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    assert {"errors": ["values {'test'} don't exist in INN dictionary"]} == await resp.json()
+
+
     resp = await api.put(f'/api/categories/{category_id}',
                          json={"data": test_category},
                          auth=TEST_AUTH)

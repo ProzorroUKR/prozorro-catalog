@@ -1,7 +1,7 @@
 from random import randint
 from copy import deepcopy
+from unittest.mock import patch, AsyncMock
 from urllib.parse import quote
-from catalog.db import get_profiles_collection
 from .base import TEST_AUTH, TEST_AUTH_ANOTHER, TEST_AUTH_NO_PERMISSION
 from .conftest import set_requirements_to_responses
 
@@ -219,6 +219,26 @@ async def test_420_product_patch(api, category, profile, product):
     resp_json = await resp.json()
     assert resp_json['errors'] == [f'requirement {req_title} is archived']
 
+    patch_product["data"] = {
+        "additionalClassifications": [{
+            "id": "test",
+            "description": "test",
+            "scheme": "ATC",
+        }]
+    }
+    with patch('catalog.validations.CachedSession.get') as medicine_resp:
+        medicine_resp.return_value = AsyncMock()
+        medicine_resp.return_value.__aenter__.return_value.status = 200
+        medicine_resp.return_value.__aenter__.return_value.json.return_value = {"data": {"foo": "bar"}}
+        resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH)
+        assert resp.status == 400
+        assert {"errors": ["values {'test'} don't exist in ATC dictionary"]} == await resp.json()
+
+        patch_product["data"]["additionalClassifications"][0]["id"] = "foo"
+        resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH)
+        assert resp.status == 200
+
+    # try to hide product without patching additionalClassifications snd without medicine validation
     patch_product = {
         "data": {
             "status": "hidden",
