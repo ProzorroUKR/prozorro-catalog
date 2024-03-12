@@ -1,4 +1,5 @@
 aiohttp
+aiohttp-client-cache
 motor
 pytz
 aiohttp-swagger>=1.0.14, <2

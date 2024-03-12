@@ -1,5 +1,6 @@
 from random import randint
 from copy import deepcopy
+from unittest.mock import patch, AsyncMock
 from urllib.parse import quote
 from catalog.db import get_category_collection
 from .base import TEST_AUTH, TEST_AUTH_NO_PERMISSION, TEST_AUTH_ANOTHER
@@ -79,6 +80,28 @@ async def test_310_profile_create(api, category):
     assert resp_json['data']['agreementID'] == category['data']['agreementID']
     assert resp_json['data']['dateCreated'] == resp_json['data']['dateModified']
     test_date_modified = resp_json['data']['dateModified']
+
+    invalid_profile = deepcopy(test_profile)
+    invalid_profile["data"]["additionalClassifications"] = [{
+        "id": "test",
+        "description": "test",
+        "scheme": "ATC",
+    }]
+
+    with patch('catalog.validations.CachedSession.get') as medicine_resp:
+        medicine_resp.return_value = AsyncMock()
+        medicine_resp.return_value.__aenter__.return_value.status = 200
+        medicine_resp.return_value.__aenter__.return_value.json.return_value = {"data": {"foo": "bar"}}
+        resp = await api.put(f'/api/profiles/{profile_id}', json=invalid_profile, auth=TEST_AUTH)
+        assert resp.status == 400
+        assert {"errors": ["values {'test'} don't exist in ATC dictionary"]} == await resp.json()
+
+        medicine_resp.return_value.__aenter__.return_value.status = 400
+        resp = await api.put(f'/api/profiles/{profile_id}', json=invalid_profile, auth=TEST_AUTH)
+        assert resp.status == 400
+        assert {"errors": [
+            "Can't get classification ATC from medicine registry, please make request later"
+        ]} == await resp.json()
 
     # test data type
     for criteria in resp_json['data']["criteria"]:

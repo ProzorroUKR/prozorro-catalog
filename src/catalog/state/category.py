@@ -5,8 +5,8 @@ from pymongo import UpdateOne
 from catalog.state.base import BaseState
 from catalog.context import get_now
 from catalog.db import get_profiles_collection
-from catalog.models.profile import ProfileStatus
 from catalog.settings import OPENPROCUREMENT_API_URL
+from catalog.validations import validate_medicine_additional_classifications
 
 
 class CategoryState(BaseState):
@@ -15,6 +15,7 @@ class CategoryState(BaseState):
     async def on_put(cls, data):
         if "agreementID" in data:
             await cls.validate_agreement(data)
+        await validate_medicine_additional_classifications(data)
         data['dateModified'] = get_now().isoformat()
         super().on_post(data)
 
@@ -33,6 +34,9 @@ class CategoryState(BaseState):
             if before.get("agreementID", "") != after.get("agreementID", ""):
                 await cls.validate_agreement(after)
                 await cls.update_profiles_agreement_id(after)
+
+            if before.get("additionalClassifications", "") != after.get("additionalClassifications", ""):
+                await validate_medicine_additional_classifications(after)
 
         super().on_patch(before, after)
 
