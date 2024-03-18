@@ -79,4 +79,8 @@ MEDICINE_SCHEMES = ("INN", "ATC")
 
 # cache settings
 EXPIRE_CACHE_AFTER = int(os.environ.get("EXPIRE_CACHE_AFTER", 3600))  # value in seconds, default 1 hour
-CACHE_BACKEND = MongoDBBackend(connection=AsyncIOMotorClient(MONGODB_URI), expire_after=EXPIRE_CACHE_AFTER)
+CACHE_BACKEND = MongoDBBackend(
+    connection=AsyncIOMotorClient(MONGODB_URI),
+    cache_name=DB_NAME,
+    expire_after=EXPIRE_CACHE_AFTER,
+)
