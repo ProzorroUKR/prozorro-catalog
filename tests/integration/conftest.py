@@ -18,7 +18,7 @@ def set_requirements_to_responses(requirement_responses, category):
 @pytest.fixture
 async def mock_agreement():
     data = get_fixture_json('category')
-    with patch('catalog.state.category.CategoryState.validate_agreement') as m:
+    with patch('catalog.state.category.validate_agreement') as m:
         m.return_value = AsyncMock()
         yield m
 
