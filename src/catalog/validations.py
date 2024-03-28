@@ -1,13 +1,14 @@
 import re
 from datetime import datetime
 
+import aiohttp
 from aiohttp.web import HTTPBadRequest, HTTPForbidden
 from aiohttp_client_cache import CachedSession
 
 from catalog.models.category import CategoryStatus
 from catalog.models.profile import ProfileStatus
 from catalog.models.criteria import TYPEMAP
-from catalog.settings import CACHE_BACKEND, MEDICINE_API_URL, MEDICINE_SCHEMES
+from catalog.settings import CACHE_BACKEND, MEDICINE_API_URL, MEDICINE_SCHEMES, OPENPROCUREMENT_API_URL
 from catalog.utils import get_now
 
 
@@ -229,3 +230,22 @@ async def validate_medicine_additional_classifications(obj: dict):
                         raise HTTPBadRequest(
                             text=f"values {diff_values} don't exist in {scheme} dictionary"
                         )
+
+
+async def validate_agreement(category):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f'{OPENPROCUREMENT_API_URL}/agreements/{category["agreementID"]}') as resp:
+            if resp.status == 404:
+                raise HTTPBadRequest(text="Agreement doesn't exist")
+            if resp.status != 200:
+                raise HTTPBadRequest(text="Can't get agreement from openprocurement api, "
+                                          "plz make request later")
+            data = await resp.json()
+            agreement = data["data"]
+            if agreement.get("status", "") != "active":
+                raise HTTPBadRequest(text="Agreement not in `active` status")
+            agr_clas_id = agreement["classification"]["id"]
+            cat_clas_id = category["classification"]["id"]
+            if agr_clas_id[0:3] != cat_clas_id[0:3]:
+                raise HTTPBadRequest(text="Agreement:classification:id first three numbers "
+                                          "should be equal to Category:classification:id")

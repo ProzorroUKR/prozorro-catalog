@@ -64,12 +64,12 @@ class ProfileUpdateData(BaseModel):
     status: Optional[ProfileStatus]
     images: Optional[List[Image]] = Field(None, max_items=100)
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
+    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
 
 
 class LocalizationProfileUpdateData(ProfileUpdateData):
     unit: Optional[Unit]
     classification: Optional[Classification]
-    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
 
 
 class Profile(BaseModel):

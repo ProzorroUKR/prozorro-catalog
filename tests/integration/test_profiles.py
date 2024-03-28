@@ -2,6 +2,8 @@ from random import randint
 from copy import deepcopy
 from unittest.mock import patch, AsyncMock
 from urllib.parse import quote
+from uuid import uuid4
+
 from catalog.db import get_category_collection
 from .base import TEST_AUTH, TEST_AUTH_NO_PERMISSION, TEST_AUTH_ANOTHER
 
@@ -207,7 +209,7 @@ async def test_311_profile_limit_offset(api, category):
     assert len(profile_map) == 0
 
 
-async def test_320_profile_patch(api, profile):
+async def test_320_profile_patch(api, profile, category):
     profile_id = profile['data']['id']
 
     resp = await api.get(f'/api/profiles/{profile_id}')
@@ -268,6 +270,13 @@ async def test_320_profile_patch(api, profile):
     assert resp.status == 200
     resp_json = await resp.json()
     assert resp_json['data']['status'] == 'active'
+
+    patch_profile["data"] = {"agreementID": uuid4().hex}
+    with patch('catalog.state.profile.validate_agreement', return_value=AsyncMock()) as mock_agreement:
+        resp = await api.patch(f'/api/profiles/{profile_id}', json=patch_profile, auth=TEST_AUTH)
+        assert resp.status == 200
+        resp_json = await resp.json()
+        assert resp_json["data"]["agreementID"] != category["data"]["agreementID"]
 
 
 async def test_330_requirement_create(api, category, profile_without_criteria):

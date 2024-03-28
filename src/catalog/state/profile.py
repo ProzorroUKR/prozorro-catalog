@@ -2,7 +2,7 @@ from aiohttp.web import HTTPBadRequest
 
 from catalog.state.base import BaseState
 from catalog.context import get_now
-from catalog.validations import validate_medicine_additional_classifications
+from catalog.validations import validate_medicine_additional_classifications, validate_agreement
 
 
 class LocalizationProfileState(BaseState):
@@ -17,6 +17,8 @@ class LocalizationProfileState(BaseState):
         if before != after:
             if before.get("additionalClassifications", "") != after.get("additionalClassifications", ""):
                 await validate_medicine_additional_classifications(after)
+            if before.get("agreementID", "") != after.get("agreementID", ""):
+                await validate_agreement(after)
             after['dateModified'] = get_now().isoformat()
 
         super().on_patch(before, after)
