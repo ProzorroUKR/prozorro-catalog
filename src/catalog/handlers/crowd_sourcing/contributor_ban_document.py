@@ -63,8 +63,7 @@ class ContributorBanDocumentView(BaseDocumentView):
                 if doc["id"] == doc_id:
                     data = body.data.dict_without_none()
                     data["id"] = doc_id
-                    data["datePublished"] = doc["datePublished"]
-                    obj["dateModified"] = ban["dateModified"] = data["dateModified"] = get_now().isoformat()
+                    obj["dateModified"] = ban["dateModified"] = data["datePublished"] = data["dateModified"] = get_now().isoformat()
                     ban["documents"].append(data)
                     break
             else:

@@ -52,7 +52,7 @@ async def test_contributor_doc_put(api, contributor, contributor_document):
     assert doc_before_put["dateModified"] != doc_after_put["dateModified"]
     assert doc_before_put["url"].split("?")[0] == doc_after_put["url"].split("?")[0]
     assert doc_before_put["url"] != doc_after_put["url"]
-    assert doc_before_put["datePublished"] == doc_after_put["datePublished"]
+    assert doc_before_put["datePublished"] != doc_after_put["datePublished"]
     assert doc_after_put["url"].split("/")[-2] == "documents"
 
     resp = await api.get(
