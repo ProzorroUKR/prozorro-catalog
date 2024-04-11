@@ -77,8 +77,7 @@ class BaseDocumentView(View):
                 if d["id"] == doc_id:
                     data = body.data.dict_without_none()
                     data["id"] = doc_id
-                    data["datePublished"] = d["datePublished"]
-                    obj["dateModified"] = data["dateModified"] = get_now().isoformat()
+                    obj["dateModified"] = data["datePublished"] = data["dateModified"] = get_now().isoformat()
                     obj["documents"].append(data)
                     break
             else:
