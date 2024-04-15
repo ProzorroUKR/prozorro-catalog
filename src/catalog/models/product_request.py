@@ -19,7 +19,7 @@ class RequestReviewPostData(BaseModel):
 
 class RequestRejectionPostData(RequestReviewPostData):
     reason: List[str] = Field(..., min_items=1)
-    description: Optional[str] = Field(None, min_length=1, max_length=500)
+    description: Optional[str] = Field(None, min_length=1, max_length=2000)
 
     @validator('reason')
     def reason_standard(cls, values):
