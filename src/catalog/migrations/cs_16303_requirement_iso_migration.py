@@ -80,6 +80,7 @@ def update_criteria(criteria: list) -> list:
             for requirement in req_group.get("requirements", []):
                 if "ДСТУ" in requirement["title"] or "ГОСТ" in requirement["title"]:
                     requirement["expectedValue"] = True
+                    requirement["dataType"] = "boolean"
                     requirement.pop("expectedValues", None)
                     requirement.pop("expectedMinItems", None)
                     requirement.pop("expectedMaxItems", None)
