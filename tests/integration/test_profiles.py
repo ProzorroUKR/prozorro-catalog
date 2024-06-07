@@ -17,6 +17,18 @@ async def create_blank_criterion(api, profile):
             "data": {
                 "description": "Спосіб використання (одноразова або багаторазова)",
                 "title": "Спосіб використання",
+                "legislation": [{
+                    "identifier": {
+                        "id": "identifier_id",
+                        "legalName": "legal_name",
+                        "uri": "http://example.com",
+                    },
+                    "version": "1.0.0"
+                }],
+                "classification": {
+                    "id": "classification_id",
+                    "scheme": "scheme",
+                }
             },
             "access": profile["access"]
         },
@@ -24,6 +36,7 @@ async def create_blank_criterion(api, profile):
     )
     resp_json = await resp.json()
     criterion_id = resp_json["data"]["id"]
+    assert resp_json["data"]["legislation"][0]["type"] == "NATIONAL_LEGISLATION"
 
     resp = await api.post(
         f"/api/profiles/{profile_id}/criteria/{criterion_id}/requirementGroups",

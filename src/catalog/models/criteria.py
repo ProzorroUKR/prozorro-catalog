@@ -185,9 +185,32 @@ class RequirementGroup(BaseModel):
     requirements: List[Requirement] = Field(..., min_items=1, max_items=100)
 
 
+class LegislationIdentifier(BaseModel):
+    id: str
+    scheme: Optional[str] = Field(None, min_length=1, max_length=250)
+    legalName: Optional[str] = Field(None, min_length=1, max_length=250)
+    legalName_en: Optional[str] = Field(None, min_length=1, max_length=250)
+    legalName_ru: Optional[str] = Field(None, min_length=1, max_length=250)
+    uri: Optional[str] = None
+
+
+class LegislationItem(BaseModel):
+    identifier: LegislationIdentifier
+    version: Optional[str] = Field(None, min_length=1, max_length=250)
+    type: str = "NATIONAL_LEGISLATION"
+    article: Optional[str] = Field(None, min_length=1, max_length=250)
+
+
+class CriterionClassification(BaseModel):
+    scheme: str = Field(..., min_length=1, max_length=250)
+    id: str = Field(..., min_length=1, max_length=250)
+
+
 class CriterionCreateData(BaseModel):
     title: str = Field(..., min_length=1, max_length=250)
     description: str = Field(..., min_length=1, max_length=250)
+    legislation: Optional[List[LegislationItem]] = Field(None, min_items=1, max_items=100)
+    classification: Optional[CriterionClassification] = None
 
     @property
     def id(self):
@@ -202,6 +225,8 @@ class CriterionUpdateData(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=250)
     code: Optional[str] = Field(None, regex=r"^[0-9A-Za-z_-]{1,32}$")
     description: Optional[str] = Field(None, min_length=1, max_length=250)
+    legislation: Optional[List[LegislationItem]] = Field(None, min_items=1, max_items=100)
+    classification: Optional[CriterionClassification] = None
 
 
 class Criterion(BaseModel):
@@ -209,6 +234,8 @@ class Criterion(BaseModel):
     requirementGroups: List[RequirementGroup] = Field(..., min_items=1, max_items=100)
     title: str = Field(..., min_length=1, max_length=250)
     description: str = Field(..., min_length=1, max_length=250)
+    legislation: Optional[List[LegislationItem]] = Field(None, min_items=1, max_items=100)
+    classification: Optional[CriterionClassification] = None
 
 
 CriterionCreateInput = AuthorizedInput[CriterionCreateData]
