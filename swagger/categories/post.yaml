@@ -1,7 +1,7 @@
 tags:
 - Categories
-description: Category update
-operationId: collection_put_category
+description: Category create
+operationId: collection_post_category
 security:
   - Basic: []
 requestBody:
@@ -10,7 +10,7 @@ requestBody:
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/Input_DeprecatedCategoryCreateData_'
+        $ref: '#/components/schemas/Input_CategoryCreateData_'
 responses:
   "200":
     description: successful operation

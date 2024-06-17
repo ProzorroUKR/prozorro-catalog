@@ -84,6 +84,11 @@ def create_application(on_cleanup=None):
     app.router.add_put(
         r"/api/categories/{category_id:[\w-]+}",
         CategoryView.put,
+        name="put_category"
+    )
+    app.router.add_post(
+        r"/api/categories",
+        CategoryView.post,
         name="create_category"
     )
     app.router.add_patch(
@@ -177,6 +182,11 @@ def create_application(on_cleanup=None):
     app.router.add_put(
         r"/api/profiles/{profile_id:[\w-]+}",
         ProfileView.put,
+        name="put_profile"
+    )
+    app.router.add_post(
+        r"/api/profiles",
+        ProfileView.post,
         name="create_profile"
     )
     app.router.add_patch(

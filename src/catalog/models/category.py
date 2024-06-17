@@ -18,7 +18,6 @@ class CategoryStatus(str, Enum):
 class CategoryCreateData(BaseModel):
     classification: Classification
     procuringEntity: ProcuringEntity
-    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{20,32}$")
     title: Optional[str] = Field(None, min_length=1, max_length=80)
     unit: Optional[Unit]
     description: Optional[str] = Field(None, min_length=1, max_length=1000)
@@ -26,6 +25,17 @@ class CategoryCreateData(BaseModel):
     status: CategoryStatus = CategoryStatus.active
     images: Optional[List[Image]] = Field(None, max_items=100)
     agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
+
+    @property
+    def criteria(self):
+        return []
+
+
+class DeprecatedCategoryCreateData(CategoryCreateData):
+    """
+    Deprecated soon the Catalog Category Create Data with required id and creation via PUT method
+    """
+    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{20,32}$")
 
     @validator('id')
     def id_format(cls, v, values, **kwargs):
@@ -37,10 +47,6 @@ class CategoryCreateData(BaseModel):
         if "procuringEntity" in values and values["procuringEntity"].identifier.id not in v:
             raise ValueError('id must include edr')
         return v
-
-    @property
-    def criteria(self):
-        return []
 
 
 class CategoryUpdateData(BaseModel):
@@ -73,6 +79,7 @@ class Category(BaseModel):
 
 
 CategoryCreateInput = Input[CategoryCreateData]
+DeprecatedCategoryCreateInput = Input[DeprecatedCategoryCreateData]
 CategoryUpdateInput = AuthorizedInput[CategoryUpdateData]
 CategoryResponse = Response[Category]
 CategoryCreateResponse = CreateResponse[Category]

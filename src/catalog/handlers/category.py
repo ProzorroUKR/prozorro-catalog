@@ -1,14 +1,15 @@
 import random
 from copy import deepcopy
+from uuid import uuid4
 
 from aiohttp.web_urldispatcher import View
-from aiohttp.web import HTTPBadRequest, HTTPNotFound, HTTPConflict
+from aiohttp.web import HTTPBadRequest, HTTPConflict
 from pymongo.errors import OperationFailure
 from catalog import db
 from catalog.swagger import class_view_swagger_path
 from catalog.auth import set_access_token, validate_accreditation, validate_access_token
-from catalog.utils import pagination_params, get_now, async_retry
-from catalog.models.category import CategoryCreateInput, CategoryUpdateInput
+from catalog.utils import pagination_params, async_retry
+from catalog.models.category import CategoryCreateInput, CategoryUpdateInput, DeprecatedCategoryCreateInput
 from catalog.serializers.base import RootSerializer
 from catalog.state.category import CategoryState
 from catalog.handlers.base_criteria import (
@@ -43,7 +44,7 @@ class CategoryView(View):
 
         # import and validate data
         json = await request.json()
-        body = CategoryCreateInput(**json)
+        body = DeprecatedCategoryCreateInput(**json)
         if category_id != body.data.id:
             raise HTTPBadRequest(text='id mismatch')
 
@@ -54,6 +55,27 @@ class CategoryView(View):
 
         response = {"data": RootSerializer(data, show_owner=False).data,
                     "access": access}
+        return response
+
+    @classmethod
+    async def post(cls, request):
+        validate_accreditation(request, "category")
+
+        # import and validate data
+        json = await request.json()
+        body = CategoryCreateInput(**json)
+
+        # export data back to dict
+        data = body.data.dict_without_none()
+        data["id"] = uuid4().hex
+        await cls.state.on_put(data)
+        access = set_access_token(request, data)
+        await db.insert_category(data)
+
+        response = {
+            "data": RootSerializer(data, show_owner=False).data,
+            "access": access,
+        }
         return response
 
     @classmethod

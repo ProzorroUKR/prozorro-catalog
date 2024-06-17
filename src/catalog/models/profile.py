@@ -23,7 +23,6 @@ class ProfileCreateData(BaseModel):
     """
     The Catalog Profile Create Data
     """
-    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     title: str = Field(
         ...,
         title='Profile Name',
@@ -49,10 +48,24 @@ class ProfileCreateData(BaseModel):
         return []
 
 
+class DeprecatedProfileCreateData(ProfileCreateData):
+    """
+    Deprecated soon the Catalog Profile Create Data with required id and creation via PUT method
+    """
+    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
+
+
 class LocalizationProfileCreateData(ProfileCreateData):
     unit: Optional[Unit]
     agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
     classification: Classification
+
+
+class DeprecatedLocalizationProfileCreateData(LocalizationProfileCreateData):
+    """
+    Deprecated soon the Localization Catalog Profile Create Data with required id and creation via PUT method
+    """
+    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
 
 
 class ProfileUpdateData(BaseModel):
@@ -106,7 +119,9 @@ class Profile(BaseModel):
 
 
 ProfileCreateInput = AuthorizedInput[ProfileCreateData]
+DeprecatedProfileCreateInput = AuthorizedInput[DeprecatedProfileCreateData]
 LocalizationProfileInput = AuthorizedInput[LocalizationProfileCreateData]
+DeprecatedLocProfileInput = AuthorizedInput[DeprecatedLocalizationProfileCreateData]
 ProfileUpdateInput = AuthorizedInput[ProfileUpdateData]
 LocalizationProfileUpdateInput = AuthorizedInput[LocalizationProfileUpdateData]
 ProfileResponse = Response[Profile]

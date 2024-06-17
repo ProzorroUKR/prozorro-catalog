@@ -2,21 +2,15 @@ from copy import deepcopy
 from random import randint
 from urllib.parse import quote
 from .base import TEST_AUTH_NO_PERMISSION, TEST_AUTH, TEST_AUTH_ANOTHER
-from .utils import create_profile
+from .conftest import set_requirements_to_responses
+from .utils import create_profile, create_criteria
 
 
 async def test_110_category_create(api, mock_agreement):
     test_category = api.get_fixture_json('category')
-    resp = await api.post('/api/categories', json=test_category, auth=TEST_AUTH)
-    assert resp.status == 405, await resp.json()
 
     resp = await api.put('/api/categories/123', auth=TEST_AUTH)
     assert resp.status == 400
-
-    resp = await api.post('/api/categories', json=test_category,
-                          auth=TEST_AUTH,
-                          headers={'X-HTTP-METHOD-OVERRIDE': 'GET'})
-    assert resp.status == 405
 
     resp = await api.put('/api/categories', json=test_category, auth=TEST_AUTH)
     assert resp.status == 405
@@ -102,6 +96,56 @@ async def test_110_category_create(api, mock_agreement):
     assert resp.status == 200
     resp_json = await resp.json()
     assert resp_json['data']['id'] == category_id
+
+
+async def test_category_post(api, mock_agreement):
+    test_category = deepcopy(api.get_fixture_json('category'))
+
+    resp = await api.post('/api/categories', json={"data": test_category}, auth=TEST_AUTH_NO_PERMISSION)
+    assert resp.status == 403
+    assert {'errors': ["Forbidden 'category' write operation"]} == await resp.json()
+
+    resp = await api.post('/api/categories', json={"data": test_category}, auth=TEST_AUTH)
+    assert resp.status == 400, await resp.json()
+    assert {'errors': ['extra fields not permitted: data.id']} == await resp.json()
+
+    test_category.pop("id", None)
+    resp = await api.post('/api/categories', json={"data": test_category}, auth=TEST_AUTH)
+    assert resp.status == 201, await resp.json()
+    category_data = await resp.json()
+    assert 'access' in category_data
+    assert 'token' in category_data['access']
+    category_id = category_data['data']['id']
+
+    resp = await api.get(f"/api/categories/{category_id}")
+    assert resp.status == 200
+    resp_json = await resp.json()
+    assert resp_json['data']['id'] == category_id
+
+    # create profile for this category with new md5 id format
+    category = await create_criteria(api, "categories", category_data)
+    test_product = {"data": deepcopy(api.get_fixture_json('product'))}
+    test_product["data"]["relatedCategory"] = category_id
+    set_requirements_to_responses(test_product["data"]["requirementResponses"], category)
+    test_product['access'] = category_data['access']
+
+    resp = await api.post('/api/products', json=test_product, auth=TEST_AUTH)
+    assert resp.status == 201, await resp.json()
+
+    # create product for this category with new md5 id format
+    profile = deepcopy(api.get_fixture_json('profile'))
+    profile['relatedCategory'] = category_id
+    test_profile = {
+        "access": dict(category['access']),
+        "data": profile,
+    }
+
+    resp = await api.post('/api/profiles', json=test_profile, auth=TEST_AUTH)
+    assert resp.status == 201
+    resp_json = await resp.json()
+    assert 'id' in resp_json['data']
+    assert 'access' in resp_json
+    assert 'token' in resp_json['access']
 
 
 async def test_111_limit_offset(api, mock_agreement):
