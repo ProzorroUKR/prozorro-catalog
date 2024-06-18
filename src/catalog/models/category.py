@@ -12,7 +12,6 @@ from enum import Enum
 class CategoryStatus(str, Enum):
     active = "active"
     hidden = "hidden"
-    deleted = "deleted"
 
 
 class CategoryCreateData(BaseModel):
