@@ -1,5 +1,7 @@
 from datetime import datetime
 from typing import Optional, List, Union
+from uuid import uuid4
+
 from pydantic import Field, validator
 
 from catalog.models.base import BaseModel
@@ -43,8 +45,12 @@ class ProductRequestPostData(BaseModel):
     product: ProductCreateData
     documents: Optional[List[DocumentPostData]]
 
+    @property
+    def id(self):
+        return uuid4().hex
 
-class ProductRequest(ProductRequestPostData):
+
+class ProductRequest(BaseModel):
     id: str = Field(..., min_length=32, max_length=32)
     contributor_id: str = Field(..., min_length=32, max_length=32)
     dateModified: datetime

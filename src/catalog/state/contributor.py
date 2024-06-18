@@ -1,5 +1,4 @@
 from aiohttp.web import HTTPBadRequest
-from uuid import uuid4
 
 from catalog import db
 from catalog.state.base import BaseState
@@ -11,7 +10,6 @@ class ContributorState(BaseState):
     @classmethod
     async def on_post(cls, data):
         await cls.validate_contributor_identifier(identifier_id=data["contributor"]["identifier"]["id"])
-        data['id'] = uuid4().hex
         data['dateCreated'] = data['dateModified'] = get_now().isoformat()
         data['owner'] = get_request().user.name
         for doc in data.get("documents", []):

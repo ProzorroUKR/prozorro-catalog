@@ -1,5 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
+from uuid import uuid4
+
 from pydantic import Field
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, CreateResponse, AuthorizedInput
@@ -19,7 +21,7 @@ class ProfileStatus(str, Enum):
     general = 'general'
 
 
-class ProfileCreateData(BaseModel):
+class BaseProfileCreateData(BaseModel):
     """
     The Catalog Profile Create Data
     """
@@ -48,20 +50,32 @@ class ProfileCreateData(BaseModel):
         return []
 
 
-class DeprecatedProfileCreateData(ProfileCreateData):
+class ProfileCreateData(BaseProfileCreateData):
+    @property
+    def id(self):
+        return uuid4().hex
+
+
+class DeprecatedProfileCreateData(BaseProfileCreateData):
     """
     Deprecated soon the Catalog Profile Create Data with required id and creation via PUT method
     """
     id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
 
 
-class LocalizationProfileCreateData(ProfileCreateData):
+class BaseLocalizationProfileCreateData(BaseProfileCreateData):
     unit: Optional[Unit]
     agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
     classification: Classification
 
 
-class DeprecatedLocalizationProfileCreateData(LocalizationProfileCreateData):
+class LocalizationProfileCreateData(BaseLocalizationProfileCreateData):
+    @property
+    def id(self):
+        return uuid4().hex
+
+
+class DeprecatedLocalizationProfileCreateData(BaseLocalizationProfileCreateData):
     """
     Deprecated soon the Localization Catalog Profile Create Data with required id and creation via PUT method
     """

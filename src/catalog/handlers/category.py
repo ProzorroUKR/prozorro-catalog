@@ -1,6 +1,5 @@
 import random
 from copy import deepcopy
-from uuid import uuid4
 
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPBadRequest, HTTPConflict
@@ -67,7 +66,6 @@ class CategoryView(View):
 
         # export data back to dict
         data = body.data.dict_without_none()
-        data["id"] = uuid4().hex
         await cls.state.on_put(data)
         access = set_access_token(request, data)
         await db.insert_category(data)

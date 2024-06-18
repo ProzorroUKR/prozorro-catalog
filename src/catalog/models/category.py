@@ -1,5 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
+from uuid import uuid4
+
 from pydantic import Field, validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, AuthorizedInput, Response, CreateResponse
@@ -15,7 +17,7 @@ class CategoryStatus(str, Enum):
     deleted = "deleted"
 
 
-class CategoryCreateData(BaseModel):
+class BaseCategoryCreateData(BaseModel):
     classification: Classification
     procuringEntity: ProcuringEntity
     title: Optional[str] = Field(None, min_length=1, max_length=80)
@@ -31,7 +33,13 @@ class CategoryCreateData(BaseModel):
         return []
 
 
-class DeprecatedCategoryCreateData(CategoryCreateData):
+class CategoryCreateData(BaseCategoryCreateData):
+    @property
+    def id(self):
+        return uuid4().hex
+
+
+class DeprecatedCategoryCreateData(BaseCategoryCreateData):
     """
     Deprecated soon the Catalog Category Create Data with required id and creation via PUT method
     """

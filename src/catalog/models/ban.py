@@ -1,5 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
+from uuid import uuid4
+
 from pydantic import Field, validator
 
 from catalog.models.base import BaseModel
@@ -20,6 +22,10 @@ class BanPostData(BaseModel):
     administrator: MarketAdministrator
     documents: Optional[List[DocumentPostData]]
 
+    @property
+    def id(self):
+        return uuid4().hex
+
     @validator('dueDate')
     def validate_date(cls, v):
         if v and isinstance(v, datetime):
@@ -34,8 +40,12 @@ class BanPostData(BaseModel):
         return v
 
 
-class Ban(BanPostData):
+class Ban(BaseModel):
     id: str = Field(..., min_length=32, max_length=32)
+    reason: str
+    description: Optional[str] = Field(None, min_length=1, max_length=500)
+    dueDate: Optional[datetime]
+    administrator: MarketAdministrator
     dateCreated: datetime
     dateModified: datetime
     owner: str

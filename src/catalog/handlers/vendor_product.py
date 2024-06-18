@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from aiohttp.web_urldispatcher import View
 
 from catalog import db
@@ -39,7 +37,6 @@ class VendorProductView(View):
             validate_product_to_profile(profile, data)
         await validate_medicine_additional_classifications(data)
 
-        data['id'] = uuid4().hex
         data['vendor'] = {"id": vendor_id}
         data['dateCreated'] = data['dateModified'] = get_now().isoformat()
         data['access'] = {'owner': request.user.name}

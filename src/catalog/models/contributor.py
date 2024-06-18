@@ -1,5 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
+from uuid import uuid4
+
 from pydantic import Field, validator, root_validator
 
 from catalog.models.ban import Ban
@@ -28,8 +30,12 @@ class ContributorPostData(BaseModel):
     contributor: PostContributorOrganization
     documents: Optional[List[DocumentPostData]]
 
+    @property
+    def id(self):
+        return uuid4().hex
 
-class Contributor(ContributorPostData):
+
+class Contributor(BaseModel):
     id: str = Field(..., min_length=32, max_length=32)
     contributor: VendorOrganization
     dateModified: datetime

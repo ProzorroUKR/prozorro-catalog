@@ -1,6 +1,5 @@
 import random
 from copy import deepcopy
-from uuid import uuid4
 
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPBadRequest, HTTPConflict
@@ -62,7 +61,6 @@ class ProfileView(View):
 
         return input_class(**json)
 
-
     @classmethod
     async def collection_get(cls, request):
         offset, limit, reverse = pagination_params(request)
@@ -110,7 +108,6 @@ class ProfileView(View):
         body = await cls.get_input(request)
         # export data back to dict
         data = body.data.dict_without_none()
-        data["id"] = uuid4().hex
 
         category_id = data['relatedCategory']
         category = await db.read_category(category_id)  # ensure exists

@@ -122,7 +122,7 @@ async def test_category_post(api, mock_agreement):
     resp_json = await resp.json()
     assert resp_json['data']['id'] == category_id
 
-    # create profile for this category with new md5 id format
+    # create product for this category with new md5 id format
     category = await create_criteria(api, "categories", category_data)
     test_product = {"data": deepcopy(api.get_fixture_json('product'))}
     test_product["data"]["relatedCategory"] = category_id
@@ -132,7 +132,7 @@ async def test_category_post(api, mock_agreement):
     resp = await api.post('/api/products', json=test_product, auth=TEST_AUTH)
     assert resp.status == 201, await resp.json()
 
-    # create product for this category with new md5 id format
+    # create profile for this category with new md5 id format
     profile = deepcopy(api.get_fixture_json('profile'))
     profile['relatedCategory'] = category_id
     test_profile = {

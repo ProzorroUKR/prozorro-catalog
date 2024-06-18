@@ -1,5 +1,7 @@
 from datetime import datetime
 from typing import Optional, List, Union
+from uuid import uuid4
+
 from pydantic import Field, validator, constr, StrictInt, StrictFloat, StrictBool, StrictStr
 
 from catalog.models.base import BaseModel
@@ -100,8 +102,12 @@ class BaseProductCreateData(ProductRequirementResponses):
 class VendorProductCreateData(BaseProductCreateData):
     relatedProfiles: Optional[List[str]] = Field(None, min_items=1, max_items=1)
 
+    @property
+    def id(self):
+        return uuid4().hex
 
-class ProductCreateData(BaseProductCreateData):
+
+class BaseProductData(BaseProductCreateData):
     additionalProperties: Optional[List[ProductProperty]] = Field(None, max_items=100)
     identifier: Optional[ProductIdentifier]
     brand: Optional[Brand]
@@ -109,6 +115,12 @@ class ProductCreateData(BaseProductCreateData):
     manufacturers: Optional[List[Manufacturer]] = Field(None, max_items=100)
     images: List[Image] = Field(None, max_items=20)
     product: Optional[ProductInfo]
+
+
+class ProductCreateData(BaseProductData):
+    @property
+    def id(self):
+        return uuid4().hex
 
 
 class ProductUpdateData(ProductRequirementResponses):
@@ -127,7 +139,7 @@ class ProductUpdateData(ProductRequirementResponses):
     status: Optional[ProductStatus]
 
 
-class Product(ProductCreateData):
+class Product(BaseProductData):
     id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     dateCreated: Optional[datetime]  # creation product with request by contributor
