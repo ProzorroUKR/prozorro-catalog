@@ -1,5 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
+from uuid import uuid4
+
 from pydantic import Field, validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, AuthorizedInput, Response, CreateResponse
@@ -15,10 +17,9 @@ class CategoryStatus(str, Enum):
     deleted = "deleted"
 
 
-class CategoryCreateData(BaseModel):
+class BaseCategoryCreateData(BaseModel):
     classification: Classification
     procuringEntity: ProcuringEntity
-    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{20,32}$")
     title: Optional[str] = Field(None, min_length=1, max_length=80)
     unit: Optional[Unit]
     description: Optional[str] = Field(None, min_length=1, max_length=1000)
@@ -26,6 +27,23 @@ class CategoryCreateData(BaseModel):
     status: CategoryStatus = CategoryStatus.active
     images: Optional[List[Image]] = Field(None, max_items=100)
     agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
+
+    @property
+    def criteria(self):
+        return []
+
+
+class CategoryCreateData(BaseCategoryCreateData):
+    @property
+    def id(self):
+        return uuid4().hex
+
+
+class DeprecatedCategoryCreateData(BaseCategoryCreateData):
+    """
+    Deprecated soon the Catalog Category Create Data with required id and creation via PUT method
+    """
+    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{20,32}$")
 
     @validator('id')
     def id_format(cls, v, values, **kwargs):
@@ -37,10 +55,6 @@ class CategoryCreateData(BaseModel):
         if "procuringEntity" in values and values["procuringEntity"].identifier.id not in v:
             raise ValueError('id must include edr')
         return v
-
-    @property
-    def criteria(self):
-        return []
 
 
 class CategoryUpdateData(BaseModel):
@@ -73,6 +87,7 @@ class Category(BaseModel):
 
 
 CategoryCreateInput = Input[CategoryCreateData]
+DeprecatedCategoryCreateInput = Input[DeprecatedCategoryCreateData]
 CategoryUpdateInput = AuthorizedInput[CategoryUpdateData]
 CategoryResponse = Response[Category]
 CategoryCreateResponse = CreateResponse[Category]

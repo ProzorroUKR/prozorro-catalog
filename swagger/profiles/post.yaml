@@ -1,7 +1,7 @@
 tags:
 - Profiles
 description: Для створення необхідно передатти відповідний <b>access.token</b> категорії
-operationId: collection_put_profile
+operationId: collection_post_profile
 security:
   - Basic: []
 parameters:
@@ -21,7 +21,7 @@ requestBody:
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/AuthorizedInput_DeprecatedProfileCreateData_'
+        $ref: '#/components/schemas/AuthorizedInput_ProfileCreateData_'
 responses:
   "200":
     description: successful operation

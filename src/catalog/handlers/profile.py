@@ -11,6 +11,8 @@ from catalog.models.profile import (
     LocalizationProfileUpdateInput,
     ProfileCreateInput,
     ProfileUpdateInput,
+    DeprecatedProfileCreateInput,
+    DeprecatedLocProfileInput,
 )
 from catalog.swagger import class_view_swagger_path
 from catalog.utils import pagination_params, get_now, async_retry, find_item_by_id
@@ -48,9 +50,9 @@ class ProfileView(View):
         json = await request.json()
         if not profile:
             if cls.is_localized(json.get("data", {})):
-                input_class = LocalizationProfileInput
+                input_class = DeprecatedLocProfileInput if request.method == 'PUT' else LocalizationProfileInput
             else:
-                input_class = ProfileCreateInput
+                input_class = DeprecatedProfileCreateInput if request.method == 'PUT' else ProfileCreateInput
         else:
             if cls.is_localized(profile):
                 input_class = LocalizationProfileUpdateInput
@@ -58,7 +60,6 @@ class ProfileView(View):
                 input_class = ProfileUpdateInput
 
         return input_class(**json)
-
 
     @classmethod
     async def collection_get(cls, request):
@@ -97,6 +98,30 @@ class ProfileView(View):
 
         response = {"data": RootSerializer(data).data,
                     "access": access}
+        return response
+
+    @classmethod
+    async def post(cls, request):
+        validate_accreditation(request, "profile")
+        # import and validate data
+
+        body = await cls.get_input(request)
+        # export data back to dict
+        data = body.data.dict_without_none()
+
+        category_id = data['relatedCategory']
+        category = await db.read_category(category_id)  # ensure exists
+        validate_access_token(request, category, body.access)
+
+        await cls.get_state_class(data).on_put(data, category)
+
+        access = set_access_token(request, data)
+        await db.insert_profile(data)
+
+        response = {
+            "data": RootSerializer(data).data,
+            "access": access,
+        }
         return response
 
     @classmethod

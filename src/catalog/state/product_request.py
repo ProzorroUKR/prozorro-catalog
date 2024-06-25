@@ -7,7 +7,6 @@ class ProductRequestState(BaseState):
 
     @classmethod
     async def on_post(cls, data):
-        data["id"] = uuid4().hex
         data["dateCreated"] = get_now().isoformat()
         data["owner"] = get_request().user.name
         for doc in data.get("documents", []):

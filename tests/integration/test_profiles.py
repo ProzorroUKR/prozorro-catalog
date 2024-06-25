@@ -157,6 +157,41 @@ async def test_310_profile_create(api, category):
     assert resp_json["errors"] == ["Related category doesn't have agreementID"]
 
 
+async def test_profile_post(api, category):
+    category_id = category['data']['id']
+
+    profile_id = '{}-{}'.format(randint(100000, 900000), category_id)
+
+    profile = api.get_fixture_json('profile')
+    profile['id'] = profile_id
+    profile['relatedCategory'] = category_id
+    test_profile = {
+        "access": dict(category['access']),
+        "data": profile,
+    }
+
+    resp = await api.post('/api/profiles', json=test_profile, auth=TEST_AUTH_NO_PERMISSION)
+    assert resp.status == 403
+    assert {'errors': ["Forbidden 'profile' write operation"]} == await resp.json()
+
+    resp = await api.post('/api/profiles', json=test_profile, auth=TEST_AUTH)
+    assert resp.status == 400, await resp.json()
+    assert {'errors': ['extra fields not permitted: data.id']} == await resp.json()
+
+    test_profile["data"].pop("id", None)
+    resp = await api.post('/api/profiles', json=test_profile, auth=TEST_AUTH)
+    assert resp.status == 201, await resp.json()
+    resp = await resp.json()
+    assert 'access' in resp
+    assert 'token' in resp['access']
+    profile_id = resp['data']['id']
+
+    resp = await api.get(f"/api/profiles/{profile_id}")
+    assert resp.status == 200
+    resp_json = await resp.json()
+    assert resp_json['data']['id'] == profile_id
+
+
 async def test_311_profile_limit_offset(api, category):
     category_id = category['data']['id']
 

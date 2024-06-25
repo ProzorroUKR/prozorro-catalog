@@ -1,6 +1,5 @@
 import random
 from copy import deepcopy
-from uuid import uuid4
 
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPConflict, HTTPNotFound
@@ -53,7 +52,6 @@ class ProductView(View):
         body = ProductCreateInput(**json)
         # export data back to dict
         data = body.data.dict_without_none()
-        data["id"] = uuid4().hex
 
         category_id = data["relatedCategory"]
         profile_ids = data.get("relatedProfiles", "")
