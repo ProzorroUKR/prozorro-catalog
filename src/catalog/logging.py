@@ -56,6 +56,8 @@ def setup_logging():
     handler.setFormatter(formatter)
     logging.basicConfig(level=logging.DEBUG, handlers=[handler])
 
+    logging.getLogger('pymongo').setLevel(logging.WARNING)
+
     # serve alternative logging for uncaught exceptions
     def exception_logging(exc_type, exc_value, exc_traceback):
         logging.exception(f'Exception {exc_type} raised', exc_info=exc_value)
