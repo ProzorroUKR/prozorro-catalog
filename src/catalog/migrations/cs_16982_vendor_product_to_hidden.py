@@ -26,13 +26,13 @@ async def migrate():
         collection = get_products_collection()
 
         date_start = "2024-01-01"
-        date_end = "2024-05-28"
+        date_end = "2024-05-29"
 
         async for obj in collection.find(
             {
                 "vendor": {"$exists": True},
                 "status": {"$ne": ProductStatus.hidden},
-                "dateCreated": {"$gte": date_start, "$lte": date_end},
+                "dateCreated": {"$gte": date_start, "$lt": date_end},
             },
             projection={"_id": 1}
         ):
