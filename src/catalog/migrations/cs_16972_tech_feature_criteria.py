@@ -69,7 +69,7 @@ async def migrate_categories(session):
     counter = 0
     collection = get_category_collection()
     async for obj in collection.find(
-        {"_id": {"$ne": EXCLUDE_CATEGORY_ID}},
+        {"_id": {"$ne": EXCLUDE_CATEGORY_ID}, "criteria": {"$exists": True}, "status": {"$ne": "hidden"}},
         projection={"_id": 1, "criteria": 1}
     ):
         if updated_criteria := update_criteria(obj["criteria"]):
@@ -97,7 +97,7 @@ async def migrate_profiles(session):
     counter = 0
     collection = get_profiles_collection()
     async for obj in collection.find(
-        {"relatedCategory": {"$ne": EXCLUDE_CATEGORY_ID}},
+        {"relatedCategory": {"$ne": EXCLUDE_CATEGORY_ID}, "criteria": {"$exists": True}, "status": {"$ne": "hidden"}},
         projection={"_id": 1, "criteria": 1}
     ):
         if updated_criteria := update_criteria(obj["criteria"]):
