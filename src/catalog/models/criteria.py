@@ -1,5 +1,6 @@
 from typing import Optional, Set, Union, List
 from uuid import uuid4
+from enum import Enum
 from pydantic import (
     Field,
     root_validator,
@@ -93,6 +94,18 @@ class RequirementBaseValidators(BaseModel):
         return values
 
 
+class EligibleEvidenceType(str, Enum):
+    statement = "statement"
+    document = "document"
+
+
+class EligibleEvidence(BaseModel):
+    id: str = Field(regex=r"^[0-9A-Za-z_-]{1,32}$", default_factory=lambda: uuid4().hex)
+    title: constr(strip_whitespace=True, min_length=1, max_length=250)
+    description: Optional[str] = Field(None, max_length=1000)
+    type: Optional[EligibleEvidenceType]
+
+
 class ProfileRequirementCreateData(RequirementBaseValidators):
     title: constr(strip_whitespace=True, min_length=1, max_length=250)
     dataType: DataTypeEnum = Field(None, max_length=100)
@@ -109,6 +122,8 @@ class ProfileRequirementCreateData(RequirementBaseValidators):
     expectedValues: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]]
     expectedMinItems: Optional[PositiveInt] = None
     expectedMaxItems: Optional[PositiveInt] = None
+
+    eligibleEvidences: Optional[List[EligibleEvidence]] = Field(None, max_items=100)
 
     @property
     def id(self):
@@ -138,6 +153,8 @@ class ProfileRequirementUpdateData(BaseModel):
     expectedMinItems: Optional[PositiveInt]
     expectedMaxItems: Optional[PositiveInt]
 
+    eligibleEvidences: Optional[List[EligibleEvidence]] = Field(None, max_items=100)
+
 
 class RequirementUpdateData(ProfileRequirementUpdateData):
     isArchived: Optional[bool] = None
@@ -161,6 +178,8 @@ class Requirement(RequirementBaseValidators):
     expectedValues: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]]
     expectedMinItems: Optional[PositiveInt] = None
     expectedMaxItems: Optional[PositiveInt] = None
+
+    eligibleEvidences: Optional[List[EligibleEvidence]] = Field(None, max_items=100)
 
 
 class RequirementGroupsCreateData(BaseModel):
@@ -188,9 +207,9 @@ class RequirementGroup(BaseModel):
 class LegislationIdentifier(BaseModel):
     id: str
     scheme: Optional[str] = Field(None, min_length=1, max_length=250)
-    legalName: Optional[str] = Field(None, min_length=1, max_length=250)
-    legalName_en: Optional[str] = Field(None, min_length=1, max_length=250)
-    legalName_ru: Optional[str] = Field(None, min_length=1, max_length=250)
+    legalName: Optional[str] = Field(None, min_length=1, max_length=500)
+    legalName_en: Optional[str] = Field(None, min_length=1, max_length=500)
+    legalName_ru: Optional[str] = Field(None, min_length=1, max_length=500)
     uri: Optional[str] = None
 
 
@@ -211,6 +230,7 @@ class CriterionCreateData(BaseModel):
     description: str = Field(..., min_length=1, max_length=250)
     legislation: Optional[List[LegislationItem]] = Field(None, min_items=1, max_items=100)
     classification: Optional[CriterionClassification] = None
+    source: str = "tenderer"
 
     @property
     def id(self):
@@ -233,9 +253,10 @@ class Criterion(BaseModel):
     id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     requirementGroups: List[RequirementGroup] = Field(..., min_items=1, max_items=100)
     title: str = Field(..., min_length=1, max_length=250)
-    description: str = Field(..., min_length=1, max_length=250)
+    description: str = Field(..., min_length=1, max_length=1000)
     legislation: Optional[List[LegislationItem]] = Field(None, min_items=1, max_items=100)
     classification: Optional[CriterionClassification] = None
+    source: str = "tenderer"
 
 
 CriterionCreateInput = AuthorizedInput[CriterionCreateData]
