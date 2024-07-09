@@ -29,14 +29,14 @@ class Counters:
 
 async def migrate_categories(session):
     bulk = []
-    counters = Counters()
+    counter = 0
     collection = get_category_collection()
 
     async for category in collection.find(
         {"procuringEntity": {"$exists": True}},
         projection={"_id": 1, "procuringEntity": 1}
     ):
-        counters.total_categories += 1
+        counter += 1
         now = get_now().isoformat()
 
         bulk.append(
@@ -50,78 +50,107 @@ async def migrate_categories(session):
         )
 
         if bulk and len(bulk) % 500 == 0:
-            await bulk_update(collection, bulk, session, counters, migrated_obj="categories")
+            await bulk_update(collection, bulk, session, counter, migrated_obj="categories")
             bulk = []
 
-        counters.total_profiles += await migrate_profiles(session, category)
-        counters.total_products += await migrate_products(session, category)
-
     if bulk:
-        await bulk_update(collection, bulk, session, counters, migrated_obj="categories")
+        await bulk_update(collection, bulk, session, counter, migrated_obj="categories")
 
-    logger.info(f"Finished. Processed {counters} records")
+    logger.info(f"Finished. Processed {counter} Category records")
 
 
-async def migrate_profiles(session, category):
+async def migrate_profiles(session):
     bulk = []
     counter = 0
     collection = get_profiles_collection()
 
-    async for obj in collection.find(
-        {"relatedCategory": category["_id"]},
-        projection={"_id": 1}
-    ):
+    pipeline = [
+        {"$match": {"relatedCategory": {"$exists": True}}},
+        {"$lookup": {
+            "from": get_category_collection().name,
+            "localField": "relatedCategory",
+            "foreignField": "_id",
+            "as": "category"
+        }},
+        {"$unwind": "$category"},
+        {"$project": {
+            "_id": 1,
+            "relatedCategory": 1,
+            "procuringEntity": "$category.procuringEntity"
+        }}
+    ]
+
+    async for obj in collection.aggregate(pipeline):
+        if not obj.get("procuringEntity"):
+            continue
         counter += 1
         now = get_now().isoformat()
         bulk.append(
             UpdateOne(
                 filter={"_id": obj["_id"]},
-                update={"$set": {"marketAdministrator": category["procuringEntity"], "dateModified": now}}
+                update={"$set": {"marketAdministrator": obj["procuringEntity"], "dateModified": now}}
             )
         )
 
         if bulk and len(bulk) % 500 == 0:
-            await bulk_update(collection, bulk, session, counter, migrated_obj="profiles", use_logging=False)
+            await bulk_update(collection, bulk, session, counter, migrated_obj="profiles")
             bulk = []
 
     if bulk:
-        await bulk_update(collection, bulk, session, counter, migrated_obj="profiles", use_logging=False)
+        await bulk_update(collection, bulk, session, counter, migrated_obj="profiles")
 
-    return counter
+    logger.info(f"Finished. Processed {counter} Profiles records")
 
 
-async def migrate_products(session, category):
+async def migrate_products(session):
     bulk = []
     counter = 0
     collection = get_products_collection()
 
-    async for obj in collection.find(
-            {"relatedCategory": category["_id"]},
-            projection={"_id": 1}
-    ):
+    pipeline = [
+        {"$match": {"relatedCategory": {"$exists": True}}},
+        {"$lookup": {
+            "from": get_category_collection().name,
+            "localField": "relatedCategory",
+            "foreignField": "_id",
+            "as": "category"
+        }},
+        {"$unwind": "$category"},
+        {"$project": {
+            "_id": 1,
+            "relatedCategory": 1,
+            "procuringEntity": "$category.procuringEntity"
+        }}
+    ]
+
+    async for obj in collection.aggregate(pipeline):
+        if not obj.get("procuringEntity"):
+            continue
         counter += 1
         now = get_now().isoformat()
         bulk.append(
             UpdateOne(
                 filter={"_id": obj["_id"]},
-                update={"$set": {"marketAdministrator": category["procuringEntity"], "dateModified": now}}
+                update={"$set": {"marketAdministrator": obj["procuringEntity"], "dateModified": now}}
             )
         )
 
         if bulk and len(bulk) % 500 == 0:
-            await bulk_update(collection, bulk, session, counter, migrated_obj="products", use_logging=False)
+            await bulk_update(collection, bulk, session, counter, migrated_obj="products")
             bulk = []
 
     if bulk:
-        await bulk_update(collection, bulk, session, counter, migrated_obj="products", use_logging=False)
+        await bulk_update(collection, bulk, session, counter, migrated_obj="products")
 
-    return counter
+    logger.info(f"Finished. Processed {counter} Products records")
 
 
 async def migrate():
     logger.info("Start migration")
     async with transaction_context_manager() as session:
         await migrate_categories(session)
+        await migrate_profiles(session)
+        await migrate_products(session)
     logger.info("Successfully migrated")
 
 
