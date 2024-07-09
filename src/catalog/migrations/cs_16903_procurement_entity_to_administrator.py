@@ -27,7 +27,7 @@ class Counters:
     total_products: int = 0
 
 
-async def migrate_categories(session):
+async def migrate_categories():
     bulk = []
     counter = 0
     collection = get_category_collection()
@@ -50,16 +50,18 @@ async def migrate_categories(session):
         )
 
         if bulk and len(bulk) % 500 == 0:
-            await bulk_update(collection, bulk, session, counter, migrated_obj="categories")
+            async with transaction_context_manager() as session:
+                await bulk_update(collection, bulk, session, counter, migrated_obj="categories")
             bulk = []
 
     if bulk:
-        await bulk_update(collection, bulk, session, counter, migrated_obj="categories")
+        async with transaction_context_manager() as session:
+            await bulk_update(collection, bulk, session, counter, migrated_obj="categories")
 
     logger.info(f"Finished. Processed {counter} Category records")
 
 
-async def migrate_profiles(session):
+async def migrate_profiles():
     bulk = []
     counter = 0
     collection = get_profiles_collection()
@@ -96,16 +98,18 @@ async def migrate_profiles(session):
         )
 
         if bulk and len(bulk) % 500 == 0:
-            await bulk_update(collection, bulk, session, counter, migrated_obj="profiles")
+            async with transaction_context_manager() as session:
+                await bulk_update(collection, bulk, session, counter, migrated_obj="profiles")
             bulk = []
 
     if bulk:
-        await bulk_update(collection, bulk, session, counter, migrated_obj="profiles")
+        async with transaction_context_manager() as session:
+            await bulk_update(collection, bulk, session, counter, migrated_obj="profiles")
 
     logger.info(f"Finished. Processed {counter} Profiles records")
 
 
-async def migrate_products(session):
+async def migrate_products():
     bulk = []
     counter = 0
     collection = get_products_collection()
@@ -142,25 +146,22 @@ async def migrate_products(session):
         )
 
         if bulk and len(bulk) % 500 == 0:
-            await bulk_update(collection, bulk, session, counter, migrated_obj="products")
+            async with transaction_context_manager() as session:
+                await bulk_update(collection, bulk, session, counter, migrated_obj="products")
             bulk = []
 
     if bulk:
-        await bulk_update(collection, bulk, session, counter, migrated_obj="products")
+        async with transaction_context_manager() as session:
+            await bulk_update(collection, bulk, session, counter, migrated_obj="products")
 
     logger.info(f"Finished. Processed {counter} Products records")
 
 
 async def migrate():
     logger.info("Start migration")
-    async with transaction_context_manager() as session:
-        await migrate_categories(session)
-
-    async with transaction_context_manager() as session:
-        await migrate_profiles(session)
-
-    async with transaction_context_manager() as session:
-        await migrate_products(session)
+    await migrate_categories()
+    await migrate_profiles()
+    await migrate_products()
     logger.info("Successfully migrated")
 
 
