@@ -84,3 +84,6 @@ CACHE_BACKEND = MongoDBBackend(
     cache_name=DB_NAME,
     expire_after=EXPIRE_CACHE_AFTER,
 )
+
+
+CPB_USERNAME = "cpb"

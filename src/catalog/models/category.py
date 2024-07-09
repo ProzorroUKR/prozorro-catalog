@@ -5,7 +5,7 @@ from uuid import uuid4
 from pydantic import Field, validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, AuthorizedInput, Response, CreateResponse
-from catalog.models.common import Classification, Image, ProcuringEntity, Unit, AGREEMENT_ID_REGEX
+from catalog.models.common import Classification, Image, CategoryMarketAdministrator, Unit, AGREEMENT_ID_REGEX
 from catalog.models.criteria import Criterion
 from catalog.utils import get_now
 from enum import Enum
@@ -18,7 +18,7 @@ class CategoryStatus(str, Enum):
 
 class BaseCategoryCreateData(BaseModel):
     classification: Classification
-    procuringEntity: ProcuringEntity
+    marketAdministrator: CategoryMarketAdministrator
     title: Optional[str] = Field(None, min_length=1, max_length=80)
     unit: Optional[Unit]
     description: Optional[str] = Field(None, min_length=1, max_length=1000)
@@ -51,7 +51,7 @@ class DeprecatedCategoryCreateData(BaseCategoryCreateData):
         """
         if "classification" in values and values["classification"].id[:8] not in v:
             raise ValueError('id must include cpv')
-        if "procuringEntity" in values and values["procuringEntity"].identifier.id not in v:
+        if "marketAdministrator" in values and values["marketAdministrator"].identifier.id not in v:
             raise ValueError('id must include edr')
         return v
 
@@ -71,7 +71,7 @@ class Category(BaseModel):
     The Catalog Profile
     """
     classification: Classification
-    procuringEntity: ProcuringEntity
+    marketAdministrator: CategoryMarketAdministrator
     id: str = Field(..., regex=r"^[0-9A-Za-z_-]{20,32}$")
     title: Optional[str] = Field(..., min_length=1, max_length=80)
     unit: Unit

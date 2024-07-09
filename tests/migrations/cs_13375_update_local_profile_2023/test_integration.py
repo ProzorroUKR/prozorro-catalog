@@ -58,7 +58,6 @@ async def test_migrate_products(db, api, profile):
     # product_data_4["requirementResponses"][0]["requirement"] = UUID("0" * 32, version=4).hex
     # await db.products.insert_one(product_data_4)
     counters = await migrate()
-    import pdb; pdb.set_trace()
     assert counters.total_products == 4
     assert counters.updated_products == 3
     assert counters.skipped_products == 1

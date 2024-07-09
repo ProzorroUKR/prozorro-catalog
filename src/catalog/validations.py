@@ -186,7 +186,7 @@ def validate_criteria_max_items_on_post(obj: dict, obj_title: str):
 
 
 def validate_contributor_banned_categories(category: dict, contributor: dict):
-    category_administrator = category.get("procuringEntity", {}).get("identifier", {}).get("id")
+    category_administrator = category.get("marketAdministrator", {}).get("identifier", {}).get("id")
     for ban in contributor.get("bans", []):
         ban_administrator = ban.get("administrator", {}).get("identifier", {}).get("id")
         if ban_administrator == category_administrator\
@@ -208,7 +208,7 @@ def validate_contributor_ban_already_exists(contributor: dict, administrator_id)
 
 def validate_category_administrator(administrator_data: dict, category: dict):
     if administrator_data.get("administrator", {}).get("identifier", {}).get("id") != \
-            category.get("procuringEntity", {}).get("identifier", {}).get("id"):
+            category.get("marketAdministrator", {}).get("identifier", {}).get("id"):
         raise HTTPBadRequest(text="only administrator who is related to product category can moderate product request.")
 
 

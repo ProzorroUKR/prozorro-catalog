@@ -31,7 +31,7 @@ class CategoryState(BaseState):
 
             if before.get("agreementID", "") != after.get("agreementID", ""):
                 await validate_agreement(after)
-                await cls.update_profiles_agreement_id(after)
+                await cls.update_profiles_agreement_id(before, after)
 
             if before.get("additionalClassifications", "") != after.get("additionalClassifications", ""):
                 await validate_medicine_additional_classifications(after)
@@ -39,14 +39,14 @@ class CategoryState(BaseState):
         super().on_patch(before, after)
 
     @classmethod
-    async def update_profiles_agreement_id(cls, category):
-        agreement_id = category["agreementID"]
+    async def update_profiles_agreement_id(cls, before, after):
+        agreement_id = after["agreementID"]
         bulk = []
         profiles_collection = get_profiles_collection()
-        async for profile in profiles_collection.find({"relatedCategory": category["id"]}):
+        async for profile in profiles_collection.find({"relatedCategory": after["id"]}):
             bulk.append(
                 UpdateOne(
-                    filter={"_id": profile["_id"]},
+                    filter={"_id": profile["_id"], "agreementID": before.get("agreementID")},
                     update={"$set": {
                         "agreementID": agreement_id, "dateModified": get_now().isoformat()}
                     }

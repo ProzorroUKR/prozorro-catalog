@@ -6,7 +6,14 @@ from pydantic import Field, validator, constr, StrictInt, StrictFloat, StrictBoo
 
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, CreateResponse, AuthorizedInput
-from catalog.models.common import Image, Classification, Address, ContactPoint, Identifier
+from catalog.models.common import (
+    Image,
+    Classification,
+    Address,
+    ContactPoint,
+    Identifier,
+    CategoryMarketAdministrator,
+)
 from catalog.models.document import Document
 from catalog.utils import get_now
 from enum import Enum
@@ -141,6 +148,7 @@ class ProductUpdateData(ProductRequirementResponses):
 
 class Product(BaseProductData):
     id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
+    marketAdministrator: CategoryMarketAdministrator
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     dateCreated: Optional[datetime]  # creation product with request by contributor
     relatedProfiles: Optional[List[str]]

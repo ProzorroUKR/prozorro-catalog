@@ -1,5 +1,5 @@
 from catalog.models.user import User
-from catalog.settings import AUTH_DATA
+from catalog.settings import AUTH_DATA, CPB_USERNAME
 from aiohttp.helpers import BasicAuth
 from aiohttp.web import HTTPUnauthorized, HTTPForbidden
 from hashlib import sha256
@@ -35,12 +35,22 @@ def validate_access_token(request, obj, access):
         obj['access']['token'],
     ):
         raise HTTPForbidden(text='Access token mismatch')
-    if not compare_digest(request.user.name, obj['access']['owner']):
+
+    admin_id = obj.get("marketAdministrator", {}).get("identifier", {}).get("id", "")
+
+    if (
+        not compare_digest(request.user.name, obj['access']['owner'])
+        and not compare_digest(request.user.name, admin_id)
+        and not compare_digest(request.user.name, CPB_USERNAME)
+    ):
         raise HTTPForbidden(text='Owner mismatch')
 
 
 def validate_accreditation(request, item_name):
-    if request.user.name not in AUTH_DATA.get(item_name, ""):
+    if (
+        request.user.name not in AUTH_DATA.get(item_name, "")
+        and request.user.name != CPB_USERNAME
+    ):
         raise HTTPForbidden(text=f"Forbidden '{item_name}' write operation")
 
 

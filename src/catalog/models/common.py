@@ -161,17 +161,24 @@ class ProcuringEntity(Organization):
     kind: ProcuringEntityKind
 
 
-class MarketAdministratorIdentifier(BaseModel):
+class BaseAdministratorIdentifier(BaseModel):
     id: str = Field(..., min_length=4, max_length=50)
     scheme: str = Field(..., min_length=1, max_length=20)
-    legalName_en: str = Field(..., min_length=1, max_length=250)
-    legalName_uk: str = Field(..., min_length=1, max_length=250)
 
     @validator("scheme")
     def scheme_standard(cls, v):
         if v not in ORA_CODES:
             raise ValueError("must be one of organizations/identifier_scheme.json codes")
         return v
+
+
+class MarketAdministratorIdentifier(BaseAdministratorIdentifier):
+    legalName_en: str = Field(..., min_length=1, max_length=250)
+    legalName_uk: str = Field(..., min_length=1, max_length=250)
+
+
+class CategoryAdministratorIdentifier(BaseAdministratorIdentifier):
+    legalName: str = Field(..., min_length=1, max_length=250)
 
 
 class MarketAdministrator(BaseModel):
@@ -183,3 +190,7 @@ class MarketAdministrator(BaseModel):
         if identifier not in ADMINISTRATOR_IDENTIFIERS:
             raise ValueError("must be one of market administrators")
         return value
+
+
+class CategoryMarketAdministrator(MarketAdministrator, ProcuringEntity):
+    identifier: CategoryAdministratorIdentifier

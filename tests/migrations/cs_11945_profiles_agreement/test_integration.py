@@ -56,7 +56,7 @@ async def test_migrate_profiles_one_scenario_ok(load_agreements_mock, api, categ
                     "scheme": "KMU777"
                 }
             ],
-            "procuringEntity": {"identifier": {"id": "test.prozorro.ua"}},
+            "marketAdministrator": {"identifier": {"id": "test.prozorro.ua"}},
             "agreementType": "electronicCatalogue",
             "status": "active"
         }
@@ -119,7 +119,7 @@ async def test_migrate_500_profiles(load_agreements_mock, api, category):
                     "scheme": "KMU777"
                 }
             ],
-            "procuringEntity": {"identifier": {"id": "test.prozorro.ua"}},
+            "marketAdministrator": {"identifier": {"id": "test.prozorro.ua"}},
             "agreementType": "electronicCatalogue",
             "status": "active"
         }

@@ -5,7 +5,14 @@ from uuid import uuid4
 from pydantic import Field
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, CreateResponse, AuthorizedInput
-from catalog.models.common import Unit, Value, Image, Classification, AGREEMENT_ID_REGEX
+from catalog.models.common import (
+    Unit,
+    Value,
+    Image,
+    Classification,
+    CategoryMarketAdministrator,
+    AGREEMENT_ID_REGEX,
+)
 from catalog.models.criteria import Criterion
 from catalog.utils import get_now
 from enum import Enum
@@ -119,6 +126,7 @@ class Profile(BaseModel):
         max_length=1000,
     )
     status: ProfileStatus = ProfileStatus.active
+    marketAdministrator: CategoryMarketAdministrator
     unit: Optional[Unit]
     value: Value
     relatedCategory: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
