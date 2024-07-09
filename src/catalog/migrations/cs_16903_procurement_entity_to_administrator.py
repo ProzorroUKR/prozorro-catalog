@@ -65,7 +65,10 @@ async def migrate_profiles(session):
     collection = get_profiles_collection()
 
     pipeline = [
-        {"$match": {"relatedCategory": {"$exists": True}}},
+        {"$match": {
+            "relatedCategory": {"$exists": True},
+            "marketAdministrator": {"$exists": False}}
+        },
         {"$lookup": {
             "from": get_category_collection().name,
             "localField": "relatedCategory",
@@ -76,19 +79,19 @@ async def migrate_profiles(session):
         {"$project": {
             "_id": 1,
             "relatedCategory": 1,
-            "procuringEntity": "$category.procuringEntity"
+            "marketAdministrator": "$category.marketAdministrator"
         }}
     ]
 
     async for obj in collection.aggregate(pipeline):
-        if not obj.get("procuringEntity"):
+        if not obj.get("marketAdministrator"):
             continue
         counter += 1
         now = get_now().isoformat()
         bulk.append(
             UpdateOne(
                 filter={"_id": obj["_id"]},
-                update={"$set": {"marketAdministrator": obj["procuringEntity"], "dateModified": now}}
+                update={"$set": {"marketAdministrator": obj["marketAdministrator"], "dateModified": now}}
             )
         )
 
@@ -108,7 +111,10 @@ async def migrate_products(session):
     collection = get_products_collection()
 
     pipeline = [
-        {"$match": {"relatedCategory": {"$exists": True}}},
+        {"$match": {
+            "relatedCategory": {"$exists": True},
+            "marketAdministrator": {"$exists": False}}
+        },
         {"$lookup": {
             "from": get_category_collection().name,
             "localField": "relatedCategory",
@@ -119,19 +125,19 @@ async def migrate_products(session):
         {"$project": {
             "_id": 1,
             "relatedCategory": 1,
-            "procuringEntity": "$category.procuringEntity"
+            "marketAdministrator": "$category.marketAdministrator"
         }}
     ]
 
     async for obj in collection.aggregate(pipeline):
-        if not obj.get("procuringEntity"):
+        if not obj.get("marketAdministrator"):
             continue
         counter += 1
         now = get_now().isoformat()
         bulk.append(
             UpdateOne(
                 filter={"_id": obj["_id"]},
-                update={"$set": {"marketAdministrator": obj["procuringEntity"], "dateModified": now}}
+                update={"$set": {"marketAdministrator": obj["marketAdministrator"], "dateModified": now}}
             )
         )
 
@@ -149,7 +155,11 @@ async def migrate():
     logger.info("Start migration")
     async with transaction_context_manager() as session:
         await migrate_categories(session)
+
+    async with transaction_context_manager() as session:
         await migrate_profiles(session)
+
+    async with transaction_context_manager() as session:
         await migrate_products(session)
     logger.info("Successfully migrated")
 
