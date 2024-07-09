@@ -28,7 +28,7 @@ class ProfileState(LocalizationProfileState):
 
     @classmethod
     async def on_put(cls, data, category):
-        fields_from_category = ["unit", "classification", "agreementID"]
+        fields_from_category = ["unit", "classification", "agreementID", "marketAdministrator"]
 
         for i in fields_from_category:
             if category.get(i):

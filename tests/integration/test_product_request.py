@@ -174,7 +174,7 @@ async def test_product_request_in_banned_category(api, mock_agreement, contribut
 
     # create category
     category_data = api.get_fixture_json('category')
-    category_data["procuringEntity"]["identifier"]["id"] = ban["administrator"]["identifier"]["id"]
+    category_data["marketAdministrator"]["identifier"]["id"] = ban["administrator"]["identifier"]["id"]
     category_data["id"] = f'{category_data["id"][:13]}-{ban["administrator"]["identifier"]["id"]}'
     resp = await api.put(
         f"/api/categories/{category_data['id']}",
@@ -219,7 +219,7 @@ async def test_product_request_in_banned_category_with_due_date(api, mock_agreem
 
     # create category
     category_data = api.get_fixture_json('category')
-    category_data["procuringEntity"]["identifier"]["id"] = ban["administrator"]["identifier"]["id"]
+    category_data["marketAdministrator"]["identifier"]["id"] = ban["administrator"]["identifier"]["id"]
     category_data["id"] = f'{category_data["id"][:13]}-{ban["administrator"]["identifier"]["id"]}'
     resp = await api.put(
         f"/api/categories/{category_data['id']}",
@@ -264,7 +264,7 @@ async def test_product_request_in_banned_category_with_expired_due_date(api, moc
 
     # create category
     category_data = api.get_fixture_json('category')
-    category_data["procuringEntity"]["identifier"]["id"] = ban["administrator"]["identifier"]["id"]
+    category_data["marketAdministrator"]["identifier"]["id"] = ban["administrator"]["identifier"]["id"]
     category_data["id"] = f'{category_data["id"][:13]}-{ban["administrator"]["identifier"]["id"]}'
     resp = await api.put(
         f"/api/categories/{category_data['id']}",
@@ -536,7 +536,8 @@ async def test_product_request_rejection(api, product_request):
 async def test_product_request_moderation_by_non_related_administrator(api, contributor, mock_agreement):
     # create category
     category_data = deepcopy(api.get_fixture_json('category'))
-    category_data["id"] = category_data["procuringEntity"]["identifier"]["id"] = "33190000-0000-40996564"
+    category_data["id"] = "33190000-0000-40996564"
+    category_data["marketAdministrator"]["identifier"]["id"] = "40996564"
     resp = await api.put(
         f"/api/categories/{category_data['id']}",
         json={"data": category_data},

@@ -39,7 +39,7 @@ class ContributorProductRequestView(BaseView):
         validate_contributor_banned_categories(category, contributor)
 
         data["contributor_id"] = contributor["id"]
-        await cls.state.on_post(data)
+        await cls.state.on_post(data, category)
         await db.insert_product_request(data)
 
         return {"data": ProductRequestSerializer(data).data}
@@ -88,7 +88,7 @@ class ProductRequestAcceptionView(BaseView):
             acceptation_date = get_now().isoformat()
             data["date"] = acceptation_date
             product_request.update({"acception": data})
-            await cls.state.on_accept(product_request, acceptation_date)
+            await cls.state.on_accept(product_request, category, acceptation_date)
 
         # add product to the market
         access = set_access_token(request, product_request["product"])

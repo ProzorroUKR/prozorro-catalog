@@ -18,7 +18,7 @@ async def test_110_category_create(api, mock_agreement):
     category_id = '{}-{}-{}'.format(
         test_category['classification']['id'][:8],
         randint(1000, 9999),
-        test_category['procuringEntity']['identifier']['id']
+        test_category['marketAdministrator']['identifier']['id']
     )
     test_category['id'] = category_id
 
@@ -158,7 +158,7 @@ async def test_111_limit_offset(api, mock_agreement):
         category_id = '{}-{}-{}'.format(
             test_category['classification']['id'][:8],
             randint(1000, 9999),
-            test_category['procuringEntity']['identifier']['id']
+            test_category['marketAdministrator']['identifier']['id']
         )
         test_category_copy['id'] = category_id
         resp = await api.put(f'/api/categories/{category_id}',
@@ -259,7 +259,7 @@ async def test_120_category_patch(api, category):
     category_id = category["data"]['id']
     patch_category_bad = {
         "data": {
-            "procuringEntity": {
+            "marketAdministrator": {
                 "address": {
                     "countryName": "Україна",
                     "locality": "Київ",

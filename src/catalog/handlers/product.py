@@ -6,7 +6,7 @@ from aiohttp.web import HTTPConflict, HTTPNotFound
 from pymongo.errors import OperationFailure
 
 from catalog import db
-from catalog.models.product import ProductStatus, ProductCreateInput, ProductUpdateInput
+from catalog.models.product import ProductCreateInput, ProductUpdateInput
 from catalog.swagger import class_view_swagger_path
 from catalog.utils import pagination_params, get_now, async_retry
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
@@ -17,10 +17,13 @@ from catalog.validations import (
     validate_patch_vendor_product,
     validate_medicine_additional_classifications,
 )
+from catalog.state.product import ProductState
 
 
 @class_view_swagger_path('/app/swagger/products')
 class ProductView(View):
+
+    state_class = ProductState
 
     @classmethod
     async def collection_get(cls, request):
@@ -54,14 +57,10 @@ class ProductView(View):
         data = body.data.dict_without_none()
 
         category_id = data["relatedCategory"]
-        profile_ids = data.get("relatedProfiles", "")
         category = await db.read_category(category_id)  # ensure exists
         validate_access_token(request, category, body.access)
-        validate_product_to_category(category, data)
-        for profile_id in profile_ids:
-            profile = await db.read_profile(profile_id)
-            validate_product_to_profile(profile, data)
-        await validate_medicine_additional_classifications(data)
+
+        await cls.state_class.on_post(data, category)
 
         access = set_access_token(request, data)
         data["dateModified"] = get_now().isoformat()
@@ -83,20 +82,10 @@ class ProductView(View):
             validate_access_token(request, product, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
-            category_id = data.get("relatedCategory") or product['relatedCategory']
-            category = await db.read_category(category_id)
-
-            # update profile with valid data
-            data['dateModified'] = get_now().isoformat()
             product_before = deepcopy(product)
+            data['dateModified'] = get_now().isoformat()
             product.update(data)
-            if product.get("status", ProductStatus.active) != ProductStatus.hidden:
-                validate_product_to_category(category, product, product_before)
-                profile_ids = product.get("relatedProfiles", "")
-                for profile_id in profile_ids:
-                    profile = await db.read_profile(profile_id)
-                    validate_product_to_profile(profile, product)
-            if product_before.get("additionalClassifications", "") != product.get("additionalClassifications", ""):
-                await validate_medicine_additional_classifications(product)
+
+            await cls.state_class.on_patch(product_before, product)
 
         return {"data": ProductSerializer(product).data}
