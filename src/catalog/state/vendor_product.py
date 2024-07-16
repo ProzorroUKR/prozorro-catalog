@@ -8,7 +8,7 @@ from catalog.validations import (
 
 class VendorProductState(ProductState):
 
-    check_classification = True
+    check_classification = False
 
     @classmethod
     async def on_post(cls, data, vendor):

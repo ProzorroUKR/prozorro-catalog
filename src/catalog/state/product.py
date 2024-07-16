@@ -14,7 +14,7 @@ from catalog.models.product import ProductStatus
 class ProductState(BaseState):
 
     category_fields_to_copy = ["marketAdministrator"]
-    check_classification = False
+    check_classification = True
 
     @classmethod
     async def on_post(cls, data, category):
