@@ -2,7 +2,7 @@ from random import randint
 from copy import deepcopy
 from unittest.mock import patch, AsyncMock
 from urllib.parse import quote
-from .base import TEST_AUTH, TEST_AUTH_ANOTHER, TEST_AUTH_NO_PERMISSION
+from .base import TEST_AUTH, TEST_AUTH_CPB
 from .conftest import set_requirements_to_responses
 
 
@@ -239,13 +239,18 @@ async def test_420_product_patch(api, category, profile, product):
         assert resp.status == 200
 
     # try to hide product without patching additionalClassifications snd without medicine validation
+    # try edit product with master access
+
     patch_product = {
         "data": {
             "status": "hidden",
         },
-        "access": product['access']
+        "access": {
+            "owner": "cpb",
+            "token": "321e8b0b4fc725c525d38de6e458965f"
+        }
     }
-    resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH)
+    resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH_CPB)
     assert resp.status == 200
     resp_json = await resp.json()
     assert resp_json['data']['status'] == 'hidden'
