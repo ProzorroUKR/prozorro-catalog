@@ -1,5 +1,5 @@
 from catalog.models.user import User
-from catalog.settings import AUTH_DATA, CPB_USERNAME
+from catalog.settings import AUTH_DATA, CPB_USERNAME, CPB_TOKEN
 from aiohttp.helpers import BasicAuth
 from aiohttp.web import HTTPUnauthorized, HTTPForbidden
 from hashlib import sha256
@@ -30,9 +30,11 @@ def validate_access_token(request, obj, access):
     token = get_access_token(request, access)
     if not token:
         raise HTTPUnauthorized(text='Require access token')
-    if not compare_digest(  # https://docs.python.org/3/library/secrets.html#secrets.compare_digest
-        hash_access_token(token),
-        obj['access']['token'],
+
+    hash_token = hash_access_token(token)
+    if (
+        not compare_digest(hash_token, obj['access']['token'])
+        and not (compare_digest(hash_token, CPB_TOKEN) and compare_digest(request.user.name, CPB_USERNAME))
     ):
         raise HTTPForbidden(text='Access token mismatch')
 
