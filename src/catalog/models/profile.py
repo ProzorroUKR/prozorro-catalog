@@ -47,7 +47,7 @@ class BaseProfileCreateData(BaseModel):
         max_length=1000,
     )
     status: ProfileStatus = ProfileStatus.active
-    value: Value
+    value: Optional[Value]
     relatedCategory: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     images: Optional[List[Image]] = Field(None, max_items=100)
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
@@ -128,7 +128,7 @@ class Profile(BaseModel):
     status: ProfileStatus = ProfileStatus.active
     marketAdministrator: CategoryMarketAdministrator
     unit: Optional[Unit]
-    value: Value
+    value: Optional[Value]
     relatedCategory: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     images: Optional[List[Image]] = Field(None, max_items=100)
     classification: Classification
