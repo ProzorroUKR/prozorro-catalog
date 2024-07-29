@@ -39,8 +39,8 @@ class BaseProfileCreateData(BaseModel):
         min_length=1,
         max_length=250,
     )
-    description: str = Field(
-        ...,
+    description: Optional[str] = Field(
+        None,
         title='Profile Description',
         description='Profile details',
         min_length=1,
@@ -118,8 +118,8 @@ class Profile(BaseModel):
         min_length=1,
         max_length=250,
     )
-    description: str = Field(
-        ...,
+    description: Optional[str] = Field(
+        None,
         title='Profile Description',
         description='Profile details',
         min_length=1,

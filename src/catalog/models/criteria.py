@@ -227,7 +227,7 @@ class CriterionClassification(BaseModel):
 
 class CriterionCreateData(BaseModel):
     title: str = Field(..., min_length=1, max_length=250)
-    description: str = Field(..., min_length=1, max_length=250)
+    description: str = Field(..., min_length=1, max_length=500)
     legislation: Optional[List[LegislationItem]] = Field(None, min_items=1, max_items=100)
     classification: Optional[CriterionClassification] = None
     source: str = "tenderer"
@@ -244,7 +244,7 @@ class CriterionCreateData(BaseModel):
 class CriterionUpdateData(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=250)
     code: Optional[str] = Field(None, regex=r"^[0-9A-Za-z_-]{1,32}$")
-    description: Optional[str] = Field(None, min_length=1, max_length=250)
+    description: Optional[str] = Field(None, min_length=1, max_length=500)
     legislation: Optional[List[LegislationItem]] = Field(None, min_items=1, max_items=100)
     classification: Optional[CriterionClassification] = None
 

@@ -97,7 +97,7 @@ class BaseProductCreateData(ProductRequirementResponses):
     title: str = Field(..., min_length=1, max_length=160)
     # When we will have moved to new logic, we should remove max_items validation
     relatedCategory: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
-    description: str = Field(..., min_length=1, max_length=1000)
+    description: Optional[str] = Field(None, min_length=1, max_length=1000)
     classification: Classification
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
     identifier: VendorProductIdentifier
