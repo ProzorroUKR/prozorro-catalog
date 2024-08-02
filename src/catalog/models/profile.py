@@ -51,6 +51,7 @@ class BaseProfileCreateData(BaseModel):
     relatedCategory: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     images: Optional[List[Image]] = Field(None, max_items=100)
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
+    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
 
     @property
     def criteria(self):

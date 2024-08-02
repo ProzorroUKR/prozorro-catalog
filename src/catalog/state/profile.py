@@ -28,11 +28,18 @@ class ProfileState(LocalizationProfileState):
 
     @classmethod
     async def on_put(cls, data, category):
-        fields_from_category = ["unit", "classification", "agreementID", "marketAdministrator"]
+        fields_from_category = ["unit", "classification", "marketAdministrator"]
+
+        if not (agreement_id := data.get("agreementID")):
+            fields_from_category.append("agreementID")
 
         for i in fields_from_category:
             if category.get(i):
                 data[i] = category[i]
             else:
                 raise HTTPBadRequest(text=f"Related category doesn't have {i}")
+
+        if agreement_id:
+            await validate_agreement(data)
+
         await super().on_put(data, category)
