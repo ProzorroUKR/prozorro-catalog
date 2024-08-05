@@ -27,13 +27,16 @@ def validate_req_response_values(requirement, values, key):
         raise HTTPBadRequest(text=f'requirement {key} should have values')
     data_type = requirement.get("dataType")
     data_type = TYPEMAP.get(data_type)
+
     for value in values:
         if not data_type or not isinstance(value, data_type):
             raise HTTPBadRequest(text=f'requirement {key} value has unexpected type')
+        if requirement.get("dataType") == "number" and isinstance(value, bool):
+            raise HTTPBadRequest(text=f'requirement {key} value has unexpected type')
 
         if (
-                'expectedValue' in requirement
-                and value != requirement['expectedValue']
+            'expectedValue' in requirement
+            and value != requirement['expectedValue']
         ):
             raise HTTPBadRequest(text=f'requirement {key} unexpected value')
         if 'minValue' in requirement and value < requirement['minValue']:
@@ -55,13 +58,12 @@ def validate_req_response_values(requirement, values, key):
 def validate_req_response(req_response, requirement):
     value = req_response.get('value')
     values = req_response.get('values')
-    if value and values:
+    if value is not None and values:
         raise HTTPBadRequest(text="please leave only one field 'values'")
     values = [value] if value is not None else values
     key = req_response.get('requirement')
 
-    if any(i in requirement for i in ('expectedValue', 'expectedValues', 'minValue', 'maxValue', 'pattern')):
-        validate_req_response_values(requirement, values, key)
+    validate_req_response_values(requirement, values, key)
 
 
 def validate_product_req_responses_to_category(category: dict, product: dict, product_before=None):
