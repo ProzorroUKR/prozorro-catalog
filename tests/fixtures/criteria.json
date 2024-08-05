@@ -56,8 +56,11 @@
               "expectedValues": ["ONE_A", "ONE_B", "ONE_C"],
               "expectedMinItems": 1,
               "expectedMaxItems": 1
+            },
+            {
+              "dataType": "boolean",
+              "title": "Рандомний"
             }
-
           ]
         }
       ],
