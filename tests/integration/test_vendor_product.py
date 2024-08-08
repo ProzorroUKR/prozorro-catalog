@@ -188,7 +188,7 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
                 {
                     "title": "Метод аналізу",
                     "dataType": "string",
-                    "expectedValue": "ІХА",
+                    "expectedValues": ["ІХА", "FOO"],
                 },
                 {
                     "title": "Специфічність",
@@ -198,6 +198,7 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
                         "name": "%"
                     },
                     "minValue": 95,
+                    "maxValue": 103,
                 }
             ]
         }]

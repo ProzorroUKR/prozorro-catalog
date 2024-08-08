@@ -335,7 +335,7 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     requirement_data = {
         "access": profile["access"],
         "data": {
-            "title": "Три шари або більше",
+            "title": "Тест allOf_1",
             "dataType": "string",
             "expectedMinItems": 3,
         }
@@ -403,6 +403,48 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     assert resp_json["errors"] == [
         "expectedMinItems couldn't be greater then count of items in expectedValues: data.__root__"
     ]
+    # check values with category requirement
+    requirement_data["data"]["expectedMinItems"] = 1
+    requirement_data["data"]["expectedMaxItems"] = 2
+    # expectedValues another than in category criteria
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "requirement 'Тест allOf_1' expectedValues should have values from category requirement"
+    ]
+
+    # expectedMinItems less than in category requirement
+    requirement_data["data"]["expectedValues"] = ["ALL_A", "ALL_B"]
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "requirement 'Тест allOf_1' expectedMinItems should be equal or greater than in category"
+    ]
+
+    requirement_data["data"]["expectedValues"] = ["ALL_A", "ALL_B", "ALL_C"]
+    requirement_data["data"]["expectedMinItems"] = 3
+    requirement_data["data"]["expectedMaxItems"] = 3
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 201
+    resp_json = await resp.json()
+    assert "expectedValue" not in resp_json["data"][0]
+    assert "minValue" not in resp_json["data"][0]
+    assert "maxValue" not in resp_json["data"][0]
+    assert "expectedValues" in resp_json["data"][0]
 
     del requirement_data["data"]["expectedMinItems"]
     del requirement_data["data"]["expectedMaxItems"]
@@ -419,8 +461,47 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
         "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data.__root__"
     ]
 
-    del requirement_data["data"]["expectedValues"]
-    requirement_data["data"]["maxValue"] = ""
+    # create requirement without dataType
+    requirement_data["data"] = {
+        "title": "Виріб оснащений носовим зажимом",
+    }
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "requirement 'Виріб оснащений носовим зажимом' dataType should be 'boolean' like in category"
+    ]
+    # create requirement without expectedValue
+    requirement_data["data"]["dataType"] = "boolean"
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "requirement 'Виріб оснащений носовим зажимом' expectedValue should be like in category"
+    ]
+
+    # create requirement with another expectedValue than in category requirement
+    requirement_data["data"]["expectedValue"] = False
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "requirement 'Виріб оснащений носовим зажимом' expectedValue should be like in category"
+    ]
+
+    requirement_data["data"]["maxValue"] = True
     resp = await api.post(
         f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
         json=requirement_data,
@@ -431,51 +512,6 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     assert resp_json["errors"] == [
         "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data.__root__"
     ]
-
-    del requirement_data["data"]["expectedValue"]
-    requirement_data["data"]["expectedValues"] = ["value1", "value2", "value3", "value4"]
-    resp = await api.post(
-        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
-        json=requirement_data,
-        auth=TEST_AUTH,
-    )
-    assert resp.status == 400
-    resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedValues couldn't exists together with one of ['minValue', 'maxValue', 'expectedValue']: data.__root__"
-    ]
-
-    del requirement_data["data"]["maxValue"]
-    requirement_data["data"]["title"] = "Тест allOf_1"
-    resp = await api.post(
-        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
-        json=requirement_data,
-        auth=TEST_AUTH,
-    )
-    assert resp.status == 201
-    resp_json = await resp.json()
-    assert "expectedMinItems" not in resp_json["data"][0]
-    assert "expectedMaxItems" not in resp_json["data"][0]
-    assert "expectedValue" not in resp_json["data"][0]
-    assert "minValue" not in resp_json["data"][0]
-    assert "maxValue" not in resp_json["data"][0]
-    assert "expectedValues" in resp_json["data"][0]
-
-    requirement_data["data"]["expectedMinItems"] = 1
-    requirement_data["data"]["expectedMaxItems"] = 3
-    requirement_data["data"]["title"] = "Тест allOf_2"
-    resp = await api.post(
-        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
-        json=requirement_data,
-        auth=TEST_AUTH,
-    )
-    assert resp.status == 201
-    resp_json = await resp.json()
-    assert "isArchived" not in resp_json["data"][0]
-    assert "expectedMinItems" in resp_json["data"][0]
-    assert "expectedMaxItems" in resp_json["data"][0]
-    assert "expectedValues" in resp_json["data"][0]
-    assert resp_json["data"][0]["title"] == "Тест allOf_2"
 
     category_id = category["data"]["id"]
     c_criteria_id = category["data"]["criteria"][0]["id"]
@@ -491,7 +527,11 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     resp_json = await resp.json()
     assert resp_json["data"]["isArchived"] is True
 
-    requirement_data["data"]["title"] = "Одноразова"
+    requirement_data["data"] = {
+        "title": "Одноразова",
+        "dataType": "string",
+        "expectedValue": "одноразова",
+    }
     resp = await api.post(
         f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
         json=requirement_data,
@@ -515,6 +555,44 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
         f"requirement '{requirement_data['data']['title']}' not found in category {category['data']['id']}"
     ]
 
+    # check maxValue and minValue
+    requirement_data["data"] = {
+        "dataType": "number",
+        "minValue": 30,
+        "title": "50 штук",
+    }
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "requirement '50 штук' minValue should be equal or greater than in category"
+    ]
+
+    requirement_data["data"]["minValue"] = 50
+    requirement_data["data"]["maxValue"] = 28
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+         "minValue couldn't be greater than maxValue: data.__root__"
+    ]
+
+    requirement_data["data"]["maxValue"] = 55.5
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 201
+
 
 async def test_331_requirement_patch(api, profile_without_criteria):
     profile = profile_without_criteria
@@ -524,9 +602,10 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     requirement_data = {
         "access": profile["access"],
         "data": {
-            "title": "Одноразова",
+            "title": "Тест allOf_3",
             "dataType": "string",
-            "expectedValues": ["value1", "value2", "value3", "value4"],
+            "expectedValues": ["ONE_A", "ONE_B"],
+            "expectedMaxItems": 1
         }
     }
 
@@ -536,7 +615,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
         auth=TEST_AUTH,
     )
 
-    # assert resp.status == 201
+    assert resp.status == 201
     resp_json = await resp.json()
     requirement_id = resp_json["data"][0]["id"]
 
@@ -559,7 +638,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedMinItems couldn't be greater then count of items in expectedValues: __root__"
+        "expectedMinItems couldn't be greater then expectedMaxItems: __root__"
     ]
 
     resp = await api.patch(
@@ -619,10 +698,10 @@ async def test_331_requirement_patch(api, profile_without_criteria):
 
     resp = await api.patch(
         f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
-        json={"data": {"expectedMinItems": 3}, "access": profile["access"]},
+        json={"data": {"expectedMinItems": 1}, "access": profile["access"]},
         auth=TEST_AUTH,
     )
     assert resp.status == 200
     resp_json = await resp.json()
-    assert resp_json["data"]["expectedMinItems"] == 3
+    assert resp_json["data"]["expectedMinItems"] == 1
     assert set(resp_json["data"]["expectedValues"]) == set(requirement_data["data"]["expectedValues"])
