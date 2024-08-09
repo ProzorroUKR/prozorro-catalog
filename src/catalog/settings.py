@@ -52,7 +52,7 @@ assert IMG_STORE_DIR_LEVELS * IMG_STORE_DIR_NAME_LEN < 32, "We only use 32 long 
 
 CATALOG_DATA = os.getenv("CATALOG_DATA")
 
-OPENPROCUREMENT_API_URL = os.environ.get("OPENPROCUREMENT_API_URL", "http://127.0.0.1:8000/api/0")
+OPENPROCUREMENT_API_URL = os.environ.get("OPENPROCUREMENT_API_URL", "http://api.master.k8s.prozorro.gov.ua/api/2.5")
 
 
 DOC_SERVICE_URL = os.environ.get("DOC_SERVICE_URL", "https://docs.prozorro.gov.ua")
