@@ -184,6 +184,7 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
                         "code": "P1",
                         "name": "%"
                     },
+                    "minValue": 90,
                     "maxValue": 110,
                 }
             ]

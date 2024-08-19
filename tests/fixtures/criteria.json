@@ -24,7 +24,8 @@
           "requirements": [
             {
               "dataType": "string",
-              "expectedValue": "одноразова",
+              "expectedValues": ["одноразова"],
+              "expectedMinItems": 1,
               "title": "Одноразова"
             },
             {
