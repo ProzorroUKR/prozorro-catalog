@@ -221,18 +221,18 @@ class RequirementGroup(BaseModel):
 
 class LegislationIdentifier(BaseModel):
     id: str
+    uri: str = Field(..., min_length=1)
     scheme: Optional[str] = Field(None, min_length=1, max_length=250)
     legalName: Optional[str] = Field(None, min_length=1, max_length=500)
     legalName_en: Optional[str] = Field(None, min_length=1, max_length=500)
     legalName_ru: Optional[str] = Field(None, min_length=1, max_length=500)
-    uri: Optional[str] = None
 
 
 class LegislationItem(BaseModel):
     identifier: LegislationIdentifier
-    version: Optional[str] = Field(None, min_length=1, max_length=250)
-    type: str = "NATIONAL_LEGISLATION"
-    article: Optional[str] = Field(None, min_length=1, max_length=250)
+    version: str = Field(..., min_length=1, max_length=250)
+    type: str = Field("NATIONAL_LEGISLATION", min_length=1, max_length=100)
+    article: str = Field(..., min_length=1, max_length=250)
 
 
 class CriterionClassification(BaseModel):
@@ -241,11 +241,11 @@ class CriterionClassification(BaseModel):
 
 
 class CriterionCreateData(BaseModel):
+    classification: CriterionClassification
     title: str = Field(..., min_length=1, max_length=250)
-    description: str = Field(..., min_length=1, max_length=500)
-    legislation: Optional[List[LegislationItem]] = Field(None, min_items=1, max_items=100)
-    classification: Optional[CriterionClassification] = None
-    source: str = "tenderer"
+    description: str = Field(..., min_length=1, max_length=1000)
+    legislation: List[LegislationItem] = Field(..., min_items=1, max_items=100)
+    source: str = Field("tenderer", min_length=1, max_length=100)
 
     @property
     def id(self):
@@ -259,7 +259,7 @@ class CriterionCreateData(BaseModel):
 class CriterionUpdateData(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=250)
     code: Optional[str] = Field(None, regex=r"^[0-9A-Za-z_-]{1,32}$")
-    description: Optional[str] = Field(None, min_length=1, max_length=500)
+    description: Optional[str] = Field(None, min_length=1, max_length=1000)
     legislation: Optional[List[LegislationItem]] = Field(None, min_items=1, max_items=100)
     classification: Optional[CriterionClassification] = None
 

@@ -155,6 +155,19 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
     criteria_data = {"criteria": [{
         "title": "Технічні характеристики предмета закупівлі",
         "description": "Тести швидкі для визначення інфекційних захворювань",
+        "legislation": [{
+            "identifier": {
+                "id": "identifier_id",
+                "legalName": "legal_name",
+                "uri": "http://example.com",
+            },
+            "version": "1.0.0",
+            "article": "22.2.3"
+        }],
+        "classification": {
+            "id": "classification_id",
+            "scheme": "scheme",
+        },
         "requirementGroups": [{
             "description": "Технічні характеристики",
             "requirements": [
@@ -182,6 +195,19 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
     criteria_data = {"criteria": [{
         "title": "Технічні характеристики предмета закупівлі",
         "description": "Тести швидкі для визначення інфекційних захворювань",
+        "legislation": [{
+            "identifier": {
+                "id": "identifier_id",
+                "legalName": "legal_name",
+                "uri": "http://example.com",
+            },
+            "version": "1.0.0",
+            "article": "22.2.3"
+        }],
+        "classification": {
+            "id": "classification_id",
+            "scheme": "scheme",
+        },
         "requirementGroups": [{
             "description": "Технічні характеристики",
             "requirements": [
