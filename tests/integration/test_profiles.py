@@ -23,7 +23,8 @@ async def create_blank_criterion(api, profile):
                         "legalName": "legal_name",
                         "uri": "http://example.com",
                     },
-                    "version": "1.0.0"
+                    "version": "1.0.0",
+                    "article": "22.2.3"
                 }],
                 "classification": {
                     "id": "classification_id",

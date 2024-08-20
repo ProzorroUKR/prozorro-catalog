@@ -38,7 +38,7 @@ CRITERIA_ADDITIONAL_DATA = {
             "identifier": {
                 "uri": "https://zakon.rada.gov.ua/laws/show/922-19#Text",
                 "id": "922-VIII",
-                "legalName": "Про публічні закупівлі"
+                "legalName": "Закон України \"Про публічні закупівлі\""
             },
             "article": "22.2.3"
         },

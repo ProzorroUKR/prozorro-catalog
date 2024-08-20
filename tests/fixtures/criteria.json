@@ -2,6 +2,22 @@
   "criteria": [
     {
       "description": "Спосіб використання (одноразова або багаторазова)",
+      "classification": {
+        "scheme": "ESPD211",
+        "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES"
+      },
+      "legislation": [
+        {
+          "version": "2024-04-19",
+          "type": "NATIONAL_LEGISLATION",
+          "identifier": {
+            "uri": "https://zakon.rada.gov.ua/laws/show/922-19#Text",
+            "id": "922-VIII",
+            "legalName": "Закон України \"Про публічні закупівлі\""
+          },
+          "article": "22.2.3"
+        }
+      ],
       "requirementGroups": [
         {
           "description": "Спосіб використання - одноразова",
