@@ -64,7 +64,7 @@ def update_criteria(criteria):
     return criteria
 
 
-async def migrate_categories(session):
+async def migrate_categories():
     bulk = []
     counter = 0
     collection = get_category_collection()
@@ -83,16 +83,18 @@ async def migrate_categories(session):
             )
 
         if bulk and len(bulk) % 500 == 0:
-            await bulk_update(collection, bulk, session, counter, migrated_obj="categories")
+            async with transaction_context_manager() as session:
+                await bulk_update(collection, bulk, session, counter, migrated_obj="categories")
             bulk = []
 
     if bulk:
-        await bulk_update(collection, bulk, session, counter, migrated_obj="categories")
+        async with transaction_context_manager() as session:
+            await bulk_update(collection, bulk, session, counter, migrated_obj="categories")
 
     logger.info(f"Finished. Processed {counter} records of migrated categories")
 
 
-async def migrate_profiles(session):
+async def migrate_profiles():
     bulk = []
     counter = 0
     collection = get_profiles_collection()
@@ -111,20 +113,21 @@ async def migrate_profiles(session):
             )
 
         if bulk and len(bulk) % 500 == 0:
-            await bulk_update(collection, bulk, session, counter, migrated_obj="profiles")
+            async with transaction_context_manager() as session:
+                await bulk_update(collection, bulk, session, counter, migrated_obj="profiles")
             bulk = []
 
     if bulk:
-        await bulk_update(collection, bulk, session, counter, migrated_obj="profiles")
+        async with transaction_context_manager() as session:
+            await bulk_update(collection, bulk, session, counter, migrated_obj="profiles")
 
     logger.info(f"Finished. Processed {counter} records of migrated profiles")
 
 
 async def migrate():
     logger.info("Start migration")
-    async with transaction_context_manager() as session:
-        await migrate_categories(session)
-        await migrate_profiles(session)
+    await migrate_categories()
+    await migrate_profiles()
     logger.info("Successfully migrated")
 
 
