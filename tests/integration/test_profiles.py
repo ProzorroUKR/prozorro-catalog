@@ -336,7 +336,7 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     requirement_data = {
         "access": profile["access"],
         "data": {
-            "title": "Тест allOf_1",
+            "title": "Тест allOf_3",
             "dataType": "string",
             "expectedMinItems": 3,
         }
@@ -416,11 +416,11 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "requirement 'Тест allOf_1' expectedValues should have values from category requirement"
+        "requirement 'Тест allOf_3' expectedValues should have values from category requirement"
     ]
 
     # expectedMinItems less than in category requirement
-    requirement_data["data"]["expectedValues"] = ["ALL_A", "ALL_B"]
+    requirement_data["data"]["expectedValues"] = ["ONE_A", "ONE_B"]
     resp = await api.post(
         f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
         json=requirement_data,
@@ -429,12 +429,12 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "requirement 'Тест allOf_1' expectedMinItems should be equal or greater than in category"
+        "requirement 'Тест allOf_3' expectedMaxItems should be equal or less than in category"
     ]
 
-    requirement_data["data"]["expectedValues"] = ["ALL_A", "ALL_B", "ALL_C"]
-    requirement_data["data"]["expectedMinItems"] = 3
-    requirement_data["data"]["expectedMaxItems"] = 3
+    requirement_data["data"]["expectedValues"] = ["ONE_A", "ONE_B", "ONE_C"]
+    requirement_data["data"]["expectedMinItems"] = 1
+    requirement_data["data"]["expectedMaxItems"] = 1
     resp = await api.post(
         f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
         json=requirement_data,
