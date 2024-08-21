@@ -350,7 +350,6 @@ async def test_130_requirement_create(api, category):
         }
     }
 
-
     resp = await api.post(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
         json=requirement_data,
@@ -387,9 +386,10 @@ async def test_130_requirement_create(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedMinItems couldn't be greater then expectedMaxItems: data.__root__"
+        "expectedMinItems is required when expectedValues exists and should be equal 1: data.__root__"
     ]
 
+    requirement_data["data"]["expectedMinItems"] = 1
     requirement_data["data"]["expectedMaxItems"] = 6
     resp = await api.post(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
@@ -399,19 +399,7 @@ async def test_130_requirement_create(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedMaxItems couldn't be greater then count of items in expectedValues: data.__root__"
-    ]
-
-    requirement_data["data"]["expectedMinItems"] = 5
-    resp = await api.post(
-        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
-        json=requirement_data,
-        auth=TEST_AUTH,
-    )
-    assert resp.status == 400
-    resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedMinItems couldn't be greater then count of items in expectedValues: data.__root__"
+         "expectedMaxItems should be equal 1 or not exist at all: data.__root__"
     ]
 
     del requirement_data["data"]["expectedMinItems"]
@@ -426,7 +414,8 @@ async def test_130_requirement_create(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data.__root__"
+        "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data.__root__",
+        "expectedMinItems is required when expectedValues exists and should be equal 1: data.__root__",
     ]
 
     del requirement_data["data"]["expectedValues"]
@@ -442,6 +431,7 @@ async def test_130_requirement_create(api, category):
         "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data.__root__"
     ]
     del requirement_data["data"]["expectedValue"]
+    requirement_data["data"]["expectedMinItems"] = 1
     requirement_data["data"]["expectedValues"] = ["value1", "value2", "value3", "value4"]
     resp = await api.post(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
@@ -464,7 +454,7 @@ async def test_130_requirement_create(api, category):
     resp_json = await resp.json()
     assert "isArchived" in resp_json["data"][0]
     assert resp_json["data"][0]["isArchived"] is False
-    assert "expectedMinItems" not in resp_json["data"][0]
+    assert "expectedMinItems" in resp_json["data"][0]
     assert "expectedMaxItems" not in resp_json["data"][0]
     assert "expectedValue" not in resp_json["data"][0]
     assert "minValue" not in resp_json["data"][0]
@@ -472,7 +462,7 @@ async def test_130_requirement_create(api, category):
     assert "expectedValues" in resp_json["data"][0]
 
     requirement_data["data"]["expectedMinItems"] = 1
-    requirement_data["data"]["expectedMaxItems"] = 3
+    requirement_data["data"]["expectedMaxItems"] = 1
     requirement_data["data"]["title"] = "Requirement with expectedValues 2"
     resp = await api.post(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
@@ -496,6 +486,7 @@ async def test_131_requirement_patch(api, category):
         "data": {
             "title": "Requirement with expectedValues",
             "dataType": "string",
+            "expectedMinItems": 1,
             "expectedValues": ["value1", "value2", "value3", "value4"],
         }
     }
@@ -529,7 +520,7 @@ async def test_131_requirement_patch(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedMinItems couldn't be greater then count of items in expectedValues: __root__"
+        "expectedMinItems is required when expectedValues exists and should be equal 1: __root__"
     ]
 
     resp = await api.patch(
@@ -540,18 +531,7 @@ async def test_131_requirement_patch(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedMaxItems couldn't be greater then count of items in expectedValues: __root__"
-    ]
-
-    resp = await api.patch(
-        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
-        json={"data": {"expectedMinItems": 6, "expectedMaxItems": 5}, "access": access},
-        auth=TEST_AUTH,
-    )
-    assert resp.status == 400
-    resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedMinItems couldn't be greater then expectedMaxItems: __root__"
+        "expectedMaxItems should be equal 1 or not exist at all: __root__"
     ]
 
     resp = await api.patch(
@@ -589,12 +569,12 @@ async def test_131_requirement_patch(api, category):
 
     resp = await api.patch(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
-        json={"data": {"expectedMinItems": 3}, "access": category["access"]},
+        json={"data": {"expectedMaxItems": 1}, "access": category["access"]},
         auth=TEST_AUTH,
     )
     assert resp.status == 200
     resp_json = await resp.json()
-    assert resp_json["data"]["expectedMinItems"] == 3
+    assert resp_json["data"]["expectedMaxItems"] == 1
     assert set(resp_json["data"]["expectedValues"]) == set(requirement_data["data"]["expectedValues"])
 
 

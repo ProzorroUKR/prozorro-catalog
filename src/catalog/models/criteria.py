@@ -50,6 +50,25 @@ class RequirementBaseValidators(BaseModel):
                 cls._check_value_type(value, values["dataType"])
         return values
 
+
+    @root_validator
+    def validate_available_values(cls, values):
+
+        error_map = {
+            "expectedValue": ["minValue", "maxValue", "expectedValues"],
+            "expectedValues": ["minValue", "maxValue", "expectedValue"],
+        }
+
+        for k, v in error_map.items():
+            if (
+                    values.get(k) is not None
+                    and any(values.get(i) is not None for i in v)
+            ):
+                raise ValueError(f"{k} couldn't exists together with one of {v}")
+        return values
+
+
+class ProfileRequirementValidators(RequirementBaseValidators):
     @root_validator
     def validate_expected_items(cls, values):
         expected_min_items = values.get("expectedMinItems")
@@ -77,20 +96,26 @@ class RequirementBaseValidators(BaseModel):
 
         return values
 
+
+class CategoryRequirementValidators(RequirementBaseValidators):
     @root_validator
-    def validate_available_values(cls, values):
+    def validate_expected_items(cls, values):
+        expected_min_items = values.get("expectedMinItems")
+        expected_max_items = values.get("expectedMaxItems")
+        expected_values = values.get("expectedValues")
 
-        error_map = {
-            "expectedValue": ["minValue", "maxValue", "expectedValues"],
-            "expectedValues": ["minValue", "maxValue", "expectedValue"],
-        }
+        if expected_values:
+            if not expected_min_items or expected_min_items != 1:
+                raise ValueError("expectedMinItems is required when expectedValues exists and should be equal 1")
 
-        for k, v in error_map.items():
-            if (
-                    values.get(k) is not None
-                    and any(values.get(i) is not None for i in v)
-            ):
-                raise ValueError(f"{k} couldn't exists together with one of {v}")
+            if expected_max_items and expected_max_items != 1:
+                raise ValueError("expectedMaxItems should be equal 1 or not exist at all")
+
+        elif expected_min_items or expected_max_items:
+            raise ValueError(
+                "expectedMinItems and expectedMaxItems couldn't exist without expectedValues"
+            )
+
         return values
 
     @root_validator
@@ -121,7 +146,7 @@ class EligibleEvidence(BaseModel):
     type: Optional[EligibleEvidenceType]
 
 
-class ProfileRequirementCreateData(RequirementBaseValidators):
+class BaseRequirementCreateData(BaseModel):
     title: constr(strip_whitespace=True, min_length=1, max_length=250)
     dataType: DataTypeEnum = Field(None, max_length=100)
 
@@ -147,11 +172,15 @@ class ProfileRequirementCreateData(RequirementBaseValidators):
         return new_id
 
 
-class RequirementCreateData(ProfileRequirementCreateData):
+class CategoryRequirementCreateData(BaseRequirementCreateData, CategoryRequirementValidators):
     isArchived: bool = False
 
 
-class ProfileRequirementUpdateData(BaseModel):
+class ProfileRequirementCreateData(BaseRequirementCreateData, ProfileRequirementValidators):
+    pass
+
+
+class BaseRequirementUpdateData(BaseModel):
     title: constr(strip_whitespace=True, min_length=1, max_length=250) = None
     dataType: DataTypeEnum = Field(None, max_length=100)
 
@@ -171,11 +200,15 @@ class ProfileRequirementUpdateData(BaseModel):
     eligibleEvidences: Optional[List[EligibleEvidence]] = Field(None, max_items=100)
 
 
-class RequirementUpdateData(ProfileRequirementUpdateData):
+class CategoryRequirementUpdateData(BaseRequirementUpdateData):
     isArchived: Optional[bool] = None
 
 
-class Requirement(RequirementBaseValidators):
+class ProfileRequirementUpdateData(BaseRequirementUpdateData):
+    pass
+
+
+class Requirement(BaseModel):
     id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     title: str = Field(..., min_length=1, max_length=250)
     dataType: DataTypeEnum = Field(..., max_length=100)
@@ -195,6 +228,14 @@ class Requirement(RequirementBaseValidators):
     expectedMaxItems: Optional[PositiveInt] = None
 
     eligibleEvidences: Optional[List[EligibleEvidence]] = Field(None, max_items=100)
+
+
+class CategoryRequirement(Requirement, CategoryRequirementValidators):
+    pass
+
+
+class ProfileRequirement(Requirement, ProfileRequirementValidators):
+    pass
 
 
 class RequirementGroupsCreateData(BaseModel):
@@ -284,11 +325,11 @@ RGUpdateInput = AuthorizedInput[RequirementGroupsUpdateData]
 RGResponse = Response[RequirementGroup]
 RGListResponse = ListResponse[RequirementGroup]
 
-RequirementCreateInput = AuthorizedInput[RequirementCreateData]
-RequirementUpdateInput = AuthorizedInput[RequirementUpdateData]
+CategoryRequirementCreateInput = AuthorizedInput[CategoryRequirementCreateData]
+CategoryRequirementUpdateInput = AuthorizedInput[CategoryRequirementUpdateData]
 ProfileRequirementCreateInput = AuthorizedInput[ProfileRequirementCreateData]
 ProfileRequirementUpdateInput = AuthorizedInput[ProfileRequirementUpdateData]
-BulkRequirementCreateInput = BulkInput[RequirementCreateData]
+CategoryBulkRequirementCreateInput = BulkInput[CategoryRequirementCreateData]
 ProfileBulkRequirementCreateInput = BulkInput[ProfileRequirementCreateData]
 RequirementResponse = Response[Requirement]
 RequirementListResponse = ListResponse[Requirement]

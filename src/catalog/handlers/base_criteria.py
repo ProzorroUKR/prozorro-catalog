@@ -8,9 +8,6 @@ from catalog.models.criteria import (
     CriterionUpdateInput,
     RGCreateInput,
     RGUpdateInput,
-    RequirementCreateInput,
-    BulkRequirementCreateInput,
-    RequirementUpdateInput,
     Requirement,
 )
 from catalog.serializers.base import RootSerializer
@@ -183,18 +180,11 @@ class BaseCriteriaRGRequirementView(View):
 
     @classmethod
     async def get_body_from_model(cls, request):
-        json = await request.json()
-        body = None
-        if request.method == "POST":
-            if isinstance(json.get("data", {}), dict):
-                body = RequirementCreateInput(**json)
-                body.data = [body.data]
-            elif isinstance(json["data"], list):
-                body = BulkRequirementCreateInput(**json)
-        elif request.method == "PATCH":
-            return RequirementUpdateInput(**json)
+        pass
 
-        return body
+    @classmethod
+    def get_main_model_class(cls):
+        return Requirement
 
     @classmethod
     async def requirement_validations(cls, parent_obj, data):
@@ -248,7 +238,10 @@ class BaseCriteriaRGRequirementView(View):
             # update profile with valid data
             requirement.update(data)
             delete_sent_none_values(requirement, json["data"])
-            Requirement(**requirement)
+
+            requirement_model = cls.get_main_model_class()
+            requirement_model(**requirement)
+
             await cls.requirement_validations(obj, [requirement])
             validate_requirement_title_uniq(obj)
             obj["dateModified"] = get_now().isoformat()

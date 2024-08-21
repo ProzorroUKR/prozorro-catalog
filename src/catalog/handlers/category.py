@@ -9,6 +9,12 @@ from catalog.swagger import class_view_swagger_path
 from catalog.auth import set_access_token, validate_accreditation, validate_access_token
 from catalog.utils import pagination_params, async_retry
 from catalog.models.category import CategoryCreateInput, CategoryUpdateInput, DeprecatedCategoryCreateInput
+from catalog.models.criteria import (
+    CategoryRequirementCreateInput,
+    CategoryBulkRequirementCreateInput,
+    CategoryRequirementUpdateInput,
+    CategoryRequirement,
+)
 from catalog.serializers.base import RootSerializer
 from catalog.state.category import CategoryState
 from catalog.handlers.base_criteria import (
@@ -118,4 +124,20 @@ class CategoryCriteriaRGView(CategoryCriteriaViewMixin, BaseCriteriaRGView):
 
 @class_view_swagger_path('/app/swagger/categories/criterion/requirementGroups/requirements')
 class CategoryCriteriaRGRequirementView(CategoryCriteriaViewMixin, BaseCriteriaRGRequirementView):
-    pass
+    @classmethod
+    async def get_body_from_model(cls, request):
+        json = await request.json()
+        body = None
+        if request.method == "POST":
+            if isinstance(json.get("data", {}), dict):
+                body = CategoryRequirementCreateInput(**json)
+                body.data = [body.data]
+            elif isinstance(json["data"], list):
+                body = CategoryBulkRequirementCreateInput(**json)
+        elif request.method == "PATCH":
+            return CategoryRequirementUpdateInput(**json)
+        return body
+
+    @classmethod
+    def get_main_model_class(cls):
+        return CategoryRequirement
