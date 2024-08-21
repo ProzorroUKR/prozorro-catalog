@@ -27,6 +27,7 @@ from catalog.models.criteria import (
     ProfileRequirementCreateInput,
     ProfileBulkRequirementCreateInput,
     ProfileRequirementUpdateInput,
+    ProfileRequirement,
 )
 from catalog.validations import validate_profile_requirements
 from catalog.state.profile import ProfileState, LocalizationProfileState
@@ -228,6 +229,10 @@ class ProfileCriteriaRGRequirementView(ProfileCriteriaMixin, BaseCriteriaRGRequi
         elif request.method == "PATCH":
             return ProfileRequirementUpdateInput(**json)
         return body
+
+    @classmethod
+    def get_main_model_class(cls):
+        return ProfileRequirement
 
     @classmethod
     async def requirement_validations(cls, parent_obj, data):

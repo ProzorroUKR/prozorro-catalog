@@ -174,6 +174,7 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
                 {
                     "title": "Метод аналізу",
                     "dataType": "string",
+                    "expectedMinItems": 1,
                     "expectedValues": ["ІХА", "FOO", "BAR"]
                 },
                 {
