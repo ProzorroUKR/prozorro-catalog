@@ -50,7 +50,6 @@ class RequirementBaseValidators(BaseModel):
                 cls._check_value_type(value, values["dataType"])
         return values
 
-
     @root_validator
     def validate_available_values(cls, values):
 
@@ -65,6 +64,21 @@ class RequirementBaseValidators(BaseModel):
                     and any(values.get(i) is not None for i in v)
             ):
                 raise ValueError(f"{k} couldn't exists together with one of {v}")
+        return values
+
+    @root_validator
+    def validate_max_min_range(cls, values):
+        min_value = values.get("minValue")
+        max_value = values.get("maxValue")
+        # TODO: remove after migration data type check
+        if (
+                min_value
+                and max_value
+                and isinstance(min_value, TYPEMAP.get(DataTypeEnum.number.value))
+                and isinstance(max_value, TYPEMAP.get(DataTypeEnum.number.value))
+                and min_value > max_value
+        ):
+            raise ValueError("minValue couldn't be greater than maxValue")
         return values
 
 
@@ -116,21 +130,6 @@ class CategoryRequirementValidators(RequirementBaseValidators):
                 "expectedMinItems and expectedMaxItems couldn't exist without expectedValues"
             )
 
-        return values
-
-    @root_validator
-    def validate_max_min_range(cls, values):
-        min_value = values.get("minValue")
-        max_value = values.get("maxValue")
-        # TODO: remove after migration data type check
-        if (
-            min_value
-            and max_value
-            and isinstance(min_value, TYPEMAP.get(DataTypeEnum.number.value))
-            and isinstance(max_value, TYPEMAP.get(DataTypeEnum.number.value))
-            and min_value > max_value
-        ):
-            raise ValueError("minValue couldn't be greater than maxValue")
         return values
 
 
