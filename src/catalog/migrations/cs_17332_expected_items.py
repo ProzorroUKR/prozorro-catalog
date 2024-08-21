@@ -45,7 +45,7 @@ async def migrate():
     collection = get_category_collection()
     async with transaction_context_manager() as session:
         async for obj in collection.find(
-            {"_id": {"$ne": CATEGORY_ID}, "status": {"$ne": "hidden"}},
+            {"_id": {"$ne": CATEGORY_ID}, "status": {"$ne": "hidden"}, "criteria": {"$exists": True}},
             projection={"_id": 1, "criteria": 1}
         ):
             if update_criteria(obj["criteria"]):
