@@ -69,7 +69,7 @@ async def migrate_categories():
     counter = 0
     collection = get_category_collection()
     async for obj in collection.find(
-        {"_id": {"$ne": EXCLUDE_CATEGORY_ID}, "criteria": {"$exists": True}, "status": {"$ne": "hidden"}},
+        {"_id": {"$ne": EXCLUDE_CATEGORY_ID}, "criteria": {"$exists": True}},
         projection={"_id": 1, "criteria": 1}
     ):
         if updated_criteria := update_criteria(obj["criteria"]):
