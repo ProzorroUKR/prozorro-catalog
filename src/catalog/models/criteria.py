@@ -136,8 +136,8 @@ class CategoryRequirementValidators(RequirementBaseValidators):
     def validate_number_requirements(cls, values):
         if (
             values.get("dataType") in (DataTypeEnum.integer.value, DataTypeEnum.number.value)
-            and not values.get("expectedValue")
-            and not values.get("minValue")
+            and values.get("expectedValue") is None
+            and values.get("minValue") is None
         ):
             raise ValueError("minValue is required when dataType number or integer")
         return values

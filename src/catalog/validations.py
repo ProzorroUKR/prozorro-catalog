@@ -169,7 +169,15 @@ def validate_profile_requirements(new_requirements: list, category: dict) -> Non
         cat_data_type = requirements_statuses[key].get("dataType")
         if cat_data_type != req.get("dataType"):
             raise HTTPBadRequest(text=f"requirement '{key}' dataType should be '{cat_data_type}' like in category")
-        if req.get("expectedValue") != requirements_statuses[key].get("expectedValue"):
+        if (
+            req.get("dataType") == "boolean"
+            and any(req.get(field_name) is not None for field_name in ("minValue", "maxValue", "expectedValues"))
+        ):
+            raise HTTPBadRequest(text=f"requirement '{key}': for boolean use only expectedValue")
+        if (
+            "expectedValue" in requirements_statuses[key]
+            and req.get("expectedValue") != requirements_statuses[key]["expectedValue"]
+        ):
             raise HTTPBadRequest(text=f"requirement '{key}' expectedValue should be like in category")
         if expected_values := requirements_statuses[key].get("expectedValues"):
             if set(req.get("expectedValues", [])).difference(set(expected_values)):
