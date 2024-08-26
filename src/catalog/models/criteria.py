@@ -132,6 +132,16 @@ class CategoryRequirementValidators(RequirementBaseValidators):
 
         return values
 
+    @root_validator
+    def validate_number_requirements(cls, values):
+        if (
+            values.get("dataType") in (DataTypeEnum.integer.value, DataTypeEnum.number.value)
+            and values.get("expectedValue") is None
+            and values.get("minValue") is None
+        ):
+            raise ValueError("minValue is required when dataType number or integer")
+        return values
+
 
 class EligibleEvidenceType(str, Enum):
     statement = "statement"
@@ -173,6 +183,10 @@ class BaseRequirementCreateData(BaseModel):
 
 class CategoryRequirementCreateData(BaseRequirementCreateData, CategoryRequirementValidators):
     isArchived: bool = False
+    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat]] = None
+    maxValue: Optional[Union[StrictInt, StrictFloat]] = None
+    minValue: Optional[Union[StrictInt, StrictFloat]] = None
+    expectedValues: Optional[Set[StrictStr]] = None
 
 
 class ProfileRequirementCreateData(BaseRequirementCreateData, ProfileRequirementValidators):
@@ -188,7 +202,7 @@ class BaseRequirementUpdateData(BaseModel):
     period: Optional[Period] = None
 
     pattern: Optional[str] = Field(None, max_length=250)
-    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = None
+    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]
     maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]
     minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]
 
@@ -201,6 +215,10 @@ class BaseRequirementUpdateData(BaseModel):
 
 class CategoryRequirementUpdateData(BaseRequirementUpdateData):
     isArchived: Optional[bool] = None
+    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat]]
+    maxValue: Optional[Union[StrictInt, StrictFloat]]
+    minValue: Optional[Union[StrictInt, StrictFloat]]
+    expectedValues: Optional[Set[StrictStr]]
 
 
 class ProfileRequirementUpdateData(BaseRequirementUpdateData):

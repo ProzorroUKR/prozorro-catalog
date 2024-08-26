@@ -404,6 +404,7 @@ async def test_130_requirement_create(api, category):
 
     del requirement_data["data"]["expectedMinItems"]
     del requirement_data["data"]["expectedMaxItems"]
+    del requirement_data["data"]["expectedValues"]
     requirement_data["data"]["expectedValue"] = "someValue"
 
     resp = await api.post(
@@ -414,12 +415,27 @@ async def test_130_requirement_create(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data.__root__",
-        "expectedMinItems is required when expectedValues exists and should be equal 1: data.__root__",
+        "value is not a valid boolean: data.expectedValue",
+        "value is not a valid integer: data.expectedValue",
+        "value is not a valid float: data.expectedValue",
     ]
 
-    del requirement_data["data"]["expectedValues"]
+    requirement_data["data"]["expectedValue"] = 4
+    requirement_data["data"]["dataType"] = "integer"
     requirement_data["data"]["maxValue"] = ""
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "value is not a valid integer: data.maxValue",
+        "value is not a valid float: data.maxValue",
+    ]
+
+    requirement_data["data"]["maxValue"] = 2
     resp = await api.post(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
         json=requirement_data,
@@ -430,9 +446,9 @@ async def test_130_requirement_create(api, category):
     assert resp_json["errors"] == [
         "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data.__root__"
     ]
+
+    # try to create integer characteristic without minValue/expectedValue
     del requirement_data["data"]["expectedValue"]
-    requirement_data["data"]["expectedMinItems"] = 1
-    requirement_data["data"]["expectedValues"] = ["value1", "value2", "value3", "value4"]
     resp = await api.post(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
         json=requirement_data,
@@ -441,9 +457,27 @@ async def test_130_requirement_create(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedValues couldn't exists together with one of ['minValue', 'maxValue', 'expectedValue']: data.__root__"
+        "minValue is required when dataType number or integer: data.__root__"
     ]
 
+    requirement_data["data"]["minValue"] = 1
+    requirement_data["data"]["expectedValues"] = [2, 3]
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "str type expected: data.expectedValues.0",
+        "str type expected: data.expectedValues.1",
+    ]
+
+    requirement_data["data"]["expectedValues"] = ["value1", "value2", "value3", "value4"]
+    requirement_data["data"]["expectedMinItems"] = 1
+    requirement_data["data"]["dataType"] = "string"
+    del requirement_data["data"]["minValue"]
     del requirement_data["data"]["maxValue"]
     resp = await api.post(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
@@ -536,24 +570,23 @@ async def test_131_requirement_patch(api, category):
 
     resp = await api.patch(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
-        json={"data": {"expectedValue": "value"}, "access": access},
+        json={
+            "data": {
+                "expectedValue": 5,
+                "dataType": "integer",
+                "expectedValues": None,
+                "expectedMinItems": None,
+                "expectedMaxItems": None,
+                "minValue": 0,
+            },
+            "access": access,
+        },
         auth=TEST_AUTH,
     )
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
         "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: __root__"
-    ]
-
-    resp = await api.patch(
-        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
-        json={"data": {"minValue": "value"}, "access": access},
-        auth=TEST_AUTH,
-    )
-    assert resp.status == 400
-    resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedValues couldn't exists together with one of ['minValue', 'maxValue', 'expectedValue']: __root__"
     ]
 
     resp = await api.patch(
