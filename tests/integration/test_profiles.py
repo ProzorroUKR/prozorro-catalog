@@ -622,7 +622,18 @@ async def test_331_requirement_patch(api, profile_without_criteria):
 
     resp = await api.patch(
         f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
-        json={"data": {"expectedMinItems": 3, "expectedValues": []}, "access": access},
+        json={"data": {"expectedMinItems": 1, "expectedValues": []}, "access": access},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedMinItems couldn't be greater then count of items in expectedValues: __root__"
+    ]
+
+    resp = await api.patch(
+        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
+        json={"data": {"expectedMinItems": 3, "expectedValues": None}, "access": access},
         auth=TEST_AUTH,
     )
     assert resp.status == 400

@@ -472,6 +472,7 @@ async def test_130_requirement_create(api, category):
     assert resp_json["errors"] == [
         "str type expected: data.expectedValues.0",
         "str type expected: data.expectedValues.1",
+        "expectedMinItems is required when expectedValues exists and should be equal 1: data.__root__"
     ]
 
     requirement_data["data"]["expectedValues"] = ["value1", "value2", "value3", "value4"]
