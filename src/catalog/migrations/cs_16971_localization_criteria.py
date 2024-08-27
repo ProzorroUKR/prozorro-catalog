@@ -209,7 +209,7 @@ async def migrate_profiles(session):
     counter = 0
     collection = get_profiles_collection()
     async for obj in collection.find(
-        {"relatedCategory": CATEGORY_ID, "status": {"$ne": "hidden"}},
+        {"relatedCategory": CATEGORY_ID},
         projection={"_id": 1, "criteria": 1}
     ):
         counter += 1
@@ -236,7 +236,7 @@ async def migrate_products(session):
     counter = 0
     collection = get_products_collection()
     async for obj in collection.find(
-        {"relatedCategory": CATEGORY_ID, "status": {"$ne": "hidden"}},
+        {"relatedCategory": CATEGORY_ID},
         projection={"_id": 1, "requirementResponses": 1}
     ):
         counter += 1

@@ -99,7 +99,7 @@ async def migrate_profiles():
     counter = 0
     collection = get_profiles_collection()
     async for obj in collection.find(
-        {"relatedCategory": {"$ne": EXCLUDE_CATEGORY_ID}, "criteria": {"$exists": True}, "status": {"$ne": "hidden"}},
+        {"relatedCategory": {"$ne": EXCLUDE_CATEGORY_ID}, "criteria": {"$exists": True}},
         projection={"_id": 1, "criteria": 1}
     ):
         if updated_criteria := update_criteria(obj["criteria"]):
