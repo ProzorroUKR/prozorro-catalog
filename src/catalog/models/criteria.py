@@ -136,6 +136,8 @@ class CategoryRequirementValidators(RequirementBaseValidators):
             raise ValueError(
                 "expectedMinItems and expectedMaxItems couldn't exist without expectedValues"
             )
+        elif values.get("dataType") == DataTypeEnum.string.value:
+            raise ValueError("expectedValues is required when dataType string")
 
         return values
 

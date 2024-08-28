@@ -346,7 +346,6 @@ async def test_130_requirement_create(api, category):
         "data": {
             "title": "Requirement with expectedValues",
             "dataType": "string",
-            "expectedMinItems": 3,
         }
     }
 
@@ -355,6 +354,33 @@ async def test_130_requirement_create(api, category):
         json=requirement_data,
         auth=TEST_AUTH,
     )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedValues is required when dataType string: data.__root__"
+    ]
+
+    requirement_data["data"]["expectedValues"] = []
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "ensure this value has at least 1 items: data.expectedValues",
+        "expectedMinItems is required when expectedValues exists and should be equal 1: data.__root__"
+    ]
+
+    requirement_data["data"]["expectedMinItems"] = 3
+    del requirement_data["data"]["expectedValues"]
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
@@ -418,6 +444,7 @@ async def test_130_requirement_create(api, category):
         "value is not a valid boolean: data.expectedValue",
         "value is not a valid integer: data.expectedValue",
         "value is not a valid float: data.expectedValue",
+        "expectedValues is required when dataType string: data.__root__",
     ]
 
     requirement_data["data"]["expectedValue"] = 4

@@ -180,7 +180,7 @@ def validate_profile_requirements(new_requirements: list, category: dict) -> Non
         ):
             raise HTTPBadRequest(text=f"requirement '{key}' expectedValue should be like in category")
         if expected_values := requirements_statuses[key].get("expectedValues"):
-            if set(req.get("expectedValues", [])).difference(set(expected_values)):
+            if not req.get("expectedValues") or set(req["expectedValues"]).difference(set(expected_values)):
                 raise HTTPBadRequest(
                     text=f"requirement '{key}' expectedValues should have values from category requirement"
                 )
