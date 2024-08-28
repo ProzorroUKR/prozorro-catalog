@@ -10,6 +10,7 @@ from pydantic import (
     StrictStr,
     PositiveInt,
     constr,
+    conset,
 )
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, BulkInput, ListResponse, AuthorizedInput
@@ -87,9 +88,9 @@ class ProfileRequirementValidators(RequirementBaseValidators):
     def validate_expected_items(cls, values):
         expected_min_items = values.get("expectedMinItems")
         expected_max_items = values.get("expectedMaxItems")
-        expected_values = values.get("expectedValues")
+        expected_values = values.get("expectedValues", [])
 
-        if expected_values:
+        if expected_values is not None:
             if expected_min_items and expected_max_items and expected_min_items > expected_max_items:
                 raise ValueError("expectedMinItems couldn't be greater then expectedMaxItems")
 
@@ -116,19 +117,27 @@ class CategoryRequirementValidators(RequirementBaseValidators):
     def validate_expected_items(cls, values):
         expected_min_items = values.get("expectedMinItems")
         expected_max_items = values.get("expectedMaxItems")
-        expected_values = values.get("expectedValues")
+        expected_values = values.get("expectedValues", [])
 
-        if expected_values:
+        if expected_values is not None:
             if not expected_min_items or expected_min_items != 1:
                 raise ValueError("expectedMinItems is required when expectedValues exists and should be equal 1")
 
             if expected_max_items and expected_max_items != 1:
                 raise ValueError("expectedMaxItems should be equal 1 or not exist at all")
 
+            if expected_min_items > len(expected_values) or (expected_max_items and expected_max_items > len(expected_values)):
+                raise ValueError(
+                    "count of items in expectedValues should be equal or greater "
+                    "than expectedMinItems/expectedMaxItems values"
+                )
+
         elif expected_min_items or expected_max_items:
             raise ValueError(
                 "expectedMinItems and expectedMaxItems couldn't exist without expectedValues"
             )
+        elif values.get("dataType") == DataTypeEnum.string.value:
+            raise ValueError("expectedValues is required when dataType string")
 
         return values
 
@@ -186,7 +195,7 @@ class CategoryRequirementCreateData(BaseRequirementCreateData, CategoryRequireme
     expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat]] = None
     maxValue: Optional[Union[StrictInt, StrictFloat]] = None
     minValue: Optional[Union[StrictInt, StrictFloat]] = None
-    expectedValues: Optional[Set[StrictStr]] = None
+    expectedValues: Optional[conset(StrictStr, min_items=1)] = None
 
 
 class ProfileRequirementCreateData(BaseRequirementCreateData, ProfileRequirementValidators):
