@@ -22,11 +22,12 @@ EXCLUDE_CATEGORY_ID = "99999999-919912-02426097"
 
 
 CRITERIA_ADDITIONAL_DATA = {
-    "title": "Вимоги до специфікації предмету закупівлі",
+    "title": "Технічні, якісні та кількісні характеристики предмету закупівлі",
     "description": "Учасники процедури закупівлі повинні надати у складі "
-                   "тендерних пропозицій інформацію та документи, які підтверджують "
-                   "відповідність тендерної пропозиції учасника технічним, якісним, "
-                   "кількісним та іншим вимогам до предмета закупівлі, установленим замовником",
+                   "тендерних пропозицій інформацію та документи, які "
+                   "підтверджують відповідність тендерної пропозиції учасника "
+                   "технічним, якісним, кількісним та іншим вимогам до предмета "
+                   "закупівлі, установленим замовником",
     "classification": {
         "scheme": "ESPD211",
         "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES"
@@ -57,10 +58,16 @@ CRITERIA_ADDITIONAL_DATA = {
     "source": "tenderer",
 }
 
+NEW_CRITERION_RG_DATA = {
+    "description": "Підтверджується, що"
+}
+
 
 def update_criteria(criteria):
     for criterion in criteria:
         criterion.update(CRITERIA_ADDITIONAL_DATA)
+        for rg in criterion.get("requirementGroups", ""):
+            rg.update(NEW_CRITERION_RG_DATA)
     return criteria
 
 
