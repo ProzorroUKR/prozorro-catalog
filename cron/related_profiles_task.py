@@ -32,7 +32,7 @@ async def run_task():
     counters = Counters()
     bulk = []
 
-    async for category in category_collection.find({}, projection={"_id": 1}):
+    async for category in category_collection.find({}, projection={"_id": 1}, no_cursor_timeout=True):
         category_id = category["_id"]
         profiles = await profiles_collection.find(
             {
@@ -40,10 +40,11 @@ async def run_task():
                 "status": {"$ne": ProfileStatus.hidden},
                 "criteria": {"$exists": True}
             },
-            projection={"criteria": 1}
+            projection={"criteria": 1},
+            no_cursor_timeout=True,
         ).to_list(None)
 
-        async for product in products_collection.find(
+        product_cursor = products_collection.find(
             {
                 "relatedCategory": category_id,
                 "vendor": {"$exists": False},
@@ -51,7 +52,11 @@ async def run_task():
                 "status": ProductStatus.active
             },
             projection={"requirementResponses": 1, "relatedProfiles": 1, "relatedCategory": 1},
-        ):
+            no_cursor_timeout=True
+        )
+        product_cursor.batch_size(1000)
+
+        async for product in product_cursor:
 
             related_profiles = await get_product_relatedProfiles(product, profiles)
 
@@ -93,7 +98,6 @@ async def get_product_relatedProfiles(product, profiles):
 
         profile_requirements_ids = set(profile_requirements.keys())
         if not profile_requirements_ids.issubset({rr["requirement"] for rr in product.get("requirementResponses", "")}):
-            logger.info(f"Product({product['_id']}) don't have responses for all profile({profile['_id']}) requirements")
             continue
 
         is_valid_profile = False
@@ -111,7 +115,6 @@ async def get_product_relatedProfiles(product, profiles):
                 is_valid_profile = is_valid_req_response_values(requirement, rr.get("values"))
 
             if not is_valid_profile:
-                logger.info(f"Requirement {req_key} in product {product['_id']} not valid for profile {profile['_id']}")
                 break
 
         if is_valid_profile:
