@@ -114,6 +114,9 @@ async def get_product_relatedProfiles(product, profiles):
             elif 'expectedValues' in requirement:
                 is_valid_profile = is_valid_req_response_values(requirement, rr.get("values"))
 
+            else:
+                is_valid_profile = is_valid_data_type(requirement, rr.get("value"))
+
             if not is_valid_profile:
                 break
 
@@ -123,13 +126,17 @@ async def get_product_relatedProfiles(product, profiles):
     return related_profiles
 
 
+def is_valid_data_type(requirement, value):
+    data_type = requirement.get("dataType")
+    data_type = TYPEMAP.get(data_type)
+    return isinstance(value, data_type) if data_type else False
+
+
 def is_valid_req_response_value(requirement, value):
     if value is None:
         return False
 
-    data_type = requirement.get("dataType")
-    data_type = TYPEMAP.get(data_type)
-    if not data_type or not isinstance(value, data_type):
+    if not is_valid_data_type(requirement, value):
         return False
 
     try:
