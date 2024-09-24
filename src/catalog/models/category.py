@@ -19,8 +19,8 @@ class CategoryStatus(str, Enum):
 class BaseCategoryCreateData(BaseModel):
     classification: Classification
     marketAdministrator: CategoryMarketAdministrator
-    title: Optional[str] = Field(None, min_length=1, max_length=80)
-    unit: Optional[Unit]
+    title: str = Field(..., min_length=1, max_length=80)
+    unit: Unit
     description: Optional[str] = Field(None, min_length=1, max_length=1000)
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
     status: CategoryStatus = CategoryStatus.active

@@ -6,28 +6,12 @@
       "scheme": "KMU777"
     }
   ],
-  "additionalProperties": [
-    {
-      "code": "ocds-color",
-      "name": "Колір",
-      "value": "білий"
-    },
-    {
-      "code": "ocds-warranty",
-      "name": "гарантія від виробника",
-      "value": true
-    }
-  ],
   "alternativeIdentifiers": [
     {
       "id": "0463234567819",
       "scheme": "EAN-13"
     }
   ],
-  "brand": {
-    "name": "IGAR",
-    "uri": "igar.ua"
-  },
   "classification": {
     "description": "Медичне обладнання та вироби медичного призначення різні",
     "id": "33190000-8",
@@ -37,37 +21,6 @@
   "identifier": {
     "id": "463234567819",
     "scheme": "UPC"
-  },
-  "images": [
-    {
-      "sizes": "500x175",
-      "url": "/static/images/619890.500x175.jpeg"
-    }
-  ],
-  "manufacturers": [
-    {
-      "address": {
-        "countryName": "Україна",
-        "locality": "м.Київ",
-        "postalCode": "01024",
-        "region": "Київська область",
-        "streetAddress": "вул. Приблизна 1, копус 20"
-      },
-      "contactPoint": {
-        "email": "igar@igar.ua",
-        "name": "Анакун Анастасия",
-        "telephone": "+380442342414"
-      },
-      "identifier": {
-        "id": "39454432",
-        "legalName": "ТОВ \"Ігар\"",
-        "scheme": "UA-EDR"
-      },
-      "name": "ТОВ \"ІГАР\""
-    }
-  ],
-  "product": {
-    "name": "Маска тришарова на гумках"
   },
   "requirementResponses": [
     {

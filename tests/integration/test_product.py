@@ -67,9 +67,8 @@ async def test_411_product_rr_create(api, category, profile):
     test_product["data"]["relatedCategory"] = category["data"]["id"]
     set_requirements_to_responses(test_product["data"]["requirementResponses"], category)
 
-    product_id = '{}-{}-{}-{}'.format(
+    product_id = '{}-{}-{}'.format(
         test_product['data']['classification']['id'][:4],
-        test_product['data']['brand']['name'][:4],
         test_product['data']['identifier']['id'][:13],
         randint(100000, 900000))
 
@@ -79,7 +78,11 @@ async def test_411_product_rr_create(api, category, profile):
     test_product['access'] = category['access']
 
     resp = await api.post('/api/products', json=test_product, auth=TEST_AUTH)
-    assert resp.status == 201, await resp.json()
+    assert resp.status == 201
+    data = await resp.json()
+
+    for rr in data["data"]["requirementResponses"]:
+        assert "classification" in rr
 
     criterion_id = category['data']['criteria'][0]['id']
     rg_id = category['data']['criteria'][0]['requirementGroups'][0]['id']
@@ -211,6 +214,10 @@ async def test_420_product_patch(api, category, profile, product):
         'requirement': req_title,
         'value': 1,
     }
+    for i in product['data']['requirementResponses']:
+        i.pop("classification", None)
+        i.pop("unit", None)
+
     patch_product["data"] = {
         "requirementResponses": [new_req_response, *product['data']['requirementResponses']]
     }
