@@ -11,12 +11,7 @@ from catalog.swagger import class_view_swagger_path
 from catalog.utils import pagination_params, get_now, async_retry
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
 from catalog.serializers.product import ProductSerializer
-from catalog.validations import (
-    validate_product_to_category,
-    validate_product_to_profile,
-    validate_patch_vendor_product,
-    validate_medicine_additional_classifications,
-)
+from catalog.validations import validate_patch_vendor_product
 from catalog.state.product import ProductState
 
 
@@ -38,6 +33,11 @@ class ProductView(View):
     @classmethod
     async def get(cls, request, product_id):
         product = await db.read_product(product_id)
+        category = await db.read_category(
+            category_id=product.get("relatedCategory"),
+            projection={"criteria": 1},
+        )
+
         vendor = None
         if "vendor" in product:
             try:
@@ -45,7 +45,7 @@ class ProductView(View):
             except HTTPNotFound:
                 pass
 
-        return {"data": ProductSerializer(product, vendor=vendor).data}
+        return {"data": ProductSerializer(product, vendor=vendor, category=category).data}
 
     @classmethod
     async def post(cls, request):
@@ -66,7 +66,7 @@ class ProductView(View):
         data["dateModified"] = get_now().isoformat()
         await db.insert_product(data)
 
-        return {"data": ProductSerializer(data).data,
+        return {"data": ProductSerializer(data, category=category).data,
                 "access": access}
 
     @classmethod
@@ -85,7 +85,7 @@ class ProductView(View):
             product_before = deepcopy(product)
             data['dateModified'] = get_now().isoformat()
             product.update(data)
-
+            category = await db.read_category(product["relatedCategory"])
             await cls.state_class.on_patch(product_before, product)
 
-        return {"data": ProductSerializer(product).data}
+        return {"data": ProductSerializer(product, category=category).data}

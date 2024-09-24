@@ -6,10 +6,6 @@
       "scheme": "KMU777"
     }
   ],
-  "brand": {
-    "name": "IGAR",
-    "uri": "igar.ua"
-  },
   "classification": {
     "description": "Медичне обладнання та вироби медичного призначення різні",
     "id": "33190000-8",
@@ -18,9 +14,6 @@
   "description": "Маски медичні IGAR тришарові на гумках 50 шт./уп. Гарантія від виробника.",
   "identifier": {
     "id": "463234567819"
-  },
-  "product": {
-    "name": "Маска тришарова на гумках"
   },
   "requirementResponses": [
     {

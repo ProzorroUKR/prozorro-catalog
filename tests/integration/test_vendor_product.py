@@ -75,10 +75,7 @@ async def test_vendor_product_create(api, vendor, category, profile):
     result = await resp.json()
     assert result == {'errors': [
         "value is not a valid enumeration member; permitted: 'EAN-13': data.identifier.scheme",
-        'extra fields not permitted: data.additionalProperties',
         'extra fields not permitted: data.alternativeIdentifiers',
-        'extra fields not permitted: data.images',
-        'extra fields not permitted: data.manufacturers',
     ]}
 
     invalid_product = deepcopy(test_product)

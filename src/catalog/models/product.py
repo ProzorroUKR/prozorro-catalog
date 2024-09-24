@@ -28,12 +28,6 @@ class VendorProductIdentifierScheme(str, Enum):
     ean_13 = "EAN-13"
 
 
-class ProductProperty(BaseModel):
-    name: str = Field(..., min_length=1, max_length=80)
-    code: str = Field(..., min_length=1, max_length=80)
-    value: Union[StrictStr, StrictFloat, StrictInt, StrictBool]
-
-
 class ProductIdentifier(BaseModel):
     id: str = Field(..., min_length=1, max_length=250)
     scheme: str = Field(..., min_length=1, max_length=80)
@@ -46,33 +40,10 @@ class VendorProductIdentifier(BaseModel):
     uri: Optional[str] = Field(None, min_length=1, max_length=250)
 
 
-class Brand(BaseModel):
-    name: constr(min_length=1, max_length=250)
-    uri: constr(max_length=250)
-    alternativeNames: Optional[List[constr(max_length=250)]]
-
-
-class VendorProductBrand(Brand):
-    uri: Optional[constr(max_length=250)]
-
-
-class Manufacturer(BaseModel):
-    name: constr(max_length=250)
-    address: Address
-    contactPoint: ContactPoint
-    identifier: Identifier
-
-
 class VendorInfo(BaseModel):
     id: str = Field(..., min_length=1, max_length=250)
     name: str
     identifier: Identifier
-
-
-class ProductInfo(BaseModel):
-    name: constr(min_length=1, max_length=250)
-    uri: Optional[constr(max_length=250)]
-    alternativeNames: Optional[List[constr(max_length=250)]]
 
 
 class RequirementResponse(BaseModel):
@@ -101,8 +72,6 @@ class BaseProductCreateData(ProductRequirementResponses):
     classification: Classification
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
     identifier: VendorProductIdentifier
-    brand: VendorProductBrand
-    product: ProductInfo
     status: ProductStatus = ProductStatus.active
 
 
@@ -115,13 +84,9 @@ class VendorProductCreateData(BaseProductCreateData):
 
 
 class BaseProductData(BaseProductCreateData):
-    additionalProperties: Optional[List[ProductProperty]] = Field(None, max_items=100)
     identifier: Optional[ProductIdentifier]
-    brand: Optional[Brand]
     alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_items=100)
-    manufacturers: Optional[List[Manufacturer]] = Field(None, max_items=100)
     images: List[Image] = Field(None, max_items=20)
-    product: Optional[ProductInfo]
 
 
 class ProductCreateData(BaseProductData):
@@ -136,12 +101,8 @@ class ProductUpdateData(ProductRequirementResponses):
     description: Optional[str] = Field(None, min_length=1, max_length=1000)
     classification: Optional[Classification]
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
-    additionalProperties: Optional[List[ProductProperty]] = Field(None, max_items=100)
     identifier: Optional[ProductIdentifier]
     alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_items=100)
-    brand: Optional[Brand]
-    product: Optional[ProductInfo]
-    manufacturers: Optional[List[Manufacturer]] = Field(None, max_items=100)
     images: Optional[List[Image]] = Field(None, max_items=20)
     status: Optional[ProductStatus]
 

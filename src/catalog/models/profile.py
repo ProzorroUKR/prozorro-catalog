@@ -7,8 +7,6 @@ from catalog.models.base import BaseModel
 from catalog.models.api import Response, CreateResponse, AuthorizedInput
 from catalog.models.common import (
     Unit,
-    Value,
-    Image,
     Classification,
     CategoryMarketAdministrator,
     AGREEMENT_ID_REGEX,
@@ -47,9 +45,7 @@ class BaseProfileCreateData(BaseModel):
         max_length=1000,
     )
     status: ProfileStatus = ProfileStatus.active
-    value: Optional[Value]
     relatedCategory: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
-    images: Optional[List[Image]] = Field(None, max_items=100)
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
     agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
 
@@ -72,7 +68,7 @@ class DeprecatedProfileCreateData(BaseProfileCreateData):
 
 
 class BaseLocalizationProfileCreateData(BaseProfileCreateData):
-    unit: Optional[Unit]
+    unit: Unit
     agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
     classification: Classification
 
@@ -97,7 +93,6 @@ class ProfileUpdateData(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=250)
     description: Optional[str] = Field(None, min_length=1, max_length=1000)
     status: Optional[ProfileStatus]
-    images: Optional[List[Image]] = Field(None, max_items=100)
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
     agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
 
@@ -129,9 +124,7 @@ class Profile(BaseModel):
     status: ProfileStatus = ProfileStatus.active
     marketAdministrator: CategoryMarketAdministrator
     unit: Optional[Unit]
-    value: Optional[Value]
     relatedCategory: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
-    images: Optional[List[Image]] = Field(None, max_items=100)
     classification: Classification
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
     agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
