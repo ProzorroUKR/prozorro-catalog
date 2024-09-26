@@ -14,6 +14,9 @@ def set_field_from_requirements(criteria, requirement_responses):
 
     for rr in requirement_responses:
         req = requirements.get(rr["requirement"])
+        if not req:
+            return
+
         for field in fields_to_copy:
             if req.get(field):
                 rr[field] = req[field]
