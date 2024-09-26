@@ -109,13 +109,16 @@ async def get_product_relatedProfiles(product, profiles):
                 continue
 
             if any(i in requirement for i in ('expectedValue', 'minValue', 'maxValue', 'pattern')):
-                is_valid_profile = is_valid_req_response_value(requirement, rr.get("value"))
+                value = get_value(rr)
+                is_valid_profile = is_valid_req_response_value(requirement, value)
 
             elif 'expectedValues' in requirement:
-                is_valid_profile = is_valid_req_response_values(requirement, rr.get("values"))
+                value = get_value(rr, is_list=True)
+                is_valid_profile = is_valid_req_response_values(requirement, value)
 
             else:
-                is_valid_profile = is_valid_data_type(requirement, rr.get("value"))
+                value = get_value(rr)
+                is_valid_profile = is_valid_data_type(requirement, value)
 
             if not is_valid_profile:
                 break
@@ -170,6 +173,19 @@ def is_valid_req_response_values(requirement, values):
         return False
 
     return True
+
+
+def get_value(rr, is_list=False):
+    if "value" in rr:
+        if not is_list:
+            return rr["value"]
+        else:
+            return [rr["value"]]
+    elif "values" in rr:
+        if not is_list:
+            return rr["values"][0]
+        else:
+            return rr["values"]
 
 
 def main():
