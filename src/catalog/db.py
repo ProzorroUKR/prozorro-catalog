@@ -457,9 +457,13 @@ def get_products_collection():
 
 async def init_products_indexes():
     modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    # for quicker migration
+    # TODO: delete after migration
+    category_index = IndexModel([("relatedCategory", ASCENDING)], background=True)
+    profile_index = IndexModel([("relatedProfiles", ASCENDING)], background=True)
     try:
         await get_products_collection().create_indexes(
-            [modified_index]
+            [modified_index, category_index, profile_index]
         )
     except PyMongoError as e:
         logger.exception(e)

@@ -24,7 +24,6 @@ def convert_expected_value_to_string(requirement):
     requirement["dataType"] = "string"
     requirement["expectedValues"] = [str(requirement.pop("expectedValue"))]
     requirement["expectedMinItems"] = 1
-    requirement.pop("expectedValue", None)
 
 
 def normalize_expected_values(requirement):
@@ -34,11 +33,16 @@ def normalize_expected_values(requirement):
 
 
 def convert_field_to_float(requirement, field_name):
-    if field_name in requirement and isinstance(requirement[field_name], (float, int)):
+    if isinstance(requirement[field_name], (float, int)):
         requirement[field_name] = float(requirement[field_name])
         requirement["dataType"] = "number"
         return True
     return False
+
+
+def pop_min_max_values(requirement):
+    requirement.pop("maxValue", None)
+    requirement.pop("minValue", None)
 
 
 async def get_responses_from_profile(obj, requirement):
@@ -56,7 +60,16 @@ async def get_responses_from_profile(obj, requirement):
     return responses
 
 
-async def migrate_responses_in_product(parent_obj, requirement, obj_type, session):
+async def get_min_value_from_responses(requirement, obj, obj_type):
+    responses = await get_responses_from_profile(obj, requirement)
+    if responses:
+        responses = [obj_type(resp) for resp in responses]
+        requirement["minValue"] = min(responses)
+    else:
+        requirement["minValue"] = 0
+
+
+async def update_responses_in_product(products, parent_obj, requirement, obj_type):
     products_collection = get_products_collection()
     async for obj in products_collection.find(
         {"$or": [{"relatedProfiles": parent_obj["_id"]}, {"relatedCategory": parent_obj["_id"]}]},
@@ -64,34 +77,36 @@ async def migrate_responses_in_product(parent_obj, requirement, obj_type, sessio
     ):
         req_resp = []
         updated = False
-        for resp in deepcopy(obj["requirementResponses"]):
-            if resp["requirement"] == requirement["title"]:
-                if resp.get("value") is not None:
-                    if not isinstance(resp["value"], obj_type):
-                        resp["value"] = obj_type(resp["value"])
+        requirement_responses = products.get(obj["_id"]) or obj["requirementResponses"]
+        for resp in deepcopy(requirement_responses):
+            try:
+                if resp["requirement"] == requirement["title"]:
+                    if resp.get("value") is not None:
+                        if not isinstance(resp["value"], obj_type):
+                            resp["value"] = obj_type(resp["value"])
+                            updated = True
+                    elif resp.get("values") is not None:
+                        for value in resp["values"]:
+                            if not isinstance(value, obj_type):
+                                break
+                        else:
+                            continue
+                        resp["values"] = [obj_type(val) for val in resp["values"]]
                         updated = True
-                elif resp.get("values") is not None:
-                    for value in resp["values"]:
-                        if not isinstance(value, obj_type):
-                            break
-                    else:
-                        continue
-                    resp["values"] = [obj_type(val) for val in resp["values"]]
-                    updated = True
-            req_resp.append(resp)
+            except ValueError as e:
+                # delete such response
+                updated = True
+            else:
+                req_resp.append(resp)
 
         if updated:
-            # couldn't use bulk, as 1 product can be modified by few requirements, and changes could be lost,
-            # that's why we need update product immediately
-            await products_collection.update_one(
-                {"_id": obj["_id"]},
-                {"$set": {"requirementResponses": req_resp}}
-            )
+            products[obj["_id"]] = req_resp
+    return products
 
 
-async def update_criteria(obj: dict, session) -> list:
+async def update_criteria(obj: dict, products: dict):
     if not obj["criteria"]:
-        return []
+        return [], products
     updated_criteria = []
 
     for criterion in obj["criteria"]:
@@ -100,49 +115,38 @@ async def update_criteria(obj: dict, session) -> list:
             for requirement in req_group.get("requirements", []):
                 # Remove min/max values if expected values exist
                 if ("expectedValue" in requirement or "expectedValues" in requirement) and ("minValue" in requirement or "maxValue" in requirement):
-                    requirement.pop("maxValue", None)
-                    requirement.pop("minValue", None)
+                    pop_min_max_values(requirement)
 
                 # Handle different data types
                 if requirement["dataType"] == "integer":
                     if "expectedValues" in requirement:
                         normalize_expected_values(requirement)
-                        await migrate_responses_in_product(obj, requirement, str, session)
+                        products = await update_responses_in_product(products, obj, requirement, str)
                     elif "minValue" in requirement or "maxValue" in requirement or "expectedValue" in requirement:
                         for field_name in ("minValue", "maxValue", "expectedValue"):
                             if field_name in requirement:
                                 if isinstance(requirement[field_name], float):
                                     requirement["dataType"] = "number"
-                                    await migrate_responses_in_product(obj, requirement, float, session)
+                                    products = await update_responses_in_product(products, obj, requirement, float)
                                 elif field_name == "expectedValue" and isinstance(requirement["expectedValue"], (bool, str)):
                                     convert_expected_value_to_string(requirement)
-                                    await migrate_responses_in_product(obj, requirement, str, session)
+                                    products = await update_responses_in_product(products, obj, requirement, str)
                     else:
-                        responses = await get_responses_from_profile(obj, requirement)
-                        if responses:
-                            responses = [int(resp) for resp in responses]
-                            requirement["minValue"] = min(responses)
-                        else:
-                            requirement["minValue"] = 0
+                        await get_min_value_from_responses(requirement, obj, int)
                 elif requirement["dataType"] == "number":
                     if "expectedValues" in requirement:
                         normalize_expected_values(requirement)
-                        await migrate_responses_in_product(obj, requirement, str, session)
+                        products = await update_responses_in_product(products, obj, requirement, str)
                     elif "minValue" in requirement or "maxValue" in requirement or "expectedValue" in requirement:
                         for field_name in ("minValue", "maxValue", "expectedValue"):
                             if field_name in requirement:
                                 if field_name == "expectedValue" and isinstance(requirement["expectedValue"], (bool, str)):
                                     convert_expected_value_to_string(requirement)
-                                    await migrate_responses_in_product(obj, requirement, str, session)
+                                    products = await update_responses_in_product(products, obj, requirement, str)
                                 elif convert_field_to_float(requirement, field_name):
-                                    await migrate_responses_in_product(obj, requirement, float, session)
+                                    products = await update_responses_in_product(products, obj, requirement, float)
                     else:
-                        responses = await get_responses_from_profile(obj, requirement)
-                        if responses:
-                            responses = [float(resp) for resp in responses]
-                            requirement["minValue"] = min(responses)
-                        else:
-                            requirement["minValue"] = 0
+                        await get_min_value_from_responses(requirement, obj, float)
                 elif requirement["dataType"] == "string":
                     if "expectedValues" in requirement:
                         normalize_expected_values(requirement)
@@ -156,8 +160,7 @@ async def update_criteria(obj: dict, session) -> list:
                         else:
                             requirement["expectedValues"] = [str(requirement["minValue"]), str(requirement["maxValue"])]
                         requirement["expectedMinItems"] = 1
-                        requirement.pop("minValue", None)
-                        requirement.pop("maxValue", None)
+                        pop_min_max_values(requirement)
                     elif "minValue" in requirement or "maxValue" in requirement:
                         for field_name in ("minValue", "maxValue"):
                             if field_name in requirement:
@@ -167,8 +170,7 @@ async def update_criteria(obj: dict, session) -> list:
                                 else:
                                     requirement["expectedValues"] = [str(requirement[field_name])]
                                 requirement["expectedMinItems"] = 1
-                                requirement.pop("minValue", None)
-                                requirement.pop("maxValue", None)
+                                pop_min_max_values(requirement)
                     else:
                         responses = await get_responses_from_profile(obj, requirement)
                         if responses:
@@ -176,7 +178,7 @@ async def update_criteria(obj: dict, session) -> list:
                             requirement["expectedMinItems"] = 1
                         else:
                             requirement["dataType"] = "boolean"
-                    await migrate_responses_in_product(obj, requirement, str, session)
+                    products = await update_responses_in_product(products, obj, requirement, str)
 
                 elif requirement["dataType"] == "boolean":
                     if "expectedValues" in requirement:
@@ -185,25 +187,25 @@ async def update_criteria(obj: dict, session) -> list:
                                 requirement["expectedValue"] = requirement["expectedValues"][0]
                                 for field_name in ("expectedValues", "expectedMinItems", "expectedMaxItems"):
                                     requirement.pop(field_name, None)
-                                await migrate_responses_in_product(obj, requirement, bool, session)
+                                products = await update_responses_in_product(products, obj, requirement, bool)
                         elif set(requirement["expectedValues"]) == {True, False}:
                             for field_name in ("expectedValues", "expectedMinItems", "expectedMaxItems"):
                                 requirement.pop(field_name, None)
-                            await migrate_responses_in_product(obj, requirement, bool, session)
+                            products = await update_responses_in_product(products, obj, requirement, bool)
                         # check whether expectedValues is left
                         if requirement.get("expectedValues"):
                             normalize_expected_values(requirement)
-                            await migrate_responses_in_product(obj, requirement, str, session)
+                            products = await update_responses_in_product(products, obj, requirement, str)
                     elif "expectedValue" in requirement:
                         convert_expected_value_to_string(requirement)
-                        await migrate_responses_in_product(obj, requirement, str, session)
+                        products = await update_responses_in_product(products, obj, requirement, str)
 
                 # delete unit from string and boolean requirements
                 if requirement["dataType"] in ("string", "boolean"):
                     requirement.pop("unit", None)
 
         updated_criteria.append(updated_criterion)
-    return updated_criteria
+    return updated_criteria, products
 
 
 async def migrate_categories_and_profiles(session):
@@ -211,14 +213,19 @@ async def migrate_categories_and_profiles(session):
         "categories": get_category_collection(),
         "profiles": get_profiles_collection(),
     }
+    products_collection = get_products_collection()
 
     for criteria_obj in migrated_objects.keys():
         collection = migrated_objects[criteria_obj]
         bulk = []
         counter = 0
+        bulk_products = []
+        counter_products = 0
+        products = {}
         async for obj in collection.find({"criteria": {"$exists": True}}, projection={"_id": 1, "criteria": 1, "status": 1}):
             try:
-                if updated_criteria := await update_criteria(obj, session):
+                updated_criteria, products = await update_criteria(obj, products)
+                if updated_criteria:
                     counter += 1
                     bulk.append(
                         UpdateOne(
@@ -230,13 +237,39 @@ async def migrate_categories_and_profiles(session):
                 if bulk and len(bulk) % 500 == 0:
                     await bulk_update(collection, bulk, session, counter, criteria_obj)
                     bulk = []
+                if len(products) >= 200:
+                    for product_id, product_responses in products.items():
+                        bulk_products.append(
+                            UpdateOne(
+                                filter={"_id": product_id},
+                                update={"$set": {"requirementResponses": product_responses}}
+                            )
+                        )
+                if bulk_products and len(bulk_products) >= 200:
+                    counter_products += len(bulk_products)
+                    await bulk_update(products_collection, bulk_products, session, counter_products, "products")
+                    bulk_products = []
+                    products = {}
             except Exception as e:
-                logger.info(f"ERROR: {criteria_obj} with id {obj['id']}. Caught {type(e).__name__}.")
+                logger.info(f"ERROR: {criteria_obj} with id {obj['_id']}. Caught {type(e).__name__}.")
                 traceback.print_exc()
                 break
 
         if bulk:
             await bulk_update(collection, bulk, session, counter, criteria_obj)
+
+        if products:
+            for product_id, product_responses in products.items():
+                bulk_products.append(
+                    UpdateOne(
+                        filter={"_id": product_id},
+                        update={"$set": {"requirementResponses": product_responses}}
+                    )
+                )
+
+        if bulk_products:
+            counter_products += len(bulk_products)
+            await bulk_update(products_collection, bulk_products, session, counter_products, "products")
 
         logger.info(f"Finished. Processed {counter} records of migrated {criteria_obj}")
 

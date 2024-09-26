@@ -36,7 +36,7 @@ async def test_requirements_with_both_fields(db, api):
                         "title": "Xарактеристика №3",
                         "dataType": "string",
                         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": "FOO",
+                        "expectedValue": "FOO",
                         "minValue": "foobar"
                     }]
                 }
@@ -476,7 +476,7 @@ async def test_requirements_string(db, api):
     }]
 
     product_data = await db.products.find_one({"_id": product_1["_id"]})
-    assert product_data["requirementResponses"] ==  [
+    assert product_data["requirementResponses"] == [
         {
             "requirement": "Xарактеристика №1",
             "values": ["True"]
@@ -629,11 +629,14 @@ async def test_requirements_number(db, api):
         },
         {
             "requirement": "Xарактеристика №6",
-            "value": 10
+            "value": "10"
         },
         {
             "requirement": "Xарактеристика №7",
             "value": 9.2
+        }, {
+            "requirement": "Xарактеристика №8",
+            "value": "some"
         }, {
             "requirement": "Xарактеристика №10",
             "values": [10.5]
@@ -734,7 +737,7 @@ async def test_requirements_number(db, api):
     }]
 
     product_data = await db.products.find_one({"_id": product_1["_id"]})
-    assert product_data["requirementResponses"] ==  [
+    assert product_data["requirementResponses"] == [
         {
             "requirement": "Xарактеристика №1",
             "values": ["True"]
@@ -982,7 +985,8 @@ async def test_requirements_integer(db, api):
     }]
 
     product_data = await db.products.find_one({"_id": product_1["_id"]})
-    assert product_data["requirementResponses"] ==  [
+    print(product_data["requirementResponses"])
+    assert product_data["requirementResponses"] == [
         {
             "requirement": "Xарактеристика №1",
             "values": ["True"]
