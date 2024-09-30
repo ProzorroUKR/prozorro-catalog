@@ -134,9 +134,46 @@ async def test_requirements_boolean(db, api):
         }
     ]
     await db.category.insert_one(category)
+    profile = deepcopy(get_fixture_json("profile"))
+    profile["_id"] = uuid4().hex
+    profile["relatedCategory"] = category["_id"]
+    profile["criteria"] = [
+        {
+            "title": "Технічні характеристики предмета закупівлі",
+            "description": "Яйця столові курячі",
+            "id": "1f92023591bd4096aea88064eaa4b235",
+            "requirementGroups": [
+                {
+                    "description": "Технічні характеристики",
+                    "id": "f3d2b5995da042ff858a6ea7b5a1a8dd",
+                    "requirements": [{
+                        "title": "Xарактеристика №1",
+                        "dataType": "string",
+                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                        "expectedValues": [True],
+                        "expectedMinItems": 1
+                    }, {
+                        "title": "Xарактеристика №2",
+                        "dataType": "string",
+                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                        "expectedValue": "some_string"
+                    }, {
+                        "title": "Xарактеристика №12",
+                        "dataType": "boolean",
+                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                        "expectedValues": [True, False],
+                        "expectedMinItems": 1,
+                        "expectedMaxItems": 1
+                    }]
+                }
+            ]
+        }
+    ]
+    await db.profiles.insert_one(profile)
     product_1 = deepcopy(get_fixture_json("product"))
     product_1["_id"] = uuid4().hex
     product_1["relatedCategory"] = category["_id"]
+    product_1["relatedProfiles"] = [profile["_id"]]
     product_1["requirementResponses"] = [
         {
             "requirement": "Xарактеристика №1",
@@ -171,71 +208,77 @@ async def test_requirements_boolean(db, api):
     await migrate()
 
     category_data = await db.category.find_one({"_id": category["_id"]})
-    assert category_data["criteria"][0]["requirementGroups"][0]["requirements"][0] == {
+    assert category_data["criteria"][0]["requirementGroups"][0]["requirements"] == [{
         "title": "Xарактеристика №1",
         "dataType": "boolean",
         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
         "expectedValue": True
-    }
-    assert category_data["criteria"][0]["requirementGroups"][0]["requirements"][1] == {
+    }, {
         "title": "Xарактеристика №2",
         "dataType": "boolean",
         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
         "expectedValue": False
-    }
-    assert category_data["criteria"][0]["requirementGroups"][0]["requirements"][2] == {
+    }, {
         "title": "Xарактеристика №3",
         "dataType": "boolean",
         "id": "8726f95aeb1d4b289d6c1a5a07271c93"
-    }
-    assert category_data["criteria"][0]["requirementGroups"][0]["requirements"][3] == {
+    }, {
         "title": "Xарактеристика №4",
         "dataType": "boolean",
         "id": "8726f95aeb1d4b289d6c1a5a07271c93"
-    }
-    assert category_data["criteria"][0]["requirementGroups"][0]["requirements"][4] == {
+    }, {
         "title": "Xарактеристика №5",
         "dataType": "string",
         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
         "expectedValues": ["0", "10", "20"],
         "expectedMinItems": 1
-    }
-    assert category_data["criteria"][0]["requirementGroups"][0]["requirements"][5] == {
+    }, {
         "title": "Xарактеристика №6",
         "dataType": "string",
         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
         "expectedValues": ["some_string"],
         "expectedMinItems": 1
-    }
-    assert category_data["criteria"][0]["requirementGroups"][0]["requirements"][6] == {
+    }, {
         "title": "Xарактеристика №7",
         "dataType": "string",
         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
         "expectedValues": ["0.0", "10.5", "20.9"],
         "expectedMinItems": 1
-    }
-    assert category_data["criteria"][0]["requirementGroups"][0]["requirements"][7] == {
+    }, {
         "title": "Xарактеристика №8",
         "dataType": "string",
         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
         "expectedValues": ["some_string"],
         "expectedMinItems": 1
-
-    }
-    assert category_data["criteria"][0]["requirementGroups"][0]["requirements"][8] == {
+    }, {
         "title": "Xарактеристика №9",
         "dataType": "string",
         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
         "expectedValues": ["10"],
         "expectedMinItems": 1
-    }
-    assert category_data["criteria"][0]["requirementGroups"][0]["requirements"][9] == {
+    }, {
         "title": "Xарактеристика №10",
         "dataType": "string",
         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
         "expectedValues": ["10.5"],
         "expectedMinItems": 1
-    }
+    }]
+
+    profile_data = await db.profiles.find_one({"_id": profile["_id"]})
+    assert profile_data["criteria"][0]["requirementGroups"][0]["requirements"] == [{
+            "title": "Xарактеристика №1",
+            "dataType": "string",
+            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+            "expectedValues": ["True"],
+            "expectedMinItems": 1
+        }, {
+            "title": "Xарактеристика №2",
+            "dataType": "string",
+            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+            "expectedValues": ["some_string"],
+            "expectedMinItems": 1
+        }
+    ]
 
     product_data = await db.products.find_one({"_id": product_1["_id"]})
     assert product_data["requirementResponses"] == [
@@ -629,7 +672,7 @@ async def test_requirements_number(db, api):
         },
         {
             "requirement": "Xарактеристика №6",
-            "value": "10"
+            "value": "some_string"
         },
         {
             "requirement": "Xарактеристика №7",
@@ -753,10 +796,6 @@ async def test_requirements_number(db, api):
         {
             "requirement": "Xарактеристика №5",
             "value": "True"
-        },
-        {
-            "requirement": "Xарактеристика №6",
-            "value": 10.0
         },
         {
             "requirement": "Xарактеристика №7",
@@ -985,7 +1024,6 @@ async def test_requirements_integer(db, api):
     }]
 
     product_data = await db.products.find_one({"_id": product_1["_id"]})
-    print(product_data["requirementResponses"])
     assert product_data["requirementResponses"] == [
         {
             "requirement": "Xарактеристика №1",
@@ -1005,7 +1043,7 @@ async def test_requirements_integer(db, api):
         },
         {
             "requirement": "Xарактеристика №6",
-            "value": 10.5
+            "value": 10
         },
         {
             "requirement": "Xарактеристика №7",
