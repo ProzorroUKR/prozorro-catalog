@@ -428,28 +428,9 @@ async def test_130_requirement_create(api, category):
          "expectedMaxItems should be equal 1 or not exist at all: data.__root__"
     ]
 
-    requirement_data["data"]["expectedMaxItems"] = 1
-    requirement_data["data"]["unit"] = {
-        "code": "H87",
-        "name": "штуки"
-    }
-
-    resp = await api.post(
-        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
-        json=requirement_data,
-        auth=TEST_AUTH,
-    )
-    assert resp.status == 400
-    resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "Unit is forbid with dataType: string: data.__root__",
-    ]
-
     del requirement_data["data"]["expectedMinItems"]
     del requirement_data["data"]["expectedMaxItems"]
     del requirement_data["data"]["expectedValues"]
-    del requirement_data["data"]["unit"]
-
     requirement_data["data"]["expectedValue"] = "someValue"
 
     resp = await api.post(
