@@ -82,6 +82,20 @@ class RequirementBaseValidators(BaseModel):
             raise ValueError("minValue couldn't be greater than maxValue")
         return values
 
+    @root_validator
+    def validate_unit_exist_to_data_type(cls, values):
+        data_type = values.get("dataType")
+        unit = values.get("unit")
+
+        if (
+                data_type
+                and unit
+                and data_type in (DataTypeEnum.string.value, DataTypeEnum.boolean.value)
+        ):
+            raise ValueError(f"Unit is forbid with dataType: {data_type}")
+
+        return values
+
 
 class ProfileRequirementValidators(RequirementBaseValidators):
     @root_validator
