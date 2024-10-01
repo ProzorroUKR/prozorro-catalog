@@ -1,4 +1,5 @@
-aiohttp
+# TODO: remove later maybe after aiohttp-client-cache upgrade
+aiohttp==3.10.5
 aiohttp-client-cache
 motor
 pytz
