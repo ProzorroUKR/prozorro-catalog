@@ -88,5 +88,3 @@ CACHE_BACKEND = MongoDBBackend(
 
 CPB_USERNAME = "cpb"
 
-# hashed value of 321e8b0b4fc725c525d38de6e458965f
-CPB_TOKEN = os.environ.get("CPB_TOKEN", "2a22eebe494e290141febee51004984d2d4a0a539bc1a5e8732d07104e337e84")
