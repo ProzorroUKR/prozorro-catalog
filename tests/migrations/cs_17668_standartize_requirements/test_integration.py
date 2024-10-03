@@ -644,6 +644,11 @@ async def test_requirements_number(db, api):
                         "title": "Xарактеристика №12",
                         "dataType": "number",
                         "id": "8726f95aeb1d4b289d6c1a5a07271c93"
+                    }, {
+                        "title": "Xарактеристика №13",
+                        "dataType": "number",
+                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                        "maxValue": "20"
                     }]
                 }
             ]
@@ -687,6 +692,10 @@ async def test_requirements_number(db, api):
         {
             "requirement": "Xарактеристика №12",
             "value": 12
+        },
+        {
+            "requirement": "Xарактеристика №13",
+            "value": "10"
         }
     ]
     await db.products.insert_one(product_1)
@@ -759,7 +768,8 @@ async def test_requirements_number(db, api):
         "title": "Xарактеристика №9",
         "dataType": "number",
         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-        "maxValue": 10.5
+        "maxValue": 10.5,
+        "minValue": 0
     }, {
         "title": "Xарактеристика №10",
         "dataType": "string",
@@ -777,6 +787,12 @@ async def test_requirements_number(db, api):
         "dataType": "number",
         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
         "minValue": 11.0
+    }, {
+        "title": "Xарактеристика №13",
+        "dataType": "string",
+        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+        "expectedValues": ["20"],
+        "expectedMinItems": 1
     }]
 
     product_data = await db.products.find_one({"_id": product_1["_id"]})
@@ -806,6 +822,9 @@ async def test_requirements_number(db, api):
         }, {
             "requirement": "Xарактеристика №12",
             "value": 12.0
+        }, {
+            "requirement": "Xарактеристика №13",
+            "value": "10"
         }
     ]
 
@@ -889,8 +908,8 @@ async def test_requirements_integer(db, api):
                         "title": "Xарактеристика №11",
                         "dataType": "integer",
                         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "minValue": 10.0,
-                        "maxValue": 20
+                        "minValue": 10,
+                        "maxValue": 20.0
                     }, {
                         "title": "Xарактеристика №12",
                         "dataType": "integer",
@@ -1003,7 +1022,8 @@ async def test_requirements_integer(db, api):
         "title": "Xарактеристика №9",
         "dataType": "number",
         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-        "maxValue": 20.5
+        "maxValue": 20.5,
+        "minValue": 0
     }, {
         "title": "Xарактеристика №10",
         "dataType": "string",

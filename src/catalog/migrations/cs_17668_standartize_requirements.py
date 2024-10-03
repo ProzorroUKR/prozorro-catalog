@@ -46,6 +46,8 @@ def convert_field_to_float(requirement, field_name):
     if isinstance(requirement[field_name], (float, int)):
         requirement[field_name] = float(requirement[field_name])
         requirement["dataType"] = "number"
+        return True
+    return False
 
 
 def pop_min_max_values(requirement):
@@ -135,15 +137,30 @@ async def requirement_not_in_category(obj, requirement):
                 return True
 
 
+def convert_min_max_value_to_string(requirement):
+    if "minValue" not in requirement:
+        requirement["expectedValues"] = [str(requirement["maxValue"])]
+    else:
+        requirement["expectedValues"] = [str(requirement["minValue"]), str(requirement["maxValue"])]
+    requirement["expectedMinItems"] = 1
+    requirement["dataType"] = "string"
+    pop_min_max_values(requirement)
+
+
 async def update_criteria_and_responses_integer(obj, requirement):
     if "expectedValues" in requirement:
         normalize_expected_values(requirement)
-    elif (
-        "minValue" in requirement
-        or "maxValue" in requirement
-        or "expectedValue" in requirement
-    ):
-        for field_name in ("minValue", "maxValue", "expectedValue"):
+    elif "maxValue" in requirement:
+        if isinstance(requirement["maxValue"], float):
+            requirement["dataType"] = "number"
+            if "minValue" not in requirement:  # add minValue to requirement
+                requirement["minValue"] = 0
+            else:
+                convert_field_to_float(requirement, "minValue")
+        elif not isinstance(requirement["maxValue"], int):
+            convert_min_max_value_to_string(requirement)
+    elif "minValue" in requirement or "expectedValue" in requirement:
+        for field_name in ("minValue", "expectedValue"):
             if field_name in requirement:
                 if isinstance(requirement[field_name], float):
                     requirement["dataType"] = "number"
@@ -159,12 +176,16 @@ async def update_criteria_and_responses_integer(obj, requirement):
 async def update_criteria_and_responses_number(obj, requirement):
     if "expectedValues" in requirement:
         normalize_expected_values(requirement)
-    elif (
-        "minValue" in requirement
-        or "maxValue" in requirement
-        or "expectedValue" in requirement
-    ):
-        for field_name in ("minValue", "maxValue", "expectedValue"):
+    elif "maxValue" in requirement:
+        if convert_field_to_float(requirement, "maxValue"):
+            if "minValue" not in requirement:  # add minValue to requirement
+                requirement["minValue"] = 0
+            else:
+                convert_field_to_float(requirement, "minValue")
+        else:
+            convert_min_max_value_to_string(requirement)
+    elif "minValue" in requirement or "expectedValue" in requirement:
+        for field_name in ("minValue", "expectedValue"):
             if field_name in requirement:
                 if (
                     field_name == "expectedValue"
