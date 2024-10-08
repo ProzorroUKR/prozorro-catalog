@@ -159,6 +159,8 @@ async def update_criteria_and_responses_integer(obj, requirement):
                 convert_field_to_float(requirement, "minValue")
         elif not isinstance(requirement["maxValue"], int):
             convert_min_max_value_to_string(requirement)
+        elif "minValue" not in requirement:
+            requirement["minValue"] = 0
     elif "minValue" in requirement or "expectedValue" in requirement:
         for field_name in ("minValue", "expectedValue"):
             if field_name in requirement:
