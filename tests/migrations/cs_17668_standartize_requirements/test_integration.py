@@ -914,6 +914,11 @@ async def test_requirements_integer(db, api):
                         "title": "Xарактеристика №12",
                         "dataType": "integer",
                         "id": "8726f95aeb1d4b289d6c1a5a07271c93"
+                    }, {
+                        "title": "Xарактеристика №13",
+                        "dataType": "integer",
+                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                        "maxValue": 20
                     }]
                 }
             ]
@@ -1041,6 +1046,12 @@ async def test_requirements_integer(db, api):
         "dataType": "integer",
         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
         "minValue": 11
+    }, {
+        "title": "Xарактеристика №13",
+        "dataType": "integer",
+        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+        "maxValue": 20,
+        "minValue": 0
     }]
 
     product_data = await db.products.find_one({"_id": product_1["_id"]})
