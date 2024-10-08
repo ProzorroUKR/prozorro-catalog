@@ -148,7 +148,7 @@ def convert_min_max_value_to_string(requirement):
 
 
 async def update_criteria_and_responses_integer(obj, requirement):
-    if "expectedValues" in requirement:
+    if "expectedValues" in requirement and requirement["expectedValues"]:  # not empty list
         normalize_expected_values(requirement)
     elif "maxValue" in requirement:
         if isinstance(requirement["maxValue"], float):
@@ -173,10 +173,12 @@ async def update_criteria_and_responses_integer(obj, requirement):
                     convert_expected_value_to_string(requirement)
     else:
         await get_min_value_from_responses(requirement, obj, int)
+        for field_name in ("expectedValues", "expectedMinItems", "expectedMaxItems"):
+            requirement.pop(field_name, None)
 
 
 async def update_criteria_and_responses_number(obj, requirement):
-    if "expectedValues" in requirement:
+    if "expectedValues" in requirement and requirement["expectedValues"]:  # not empty list
         normalize_expected_values(requirement)
     elif "maxValue" in requirement:
         if convert_field_to_float(requirement, "maxValue"):
@@ -198,10 +200,12 @@ async def update_criteria_and_responses_number(obj, requirement):
                     convert_field_to_float(requirement, field_name)
     else:
         await get_min_value_from_responses(requirement, obj, float)
+        for field_name in ("expectedValues", "expectedMinItems", "expectedMaxItems"):
+            requirement.pop(field_name, None)
 
 
 async def update_criteria_and_responses_string(obj, requirement):
-    if "expectedValues" in requirement:
+    if "expectedValues" in requirement and requirement["expectedValues"]:  # not empty list
         normalize_expected_values(requirement)
     elif "expectedValue" in requirement:
         convert_expected_value_to_string(requirement)
@@ -231,6 +235,8 @@ async def update_criteria_and_responses_string(obj, requirement):
             requirement["expectedMinItems"] = 1
         else:
             requirement["dataType"] = "boolean"
+            for field_name in ("expectedValues", "expectedMinItems", "expectedMaxItems"):
+                requirement.pop(field_name, None)
 
 
 async def update_criteria_and_responses_boolean(requirement):

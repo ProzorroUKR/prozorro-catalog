@@ -402,6 +402,12 @@ async def test_requirements_string(db, api):
                         "title": "Xарактеристика №12",
                         "dataType": "string",
                         "id": "8726f95aeb1d4b289d6c1a5a07271c93"
+                    }, {
+                        "title": "Xарактеристика №13",
+                        "dataType": "string",
+                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                        "expectedValues": [],
+                        "expectedMinItems": 1
                     }]
                 }
             ]
@@ -514,6 +520,10 @@ async def test_requirements_string(db, api):
         "expectedMinItems": 1
     }, {
         "title": "Xарактеристика №12",
+        "dataType": "boolean",
+        "id": "8726f95aeb1d4b289d6c1a5a07271c93"
+    }, {
+        "title": "Xарактеристика №13",
         "dataType": "boolean",
         "id": "8726f95aeb1d4b289d6c1a5a07271c93"
     }]
