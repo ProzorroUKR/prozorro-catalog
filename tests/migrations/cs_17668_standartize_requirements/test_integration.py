@@ -128,6 +128,11 @@ async def test_requirements_boolean(db, api):
                         "dataType": "boolean",
                         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
                         "expectedValue": 10.5,
+                    }, {
+                        "title": "Xарактеристика №11",
+                        "dataType": "boolean",
+                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                        "expectedValue": True,
                     }]
                 }
             ]
@@ -262,6 +267,11 @@ async def test_requirements_boolean(db, api):
         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
         "expectedValues": ["10.5"],
         "expectedMinItems": 1
+    }, {
+        "title": "Xарактеристика №11",
+        "dataType": "boolean",
+        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+        "expectedValue": True,
     }]
 
     profile_data = await db.profiles.find_one({"_id": profile["_id"]})
