@@ -401,7 +401,7 @@ async def bulk_update(collection, bulk, session, counter, migrated_obj):
 
 async def migrate():
     logger.info("Start migration")
-    # await migrate_categories_and_profiles()
+    await migrate_categories_and_profiles()
     await migrate_products()
     logger.info("Successfully migrated")
 
