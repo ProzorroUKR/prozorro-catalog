@@ -85,6 +85,8 @@ async def update_responses_in_product(product):
     category = await get_category_collection().find_one(
         {"_id": product["relatedCategory"]}, {"criteria": 1}
     )
+    if not category:
+        return None
     category_requirements = {
         r["title"]: r
         for c in category.get("criteria", "")
@@ -399,7 +401,7 @@ async def bulk_update(collection, bulk, session, counter, migrated_obj):
 
 async def migrate():
     logger.info("Start migration")
-    await migrate_categories_and_profiles()
+    # await migrate_categories_and_profiles()
     await migrate_products()
     logger.info("Successfully migrated")
 
