@@ -16,6 +16,7 @@ from catalog.db import (
 )
 from catalog.logging import setup_logging
 from catalog.settings import SENTRY_DSN
+from catalog.utils import get_now
 
 logger = logging.getLogger(__name__)
 
@@ -271,6 +272,7 @@ async def update_criteria_and_responses_boolean(requirement):
 async def update_criteria(obj: dict):
     if not obj["criteria"]:
         return []
+    updated = False
     updated_criteria = []
 
     for criterion in obj["criteria"]:
@@ -279,6 +281,8 @@ async def update_criteria(obj: dict):
         for req_group in updated_criterion.get("requirementGroups", []):
             updated_requirements = []
             for requirement in req_group.get("requirements", []):
+                previous_requirement = deepcopy(requirement)
+
                 # check whether there is requirement in profile but not in category
                 if await requirement_not_in_category(obj, requirement):
                     continue
@@ -304,12 +308,15 @@ async def update_criteria(obj: dict):
                 if requirement["dataType"] in ("string", "boolean"):
                     requirement.pop("unit", None)
                 updated_requirements.append(requirement)
+
+                if requirement != previous_requirement:
+                    updated = True
             req_group["requirements"] = updated_requirements
             updated_req_group.append(req_group)
 
         updated_criterion["requirementGroups"] = updated_req_group
         updated_criteria.append(updated_criterion)
-    return updated_criteria
+    return updated_criteria if updated else None
 
 
 async def migrate_categories_and_profiles():
@@ -335,7 +342,10 @@ async def migrate_categories_and_profiles():
                     bulk.append(
                         UpdateOne(
                             filter={"_id": obj["_id"]},
-                            update={"$set": {"criteria": updated_criteria}},
+                            update={"$set": {
+                                "criteria": updated_criteria,
+                                "dateModified": get_now().isoformat(),
+                            }},
                         )
                     )
 
@@ -379,7 +389,10 @@ async def migrate_products():
             bulk.append(
                 UpdateOne(
                     filter={"_id": obj["_id"]},
-                    update={"$set": {"requirementResponses": updated_responses}},
+                    update={"$set": {
+                        "requirementResponses": updated_responses,
+                        "dateModified": get_now().isoformat(),
+                    }},
                 )
             )
         if bulk and len(bulk) % 500 == 0:

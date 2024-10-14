@@ -11,6 +11,7 @@ from tests.integration.conftest import api, db, get_fixture_json
 # якщо є expectedValues і minValue або maxValue -> видаляємо minValue і maxValue
 async def test_requirements_with_both_fields(db, api):
     category = deepcopy(get_fixture_json('category'))
+    category["dateModified"] = "2024-10-01T11:54:57.860085+03:00"
     category["criteria"] = [
         {
             "title": "Технічні характеристики предмета закупівлі",
@@ -50,6 +51,7 @@ async def test_requirements_with_both_fields(db, api):
     assert "minValue" not in category_data["criteria"][0]["requirementGroups"][0]["requirements"][0]
     assert "maxValue" not in category_data["criteria"][0]["requirementGroups"][0]["requirements"][1]
     assert "minValue" not in category_data["criteria"][0]["requirementGroups"][0]["requirements"][2]
+    assert category_data["dateModified"] != "2024-10-01T11:54:57.860085+03:00"
 
 
 # dataType dataType = "boolean"
@@ -1107,3 +1109,85 @@ async def test_requirements_integer(db, api):
             "value": 12
         }
     ]
+
+
+async def test_date_modified(db, api):
+    category = deepcopy(get_fixture_json('category'))
+    category["dateModified"] = "2024-10-01T11:54:57.860085+03:00"
+    category["criteria"] = [
+        {
+            "title": "Технічні характеристики предмета закупівлі",
+            "description": "Яйця столові курячі",
+            "id": "1f92023591bd4096aea88064eaa4b235",
+            "requirementGroups": [
+                {
+                    "description": "Технічні характеристики",
+                    "id": "f3d2b5995da042ff858a6ea7b5a1a8dd",
+                    "requirements": [{
+                        "title": "Xарактеристика №1",
+                        "dataType": "boolean",
+                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                        "expectedValue": True,
+                    }, {
+                        "title": "Xарактеристика №2",
+                        "dataType": "string",
+                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                        "expectedValues": ["foo", "bar"],
+                        "expectedMinItems": 1,
+                    },]
+                }
+            ]
+        }
+    ]
+    await db.category.insert_one(category)
+    profile = deepcopy(get_fixture_json("profile"))
+    profile["_id"] = uuid4().hex
+    profile["relatedCategory"] = category["_id"]
+    profile["dateModified"] = "2024-10-01T11:54:57.860085+03:00"
+    profile["criteria"] = [
+        {
+            "title": "Технічні характеристики предмета закупівлі",
+            "description": "Яйця столові курячі",
+            "id": "1f92023591bd4096aea88064eaa4b235",
+            "requirementGroups": [
+                {
+                    "description": "Технічні характеристики",
+                    "id": "f3d2b5995da042ff858a6ea7b5a1a8dd",
+                    "requirements": [{
+                        "title": "Xарактеристика №1",
+                        "dataType": "boolean",
+                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                        "expectedValue": True
+                    }]
+                }
+            ]
+        }
+    ]
+    await db.profiles.insert_one(profile)
+    product_1 = deepcopy(get_fixture_json("product"))
+    product_1["_id"] = uuid4().hex
+    product_1["relatedCategory"] = category["_id"]
+    product_1["relatedProfiles"] = [profile["_id"]]
+    product_1["dateModified"] = "2024-10-01T11:54:57.860085+03:00"
+    product_1["requirementResponses"] = [
+        {
+            "requirement": "Xарактеристика №1",
+            "values": [True]
+        },
+        {
+            "requirement": "Xарактеристика №2",
+            "value": "foo"
+        }
+    ]
+    await db.products.insert_one(product_1)
+
+    await migrate()
+
+    category_data = await db.category.find_one({"_id": category["_id"]})
+    assert category_data["dateModified"] == "2024-10-01T11:54:57.860085+03:00"
+
+    profile_data = await db.profiles.find_one({"_id": profile["_id"]})
+    assert profile_data["dateModified"] == "2024-10-01T11:54:57.860085+03:00"
+
+    product_data = await db.products.find_one({"_id": product_1["_id"]})
+    assert product_data["dateModified"] == "2024-10-01T11:54:57.860085+03:00"
