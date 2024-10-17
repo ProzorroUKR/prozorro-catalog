@@ -346,6 +346,10 @@ async def test_product_request_acception(api, product_request):
     product_token = result["access"]["token"]
     product_id = data["product"]["id"]
 
+    req_resp = data["product"]["requirementResponses"][1]
+    assert "classification" in req_resp
+    assert "unit" in req_resp
+
     # check generated data
     additional_fields = {k: v for k, v in data.items() if k not in product_request["data"]}
     assert set(additional_fields.keys()) == {'acception'}
@@ -406,6 +410,10 @@ async def test_product_request_accept_if_category_id_diff_procuring_entity_ident
     )
     product_request = await resp.json()
     assert resp.status == 201, product_request
+
+    req_resp = product_request["data"]["product"]["requirementResponses"][1]
+    assert "classification" in req_resp
+    assert "unit" in req_resp
 
     # successfully accept product request: administrator.identifier.id == procuringEntity.identifier.id of category
     resp = await api.post(
@@ -526,6 +534,10 @@ async def test_product_request_rejection(api, product_request):
     assert "access" not in result
     data = result["data"]
 
+    req_resp = data["product"]["requirementResponses"][1]
+    assert "classification" in req_resp
+    assert "unit" in req_resp
+
     # check generated data
     additional_fields = {k: v for k, v in data.items() if k not in product_request["data"]}
     assert set(additional_fields.keys()) == {'rejection'}
@@ -627,6 +639,10 @@ async def test_product_request_get(api, product_request, contributor):
     assert set(result.keys()) == {'data'}
     assert set(result["data"].keys()) == {'id', 'contributor_id', 'owner', 'dateCreated', 'dateModified', 'product'}
     assert contributor["data"]["owner"] == result["data"]["owner"]
+
+    req_resp = result["data"]["product"]["requirementResponses"][1]
+    assert "classification" in req_resp
+    assert "unit" in req_resp
 
 
 async def test_product_request_list(api, product_request):

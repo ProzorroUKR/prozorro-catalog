@@ -1,18 +1,23 @@
 
 def evaluate_serializer(serializer, value, obj=None):
+    kwargs = {}
+    if obj:
+        kwargs = obj.kwargs
     if type(serializer).__name__ == "function":
-        value = serializer(obj, value)
+        value = serializer(obj, value, **kwargs)
     else:
-        value = serializer(value).data
+        value = serializer(value, **kwargs).data
     return value
 
 
 class ListSerializer:
-    def __init__(self, serializer):
+    def __init__(self, serializer, **kwargs):
+        self.kwargs = kwargs
         self.serializer = serializer
 
-    def __call__(self, data):
+    def __call__(self, data, **kwargs):
         self._data = data
+        self.kwargs.update(kwargs)
         return self
 
     @property
@@ -28,7 +33,8 @@ class BaseSerializer:
     private_fields = None
     whitelist = None
 
-    def __init__(self, data: dict):
+    def __init__(self, data: dict, **kwargs):
+        self.kwargs = kwargs
         self._data = data
 
     def get_raw(self, k):
@@ -64,8 +70,10 @@ class BaseSerializer:
 
 
 class RootSerializer(BaseSerializer):
-    def __init__(self, data: dict, show_owner=True):
+    def __init__(self, data: dict, **kwargs):
         access = data.pop("access", None)
+        show_owner = kwargs.get("show_owner", True)
+
         if access and show_owner:
             data["owner"] = access["owner"]
-        super().__init__(data)
+        super().__init__(data, **kwargs)

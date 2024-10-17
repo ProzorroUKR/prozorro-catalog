@@ -42,7 +42,7 @@ class ContributorProductRequestView(BaseView):
         await cls.state.on_post(data, category)
         await db.insert_product_request(data)
 
-        return {"data": ProductRequestSerializer(data).data}
+        return {"data": ProductRequestSerializer(data, category=category).data}
 
 
 @class_view_swagger_path('/app/swagger/crowd_sourcing/product_requests')
@@ -64,7 +64,11 @@ class ProductRequestView(View):
     @classmethod
     async def get(cls, request, request_id):
         obj = await db.read_product_request(request_id)
-        return {"data": ProductRequestSerializer(obj).data}
+        category = await db.read_category(
+            category_id=obj["product"].get("relatedCategory"),
+            projection={"criteria": 1},
+        )
+        return {"data": ProductRequestSerializer(obj, category=category).data}
 
 
 @class_view_swagger_path('/app/swagger/crowd_sourcing/product_requests/accept')
@@ -95,7 +99,7 @@ class ProductRequestAcceptionView(BaseView):
         await db.insert_product(product_request["product"])
 
         return {
-            "data": ProductRequestSerializer(product_request).data,
+            "data": ProductRequestSerializer(product_request, category=category).data,
             "access": access,
         }
 
@@ -122,4 +126,4 @@ class ProductRequestRejectionView(BaseView):
             data["date"] = modified_date
             product_request.update({"rejection": data, "dateModified": modified_date})
 
-        return {"data": ProductRequestSerializer(product_request).data}
+        return {"data": ProductRequestSerializer(product_request, category=category).data}
