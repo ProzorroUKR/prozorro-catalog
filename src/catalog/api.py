@@ -1,5 +1,5 @@
 from aiohttp import web
-from aiohttp_swagger import setup_swagger
+from aiohttp_swagger import setup_swagger as aiohttp_setup_swagger
 from catalog import version
 from catalog.handlers.crowd_sourcing.contributor import ContributorView
 from catalog.handlers.crowd_sourcing.contributor_ban import ContributorBanView
@@ -581,18 +581,17 @@ def create_application(on_cleanup=None):
     return app
 
 
-if __name__ == "__main__":
-    setup_logging()
+def setup_sentry():
     if SENTRY_DSN:
         sentry_sdk.init(
             dsn=SENTRY_DSN,
             integrations=[AioHttpIntegration()]
         )
-    logger.info("Starting app on 0.0.0.0:8000")
-    application = create_application()
 
+
+def setup_swagger(application):
     if SWAGGER_DOC_AVAILABLE:
-        setup_swagger(
+        aiohttp_setup_swagger(
             application,
             title='Prozorro Catalog API',
             description='Prozorro Catalog API description',
@@ -600,8 +599,20 @@ if __name__ == "__main__":
             ui_version=3,
             definitions=get_definitions(),
         )
+
+
+async def application():
+    setup_logging()
+    setup_sentry()
+    application = create_application()
+    setup_swagger(application)
+    return application
+
+
+if __name__ == "__main__":
+    logger.info("Starting app on 0.0.0.0:8000")
     web.run_app(
-        application,
+        application(),
         host="0.0.0.0",
         port=8000,
         access_log_class=AccessLogger,

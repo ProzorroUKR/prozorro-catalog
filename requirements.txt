@@ -1,5 +1,5 @@
-# TODO: remove later maybe after aiohttp-client-cache upgrade
-aiohttp==3.10.5
+gunicorn==23.0.0
+aiohttp==3.10.5 # TODO: remove version later maybe after aiohttp-client-cache upgrade
 aiohttp-client-cache
 motor
 pytz
