@@ -11,8 +11,7 @@ class VendorProductState(ProductState):
     check_classification = False
 
     @classmethod
-    async def on_post(cls, data, vendor):
+    async def on_post(cls, data, vendor, category):
         validate_product_active_vendor(vendor)
-        category = await db.read_category(data["relatedCategory"])
         validate_product_related_category(category)
         await super().on_post(data, category)

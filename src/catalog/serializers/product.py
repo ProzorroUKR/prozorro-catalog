@@ -30,11 +30,12 @@ class ProductSerializer(RootSerializer):
     def __init__(
             self,
             data: dict,
-            vendor: dict = None,
-            show_owner: bool = True,
-            category: dict = None
+            **kwargs,
+
     ):
-        super().__init__(data, show_owner)
+        super().__init__(data, **kwargs)
+        vendor = self.kwargs.get("vendor")
+        category = self.kwargs.get("category")
         if vendor and 'vendor' in data:
             data['vendor'].update({
                 'name': vendor['vendor']['name'],

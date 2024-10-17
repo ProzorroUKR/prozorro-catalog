@@ -23,11 +23,12 @@ class VendorProductView(View):
         validate_access_token(request, vendor, body.access)
         data = body.data.dict_without_none()
 
-        await cls.state_class.on_post(data, vendor)
+        category = await db.read_category(data["relatedCategory"])
+        await cls.state_class.on_post(data, vendor, category)
 
         data['vendor'] = {"id": vendor_id}
         data['dateCreated'] = data['dateModified'] = get_now().isoformat()
         data['access'] = {'owner': request.user.name}
         await db.insert_product(data)
 
-        return {'data': ProductSerializer(data, vendor=vendor).data}
+        return {'data': ProductSerializer(data, vendor=vendor, category=category).data}
