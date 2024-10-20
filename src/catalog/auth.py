@@ -10,7 +10,10 @@ def login_user(request, allow_anonymous=True):
     # TODO use request.headers.get("X-Username") ?
     authorization = request.headers.get("Authorization")
     if authorization:
-        auth = BasicAuth.decode(authorization)
+        try:
+            auth = BasicAuth.decode(authorization)
+        except ValueError as e:
+            raise HTTPUnauthorized(text=e.args[0])
         # There is only login check in API (for permission validation),
         # but DevOps check login with password via nginx before API request.
         # So don't worry, password is being checked too.

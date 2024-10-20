@@ -3,6 +3,8 @@ import logging
 from contextlib import asynccontextmanager
 from contextvars import ContextVar
 from base64 import urlsafe_b64encode, urlsafe_b64decode
+from datetime import datetime
+
 from aiohttp import web
 from bson.codec_options import TypeRegistry
 from bson.codec_options import CodecOptions
@@ -152,10 +154,10 @@ async def paginated_result(collection, *_, offset, limit, reverse, filters=None,
     limit = max(limit, 1)
     filters = filters or {}
     if offset:
-        if offset and offset[:2] != '20':
-            offset = urlsafe_b64decode(offset).decode()
-        if offset[:2] != '20' or len(offset) < 20:
-            offset = ''
+        try:
+            datetime.fromisoformat(offset)
+        except Exception:
+            raise web.HTTPBadRequest(text=f"Invalid offset: {offset}")
         if reverse:
             filters["dateModified"] = {"$lt": offset}
         else:

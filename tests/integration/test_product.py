@@ -6,6 +6,18 @@ from .base import TEST_AUTH, TEST_AUTH_CPB
 from .conftest import set_requirements_to_responses
 
 
+async def test_invalid_auth_header(api, product):
+    resp = await api.patch(
+        f'/api/products/{product["data"]["id"]}',
+        headers={
+            "Authorization": "realsuperadmintoken",
+        },
+    )
+    assert resp.status == 401, await resp.json()
+    response = await resp.json()
+    assert {'errors': ['Could not parse authorization header.']} == response
+
+
 async def test_410_product_create(api, category, profile):
     category_id = category['data']['id']
 
