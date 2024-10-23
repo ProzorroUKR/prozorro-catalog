@@ -30,6 +30,7 @@ async def requirement_diff_type_in_category(obj, requirement):
         category = await get_category_collection().find_one(
             {"_id": obj["relatedCategory"]}, {"criteria": 1, "status": 1}
         )
+        updated = False
         if category:
             category_requirements = {
                 r["title"]: r
@@ -53,30 +54,37 @@ async def requirement_diff_type_in_category(obj, requirement):
                             for field_name in ("expectedValues", "expectedMinItems", "expectedMaxItems"):
                                 requirement.pop(field_name, None)
                     except ValueError:
-                        return
-                elif category_requirements[requirement["title"]]["dataType"] == "boolean":
-                    if requirement["dataType"] in ("number", "integer"):
-                        return
-                    else:
-                        for field_name in ("expectedValues", "expectedMinItems", "expectedMaxItems"):
-                            requirement.pop(field_name, None)
-                        requirement["dataType"] = category_requirements[requirement["title"]]["dataType"]
-                        if category_requirements[requirement["title"]].get("expectedValue") is not None:
-                            requirement["expectedValue"] = category_requirements[requirement["title"]]["expectedValue"]
+                        pass
+                elif (
+                    category_requirements[requirement["title"]]["dataType"] == "boolean"
+                    and requirement["dataType"] == "string"
+                ):
+                    for field_name in ("expectedValues", "expectedMinItems", "expectedMaxItems"):
+                        requirement.pop(field_name, None)
+                    requirement["dataType"] = category_requirements[requirement["title"]]["dataType"]
+                    if category_requirements[requirement["title"]].get("expectedValue") is not None:
+                        requirement["expectedValue"] = category_requirements[requirement["title"]]["expectedValue"]
+                    updated = True
                 elif category_requirements[requirement["title"]]["dataType"] == "string":
                     if "expectedValues" in requirement and requirement["expectedValues"]:  # not empty list
                         requirement["expectedValues"] = [
                             str(value) for value in requirement["expectedValues"]
                         ]
                         requirement["expectedMinItems"] = 1
+                        requirement["dataType"] = "string"
+                        updated = True
                     elif "expectedValue" in requirement:
                         requirement["expectedValues"] = [str(requirement.pop("expectedValue"))]
                         requirement["expectedMinItems"] = 1
+                        requirement["dataType"] = "string"
+                        updated = True
                     elif "minValue" in requirement and "maxValue" in requirement:
                         requirement["expectedValues"] = [str(requirement["minValue"]), str(requirement["maxValue"])]
                         requirement["expectedMinItems"] = 1
                         for field_name in ("minValue", "maxValue"):
                             requirement.pop(field_name, None)
+                        requirement["dataType"] = "string"
+                        updated = True
                     elif "minValue" in requirement or "maxValue" in requirement:
                         for field_name in ("minValue", "maxValue"):
                             if field_name in requirement:
@@ -84,9 +92,8 @@ async def requirement_diff_type_in_category(obj, requirement):
                                 requirement["expectedMinItems"] = 1
                                 for field_name in ("minValue", "maxValue"):
                                     requirement.pop(field_name, None)
-                    else:
-                        return
-                    requirement["dataType"] = "string"
+                        requirement["dataType"] = "string"
+                        updated = True
                 elif (
                     category_requirements[requirement["title"]]["dataType"] in ("number", "integer")
                     and requirement["dataType"] in ("number", "integer")
@@ -97,11 +104,17 @@ async def requirement_diff_type_in_category(obj, requirement):
                                 obj_type = TYPE_MAPPING[category_requirements[requirement["title"]]["dataType"]]
                                 requirement[field_name] = obj_type(requirement[field_name])
                                 requirement["dataType"] = category_requirements[requirement["title"]]["dataType"]
+                                updated = True
                     except ValueError:
-                        return
-                else:
-                    return
-                return True
+                        pass
+            if requirement["dataType"] in ("string", "boolean") and requirement.get("unit"):
+                requirement.pop("unit")
+                updated = True
+            elif requirement["dataType"] in ("number", "integer"):
+                if category_requirements[requirement["title"]].get("unit") and not requirement.get("unit"):
+                    requirement["unit"] = category_requirements[requirement["title"]]["unit"]
+                    updated = True
+            return updated
 
 
 async def bulk_update(collection, bulk, session, counter):

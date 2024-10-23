@@ -22,7 +22,11 @@ async def test_requirements_number(db, api):
                         "title": "Xарактеристика №1",
                         "dataType": "number",
                         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": 10.0
+                        "expectedValue": 10.0,
+                        "unit": {
+                            "code": "CMT",
+                            "name": "см"
+                        }
                     }, {
                         "title": "Xарактеристика №2",
                         "dataType": "number",
@@ -90,7 +94,11 @@ async def test_requirements_number(db, api):
                         "dataType": "number",
                         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
                         "minValue": 10,
-                        "maxValue": 20
+                        "maxValue": 20,
+                        "unit": {
+                            "code": "CMT",
+                            "name": "см"
+                        },
                     }, {
                         "title": "Xарактеристика №16",
                         "dataType": "boolean",
@@ -129,17 +137,25 @@ async def test_requirements_number(db, api):
                         "title": "Xарактеристика №2",
                         "dataType": "string",
                         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": ["10", "20"]
+                        "expectedValues": ["10", "20"],
                     }, {
                         "title": "Xарактеристика №3",
                         "dataType": "string",
                         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": ["10"]
+                        "expectedValues": ["10"],
+                        "unit": {
+                            "code": "CMT",
+                            "name": "см"
+                        },
                     }, {
                         "title": "Xарактеристика №4",
                         "dataType": "string",
                         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": ["dsd"]
+                        "expectedValues": ["dsd"],
+                        "unit": {
+                            "code": "CMT",
+                            "name": "см"
+                        },
                     }, {
                         "title": "Xарактеристика нема такої",
                         "dataType": "string",
@@ -187,7 +203,11 @@ async def test_requirements_number(db, api):
                         "dataType": "integer",
                         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
                         "minValue": 10.0,
-                        "maxValue": 20.0
+                        "maxValue": 20.0,
+                        "unit": {
+                            "code": "%",
+                            "name": "%"
+                        },
                     }, {
                         "title": "Xарактеристика №16",
                         "dataType": "string",
@@ -216,7 +236,11 @@ async def test_requirements_number(db, api):
             "title": "Xарактеристика №1",
             "dataType": "number",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-            "expectedValue": 10.0
+            "expectedValue": 10.0,
+            "unit": {
+                "code": "CMT",
+                "name": "см"
+            },
         }, {
             "title": "Xарактеристика №2",
             "dataType": "string",
@@ -226,7 +250,11 @@ async def test_requirements_number(db, api):
             "title": "Xарактеристика №3",
             "dataType": "integer",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-            "expectedValue": 10
+            "expectedValue": 10,
+            "unit": {
+                "code": "CMT",
+                "name": "см"
+            },
         }, {
             "title": "Xарактеристика №4",
             "dataType": "string",
@@ -279,7 +307,11 @@ async def test_requirements_number(db, api):
             "dataType": "number",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
             "minValue": 10.0,
-            "maxValue": 20.0
+            "maxValue": 20.0,
+            "unit": {
+                "code": "%",
+                "name": "%"
+            },
         }, {
             "title": "Xарактеристика №16",
             "dataType": "boolean",
