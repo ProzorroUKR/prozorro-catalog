@@ -221,6 +221,11 @@ async def test_requirements_number(db, api):
                         "expectedValues": ["foo", "bar", "baz"],
                         "expectedMinItems": 1,
                         "expectedMaxItems": 2
+                    }, {
+                        "title": "Xарактеристика №18",
+                        "dataType": "number",
+                        "expectedValue": 1,
+                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
                     }]
                 }
             ]
@@ -321,6 +326,11 @@ async def test_requirements_number(db, api):
             "title": "Xарактеристика №17",
             "dataType": "boolean",
             "expectedValue": False,
+            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+        }, {
+            "title": "Xарактеристика №18",
+            "dataType": "number",
+            "expectedValue": 1,
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
         }
     ]
