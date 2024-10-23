@@ -61,6 +61,8 @@ async def requirement_diff_type_in_category(obj, requirement):
                         for field_name in ("expectedValues", "expectedMinItems", "expectedMaxItems"):
                             requirement.pop(field_name, None)
                         requirement["dataType"] = category_requirements[requirement["title"]]["dataType"]
+                        if category_requirements[requirement["title"]].get("expectedValue") is not None:
+                            requirement["expectedValue"] = category_requirements[requirement["title"]]["expectedValue"]
                 elif category_requirements[requirement["title"]]["dataType"] == "string":
                     if "expectedValues" in requirement and requirement["expectedValues"]:  # not empty list
                         requirement["expectedValues"] = [

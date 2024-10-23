@@ -1,7 +1,7 @@
 from copy import deepcopy
 from uuid import uuid4
 
-from catalog.migrations.comparing_profiles_with_categories import (
+from catalog.migrations.cs_17989_comparing_profiles_with_categories import (
     migrate_profiles,
 )
 from tests.integration.conftest import api, db, get_fixture_json
@@ -91,6 +91,16 @@ async def test_requirements_number(db, api):
                         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
                         "minValue": 10,
                         "maxValue": 20
+                    }, {
+                        "title": "Xарактеристика №16",
+                        "dataType": "boolean",
+                        "expectedValue": True,
+                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                    }, {
+                        "title": "Xарактеристика №17",
+                        "dataType": "boolean",
+                        "expectedValue": False,
+                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
                     }]
                 }
             ]
@@ -178,6 +188,19 @@ async def test_requirements_number(db, api):
                         "id": "8726f95aeb1d4b289d6c1a5a07271c93",
                         "minValue": 10.0,
                         "maxValue": 20.0
+                    }, {
+                        "title": "Xарактеристика №16",
+                        "dataType": "string",
+                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                        "expectedValues": ["10.5"],
+                        "expectedMinItems": 1
+                    }, {
+                        "title": "Xарактеристика №17",
+                        "dataType": "string",
+                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                        "expectedValues": ["foo", "bar", "baz"],
+                        "expectedMinItems": 1,
+                        "expectedMaxItems": 2
                     }]
                 }
             ]
@@ -257,5 +280,15 @@ async def test_requirements_number(db, api):
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
             "minValue": 10.0,
             "maxValue": 20.0
+        }, {
+            "title": "Xарактеристика №16",
+            "dataType": "boolean",
+            "expectedValue": True,
+            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+        }, {
+            "title": "Xарактеристика №17",
+            "dataType": "boolean",
+            "expectedValue": False,
+            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
         }
     ]
