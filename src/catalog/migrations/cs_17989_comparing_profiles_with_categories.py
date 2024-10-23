@@ -111,7 +111,11 @@ async def requirement_diff_type_in_category(obj, requirement):
                 requirement.pop("unit")
                 updated = True
             elif requirement["dataType"] in ("number", "integer"):
-                if category_requirements[requirement["title"]].get("unit") and not requirement.get("unit"):
+                if (
+                    category_requirements.get(requirement["title"])
+                    and category_requirements[requirement["title"]].get("unit")
+                    and not requirement.get("unit")
+                ):
                     requirement["unit"] = category_requirements[requirement["title"]]["unit"]
                     updated = True
             return updated
