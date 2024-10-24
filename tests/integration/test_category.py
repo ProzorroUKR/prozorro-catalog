@@ -261,6 +261,12 @@ async def test_111_limit_offset(api, mock_agreement):
     result = await resp.json()
     assert {'errors': [f'Invalid offset: {offset}']} == result
 
+    offset = "2024-08-20T10:03:07.108768+03:00"
+    resp = await api.get(f'/api/categories?limit=8&reverse=1&offset={offset}')
+    assert resp.status == 200
+    resp_json = await resp.json()
+    assert len(resp_json['data']) == 0
+
 
 async def test_120_category_patch(api, category):
     category_id = category["data"]['id']

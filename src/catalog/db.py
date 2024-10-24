@@ -155,7 +155,7 @@ async def paginated_result(collection, *_, offset, limit, reverse, filters=None,
     filters = filters or {}
     if offset:
         try:
-            datetime.fromisoformat(offset)
+            datetime.fromisoformat(offset.replace(" ", "+"))
         except Exception:
             raise web.HTTPBadRequest(text=f"Invalid offset: {offset}")
         if reverse:
