@@ -265,7 +265,7 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
 
     assert resp.status == 400
     result = await resp.json()
-    assert result == {'errors': ["please leave only one field 'values'"]}
+    assert result == {'errors': ["please leave only one field 'value' or 'values'"]}
 
     # response with values
     test_product['requirementResponses'] = [
