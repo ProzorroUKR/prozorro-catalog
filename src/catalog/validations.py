@@ -58,8 +58,10 @@ def validate_req_response_values(requirement, values, key):
 def validate_req_response(req_response, requirement):
     value = req_response.get('value')
     values = req_response.get('values')
-    if value is not None and values is not None:
-        raise HTTPBadRequest(text="please leave only one field 'value' or 'values'")
+    if requirement.get("expectedValues") is not None and value is not None:
+        raise HTTPBadRequest(text=f"only 'values' allowed in response for requirement {requirement['title']}")
+    elif requirement.get("expectedValues") is None and values is not None:
+        raise HTTPBadRequest(text=f"only 'value' allowed in response for requirement {requirement['title']}")
     values = [value] if value is not None else values
     key = req_response.get('requirement')
 

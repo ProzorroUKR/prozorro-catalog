@@ -265,7 +265,7 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
 
     assert resp.status == 400
     result = await resp.json()
-    assert result == {'errors': ["please leave only one field 'value' or 'values'"]}
+    assert result == {'errors': ["only 'values' allowed in response for requirement Метод аналізу"]}
 
     # response with values
     test_product['requirementResponses'] = [
@@ -284,12 +284,14 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
         auth=TEST_AUTH,
     )
 
-    assert resp.status == 201
+    assert resp.status == 400
+    result = await resp.json()
+    assert result == {'errors': ["only 'value' allowed in response for requirement Специфічність"]}
 
     # response with value
     test_product['requirementResponses'] = [
         {
-            "value": "ІХА",
+            "values": ["ІХА"],
             "requirement": "Метод аналізу"
         },
         {
