@@ -1,4 +1,5 @@
 from aiohttp.web import HTTPBadRequest
+from aiohttp.web_exceptions import HTTPForbidden
 
 from catalog import db
 from catalog.state.base import BaseState
@@ -28,19 +29,34 @@ class ProductState(BaseState):
         await cls.validate_product_to_profiles(data)
         await validate_medicine_additional_classifications(data)
         cls.copy_data_from_category(data, category)
+        data["dateCreated"] = data["dateModified"] = get_now().isoformat()
 
     @classmethod
     async def on_patch(cls, before, after):
+        if before.get("status", ProductStatus.active) != ProductStatus.active:
+            raise HTTPForbidden(text=f"Patch product in {before['status']} status is disallowed")
+        now = get_now().isoformat()
         if before != after:
             category_id = after["relatedCategory"]
             category = await db.read_category(category_id)
 
             if after.get("status", ProductStatus.active) != ProductStatus.hidden:
-                validate_product_to_category(category, after, before, required_criteria=cls.required_criteria)
+                validate_product_to_category(
+                    category,
+                    after,
+                    before,
+                    check_classification=(after.get("vendor") is None),
+                    required_criteria=cls.required_criteria,
+                )
                 await cls.validate_product_to_profiles(after)
             if before.get("additionalClassifications", "") != after.get("additionalClassifications", ""):
                 await validate_medicine_additional_classifications(after)
             cls.copy_data_from_category(after, category)
+            if after.get("status") != ProductStatus.active:
+                after["dateArchived"] = now
+            for doc in after.get("documents", []):
+                doc["datePublished"] = doc["dateModified"] = now
+        after["dateModified"] = now
 
         super().on_patch(before, after)
 

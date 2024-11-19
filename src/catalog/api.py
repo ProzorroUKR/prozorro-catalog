@@ -38,6 +38,7 @@ from catalog.handlers.category import (
     CategoryCriteriaRGRequirementView,
 )
 from catalog.handlers.product import ProductView
+from catalog.handlers.product_document import ProductDocumentView
 from catalog.handlers.offer import OfferView
 from catalog.handlers.image import ImageView
 from catalog.handlers.search import SearchView
@@ -300,6 +301,34 @@ def create_application(on_cleanup=None):
         r"/api/products/{product_id:[\w-]+}",
         ProductView.patch,
         name="update_product"
+    )
+
+    # product docs
+    app.router.add_get(
+        r"/api/products/{product_id:[\w-]+}/documents",
+        ProductDocumentView.collection_get,
+        name="read_product_document_registry",
+        allow_head=False,
+    )
+    app.router.add_get(
+        r"/api/products/{product_id:[\w-]+}/documents/{doc_id:[\w]{32}}",
+        ProductDocumentView.get,
+        name="read_product_document",
+    )
+    app.router.add_post(
+        r"/api/products/{product_id:[\w-]+}/documents",
+        ProductDocumentView.post,
+        name="create_product_document"
+    )
+    app.router.add_put(
+        r"/api/products/{product_id:[\w-]+}/documents/{doc_id:[\w]{32}}",
+        ProductDocumentView.put,
+        name="replace_product_document",
+    )
+    app.router.add_patch(
+        r"/api/products/{product_id:[\w-]+}/documents/{doc_id:[\w]{32}}",
+        ProductDocumentView.patch,
+        name="update_product_document",
     )
 
     # offers

@@ -6,12 +6,11 @@ from aiohttp.web import HTTPConflict, HTTPNotFound
 from pymongo.errors import OperationFailure
 
 from catalog import db
-from catalog.models.product import ProductCreateInput, ProductUpdateInput
+from catalog.models.product import ProductCreateInput, ProductUpdateInput, LocalizationProductUpdateInput
 from catalog.swagger import class_view_swagger_path
 from catalog.utils import pagination_params, get_now, async_retry
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
 from catalog.serializers.product import ProductSerializer
-from catalog.validations import validate_patch_vendor_product
 from catalog.state.product import ProductState
 
 
@@ -63,7 +62,7 @@ class ProductView(View):
         await cls.state_class.on_post(data, category)
 
         access = set_access_token(request, data)
-        data["dateModified"] = get_now().isoformat()
+        data["dateCreated"] = data["dateModified"] = get_now().isoformat()
         await db.insert_product(data)
 
         return {"data": ProductSerializer(data, category=category).data,
@@ -77,13 +76,14 @@ class ProductView(View):
         async with db.read_and_update_product(product_id) as product:
             # import and validate data
             json = await request.json()
-            body = ProductUpdateInput(**json)
-            validate_patch_vendor_product(product)
+            if product.get("vendor"):
+                body = LocalizationProductUpdateInput(**json)
+            else:
+                body = ProductUpdateInput(**json)
             validate_access_token(request, product, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
             product_before = deepcopy(product)
-            data['dateModified'] = get_now().isoformat()
             product.update(data)
             category = await db.read_category(product["relatedCategory"])
             await cls.state_class.on_patch(product_before, product)

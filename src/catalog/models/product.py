@@ -9,18 +9,17 @@ from catalog.models.api import Response, CreateResponse, AuthorizedInput
 from catalog.models.common import (
     Image,
     Classification,
-    Address,
-    ContactPoint,
     Identifier,
     CategoryMarketAdministrator,
 )
-from catalog.models.document import Document
+from catalog.models.document import Document, DocumentPostData
 from catalog.utils import get_now
 from enum import Enum
 
 
 class ProductStatus(str, Enum):
     active = 'active'
+    inactive = 'inactive'
     hidden = 'hidden'
 
 
@@ -107,11 +106,16 @@ class ProductUpdateData(ProductRequirementResponses):
     status: Optional[ProductStatus]
 
 
+class LocalizationProductUpdateData(BaseModel):
+    status: Optional[ProductStatus]
+    documents: Optional[List[DocumentPostData]]
+
+
 class Product(BaseProductData):
     id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     marketAdministrator: CategoryMarketAdministrator
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
-    dateCreated: Optional[datetime]  # creation product with request by contributor
+    dateCreated: Optional[datetime]
     relatedProfiles: Optional[List[str]]
     owner: str
     vendor: Optional[VendorInfo]
@@ -122,5 +126,6 @@ class Product(BaseProductData):
 ProductCreateInput = AuthorizedInput[ProductCreateData]
 VendorProductCreateInput = AuthorizedInput[VendorProductCreateData]
 ProductUpdateInput = AuthorizedInput[ProductUpdateData]
+LocalizationProductUpdateInput = AuthorizedInput[LocalizationProductUpdateData]
 ProductResponse = Response[Product]
 ProductCreateResponse = CreateResponse[Product]

@@ -3,7 +3,6 @@ from aiohttp.web_urldispatcher import View
 from catalog import db
 from catalog.models.product import VendorProductCreateInput
 from catalog.swagger import class_view_swagger_path
-from catalog.utils import get_now
 from catalog.auth import validate_access_token, validate_accreditation
 from catalog.serializers.product import ProductSerializer
 from catalog.state.vendor_product import VendorProductState
@@ -27,7 +26,6 @@ class VendorProductView(View):
         await cls.state_class.on_post(data, vendor, category)
 
         data['vendor'] = {"id": vendor_id}
-        data['dateCreated'] = data['dateModified'] = get_now().isoformat()
         data['access'] = {'owner': request.user.name}
         await db.insert_product(data)
 

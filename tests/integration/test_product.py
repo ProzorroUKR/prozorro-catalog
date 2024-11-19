@@ -45,6 +45,8 @@ async def test_410_product_create(api, category, profile):
     assert 'id' in resp_json['data']
     assert 'access' in resp_json
     assert 'token' in resp_json['access']
+    assert resp_json['data']['dateCreated'] == resp_json['data']['dateModified']
+    assert 'expirationDate' not in resp_json['data']
     product_id = resp_json['data']['id']
 
     resp = await api.patch(
@@ -158,35 +160,6 @@ async def test_420_product_patch(api, category, profile, product):
 
     patch_product = {
         "data": {
-            "status": "hidden",
-            "title": "Маски (приховані)"
-        },
-        "access": product['access']
-    }
-
-    resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH)
-    assert resp.status == 200
-    resp_json = await resp.json()
-    for key, patch_value in patch_product['data'].items():
-        assert resp_json['data'][key] == patch_value
-
-    test_date_modified = resp_json['data']['dateModified']
-    assert test_date_modified > product["data"]["dateModified"]
-
-    resp = await api.get(f'/api/products/{product_id}')
-    assert resp.status == 200
-    resp_json = await resp.json()
-    for key, patch_value in patch_product['data'].items():
-        assert resp_json['data'][key] == patch_value
-
-    patch_product['data']['status'] = 'active'
-    resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH)
-    assert resp.status == 200
-    resp_json = await resp.json()
-    assert resp_json['data']['status'] == 'active'
-
-    patch_product = {
-        "data": {
             "relatedCategory": "1"*32,
         },
         "access": product['access']
@@ -273,6 +246,44 @@ async def test_420_product_patch(api, category, profile, product):
     assert resp.status == 200
     resp_json = await resp.json()
     assert resp_json['data']['status'] == 'hidden'
+
+
+async def test_product_patch_after_termination_status(api, product, category):
+    product_id = product['data']['id']
+
+    resp = await api.get(f'/api/products/{product_id}')
+    assert resp.status == 200
+    resp_json = await resp.json()
+    assert product_id == resp_json['data']['id']
+
+    patch_product = {
+        "data": {
+            "status": "hidden",
+            "title": "Маски (приховані)"
+        },
+        "access": product['access']
+    }
+
+    resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH)
+    assert resp.status == 200
+    resp_json = await resp.json()
+    for key, patch_value in patch_product['data'].items():
+        assert resp_json['data'][key] == patch_value
+    assert "dateArchived" in resp_json['data']
+
+    test_date_modified = resp_json['data']['dateModified']
+    assert test_date_modified > product["data"]["dateModified"]
+
+    resp = await api.get(f'/api/products/{product_id}')
+    assert resp.status == 200
+    resp_json = await resp.json()
+    for key, patch_value in patch_product['data'].items():
+        assert resp_json['data'][key] == patch_value
+
+    # forbidden to patch hidden product
+    patch_product['data']['status'] = 'active'
+    resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH)
+    assert resp.status == 403
 
 
 async def test_430_product_limit_offset(api, category, profile):
