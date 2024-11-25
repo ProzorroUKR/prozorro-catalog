@@ -34,13 +34,13 @@
         "values": ["одноразова"]
       },
       {
-        "values": [3]
+        "value": 3
       },
       {
-        "values": [50]
+        "value": 50
       },
       {
-        "values": [true]
+        "value": true
       },
       {
         "values": ["ALL_A", "ALL_B", "ALL_C"]

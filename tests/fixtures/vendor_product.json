@@ -17,7 +17,7 @@
   },
   "requirementResponses": [
     {
-      "value": "одноразова"
+      "values": ["одноразова"]
     },
     {
       "value": 3
