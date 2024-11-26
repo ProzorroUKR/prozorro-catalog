@@ -1,30 +1,36 @@
 tags:
-- CrowdSourcing/ContributorBans
-description: Contributor ban creation
-operationId: collection_post_contributor_ban
+- Vendors/Bans
+description: Create document
+operationId: post_vendor_ban_doc
 parameters:
 - in: path
-  name: contributor_id
+  name: vendor_id
   schema:
     type: string
   required: true
-  description: ID of the contributor
+  description: ID of the vendor
+- in: path
+  name: ban_id
+  schema:
+    type: string
+  required: true
+  description: ID of the vendor ban
 security:
   - Basic: []
 requestBody:
-  description: Contributor ban data
+  description: Document data
   required: true
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/Input_ContributorBanPostData_'
+        $ref: '#/components/schemas/Input_DocumentPostData_'
 responses:
   "200":
     description: successful operation
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/Response_Ban_'
+          $ref: '#/components/schemas/Response_Document_'
   "400":
     description: validation errors
     content:

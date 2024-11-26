@@ -15,10 +15,9 @@ import standards
 BAN_REASONS = standards.load("market/ban_reason.json")
 
 
-class BanPostData(BaseModel):
+class BaseBanPostData(BaseModel):
     reason: str
     description: Optional[str] = Field(None, min_length=1, max_length=500)
-    dueDate: Optional[datetime]
     administrator: MarketAdministrator
     documents: Optional[List[DocumentPostData]]
 
@@ -26,18 +25,22 @@ class BanPostData(BaseModel):
     def id(self):
         return uuid4().hex
 
+    @validator('reason')
+    def reason_standard(cls, v):
+        if v not in BAN_REASONS:
+            raise ValueError("must be one of market/ban_reason.json keys")
+        return v
+
+
+class ContributorBanPostData(BaseBanPostData):
+    dueDate: Optional[datetime]
+
     @validator('dueDate')
     def validate_date(cls, v):
         if v and isinstance(v, datetime):
             if v < get_now():
                 raise ValueError("should be greater than now")
             return v.isoformat()
-
-    @validator('reason')
-    def reason_standard(cls, v):
-        if v not in BAN_REASONS:
-            raise ValueError("must be one of market/ban_reason.json keys")
-        return v
 
 
 class Ban(BaseModel):
@@ -52,6 +55,7 @@ class Ban(BaseModel):
     documents: Optional[List[Document]]
 
 
-BanPostInput = Input[BanPostData]
+ContributorBanPostInput = Input[ContributorBanPostData]
+VendorBanPostInput = Input[BaseBanPostData]
 BanResponse = Response[Ban]
 BanList = ListResponse[Ban]

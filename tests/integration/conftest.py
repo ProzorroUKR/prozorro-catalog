@@ -6,7 +6,7 @@ import pytest
 from catalog.api import create_application
 from catalog.db import flush_database, init_mongo, get_database, get_offers_collection, insert_object
 from catalog.doc_service import generate_test_url
-from .base import TEST_AUTH
+from .base import TEST_AUTH, TEST_AUTH_CPB
 from .utils import get_fixture_json, create_profile, create_criteria
 
 
@@ -257,6 +257,23 @@ async def product_request_document(api, product_request):
         f'/api/crowd-sourcing/requests/{product_request["id"]}/documents',
         json={"data": doc_data},
         auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    return result
+
+
+@pytest.fixture
+async def vendor_ban(api, vendor):
+    data = get_fixture_json('ban')
+    del data["dueDate"]
+    doc_hash = "0" * 32
+    data['documents'][0]['url'] = generate_test_url(doc_hash)
+    data['documents'][0]['hash'] = f"md5:{doc_hash}"
+    resp = await api.post(
+        f'/api/vendors/{vendor["data"]["id"]}/bans',
+        json={"data": data},
+        auth=TEST_AUTH_CPB,
     )
     result = await resp.json()
     assert resp.status == 201, result

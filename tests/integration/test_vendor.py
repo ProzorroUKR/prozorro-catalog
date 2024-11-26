@@ -152,7 +152,7 @@ async def test_vendor_create(db, api, mock_agreement):
 
     # check generated data
     additional_fields = {k: v for k, v in data.items() if k not in test_vendor}
-    assert set(additional_fields.keys()) == {'id', 'dateCreated', 'dateModified', 'owner', 'isActivated', "status"}
+    assert set(additional_fields.keys()) == {'id', 'dateCreated', 'dateModified', 'owner', 'isActivated', 'status', 'isBanned'}
     assert data["isActivated"] is False
     assert data["status"] == "pending"
 
@@ -268,8 +268,8 @@ async def test_vendor_get(api, vendor):
     assert resp.status == 200
     result = await resp.json()
     assert set(result.keys()) == {'data'}
-    assert set(result["data"].keys()) == {'categories', 'id', 'vendor', 'owner', "status",
-                                          'isActivated', 'dateCreated', 'dateModified'}
+    assert set(result["data"].keys()) == {'categories', 'id', 'vendor', 'owner', 'status',
+                                          'isActivated', 'dateCreated', 'dateModified', 'isBanned'}
     assert result["data"]["status"] == "active"
 
 

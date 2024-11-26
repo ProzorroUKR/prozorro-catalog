@@ -18,9 +18,12 @@ def validate_product_related_category(category):
         raise HTTPBadRequest(text="relatedCategory should be in `active` status.")
 
 
-def validate_product_active_vendor(vendor):
+def validate_active_vendor(vendor):
     if not vendor['isActivated']:
         raise HTTPBadRequest(text="Vendor should be activated.")
+    for ban in vendor.get("bans", []):
+        if datetime.fromisoformat(ban["dueDate"]) > get_now():
+            raise HTTPForbidden(text="Vendor is banned")
 
 
 def validate_req_response_values(requirement, values, key):
