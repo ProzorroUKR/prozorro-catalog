@@ -15,10 +15,16 @@ class ProductState(BaseState):
 
     category_fields_to_copy = ["marketAdministrator"]
     check_classification = True
+    required_criteria = []
 
     @classmethod
     async def on_post(cls, data, category):
-        validate_product_to_category(category, data, check_classification=cls.check_classification)
+        validate_product_to_category(
+            category,
+            data,
+            check_classification=cls.check_classification,
+            required_criteria=cls.required_criteria,
+        )
         await cls.validate_product_to_profiles(data)
         await validate_medicine_additional_classifications(data)
         cls.copy_data_from_category(data, category)
@@ -30,7 +36,7 @@ class ProductState(BaseState):
             category = await db.read_category(category_id)
 
             if after.get("status", ProductStatus.active) != ProductStatus.hidden:
-                validate_product_to_category(category, after, before)
+                validate_product_to_category(category, after, before, required_criteria=cls.required_criteria)
                 await cls.validate_product_to_profiles(after)
             if before.get("additionalClassifications", "") != after.get("additionalClassifications", ""):
                 await validate_medicine_additional_classifications(after)

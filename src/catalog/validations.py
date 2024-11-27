@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from typing import Iterable
 
 import aiohttp
 from aiohttp.web import HTTPBadRequest, HTTPForbidden
@@ -68,13 +69,22 @@ def validate_req_response(req_response, requirement):
     validate_req_response_values(requirement, values, key)
 
 
-def validate_product_req_responses_to_category(category: dict, product: dict, product_before=None):
+def validate_product_req_responses_to_category(
+        category: dict,
+        product: dict,
+        product_before: dict = None,
+        required_criteria: Iterable = None
+):
+
     category_requirements = {
-        r["title"]: r
+        r["title"]: (r, c.get("classification", {}).get("id"))
         for c in category.get("criteria", "")
         for group in c["requirementGroups"]
         for r in group["requirements"]
     }
+    required_criteria = required_criteria if required_criteria else list()
+    required_classifications = {i[1] for i in category_requirements.values() if i[1] in required_criteria}
+    responded_classifications = set()
 
     if category_requirements and not product.get("requirementResponses"):
         raise HTTPBadRequest(text='should be responded at least on one category requirement')
@@ -92,12 +102,18 @@ def validate_product_req_responses_to_category(category: dict, product: dict, pr
         # check if added new requirement responses to archived requirement
         if (
             key not in before_responded_requirements
-            and category_requirements[key].get("isArchived", False)
+            and category_requirements[key][0].get("isArchived", False)
         ):
             raise HTTPBadRequest(text=f'requirement {key} is archived')
 
-        requirement = category_requirements[key]
+        requirement, classification = category_requirements[key]
         validate_req_response(req_response, requirement)
+        responded_classifications.add(classification)
+
+    for required_classification in required_classifications:
+        if required_classification not in responded_classifications:
+            raise HTTPBadRequest(text=f'should be responded at least on one category '
+                                      f'requirement with classification {required_classification}')
 
 
 def validate_product_req_response_to_profile(profile: dict, product: dict):
@@ -123,7 +139,13 @@ def validate_product_req_response_to_profile(profile: dict, product: dict):
         raise HTTPBadRequest(text=f"should be responded at least on one profile({profile['id']}) requirement")
 
 
-def validate_product_to_category(category, product, product_before=None, check_classification=True):
+def validate_product_to_category(
+        category,
+        product,
+        product_before=None,
+        check_classification=True,
+        required_criteria=None
+):
     if category.get("status", CategoryStatus.active) != CategoryStatus.active:
         raise HTTPBadRequest(text=f"relatedCategory should be in `{CategoryStatus.active}` status.")
     if check_classification:
@@ -134,7 +156,7 @@ def validate_product_to_category(category, product, product_before=None, check_c
                 text="product classification should have the same digits at the beginning as in related category."
             )
 
-    validate_product_req_responses_to_category(category, product, product_before)
+    validate_product_req_responses_to_category(category, product, product_before, required_criteria)
 
 
 def validate_product_to_profile(profile, product):
