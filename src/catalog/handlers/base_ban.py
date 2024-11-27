@@ -48,7 +48,7 @@ class BaseBanView(BaseView):
         data = body.data.dict_without_none()
         async with cls.read_and_update_object(**kwargs) as obj:
             await cls.validate_data(request, body, obj, **kwargs)
-            await cls.state.on_post(data)
+            await cls.state.on_post(data, obj)
             obj["dateModified"] = get_now().isoformat()
             if "bans" not in obj:
                 obj["bans"] = []

@@ -12,17 +12,6 @@ class VendorSerializer(RootSerializer):
         "documents": ListSerializer(DocumentSerializer),
     }
 
-    @property
-    def data(self) -> dict:
-        data = super().data
-        for ban in data.get("bans", []):
-            if datetime.fromisoformat(ban["dueDate"]) > get_now():
-                data["isBanned"] = True
-                break
-        else:
-            data["isBanned"] = False
-        return data
-
 
 class VendorSignSerializer(RootSerializer):
     whitelist = {"categories", "vendor", "documents"}

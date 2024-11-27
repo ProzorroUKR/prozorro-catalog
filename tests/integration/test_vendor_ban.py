@@ -5,7 +5,9 @@ from freezegun import freeze_time
 
 from urllib.parse import urlparse, parse_qsl, urlencode
 from catalog.doc_service import generate_test_url, get_doc_service_uid_from_url
+from catalog.models.vendor import VendorStatus
 from catalog.utils import get_now
+from cron.activate_banned_vendors import run_task as activate_banned_vendors
 from .base import TEST_AUTH, TEST_AUTH_CPB
 from .conftest import set_requirements_to_responses
 
@@ -117,13 +119,14 @@ async def test_ban_create(api, vendor):
     assert resp.status == 200
     result = await resp.json()
     assert len(result["data"]["bans"]) == 1
-    assert result["data"]["isBanned"] is True
+    assert result["data"]["status"] == VendorStatus.banned
 
     now = get_now()
     with freeze_time(now.replace(year=now.year + 1).isoformat()):
+        await activate_banned_vendors()
         resp = await api.get(f"api/vendors/{vendor['data']['id']}")
         result = await resp.json()
-        assert result["data"]["isBanned"] is False
+        assert result["data"]["status"] == VendorStatus.active
 
 
 async def test_ban_get(api, vendor, vendor_ban):
@@ -187,7 +190,7 @@ async def test_vendor_banned(api, vendor, vendor_ban, category):
     resp = await api.get(f"/api/vendors/{vendor['id']}")
     assert resp.status == 200
     result = await resp.json()
-    assert result["data"]["isBanned"] is True
+    assert result["data"]["status"] == VendorStatus.banned
 
     # try to add product from banned vendor
     resp = await api.post(
@@ -203,9 +206,10 @@ async def test_vendor_banned(api, vendor, vendor_ban, category):
     # a year is passed
     now = get_now()
     with freeze_time(now.replace(year=now.year + 1).isoformat()):
+        await activate_banned_vendors()
         resp = await api.get(f"api/vendors/{vendor['id']}")
         result = await resp.json()
-        assert result["data"]["isBanned"] is False
+        assert result["data"]["status"] == VendorStatus.active
 
         resp = await api.post(
             f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',

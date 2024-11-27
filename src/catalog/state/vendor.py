@@ -1,3 +1,4 @@
+from catalog.models.vendor import VendorStatus
 from catalog.state.base import BaseState
 from aiohttp.web import HTTPBadRequest
 from catalog.context import get_now
@@ -56,4 +57,4 @@ class VendorState(BaseState):
 
     @classmethod
     def always(cls, data):
-        data["status"] = "active" if data.get("isActivated") else "pending"
+        data["status"] = VendorStatus.active if data.get("isActivated") else VendorStatus.pending

@@ -63,6 +63,7 @@ class VendorPatchData(BaseModel):
 class VendorStatus(str, Enum):
     pending = "pending"
     active = "active"
+    banned = "banned"
 
 
 class Vendor(VendorPostData):
@@ -75,7 +76,6 @@ class Vendor(VendorPostData):
     status: VendorStatus = VendorStatus.pending
     documents: List[Document]
     bans: Optional[List[Ban]]
-    isBanned: Optional[bool]
 
 
 class VendorSign(VendorPostData):
