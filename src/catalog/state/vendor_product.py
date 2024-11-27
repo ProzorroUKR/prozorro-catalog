@@ -9,6 +9,10 @@ from catalog.validations import (
 class VendorProductState(ProductState):
 
     check_classification = False
+    required_criteria = (
+        "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL",
+        "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
+    )
 
     @classmethod
     async def on_post(cls, data, vendor, category):
