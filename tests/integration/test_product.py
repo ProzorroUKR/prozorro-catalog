@@ -269,7 +269,7 @@ async def test_product_patch_after_termination_status(api, product, category):
     resp_json = await resp.json()
     for key, patch_value in patch_product['data'].items():
         assert resp_json['data'][key] == patch_value
-    assert "dateArchived" in resp_json['data']
+    assert "expirationDate" in resp_json['data']
 
     test_date_modified = resp_json['data']['dateModified']
     assert test_date_modified > product["data"]["dateModified"]

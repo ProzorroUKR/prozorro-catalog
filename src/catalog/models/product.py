@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Literal
 from uuid import uuid4
 
 from pydantic import Field, validator, constr, StrictInt, StrictFloat, StrictBool, StrictStr
@@ -71,7 +71,7 @@ class BaseProductCreateData(ProductRequirementResponses):
     classification: Classification
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
     identifier: VendorProductIdentifier
-    status: ProductStatus = ProductStatus.active
+    status: Literal[ProductStatus.active]
 
 
 class VendorProductCreateData(BaseProductCreateData):
@@ -121,6 +121,7 @@ class Product(BaseProductData):
     vendor: Optional[VendorInfo]
     documents: Optional[Document]
     images: Optional[List[Image]] = Field(None, max_items=100)
+    expirationDate: Optional[datetime]
 
 
 ProductCreateInput = AuthorizedInput[ProductCreateData]

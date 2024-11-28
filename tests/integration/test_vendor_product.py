@@ -85,6 +85,20 @@ async def test_vendor_product_create(api, vendor, category, profile):
     ]}
 
     invalid_product = deepcopy(test_product)
+    invalid_product["status"] = "hidden"
+    resp = await api.post(
+        f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',
+        json={'data': invalid_product},
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 400
+    result = await resp.json()
+    assert result == {'errors': [
+        "unexpected value; permitted: <ProductStatus.active: 'active'>: data.status"
+    ]}
+
+    invalid_product = deepcopy(test_product)
     invalid_product["additionalClassifications"] = [{
         "id": "test",
         "description": "test",
@@ -170,8 +184,8 @@ async def test_vendor_product_update(api, vendor, category, vendor_product):
     )
     assert resp.status == 200
     result = await resp.json()
-    assert "dateArchived" in result["data"]
-    assert result["data"]["dateArchived"] == result["data"]["dateModified"]
+    assert "expirationDate" in result["data"]
+    assert result["data"]["expirationDate"] == result["data"]["dateModified"]
 
     resp = await api.patch(
         f'/api/products/{vendor_product["data"]["id"]}?access_token={vendor_token}',

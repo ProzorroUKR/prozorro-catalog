@@ -42,7 +42,7 @@ async def run_task():
                     },
                 )
             )
-        counters.total_products += 1
+            counters.total_products += 1
 
     if bulk:
         result = await products_collection.bulk_write(bulk)

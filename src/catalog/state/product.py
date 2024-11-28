@@ -53,7 +53,7 @@ class ProductState(BaseState):
                 await validate_medicine_additional_classifications(after)
             cls.copy_data_from_category(after, category)
             if after.get("status") != ProductStatus.active:
-                after["dateArchived"] = now
+                after["expirationDate"] = now
             for doc in after.get("documents", []):
                 doc["datePublished"] = doc["dateModified"] = now
         after["dateModified"] = now
