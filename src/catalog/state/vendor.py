@@ -21,6 +21,7 @@ class VendorState(BaseState):
         data['id'] = uuid4().hex
         data['isActivated'] = False
         data['dateCreated'] = data['dateModified'] = get_now().isoformat()
+        data["status"] = VendorStatus.pending
 
         super().on_post(data)
 
@@ -36,6 +37,7 @@ class VendorState(BaseState):
                     identifier_id=after["vendor"]["identifier"]["id"],
                     vendor_id=after["id"],
                 )
+            after["status"] = VendorStatus.active if after.get("isActivated") else VendorStatus.pending
         super().on_patch(before, after)
 
     @staticmethod
@@ -54,7 +56,3 @@ class VendorState(BaseState):
             raise HTTPBadRequest(
                 text=f"Cannot {action} vendor.identifier.id {identifier_id} already exists: {dup_id}"
             )
-
-    @classmethod
-    def always(cls, data):
-        data["status"] = VendorStatus.active if data.get("isActivated") else VendorStatus.pending

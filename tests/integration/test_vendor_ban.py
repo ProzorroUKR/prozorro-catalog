@@ -224,7 +224,7 @@ async def test_ban_inactive_vendor(api, category):
     data = api.get_fixture_json('vendor')
     data['categories'] = [{"id": category["data"]["id"]}]
     resp = await api.post(
-        f"/api/vendors",
+        "/api/vendors",
         json={"data": data},
         auth=TEST_AUTH,
     )
