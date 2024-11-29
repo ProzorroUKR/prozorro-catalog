@@ -30,19 +30,22 @@ class VendorState(BaseState):
 
             # validate activation is allowed
             if after.get("isActivated") and not before.get("isActivated"):
-                await cls.validate_vendor_identifier(action="activate",
-                                                     identifier_id=after["vendor"]["identifier"]["id"])
+                await cls.validate_vendor_identifier(
+                    action="activate",
+                    identifier_id=after["vendor"]["identifier"]["id"],
+                    vendor_id=after["id"],
+                )
         super().on_patch(before, after)
 
     @staticmethod
-    async def validate_vendor_identifier(action, identifier_id):
+    async def validate_vendor_identifier(action, identifier_id, vendor_id=None):
         existing = await db.find_vendors(
             offset=None,
             limit=1,
             reverse=False,
             filters={
-                "isActivated": True,
                 "vendor.identifier.id": identifier_id,
+                "_id": {"$ne": vendor_id},
             }
         )
         if existing["data"]:
