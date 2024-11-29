@@ -169,11 +169,6 @@ def validate_product_to_profile(profile, product):
     validate_product_req_response_to_profile(profile, product)
 
 
-def validate_patch_vendor_product(product: dict) -> None:
-    if product.get("vendor"):
-        raise HTTPForbidden(text="Patch vendor product is disallowed")
-
-
 def validate_profile_requirements(new_requirements: list, category: dict) -> None:
     requirements_statuses = {
         r["title"]: r

@@ -30,16 +30,14 @@ def hash_access_token(token):
 
 
 def validate_access_token(request, obj, access):
-    token = get_access_token(request, access)
-    if not token:
-        raise HTTPUnauthorized(text='Require access token')
+    if not compare_digest(request.user.name, CPB_USERNAME):
+        token = get_access_token(request, access)
+        if not token:
+            raise HTTPUnauthorized(text='Require access token')
 
-    hash_token = hash_access_token(token)
-    if (
-        not compare_digest(hash_token, obj['access']['token'])
-        and not compare_digest(request.user.name, CPB_USERNAME)
-    ):
-        raise HTTPForbidden(text='Access token mismatch')
+        hash_token = hash_access_token(token)
+        if not obj['access'].get('token') or not compare_digest(hash_token, obj['access']['token']):
+            raise HTTPForbidden(text='Access token mismatch')
 
     admin_id = obj.get("marketAdministrator", {}).get("identifier", {}).get("id", "")
 

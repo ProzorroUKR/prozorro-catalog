@@ -1,9 +1,12 @@
 from copy import deepcopy
+from datetime import datetime
 from unittest.mock import AsyncMock, patch
 
+from catalog.doc_service import generate_test_url
 from catalog.models.product import VendorProductIdentifierScheme
+from catalog.utils import get_now
 
-from .base import TEST_AUTH
+from .base import TEST_AUTH, TEST_AUTH_CPB
 from .conftest import set_requirements_to_responses
 from .utils import create_criteria, create_profile
 
@@ -43,20 +46,23 @@ async def test_vendor_product_create(api, vendor, category, profile):
 
     # assert resp.status == 201
     result = await resp.json()
-    product = result['data']
+    product_data = result['data']
     assert 'data' in result
     # assert "access" in result
-    assert 'vendor' in product
-    assert product['identifier']['scheme'] == VendorProductIdentifierScheme.ean_13
-    assert vendor['id'] == product['vendor']['id']
-    assert vendor['vendor']['name'] == product['vendor']['name']
-    assert vendor['vendor']['identifier'] == product['vendor']['identifier']
+    assert 'vendor' in product_data
+    assert product_data['identifier']['scheme'] == VendorProductIdentifierScheme.ean_13
+    assert vendor['id'] == product_data['vendor']['id']
+    assert vendor['vendor']['name'] == product_data['vendor']['name']
+    assert vendor['vendor']['identifier'] == product_data['vendor']['identifier']
+    assert product_data['expirationDate'] == datetime(
+        year=get_now().year, month=12, day=31, hour=23, minute=59, second=59, tzinfo=get_now().tzinfo,
+    ).isoformat()
 
     resp = await api.get('/api/products')
     result = await resp.json()
     assert len(result['data']) == 1
 
-    resp = await api.get(f'/api/products/{product["id"]}')
+    resp = await api.get(f'/api/products/{product_data["id"]}')
     result = await resp.json()
     assert vendor['vendor']['name'] == result['data']['vendor']['name']
     assert vendor['vendor']['identifier'] == result['data']['vendor']['identifier']
@@ -76,6 +82,20 @@ async def test_vendor_product_create(api, vendor, category, profile):
     assert result == {'errors': [
         "value is not a valid enumeration member; permitted: 'EAN-13': data.identifier.scheme",
         'extra fields not permitted: data.alternativeIdentifiers',
+    ]}
+
+    invalid_product = deepcopy(test_product)
+    invalid_product["status"] = "hidden"
+    resp = await api.post(
+        f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',
+        json={'data': invalid_product},
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 400
+    result = await resp.json()
+    assert result == {'errors': [
+        "unexpected value; permitted: <ProductStatus.active: 'active'>: data.status"
     ]}
 
     invalid_product = deepcopy(test_product)
@@ -125,9 +145,8 @@ async def test_vendor_product_create(api, vendor, category, profile):
 
 async def test_vendor_product_update(api, vendor, category, vendor_product):
     vendor_token = vendor['access']['token']
-    vendor_product = vendor_product['data']
     resp = await api.patch(
-        f'/api/products/{vendor_product["id"]}?access_token={vendor_token}',
+        f'/api/products/{vendor_product["data"]["id"]}?access_token={vendor_token}',
         json={'data': {"status": "active"}},
         auth=TEST_AUTH,
     )
@@ -135,7 +154,56 @@ async def test_vendor_product_update(api, vendor, category, vendor_product):
     assert resp.status == 403
     result = await resp.json()
     assert 'errors' in result
-    assert result['errors'][0] == 'Patch vendor product is disallowed'
+    assert result['errors'][0] == 'Access token mismatch'
+
+    resp = await api.patch(
+        f'/api/products/{vendor_product["data"]["id"]}?access_token={vendor_token}',
+        json={'data': {"description": "foobar"}},
+        auth=TEST_AUTH_CPB,
+    )
+    assert resp.status == 400
+    result = await resp.json()
+    assert 'errors' in result
+    assert result['errors'][0] == 'extra fields not permitted: data.description'
+
+    # update status and documents in one request
+    doc_hash = "0" * 32
+    doc_data = {
+        "title": "name.doc",
+        "url": generate_test_url(doc_hash),
+        "hash": f"md5:{doc_hash}",
+        "format": "application/msword",
+    }
+    resp = await api.patch(
+        f'/api/products/{vendor_product["data"]["id"]}?access_token={vendor_token}',
+        json={'data': {
+            "documents": [doc_data],
+            "status": "inactive",
+        }},
+        auth=TEST_AUTH_CPB,
+    )
+    assert resp.status == 200
+    result = await resp.json()
+    assert "expirationDate" in result["data"]
+    assert result["data"]["expirationDate"] == result["data"]["dateModified"]
+
+    resp = await api.patch(
+        f'/api/products/{vendor_product["data"]["id"]}?access_token={vendor_token}',
+        json={'data': {"status": "active"}},
+        auth=TEST_AUTH_CPB,
+    )
+    assert resp.status == 403
+    result = await resp.json()
+    assert 'errors' in result
+    assert result['errors'][0] == 'Patch product in inactive status is disallowed'
+
+    # try to add doc in inactive status
+    resp = await api.post(
+        f'/api/products/{vendor_product["data"]["id"]}/documents?access_token={vendor_token}',
+        json={'data': doc_data},
+        auth=TEST_AUTH_CPB,
+    )
+    assert resp.status == 201
 
 
 async def test_vendor_product_with_different_formats_of_expected_values(api, vendor, mock_agreement):

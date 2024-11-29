@@ -3,13 +3,16 @@ FROM python:3.9-alpine3.14 as base
 RUN pip install --upgrade pip
 
 WORKDIR /app
-RUN apk --no-cache add gcc build-base git openssl-dev libffi-dev
+RUN apk --no-cache add gcc build-base git openssl-dev libffi-dev dcron
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 COPY swagger /app/swagger
 COPY migrations /app/migrations
 COPY cron /app/cron
-RUN /usr/bin/crontab cron/cron.txt
+COPY cron/cron.txt /etc/crontabs/root
+RUN chmod 600 /etc/crontabs/root  # permissions for cron
+RUN touch /var/log/cron.log  # log file for cron
+CMD ["crond", "-f"]
 EXPOSE 8000
 
 FROM base as test_base
