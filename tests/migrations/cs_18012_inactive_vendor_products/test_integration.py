@@ -45,6 +45,15 @@ async def test_inactivate_vendor_products(db, api):
     })
     await db.products.insert_one(product_loc_hidden_new)
 
+    product_loc_inactive = deepcopy(product_loc_active_old)
+    product_loc_inactive.update({
+        "_id": uuid4().hex,
+        "dateCreated": "2024-01-01",
+        "status": "inactive",
+        "expirationDate": "2024-08-08"
+    })
+    await db.products.insert_one(product_loc_inactive)
+
     await migrate()
 
     product_data = await db.products.find_one({"_id": product_non_localized["_id"]})
@@ -70,3 +79,8 @@ async def test_inactivate_vendor_products(db, api):
     assert product_data["status"] == "inactive"
     assert product_data["expirationDate"] == "2024-12-31T23:59:59+02:00"
     assert product_data["dateModified"] != product_loc_hidden_new["dateModified"]
+
+    product_data = await db.products.find_one({"_id": product_loc_inactive["_id"]})
+    assert product_data["status"] == "inactive"
+    assert product_data["expirationDate"] == product_loc_inactive["expirationDate"]
+    assert product_data["dateModified"] == product_loc_inactive["dateModified"]

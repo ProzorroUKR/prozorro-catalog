@@ -28,7 +28,7 @@ async def migrate():
         collection = get_products_collection()
 
         async for obj in collection.find(
-            {"vendor": {"$exists": True}},
+            {"vendor": {"$exists": True}, "status": {"$ne": ProductStatus.inactive}},
             projection={"dateCreated": 1, "status": 1},
         ):
             counter += 1
