@@ -1,32 +1,34 @@
-from catalog.auth import validate_accreditation
+from catalog.auth import validate_access_token
 
 from catalog import db
 from catalog.handlers.base_ban import BaseBanView
-from catalog.models.ban import ContributorBanPostInput
+from catalog.models.ban import VendorBanPostInput
+from catalog.state.vendor_ban import VendorBanState
 from catalog.swagger import class_view_swagger_path
-from catalog.validations import validate_contributor_ban_already_exists
+from catalog.validations import validate_active_vendor
 
 
-@class_view_swagger_path('/app/swagger/crowd_sourcing/contributors/bans')
-class ContributorBanView(BaseBanView):
+@class_view_swagger_path('/app/swagger/vendors/bans')
+class VendorBanView(BaseBanView):
+    state = VendorBanState
+
     @classmethod
     async def get_parent_obj(cls, **kwargs):
-        return await db.read_contributor(kwargs.get("contributor_id"))
+        return await db.read_vendor(kwargs.get("vendor_id"))
 
     @classmethod
     def read_and_update_object(cls, **kwargs):
-        return db.read_and_update_contributor(kwargs.get("contributor_id"))
+        return db.read_and_update_vendor(kwargs.get("vendor_id"))
 
     @classmethod
     async def validate_data(cls, request, body, parent_obj, **kwargs):
-        data = body.data.dict_without_none()
-        administrator_id = data.get("administrator", {}).get("identifier", {}).get("id")
-        validate_contributor_ban_already_exists(parent_obj, administrator_id)
+        validate_access_token(request, parent_obj, parent_obj["access"])
+        validate_active_vendor(parent_obj)
 
     @classmethod
     async def get_body_from_model(cls, request):
         json = await request.json()
-        return ContributorBanPostInput(**json)
+        return VendorBanPostInput(**json)
 
     @classmethod
     async def collection_get(cls, request, **kwargs):
@@ -38,5 +40,4 @@ class ContributorBanView(BaseBanView):
 
     @classmethod
     async def post(cls, request, **kwargs):
-        validate_accreditation(request, "category")
         return await super().post(request, **kwargs)

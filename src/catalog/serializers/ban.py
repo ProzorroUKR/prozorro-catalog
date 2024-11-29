@@ -1,10 +1,8 @@
-from catalog.serializers.ban import BanSerializer
 from catalog.serializers.base import RootSerializer, ListSerializer
 from catalog.serializers.document import DocumentSerializer
 
 
-class ContributorSerializer(RootSerializer):
+class BanSerializer(RootSerializer):
     serializers = {
-        "bans": ListSerializer(BanSerializer),
         "documents": ListSerializer(DocumentSerializer),
     }

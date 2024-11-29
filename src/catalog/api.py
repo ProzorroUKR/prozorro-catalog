@@ -12,6 +12,8 @@ from catalog.handlers.crowd_sourcing.product_request import (
     ProductRequestRejectionView,
 )
 from catalog.handlers.crowd_sourcing.product_request_document import ProductRequestDocumentView
+from catalog.handlers.vendor_ban import VendorBanView
+from catalog.handlers.vendor_ban_document import VendorBanDocumentView
 from catalog.settings import SWAGGER_DOC_AVAILABLE
 from catalog.swagger import get_definitions
 from catalog.middleware import (
@@ -434,6 +436,53 @@ def create_application(on_cleanup=None):
         r"/api/vendors/{vendor_id:[\w]{32}}/products/{product_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
         VendorProductDocumentView.patch,
         name="update_vendor_product_document",
+    )
+
+    # vendor ban
+    app.router.add_get(
+        r"/api/vendors/{vendor_id:[\w]{32}}/bans",
+        VendorBanView.collection_get,
+        name="read_vendor_ban_registry",
+        allow_head=False
+    )
+    app.router.add_get(
+        r"/api/vendors/{vendor_id:[\w]{32}}/bans/{ban_id:[\w]{32}}",
+        VendorBanView.get,
+        name="read_vendor_ban",
+    )
+    app.router.add_post(
+        r"/api/vendors/{vendor_id:[\w]{32}}/bans",
+        VendorBanView.post,
+        name="create_vendor_ban"
+    )
+
+    # vendor ban docs
+    app.router.add_get(
+        r"/api/vendors/{vendor_id:[\w]{32}}/bans/{ban_id:[\w]{32}}/documents",
+        VendorBanDocumentView.collection_get,
+        name="read_vendor_ban_document_registry",
+        allow_head=False,
+    )
+    app.router.add_get(
+        r"/api/vendors/{vendor_id:[\w]{32}}/bans/{ban_id:[\w]{32}}"
+        r"/documents/{doc_id:[\w]{32}}",
+        VendorBanDocumentView.get,
+        name="read_vendor_ban_document",
+    )
+    app.router.add_post(
+        r"/api/vendors/{vendor_id:[\w]{32}}/bans/{ban_id:[\w]{32}}/documents",
+        VendorBanDocumentView.post,
+        name="create_vendor_ban_document"
+    )
+    app.router.add_put(
+        r"/api/vendors/{vendor_id:[\w]{32}}/bans/{ban_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
+        VendorBanDocumentView.put,
+        name="replace_vendor_ban_document",
+    )
+    app.router.add_patch(
+        r"/api/vendors/{vendor_id:[\w]{32}}/bans/{ban_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
+        VendorBanDocumentView.patch,
+        name="update_vendor_ban_document",
     )
 
     # contributors

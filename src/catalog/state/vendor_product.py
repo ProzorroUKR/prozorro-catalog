@@ -4,7 +4,7 @@ from catalog.context import get_now
 from catalog.state.product import ProductState
 from catalog.validations import (
     validate_product_related_category,
-    validate_product_active_vendor,
+    validate_active_vendor,
 )
 
 
@@ -18,7 +18,7 @@ class VendorProductState(ProductState):
 
     @classmethod
     async def on_post(cls, data, vendor, category):
-        validate_product_active_vendor(vendor)
+        validate_active_vendor(vendor)
         validate_product_related_category(category)
         await super().on_post(data, category)
         now = get_now()

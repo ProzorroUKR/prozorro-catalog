@@ -47,6 +47,12 @@ responses:
               items:
                 type: string
                 example: Authorization header not found
+  "403":
+    description: Permission error
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'
   "500":
     description: Server error
     content:

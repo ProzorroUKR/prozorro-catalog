@@ -1,23 +1,23 @@
 tags:
-- CrowdSourcing/ContributorBans
-description: Contributor ban creation
-operationId: collection_post_contributor_ban
+- Vendors/Bans
+description: Vendor ban creation
+operationId: collection_post_vendor_ban
 parameters:
 - in: path
-  name: contributor_id
+  name: vendor_id
   schema:
     type: string
   required: true
-  description: ID of the contributor
+  description: ID of the vendor
 security:
   - Basic: []
 requestBody:
-  description: Contributor ban data
+  description: Vendor ban data
   required: true
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/Input_ContributorBanPostData_'
+        $ref: '#/components/schemas/Input_BaseBanPostData_'
 responses:
   "200":
     description: successful operation
@@ -43,6 +43,12 @@ responses:
               items:
                 type: string
                 example: Authorization header not found
+  "403":
+    description: Permission error
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'
   "500":
     description: Server error
     content:

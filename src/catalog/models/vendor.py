@@ -3,6 +3,7 @@ from typing import Optional, List
 from pydantic import EmailStr, Field, validator, root_validator
 from enum import Enum
 
+from catalog.models.ban import Ban
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse, AuthorizedInput
 from catalog.models.common import Identifier, Organization, ContactPoint, Address, ORA_CODES
@@ -62,6 +63,7 @@ class VendorPatchData(BaseModel):
 class VendorStatus(str, Enum):
     pending = "pending"
     active = "active"
+    banned = "banned"
 
 
 class Vendor(VendorPostData):
@@ -73,6 +75,7 @@ class Vendor(VendorPostData):
     owner: str
     status: VendorStatus = VendorStatus.pending
     documents: List[Document]
+    bans: Optional[List[Ban]]
 
 
 class VendorSign(VendorPostData):
