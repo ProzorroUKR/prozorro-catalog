@@ -35,3 +35,18 @@ crontab -l
 ## EOF
 
 Don't forget that `cron.txt` file should always have empty line in the end of file!!!
+
+
+## Schedule
+
+Cron schedule uses UTC timezone, that's why if you want script running at 00:00 in Ukraine time, then in UTC it will be:
+
+```
+0 22 * * *
+```
+
+If you want script running at 00:00 on 1st January in Ukraine time, then in UTC it will be:
+
+```
+0 22 31 12 *
+```
