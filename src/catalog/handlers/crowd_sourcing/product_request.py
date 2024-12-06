@@ -1,3 +1,5 @@
+import logging
+
 from aiohttp.web_urldispatcher import View
 from catalog.auth import set_access_token, validate_accreditation
 
@@ -18,6 +20,9 @@ from catalog.validations import (
     validate_category_administrator,
 )
 from catalog.utils import pagination_params, get_now
+
+
+logger = logging.getLogger(__name__)
 
 
 @class_view_swagger_path('/app/swagger/crowd_sourcing/contributors/product_request')
@@ -41,6 +46,14 @@ class ContributorProductRequestView(BaseView):
         data["contributor_id"] = contributor["id"]
         await cls.state.on_post(data, category)
         await db.insert_product_request(data)
+
+        logger.info(
+            f"Created contributor product request {data['id']}",
+            extra={
+                "MESSAGE_ID": f"contributor_product_request_create",
+                "contributor_product_request_id": data["id"],
+            },
+        )
 
         return {"data": ProductRequestSerializer(data, category=category).data}
 
@@ -94,9 +107,22 @@ class ProductRequestAcceptionView(BaseView):
             product_request.update({"acception": data})
             await cls.state.on_accept(product_request, category, acceptation_date)
 
+            logger.info(
+                f"Updated product request {request_id}",
+                extra={"MESSAGE_ID": f"product_request_acception_update"},
+            )
+
         # add product to the market
         access = set_access_token(request, product_request["product"])
         await db.insert_product(product_request["product"])
+
+        logger.info(
+            f"Created product {product_request['product']['id']}",
+            extra={
+                "MESSAGE_ID": f"product_request_product_create",
+                "product_id": product_request['product']['id'],
+            },
+        )
 
         return {
             "data": ProductRequestSerializer(product_request, category=category).data,
@@ -125,5 +151,10 @@ class ProductRequestRejectionView(BaseView):
             modified_date = get_now().isoformat()
             data["date"] = modified_date
             product_request.update({"rejection": data, "dateModified": modified_date})
+
+            logger.info(
+                f"Updated product request {request_id}",
+                extra={"MESSAGE_ID": f"product_request_rejection_update"},
+            )
 
         return {"data": ProductRequestSerializer(product_request, category=category).data}

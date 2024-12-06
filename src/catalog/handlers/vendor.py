@@ -1,6 +1,9 @@
 import random
+import logging
+
 from aiohttp.web import HTTPConflict
 from pymongo.errors import OperationFailure
+
 from catalog import db
 from catalog.swagger import class_view_swagger_path
 from catalog.handlers.base import BaseView
@@ -9,6 +12,9 @@ from catalog.auth import set_access_token, validate_accreditation, validate_acce
 from catalog.utils import pagination_params, async_retry, get_now
 from catalog.models.vendor import VendorPostInput, VendorPatchInput
 from catalog.serializers.vendor import VendorSignSerializer, VendorSerializer
+
+
+logger = logging.getLogger(__name__)
 
 
 @class_view_swagger_path('/app/swagger/vendors')
@@ -46,6 +52,14 @@ class VendorView(BaseView):
         await cls.state.on_post(data)
         access = set_access_token(request, data)
         await db.insert_vendor(data)
+
+        logger.info(
+            f"Created vendor {data['id']}",
+            extra={
+                "MESSAGE_ID": "vendor_create",
+                "vendor_id": data["id"],
+            },
+        )
         response = {"data": VendorSerializer(data).data,
                     "access": access}
         return response
@@ -66,4 +80,10 @@ class VendorView(BaseView):
             initial_data = dict(vendor)
             vendor.update(data)
             await cls.state.on_patch(initial_data, vendor)
+
+            logger.info(
+                f"Updated vendor {vendor_id}",
+                extra={"MESSAGE_ID": "vendor_patch"},
+            )
+
         return {"data": VendorSerializer(vendor).data}

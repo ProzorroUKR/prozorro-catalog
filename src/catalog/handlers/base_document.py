@@ -1,4 +1,6 @@
 import random
+import logging
+
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPConflict, HTTPFound, HTTPNotFound
 from pymongo.errors import OperationFailure
@@ -8,7 +10,12 @@ from catalog.serializers.document import DocumentSerializer
 from catalog.doc_service import get_doc_download_url, get_ds_id_from_api_url
 
 
+logger = logging.getLogger(__name__)
+
+
 class BaseDocumentView(View):
+
+    parent_obj_name = None
 
     @classmethod
     async def get_parent_obj(cls, **kwargs):
@@ -58,6 +65,14 @@ class BaseDocumentView(View):
                 obj["documents"] = []
             obj["documents"].append(data)
 
+            logger.info(
+                f"Created {cls.parent_obj_name} document {data['id']}",
+                extra={
+                    "MESSAGE_ID": f"{cls.parent_obj_name}_document_create",
+                    "document_id": data["id"]
+                },
+            )
+
         return {"data": DocumentSerializer(data).data}
 
     @classmethod
@@ -82,6 +97,11 @@ class BaseDocumentView(View):
                     break
             else:
                 raise HTTPNotFound(text="Document not found")
+
+            logger.info(
+                f"Updated {cls.parent_obj_name} document {doc_id}",
+                extra={"MESSAGE_ID": f"{cls.parent_obj_name}_document_put"},
+            )
         return {"data": DocumentSerializer(data).data}
 
     @classmethod
@@ -107,4 +127,9 @@ class BaseDocumentView(View):
                     break
             else:
                 raise HTTPNotFound(text="Document not found")
+
+            logger.info(
+                f"Updated {cls.parent_obj_name} document {doc_id}",
+                extra={"MESSAGE_ID": f"{cls.parent_obj_name}_document_patch"},
+            )
         return {"data": DocumentSerializer(d).data}

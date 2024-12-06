@@ -1,5 +1,6 @@
 import random
 from copy import deepcopy
+import logging
 
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPConflict, HTTPNotFound
@@ -12,6 +13,9 @@ from catalog.utils import pagination_params, get_now, async_retry
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
 from catalog.serializers.product import ProductSerializer
 from catalog.state.product import ProductState
+
+
+logger = logging.getLogger(__name__)
 
 
 @class_view_swagger_path('/app/swagger/products')
@@ -65,6 +69,13 @@ class ProductView(View):
         data["dateCreated"] = data["dateModified"] = get_now().isoformat()
         await db.insert_product(data)
 
+        logger.info(
+            f"Created product {data['id']}",
+            extra={
+                "MESSAGE_ID": "product_create",
+                "product_id": data["id"],
+            },
+        )
         return {"data": ProductSerializer(data, category=category).data,
                 "access": access}
 
@@ -87,5 +98,10 @@ class ProductView(View):
             product.update(data)
             category = await db.read_category(product["relatedCategory"])
             await cls.state_class.on_patch(product_before, product)
+
+            logger.info(
+                f"Updated product {product_id}",
+                extra={"MESSAGE_ID": "product_patch"},
+            )
 
         return {"data": ProductSerializer(product, category=category).data}

@@ -1,3 +1,5 @@
+import logging
+
 from aiohttp.web import HTTPNotFound
 
 from catalog.context import get_now
@@ -7,8 +9,13 @@ from catalog.state.ban import BanState
 from catalog.handlers.base import BaseView
 
 
+logger = logging.getLogger(__name__)
+
+
 class BaseBanView(BaseView):
     state = BanState
+
+    parent_obj_name = None
 
     @classmethod
     async def get_parent_obj(cls, **kwargs):
@@ -53,5 +60,13 @@ class BaseBanView(BaseView):
             if "bans" not in obj:
                 obj["bans"] = []
             obj["bans"].append(data)
+
+            logger.info(
+                f"Created {cls.parent_obj_name} ban {data['id']}",
+                extra={
+                    "MESSAGE_ID": f"{cls.parent_obj_name}_ban_create",
+                    "document_id": data["id"]
+                },
+            )
 
         return {"data": BanSerializer(data).data}

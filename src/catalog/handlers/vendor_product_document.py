@@ -6,6 +6,7 @@ from catalog.auth import validate_access_token
 
 @class_view_swagger_path('/app/swagger/vendors/products/documents')
 class VendorProductDocumentView(BaseDocumentView):
+    parent_obj_name = "vendor_product"
 
     @classmethod
     async def get_parent_obj(cls, **kwargs):

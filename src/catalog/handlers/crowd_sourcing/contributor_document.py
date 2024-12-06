@@ -12,6 +12,8 @@ from catalog.handlers.base_document import BaseDocumentView
 @class_view_swagger_path('/app/swagger/crowd_sourcing/contributors/documents')
 class ContributorDocumentView(BaseDocumentView):
 
+    parent_obj_name = "contributor"
+
     @classmethod
     async def get_parent_obj(cls, **kwargs):
         return await db.read_contributor(kwargs.get("contributor_id"))

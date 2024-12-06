@@ -1,3 +1,5 @@
+import logging
+
 from aiohttp.web_urldispatcher import View
 
 from catalog import db
@@ -6,6 +8,9 @@ from catalog.swagger import class_view_swagger_path
 from catalog.auth import validate_access_token, validate_accreditation
 from catalog.serializers.product import ProductSerializer
 from catalog.state.vendor_product import VendorProductState
+
+
+logger = logging.getLogger(__name__)
 
 
 @class_view_swagger_path('/app/swagger/vendors/products')
@@ -29,4 +34,11 @@ class VendorProductView(View):
         data['access'] = {'owner': request.user.name}
         await db.insert_product(data)
 
+        logger.info(
+            f"Created vendor product {data['id']}",
+            extra={
+                "MESSAGE_ID": f"vendor_product_create",
+                "vendor_product_id": data["id"]
+            },
+        )
         return {'data': ProductSerializer(data, vendor=vendor, category=category).data}

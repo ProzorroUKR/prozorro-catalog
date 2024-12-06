@@ -15,6 +15,8 @@ from catalog.utils import async_retry, get_now, find_item_by_id
 @class_view_swagger_path('/app/swagger/crowd_sourcing/contributors/bans/documents')
 class ContributorBanDocumentView(BaseDocumentView):
 
+    parent_obj_name = "contributor_ban"
+
     @classmethod
     async def get_parent_obj(cls, **kwargs):
         contributor = await db.read_contributor(kwargs.get("contributor_id"))
