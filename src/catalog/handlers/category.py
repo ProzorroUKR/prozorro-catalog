@@ -1,5 +1,6 @@
 import random
 from copy import deepcopy
+import logging
 
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPBadRequest, HTTPConflict
@@ -22,6 +23,9 @@ from catalog.handlers.base_criteria import (
     BaseCriteriaRGView,
     BaseCriteriaRGRequirementView,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 @class_view_swagger_path('/app/swagger/categories')
@@ -58,6 +62,10 @@ class CategoryView(View):
         access = set_access_token(request, data)
         await db.insert_category(data)
 
+        logger.info(
+            f"Created category {data['id']}",
+            extra={"MESSAGE_ID": "category_create_put"},
+        )
         response = {"data": RootSerializer(data, show_owner=False).data,
                     "access": access}
         return response
@@ -75,6 +83,14 @@ class CategoryView(View):
         await cls.state.on_put(data)
         access = set_access_token(request, data)
         await db.insert_category(data)
+
+        logger.info(
+            f"Created category {data['id']}",
+            extra={
+                "MESSAGE_ID": "category_create_post",
+                "category_id": data["id"],
+            },
+        )
 
         response = {
             "data": RootSerializer(data, show_owner=False).data,
@@ -99,6 +115,11 @@ class CategoryView(View):
             old_category = deepcopy(category)
             category.update(data)
             await cls.state.on_patch(old_category, category)
+
+            logger.info(
+                f"Updated category {category_id}",
+                extra={"MESSAGE_ID": "category_patch"},
+            )
 
         return {"data": RootSerializer(category, show_owner=False).data}
 

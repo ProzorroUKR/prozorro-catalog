@@ -1,4 +1,6 @@
 import random
+import logging
+
 from aiohttp.web_exceptions import HTTPNotFound
 from aiohttp.web import HTTPConflict
 from pymongo.errors import OperationFailure
@@ -12,8 +14,13 @@ from catalog.handlers.base_document import BaseDocumentView
 from catalog.utils import async_retry, get_now, find_item_by_id
 
 
+logger = logging.getLogger(__name__)
+
+
 @class_view_swagger_path('/app/swagger/vendors/bans/documents')
 class VendorBanDocumentView(BaseDocumentView):
+
+    parent_obj_name = "vendor_ban"
 
     @classmethod
     async def get_parent_obj(cls, **kwargs):
@@ -48,6 +55,14 @@ class VendorBanDocumentView(BaseDocumentView):
                 ban["documents"] = []
             ban["documents"].append(data)
 
+            logger.info(
+                f"Created {cls.parent_obj_name} document {data['id']}",
+                extra={
+                    "MESSAGE_ID": f"{cls.parent_obj_name}_document_create",
+                    "document_id": data["id"]
+                },
+            )
+
         return {"data": DocumentSerializer(data).data}
 
     @classmethod
@@ -72,6 +87,12 @@ class VendorBanDocumentView(BaseDocumentView):
                     break
             else:
                 raise HTTPNotFound(text="Document not found")
+
+            logger.info(
+                f"Updated {cls.parent_obj_name} document {doc_id}",
+                extra={"MESSAGE_ID": f"{cls.parent_obj_name}_document_put"},
+            )
+
         return {"data": DocumentSerializer(data).data}
 
     @classmethod
@@ -97,4 +118,9 @@ class VendorBanDocumentView(BaseDocumentView):
                     break
             else:
                 raise HTTPNotFound(text="Document not found")
+
+            logger.info(
+                f"Updated {cls.parent_obj_name} document {doc_id}",
+                extra={"MESSAGE_ID": f"{cls.parent_obj_name}_document_patch"},
+            )
         return {"data": DocumentSerializer(doc).data}

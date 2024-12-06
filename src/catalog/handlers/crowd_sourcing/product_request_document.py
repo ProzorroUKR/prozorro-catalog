@@ -12,6 +12,8 @@ from catalog.handlers.base_document import BaseDocumentView
 # @class_view_swagger_path('/app/swagger/crowd_sourcing/product_requests/documents')
 class ProductRequestDocumentView(BaseDocumentView):
 
+    parent_obj_name = "product_request"
+
     @classmethod
     async def get_parent_obj(cls, **kwargs):
         return await db.read_product_request(kwargs.get("request_id"))

@@ -12,6 +12,8 @@ from catalog.validations import validate_active_vendor
 class VendorBanView(BaseBanView):
     state = VendorBanState
 
+    parent_obj_name = "vendor"
+
     @classmethod
     async def get_parent_obj(cls, **kwargs):
         return await db.read_vendor(kwargs.get("vendor_id"))

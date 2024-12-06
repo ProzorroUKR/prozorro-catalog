@@ -1,5 +1,6 @@
 import random
 from copy import deepcopy
+import logging
 
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPBadRequest, HTTPConflict
@@ -31,6 +32,9 @@ from catalog.models.criteria import (
 )
 from catalog.validations import validate_profile_requirements
 from catalog.state.profile import ProfileState, LocalizationProfileState
+
+
+logger = logging.getLogger(__name__)
 
 
 @class_view_swagger_path('/app/swagger/profiles')
@@ -97,6 +101,13 @@ class ProfileView(View):
         access = set_access_token(request, data)
         await db.insert_profile(data)
 
+        logger.info(
+            f"Created profile {data['id']}",
+            extra={
+                "MESSAGE_ID": "profile_create_put",
+                "profile_id": data['id'],
+            },
+        )
         response = {"data": RootSerializer(data).data,
                     "access": access}
         return response
@@ -119,6 +130,14 @@ class ProfileView(View):
         access = set_access_token(request, data)
         await db.insert_profile(data)
 
+        logger.info(
+            f"Created profile {data['id']}",
+            extra={
+                "MESSAGE_ID": "profile_create_post",
+                "profile_id": data['id']
+            },
+        )
+
         response = {
             "data": RootSerializer(data).data,
             "access": access,
@@ -140,6 +159,11 @@ class ProfileView(View):
             old_profile = deepcopy(profile)
             profile.update(data)
             await cls.get_state_class(data).on_patch(old_profile, profile)
+
+            logger.info(
+                f"Updated profile {profile_id}",
+                extra={"MESSAGE_ID": "profile_patch"},
+            )
 
         return {"data": RootSerializer(profile).data}
 

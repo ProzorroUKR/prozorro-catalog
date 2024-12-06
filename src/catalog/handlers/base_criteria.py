@@ -1,3 +1,5 @@
+import logging
+
 from aiohttp.web_urldispatcher import View as BaseView
 
 from catalog import db
@@ -12,6 +14,9 @@ from catalog.models.criteria import (
 )
 from catalog.serializers.base import RootSerializer
 from catalog.validations import validate_requirement_title_uniq, validate_criteria_max_items_on_post
+
+
+logger = logging.getLogger(__name__)
 
 
 class View(BaseView):
@@ -90,6 +95,14 @@ class BaseCriteriaView(View):
             parent_obj["criteria"].append(data)
             validate_criteria_max_items_on_post(parent_obj, "criteria")
             parent_obj["dateModified"] = get_now().isoformat()
+
+            logger.info(
+                f"Created {cls.obj_name} criterion {data['id']}",
+                extra={
+                    "MESSAGE_ID": f"{cls.obj_name}_criterion_create",
+                    f"{cls.obj_name}_criterion_id": data["id"]
+                },
+            )
         return {"data": cls.serializer_class(data).data}
 
     @classmethod
@@ -107,6 +120,11 @@ class BaseCriteriaView(View):
             # mongo unwinded criteria, so here is only one item in `criteria`
             parent_obj["criteria"].update(data)
             parent_obj["dateModified"] = get_now().isoformat()
+
+            logger.info(
+                f"Updated {cls.obj_name} criterion {criterion_id}",
+                extra={"MESSAGE_ID": f"{cls.obj_name}_criterion_patch"},
+            )
 
         return {"data": cls.serializer_class(parent_obj["criteria"]).data}
 
@@ -153,6 +171,14 @@ class BaseCriteriaRGView(View):
             parent_obj["criteria"]["requirementGroups"].append(data)
             validate_criteria_max_items_on_post(parent_obj["criteria"], "requirementGroups")
             parent_obj["dateModified"] = get_now().isoformat()
+
+            logger.info(
+                f"Created {cls.obj_name} criteria requirement group {data['id']}",
+                extra={
+                    "MESSAGE_ID": f"{cls.obj_name}_requirement_group_create",
+                    "requirement_group_id": data["id"]
+                },
+            )
         return {"data": cls.serializer_class(data).data}
 
     @classmethod
@@ -169,6 +195,11 @@ class BaseCriteriaRGView(View):
             rg = find_item_by_id(parent_obj["criteria"]["requirementGroups"], rg_id, "requirementGroups")
             rg.update(data)
             parent_obj["dateModified"] = get_now().isoformat()
+
+            logger.info(
+                f"Updated {cls.obj_name} criteria requirement group {rg_id}",
+                extra={"MESSAGE_ID": f"{cls.obj_name}_requirement_group_patch"},
+            )
 
         return {"data": cls.serializer_class(rg).data}
 
@@ -219,6 +250,16 @@ class BaseCriteriaRGRequirementView(View):
             rg["requirements"].extend(data)
             validate_requirement_title_uniq(obj)
             obj["dateModified"] = get_now().isoformat()
+
+            for i in data:
+
+                logger.info(
+                    f"Created {cls.obj_name} criteria requirement {i['id']}",
+                    extra={
+                        "MESSAGE_ID": f"{cls.obj_name}_requirement_create",
+                        "requirement_group_id": i["id"],
+                    },
+                )
         return {"data": [cls.serializer_class(r).data for r in data]}
 
     @classmethod
@@ -245,5 +286,10 @@ class BaseCriteriaRGRequirementView(View):
             await cls.requirement_validations(obj, [requirement])
             validate_requirement_title_uniq(obj)
             obj["dateModified"] = get_now().isoformat()
+
+            logger.info(
+                f"Updared {cls.obj_name} criteria requirement {requirement_id}",
+                extra={"MESSAGE_ID": f"{cls.obj_name}_requirement_create"},
+            )
 
         return {"data": cls.serializer_class(requirement).data}
