@@ -70,7 +70,7 @@ class BaseProductCreateData(ProductRequirementResponses):
     classification: Classification
     additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
     identifier: VendorProductIdentifier
-    status: Literal[ProductStatus.active]
+    status: Literal[ProductStatus.active] = ProductStatus.active
 
 
 class VendorProductCreateData(BaseProductCreateData):
