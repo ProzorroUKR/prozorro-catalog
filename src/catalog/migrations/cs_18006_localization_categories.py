@@ -177,7 +177,7 @@ async def migrate():
             category_data = deepcopy(localization_category)
             category_data.update(profile)
             category_data["_id"] = uuid4().hex
-            category_data["status"] = "hidden"
+            category_data["status"] = "active"
             category_data["dateModified"] = get_now().isoformat()
 
             try:
