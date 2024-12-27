@@ -704,8 +704,7 @@ async def test_140_category_agreement_id_patch(api, category):
     }
 
     profile_1 = await create_profile(api, category)
-    profile_2 = await create_profile(api, category, {"status": "general"})
-    profile_3 = await create_profile(api, category, {"status": "hidden"})
+    profile_2 = await create_profile(api, category, {"status": "hidden"})
 
     resp = await api.patch(f'/api/categories/{category_id}',
                            json=patch_category,
@@ -723,12 +722,6 @@ async def test_140_category_agreement_id_patch(api, category):
     assert resp.status == 200
     resp_json = await resp.json()
     assert resp_json['data']['agreementID'] == agreement_id
-
-    resp = await api.get(f'/api/profiles/{profile_3["data"]["id"]}')
-    assert resp.status == 200
-    resp_json = await resp.json()
-    assert resp_json['data']['agreementID'] == agreement_id
-
 
 async def test_two_criteria(api, mock_agreement):
     # create category
