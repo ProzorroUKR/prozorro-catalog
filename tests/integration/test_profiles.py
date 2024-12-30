@@ -10,27 +10,50 @@ from .base import TEST_AUTH, TEST_AUTH_NO_PERMISSION, TEST_AUTH_ANOTHER
 
 async def create_blank_criterion(api, profile):
     profile_id = profile["data"]["id"]
+    criterion_data = {
+        "description": "Спосіб використання (одноразова або багаторазова)",
+        "title": "Спосіб використання",
+        "legislation": [{
+            "identifier": {
+                "id": "identifier_id",
+                "legalName": "legal_name",
+                "uri": "http://example.com",
+            },
+            "version": "1.0.0",
+            "article": "22.2.3"
+        }],
+        "classification": {
+            "id": "classification_id",
+            "scheme": "scheme",
+        }
+    }
 
     resp = await api.post(
         f"/api/profiles/{profile_id}/criteria",
         json={
-            "data": {
-                "description": "Спосіб використання (одноразова або багаторазова)",
-                "title": "Спосіб використання",
-                "legislation": [{
-                    "identifier": {
-                        "id": "identifier_id",
-                        "legalName": "legal_name",
-                        "uri": "http://example.com",
-                    },
-                    "version": "1.0.0",
-                    "article": "22.2.3"
-                }],
-                "classification": {
-                    "id": "classification_id",
-                    "scheme": "scheme",
-                }
-            },
+            "data": criterion_data,
+            "access": profile["access"]
+        },
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    assert {
+               "errors": [
+                   "unexpected value; permitted: 'ESPD211': data.classification.scheme",
+                   "must be one of ('CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL', "
+                   "'CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES'): data.classification.id",
+               ]
+           } == await resp.json()
+
+    criterion_data["classification"] = {
+        "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
+        "scheme": "ESPD211",
+    }
+
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria",
+        json={
+            "data": criterion_data,
             "access": profile["access"]
         },
         auth=TEST_AUTH,

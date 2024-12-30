@@ -230,8 +230,8 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
             "article": "22.2.3"
         }],
         "classification": {
-            "id": "classification_id",
-            "scheme": "scheme",
+            "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
+            "scheme": "ESPD211",
         },
         "requirementGroups": [{
             "description": "Технічні характеристики",
@@ -272,8 +272,8 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
             "article": "22.2.3"
         }],
         "classification": {
-            "id": "classification_id",
-            "scheme": "scheme",
+            "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
+            "scheme": "ESPD211",
         },
         "requirementGroups": [{
             "description": "Технічні характеристики",
