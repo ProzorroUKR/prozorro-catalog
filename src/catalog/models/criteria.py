@@ -1,4 +1,4 @@
-from typing import Optional, Set, Union, List
+from typing import Optional, Set, Union, List, Literal
 from uuid import uuid4
 from enum import Enum
 from pydantic import (
@@ -11,12 +11,14 @@ from pydantic import (
     PositiveInt,
     constr,
     conset,
+    validator,
 )
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, BulkInput, ListResponse, AuthorizedInput
 from catalog.models.common import Unit, DataTypeEnum, Period
 import logging
 
+from catalog.settings import CRITERIA_LIST
 
 logger = logging.getLogger(__name__)
 
@@ -317,8 +319,14 @@ class LegislationItem(BaseModel):
 
 
 class CriterionClassification(BaseModel):
-    scheme: str = Field(..., min_length=1, max_length=250)
+    scheme: Literal["ESPD211"]
     id: str = Field(..., min_length=1, max_length=250)
+
+    @validator('id')
+    def validate_id(cls, value):
+        if value not in CRITERIA_LIST:
+            raise ValueError(f"must be one of {CRITERIA_LIST}")
+        return value
 
 
 class CriterionCreateData(BaseModel):

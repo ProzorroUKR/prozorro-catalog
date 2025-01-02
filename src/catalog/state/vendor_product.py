@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from catalog.context import get_now
+from catalog.settings import CRITERIA_LIST
 from catalog.state.product import ProductState
 from catalog.validations import (
     validate_product_related_category,
@@ -11,11 +12,7 @@ from catalog.validations import (
 class VendorProductState(ProductState):
 
     check_classification = False
-    required_criteria = (
-        "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL",
-        "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
-    )
-
+    required_criteria = CRITERIA_LIST
     @classmethod
     async def on_post(cls, data, vendor, category):
         validate_active_vendor(vendor)
