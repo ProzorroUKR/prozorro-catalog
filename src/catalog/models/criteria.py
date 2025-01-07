@@ -89,12 +89,12 @@ class RequirementBaseValidators(BaseModel):
         data_type = values.get("dataType")
         unit = values.get("unit")
 
-        if (
-                data_type
-                and unit
-                and data_type in (DataTypeEnum.string.value, DataTypeEnum.boolean.value)
-        ):
-            raise ValueError(f"Unit is forbid with dataType: {data_type}")
+        if unit:
+            if data_type in (DataTypeEnum.string.value, DataTypeEnum.boolean.value):
+                raise ValueError(f"Unit is forbid with dataType {data_type}")
+        else:
+            if data_type in (DataTypeEnum.integer.value, DataTypeEnum.number.value):
+                raise ValueError(f"Unit is required with dataType {data_type}")
 
         return values
 
