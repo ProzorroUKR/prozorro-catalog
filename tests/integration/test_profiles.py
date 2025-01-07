@@ -584,6 +584,10 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
         "dataType": "number",
         "minValue": 30,
         "title": "50 штук",
+        "unit": {
+            "name": "Відсоток",
+            "code": "P1",
+        }
     }
     resp = await api.post(
         f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",

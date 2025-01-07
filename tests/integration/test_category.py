@@ -455,7 +455,7 @@ async def test_130_requirement_create(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "Unit is forbid with dataType: string: data.__root__",
+        "Unit is forbid with dataType string: data.__root__",
     ]
 
     del requirement_data["data"]["expectedMinItems"]
@@ -481,6 +481,21 @@ async def test_130_requirement_create(api, category):
 
     requirement_data["data"]["expectedValue"] = 4
     requirement_data["data"]["dataType"] = "integer"
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        'Unit is required with dataType integer: data.__root__',
+    ]
+
+    requirement_data["data"]["unit"] = {
+        "name": "Відсоток",
+        "code": "P1",
+    }
     requirement_data["data"]["maxValue"] = ""
     resp = await api.post(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
@@ -539,6 +554,8 @@ async def test_130_requirement_create(api, category):
     requirement_data["data"]["dataType"] = "string"
     del requirement_data["data"]["minValue"]
     del requirement_data["data"]["maxValue"]
+    del requirement_data["data"]["unit"]
+
     resp = await api.post(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
         json=requirement_data,
@@ -638,6 +655,10 @@ async def test_131_requirement_patch(api, category):
                 "expectedMinItems": None,
                 "expectedMaxItems": None,
                 "minValue": 0,
+                "unit": {
+                    "name": "Відсоток",
+                    "code": "P1",
+                }
             },
             "access": access,
         },

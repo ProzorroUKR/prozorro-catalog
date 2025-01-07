@@ -183,7 +183,11 @@ async def test_420_product_patch(api, category, profile, product):
         "dataType": "number",
         "expectedValue": 1,
         "title": "Дворазова",
-        "isArchived": True
+        "isArchived": True,
+        "unit": {
+            "name": "Відсоток",
+            "code": "P1",
+        }
     }
     resp = await api.post(
         f'/api/categories/{category["data"]["id"]}/criteria/{criterion_id}/requirementGroups/{rg_id}/requirements',
