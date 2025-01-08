@@ -728,3 +728,233 @@ async def test_140_category_agreement_id_patch(api, category):
     assert resp.status == 200
     resp_json = await resp.json()
     assert resp_json['data']['agreementID'] == agreement_id
+
+
+async def test_two_criteria(api, mock_agreement):
+    # create category
+    data = api.get_fixture_json('category')
+    resp = await api.put(
+        f"/api/categories/{data['id']}",
+        json={"data": data},
+        auth=TEST_AUTH
+    )
+    assert resp.status == 201
+    category_data = await resp.json()
+    criteria = api.get_fixture_json('criteria')
+
+    # add tech criteria
+    criterion = criteria["criteria"][0]
+    rgs = criterion.pop("requirementGroups")
+    resp = await api.post(
+        f"/api/categories/{category_data['data']['id']}/criteria",
+        json={"data": criterion, "access": category_data["access"]},
+        auth=TEST_AUTH,
+    )
+
+    criterion_data = await resp.json()
+    criterion_id = criterion_data["data"]["id"]
+
+    # add requirements
+    for rg in rgs:
+        reqs = rg.pop("requirements")
+        rg_resp = await api.post(
+            f"/api/categories/{category_data['data']['id']}/criteria/{criterion_id}/requirementGroups",
+            json={"data": rg, "access": category_data["access"]},
+            auth=TEST_AUTH,
+        )
+        rg_data = await rg_resp.json()
+        rg_id = rg_data["data"]["id"]
+        await api.post(
+            f"/api/categories/{category_data['data']['id']}/criteria/"
+            f"{criterion_id}/requirementGroups/{rg_id}/requirements",
+            json={"data": reqs, "access": category_data["access"]},
+            auth=TEST_AUTH,
+        )
+
+    # add second tech criteria
+    resp = await api.post(
+        f"/api/categories/{category_data['data']['id']}/criteria",
+        json={"data": criterion, "access": category_data["access"]},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        'Criteria classification should be unique'
+    ]
+
+    # add localization criteria
+    criterion_2 = criteria["criteria"][1]
+    rgs_loc = criterion_2.pop("requirementGroups")
+    resp = await api.post(
+        f"/api/categories/{category_data['data']['id']}/criteria",
+        json={"data": criterion_2, "access": category_data["access"]},
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 201
+    criterion_data = await resp.json()
+    criterion_id_2 = criterion_data["data"]["id"]
+
+    # add requirements
+    for rg in rgs_loc:
+        reqs = rg.pop("requirements")
+        rg_resp = await api.post(
+            f"/api/categories/{category_data['data']['id']}/criteria/{criterion_id_2}/requirementGroups",
+            json={"data": rg, "access": category_data["access"]},
+            auth=TEST_AUTH,
+        )
+        rg_data = await rg_resp.json()
+        rg_id = rg_data["data"]["id"]
+        await api.post(
+            f"/api/categories/{category_data['data']['id']}/criteria/"
+            f"{criterion_id_2}/requirementGroups/{rg_id}/requirements",
+            json={"data": reqs, "access": category_data["access"]},
+            auth=TEST_AUTH,
+        )
+
+    # patch tech criterion classification
+    resp = await api.patch(
+        f"/api/categories/{category_data['data']['id']}/criteria/{criterion_id_2}",
+        json={
+            "data": {
+                "classification": {
+                    "scheme": "ESPD211",
+                    "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES"
+                }
+            },
+            "access": category_data["access"]
+        },
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        'Criteria with this classification already exists'
+    ]
+
+    # get criteria
+    resp = await api.get(
+        f"/api/categories/{category_data['data']['id']}/criteria",
+        auth=TEST_AUTH,
+    )
+    resp_json = await resp.json()
+    assert len(resp_json["data"]) == 2
+
+    resp = await api.get(
+        f"/api/categories/{category_data['data']['id']}",
+        auth=TEST_AUTH,
+    )
+    resp_json = await resp.json()
+    assert len(resp_json["data"]["criteria"]) == 2
+
+    # get criteria by id
+    await api.patch(
+        f"/api/categories/{category_data['data']['id']}/criteria/{criterion_id_2}",
+        json={
+            "data": {
+                "description": "Товар включений до додаткового переліку",
+            },
+            "access": category_data["access"]
+        },
+        auth=TEST_AUTH,
+    )
+    resp = await api.get(
+        f"/api/categories/{category_data['data']['id']}/criteria/{criterion_id_2}",
+        auth=TEST_AUTH,
+    )
+    resp_json = await resp.json()
+    assert resp_json["data"]["description"] == "Товар включений до додаткового переліку"
+
+    # create profile
+    profile = await create_profile(api, category_data)
+
+    # add tech criteria
+    criteria = api.get_fixture_json('criteria')
+    criterion = criteria["criteria"][0]
+    rgs = criterion.pop("requirementGroups")
+    resp = await api.post(
+        f"/api/profiles/{profile['data']['id']}/criteria",
+        json={"data": criterion, "access": profile["access"]},
+        auth=TEST_AUTH,
+    )
+
+    criterion_data = await resp.json()
+    criterion_id = criterion_data["data"]["id"]
+
+    # add second tech criteria
+    resp = await api.post(
+        f"/api/profiles/{profile['data']['id']}/criteria",
+        json={"data": criterion, "access": profile["access"]},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        'Criteria classification should be unique'
+    ]
+
+    # add a few requirements from category criteria
+    for rg in rgs:
+        reqs = rg.pop("requirements")
+        rg_resp = await api.post(
+            f"/api/profiles/{profile['data']['id']}/criteria/{criterion_id}/requirementGroups",
+            json={"data": rg, "access": profile["access"]},
+            auth=TEST_AUTH,
+        )
+        rg_data = await rg_resp.json()
+        rg_id = rg_data["data"]["id"]
+        await api.post(
+            f"/api/profiles/{profile['data']['id']}/criteria/"
+            f"{criterion_id}/requirementGroups/{rg_id}/requirements",
+            json={"data": reqs[:1], "access": profile["access"]},
+            auth=TEST_AUTH,
+        )
+
+    # create vendor
+    data = api.get_fixture_json('vendor')
+    data['categories'] = [{"id": category_data["data"]["id"]}]
+    resp = await api.post(
+        f"/api/vendors",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    vendor = await resp.json()
+    assert resp.status == 201, vendor
+
+    patch_data = {"isActivated": True}
+    await api.patch(
+        f"/api/vendors/{vendor['data']['id']}?access_token={vendor['access']['token']}",
+        json={"data": patch_data},
+        auth=TEST_AUTH,
+    )
+
+    # create localization product
+    data = api.get_fixture_json('vendor_product')
+    data['relatedCategory'] = category_data["data"]["id"]
+    data['relatedProfiles'] = [profile["data"]["id"]]
+    for item, rr in enumerate(data["requirementResponses"]):
+        if "requirement" not in rr:
+            rr["requirement"] = reqs[item]["title"]
+    all_req_resp = data["requirementResponses"]
+    data["requirementResponses"] = all_req_resp[:-3]
+
+    resp = await api.post(
+        f"/api/vendors/{vendor['data']['id']}/products?access_token={vendor['access']['token']}",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        'should be responded at least on one category requirement with classification CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL'
+    ]
+
+    data["requirementResponses"] = all_req_resp
+    resp = await api.post(
+        f"/api/vendors/{vendor['data']['id']}/products?access_token={vendor['access']['token']}",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 201
+

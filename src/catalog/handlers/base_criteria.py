@@ -4,6 +4,7 @@ from aiohttp.web_urldispatcher import View as BaseView
 
 from catalog import db
 from catalog.auth import validate_accreditation, validate_access_token
+from catalog.settings import LOCALIZATION_CRITERIA
 from catalog.utils import get_now, find_item_by_id, delete_sent_none_values
 from catalog.models.criteria import (
     CriterionCreateInput,
@@ -13,8 +14,11 @@ from catalog.models.criteria import (
     Requirement,
 )
 from catalog.serializers.base import RootSerializer
-from catalog.validations import validate_requirement_title_uniq, validate_criteria_max_items_on_post
-
+from catalog.validations import (
+    validate_criteria_classification_uniq,
+    validate_criteria_max_items_on_post,
+    validate_requirement_title_uniq,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +97,7 @@ class BaseCriteriaView(View):
                 parent_obj["criteria"] = []
 
             parent_obj["criteria"].append(data)
-            validate_criteria_max_items_on_post(parent_obj, "criteria")
+            validate_criteria_classification_uniq(parent_obj)
             parent_obj["dateModified"] = get_now().isoformat()
 
             logger.info(
@@ -119,6 +123,8 @@ class BaseCriteriaView(View):
             # update obj with valid data
             # mongo unwinded criteria, so here is only one item in `criteria`
             parent_obj["criteria"].update(data)
+            criteria_parent = await cls.get_parent_obj(obj_id)
+            validate_criteria_classification_uniq(criteria_parent, updated_criterion=parent_obj["criteria"])
             parent_obj["dateModified"] = get_now().isoformat()
 
             logger.info(
@@ -169,7 +175,8 @@ class BaseCriteriaRGView(View):
             data = body.data.dict_without_none()
             # update obj with valid data
             parent_obj["criteria"]["requirementGroups"].append(data)
-            validate_criteria_max_items_on_post(parent_obj["criteria"], "requirementGroups")
+            if parent_obj["criteria"].get("classification", {}).get("id") != LOCALIZATION_CRITERIA:
+                validate_criteria_max_items_on_post(parent_obj["criteria"], "requirementGroups")
             parent_obj["dateModified"] = get_now().isoformat()
 
             logger.info(

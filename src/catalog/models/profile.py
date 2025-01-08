@@ -131,7 +131,7 @@ class Profile(BaseModel):
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     dateCreated: datetime
     owner: str
-    criteria: List[Criterion] = Field(..., max_items=1)
+    criteria: List[Criterion] = Field(...)
 
 
 ProfileCreateInput = AuthorizedInput[ProfileCreateData]

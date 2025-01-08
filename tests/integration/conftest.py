@@ -12,7 +12,8 @@ from .utils import get_fixture_json, create_profile, create_criteria
 
 def set_requirements_to_responses(requirement_responses, category):
     for item, rr in enumerate(requirement_responses):
-        rr["requirement"] = category["data"]["criteria"][0]["requirementGroups"][0]["requirements"][item]["title"]
+        if "requirement" not in rr:
+            rr["requirement"] = category["data"]["criteria"][0]["requirementGroups"][0]["requirements"][item]["title"]
 
 
 @pytest.fixture
