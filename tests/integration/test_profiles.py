@@ -59,8 +59,8 @@ async def create_blank_criterion(api, profile):
         auth=TEST_AUTH,
     )
     resp_json = await resp.json()
-    criterion_id = resp_json["data"]["id"]
-    assert resp_json["data"]["legislation"][0]["type"] == "NATIONAL_LEGISLATION"
+    criterion_id = resp_json["data"][-1]["id"]
+    assert resp_json["data"][-1]["legislation"][0]["type"] == "NATIONAL_LEGISLATION"
 
     resp = await api.post(
         f"/api/profiles/{profile_id}/criteria/{criterion_id}/requirementGroups",

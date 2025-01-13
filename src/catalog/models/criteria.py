@@ -364,6 +364,7 @@ class Criterion(BaseModel):
 
 
 CriterionCreateInput = AuthorizedInput[CriterionCreateData]
+CriterionBulkCreateInput = BulkInput[CriterionCreateData]
 CriterionUpdateInput = AuthorizedInput[CriterionUpdateData]
 CriterionResponse = Response[Criterion]
 CriterionListResponse = ListResponse[Criterion]

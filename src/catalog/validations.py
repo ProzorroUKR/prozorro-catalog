@@ -85,7 +85,11 @@ def validate_product_req_responses_to_category(
         for group in c["requirementGroups"]
         for r in group["requirements"]
     }
-    required_criteria = required_criteria if required_criteria else list()
+    category_criteria = [
+        c.get("classification", {}).get("id")
+        for c in category.get("criteria", "")
+    ]
+    required_criteria = required_criteria if required_criteria else category_criteria
     required_classifications = {i[1] for i in category_requirements.values() if i[1] in required_criteria}
     responded_classifications = set()
 
@@ -120,26 +124,25 @@ def validate_product_req_responses_to_category(
 
 
 def validate_product_req_response_to_profile(profile: dict, product: dict):
-    requirements = {
-        r["title"]: r
-        for c in profile.get("criteria", "")
-        for group in c["requirementGroups"]
-        for r in group["requirements"]
-    }
+    for criterion in profile.get("criteria", ""):
+        requirements = {
+            r["title"]: r
+            for group in criterion["requirementGroups"]
+            for r in group["requirements"]
+        }
+        if not requirements:
+            raise HTTPBadRequest(text=f"product.relatedProfile({profile['id']}) should have at least one requirement for criteria {criterion['title']}")
 
-    if not requirements:
-        raise HTTPBadRequest(text=f"product.relatedProfile({profile['id']}) should have at least one requirement")
+        is_requirement_responded = False
+        for req_response in product.get("requirementResponses", ""):
+            key = req_response["requirement"]
+            if key in requirements:
+                is_requirement_responded = True
+                requirement = requirements[key]
+                validate_req_response(req_response, requirement)
 
-    is_requirement_responded = False
-    for req_response in product.get("requirementResponses", ""):
-        key = req_response["requirement"]
-        if key in requirements:
-            is_requirement_responded = True
-            requirement = requirements[key]
-            validate_req_response(req_response, requirement)
-
-    if not is_requirement_responded:
-        raise HTTPBadRequest(text=f"should be responded at least on one profile({profile['id']}) requirement")
+        if not is_requirement_responded:
+            raise HTTPBadRequest(text=f"should be responded at least on one profile({profile['id']}) requirement for criteria {criterion['title']}")
 
 
 def validate_product_to_category(
@@ -246,6 +249,22 @@ def validate_requirement_title_uniq(profile: dict):
     ]
     if len(req_titles) != len(set(req_titles)):
         raise HTTPBadRequest(text="Requirement title should be unique")
+
+
+def validate_criteria_classification_uniq(obj: dict, updated_criterion=None):
+    criteria = obj.get("criteria", [])
+    if updated_criterion:
+        if classification_id := updated_criterion.get("classification", {}).get("id"):
+            criterion_id = updated_criterion["id"]
+            if any(
+                criterion["classification"]["id"] == classification_id and criterion["id"] != criterion_id
+                for criterion in criteria
+            ):
+                raise HTTPBadRequest(text="Criteria with this classification already exists")
+    else:
+        classification_ids = [criterion["classification"]["id"] for criterion in criteria if criterion.get("classification")]
+        if len(classification_ids) != len(set(classification_ids)):
+            raise HTTPBadRequest(text="Criteria classification should be unique")
 
 
 def validate_criteria_max_items_on_post(obj: dict, obj_title: str):

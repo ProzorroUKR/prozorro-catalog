@@ -80,7 +80,7 @@ class Category(BaseModel):
     status: CategoryStatus = CategoryStatus.active
     images: Optional[List[Image]] = Field(..., max_items=100)
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
-    criteria: List[Criterion] = Field(..., max_items=1)
+    criteria: List[Criterion] = Field(...)
     agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
     owner: str
 
