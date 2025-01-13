@@ -752,7 +752,7 @@ async def test_two_criteria(api, mock_agreement):
     )
 
     criterion_data = await resp.json()
-    criterion_id = criterion_data["data"]["id"]
+    criterion_id = criterion_data["data"][-1]["id"]
 
     # add requirements
     for rg in rgs:
@@ -794,7 +794,7 @@ async def test_two_criteria(api, mock_agreement):
 
     assert resp.status == 201
     criterion_data = await resp.json()
-    criterion_id_2 = criterion_data["data"]["id"]
+    criterion_id_2 = criterion_data["data"][-1]["id"]
 
     # add requirements
     for rg in rgs_loc:
@@ -880,7 +880,7 @@ async def test_two_criteria(api, mock_agreement):
     )
 
     criterion_data = await resp.json()
-    criterion_id = criterion_data["data"]["id"]
+    criterion_id = criterion_data["data"][-1]["id"]
 
     # add second tech criteria
     resp = await api.post(
@@ -958,3 +958,29 @@ async def test_two_criteria(api, mock_agreement):
     )
     assert resp.status == 201
 
+
+async def test_criteria_batch(api, mock_agreement):
+    # create category
+    data = api.get_fixture_json('category')
+    resp = await api.put(
+        f"/api/categories/{data['id']}",
+        json={"data": data},
+        auth=TEST_AUTH
+    )
+    assert resp.status == 201
+    category_data = await resp.json()
+    criteria = api.get_fixture_json('criteria')
+
+    for criterion in criteria["criteria"]:
+        criterion.pop("requirementGroups")
+
+    # POST 2 criterion in one time
+    resp = await api.post(
+        f"/api/categories/{category_data['data']['id']}/criteria",
+        json={"data": criteria["criteria"], "access": category_data["access"]},
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 201
+    criterion_data = await resp.json()
+    assert len(criterion_data["data"]) == 2

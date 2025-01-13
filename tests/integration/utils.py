@@ -45,7 +45,7 @@ async def create_criteria(api, obj_path, profile, criteria=None):
         )
 
         criterion_data = await resp.json()
-        criterion_id = criterion_data["data"]["id"]
+        criterion_id = criterion_data["data"][-1]["id"]
         for rg in rgs:
             reqs = rg.pop("requirements")
             rg_resp = await api.post(

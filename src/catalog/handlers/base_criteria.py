@@ -7,6 +7,7 @@ from catalog.auth import validate_accreditation, validate_access_token
 from catalog.settings import LOCALIZATION_CRITERIA
 from catalog.utils import get_now, find_item_by_id, delete_sent_none_values
 from catalog.models.criteria import (
+    CriterionBulkCreateInput,
     CriterionCreateInput,
     CriterionUpdateInput,
     RGCreateInput,
@@ -66,9 +67,14 @@ class BaseCriteriaView(View):
     async def get_body_from_model(cls, request):
         json = await request.json()
         if request.method == "POST":
-            return CriterionCreateInput(**json)
+            if isinstance(json.get("data", {}), dict):
+                body = CriterionCreateInput(**json)
+                body.data = [body.data]
+            elif isinstance(json["data"], list):
+                body = CriterionBulkCreateInput(**json)
         elif request.method == "PATCH":
             return CriterionUpdateInput(**json)
+        return body
 
     @classmethod
     async def collection_get(cls, request, obj_id):
@@ -91,23 +97,23 @@ class BaseCriteriaView(View):
 
             validate_access_token(request, parent_obj, body.access)
             # export data back to dict
-            data = body.data.dict_without_none()
+            data = [criterion.dict_without_none() for criterion in body.data]
             # update profile with valid data
             if "criteria" not in parent_obj:
                 parent_obj["criteria"] = []
 
-            parent_obj["criteria"].append(data)
+            parent_obj["criteria"].extend(data)
             validate_criteria_classification_uniq(parent_obj)
             parent_obj["dateModified"] = get_now().isoformat()
-
-            logger.info(
-                f"Created {cls.obj_name} criterion {data['id']}",
-                extra={
-                    "MESSAGE_ID": f"{cls.obj_name}_criterion_create",
-                    f"{cls.obj_name}_criterion_id": data["id"]
-                },
-            )
-        return {"data": cls.serializer_class(data).data}
+            for criterion in data:
+                logger.info(
+                    f"Created {cls.obj_name} criterion {criterion['id']}",
+                    extra={
+                        "MESSAGE_ID": f"{cls.obj_name}_criterion_create",
+                        f"{cls.obj_name}_criterion_id": criterion['id']
+                    },
+                )
+        return {"data": [cls.serializer_class(criterion).data for criterion in data]}
 
     @classmethod
     async def patch(cls, request, obj_id, criterion_id):
