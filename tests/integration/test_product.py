@@ -2,8 +2,11 @@ from random import randint
 from copy import deepcopy
 from unittest.mock import patch, AsyncMock
 from urllib.parse import quote
+
+from catalog.settings import CPB_USERNAME
 from .base import TEST_AUTH, TEST_AUTH_CPB
 from .conftest import set_requirements_to_responses
+from .utils import create_criteria
 
 
 async def test_invalid_auth_header(api, product):
@@ -346,3 +349,27 @@ async def test_430_product_limit_offset(api, category, profile):
             assert test_product_map.pop(item['id']) == item['dateModified']
 
     assert len(test_product_map) == 0
+
+
+async def test_create_product_from_cabinet_category(api, mock_agreement):
+    data = api.get_fixture_json('category')
+    resp = await api.put(
+        f"/api/categories/{data['id']}",
+        json={"data": data},
+        auth=TEST_AUTH_CPB
+    )
+    assert resp.status == 201
+    category_data = await resp.json()
+    category_token = category_data["access"]
+    assert category_data["access"]["owner"] == CPB_USERNAME
+    category = await create_criteria(api, "categories", category_data)
+
+    # try to POST product with only token but another owner
+    test_product = api.get_fixture_json('product')
+    test_product["relatedCategory"] = category_data["data"]["id"]
+    set_requirements_to_responses(test_product["requirementResponses"], category)
+
+    resp = await api.post('/api/products', json={"data": test_product, "access": category_token}, auth=TEST_AUTH)
+    assert resp.status == 201
+    product_data = await resp.json()
+    assert product_data["access"]["owner"] != category_data["access"]["owner"]

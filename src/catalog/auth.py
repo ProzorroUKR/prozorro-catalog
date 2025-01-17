@@ -42,7 +42,8 @@ def validate_access_token(request, obj, access):
     admin_id = obj.get("marketAdministrator", {}).get("identifier", {}).get("id", "")
 
     if (
-        not compare_digest(request.user.name, obj['access']['owner'])
+        obj['access']['owner'] != CPB_USERNAME  # if object was created via the Cabinet, we don't check owner
+        and not compare_digest(request.user.name, obj['access']['owner'])
         and not compare_digest(request.user.name, admin_id)
         and not compare_digest(request.user.name, CPB_USERNAME)
     ):
