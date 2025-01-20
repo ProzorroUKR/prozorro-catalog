@@ -169,8 +169,7 @@ def validate_product_to_profile(profile, product):
     if product["relatedCategory"] != profile["relatedCategory"]:
         raise HTTPBadRequest(text='product and profile should be related with the same category')
     if profile["status"] == ProfileStatus.hidden:
-        raise HTTPBadRequest(text=f"relatedProfiles should be in `{ProfileStatus.active}` or"
-                                  f"`{ProfileStatus.general}` status.")
+        raise HTTPBadRequest(text=f"relatedProfiles should be in `{ProfileStatus.active}` status")
 
     validate_product_req_response_to_profile(profile, product)
 
