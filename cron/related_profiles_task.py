@@ -47,7 +47,6 @@ async def run_task():
         product_cursor = products_collection.find(
             {
                 "relatedCategory": category_id,
-                "vendor": {"$exists": False},
                 "requirementResponses": {"$exists": True},
                 "status": ProductStatus.active
             },
