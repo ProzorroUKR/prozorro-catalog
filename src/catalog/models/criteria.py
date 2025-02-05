@@ -44,13 +44,14 @@ class RequirementBaseValidators(BaseModel):
 
     @root_validator
     def check_sum(cls, values):
-
+        if not (data_type := values.get("dataType")):
+            return values
         for k in ("expectedValue", "maxValue", "minValue"):
             if values.get(k) is not None:
-                cls._check_value_type(values[k], values["dataType"])
+                cls._check_value_type(values[k], data_type)
         if values.get("expectedValues"):
             for value in values["expectedValues"]:
-                cls._check_value_type(value, values["dataType"])
+                cls._check_value_type(value, data_type)
         return values
 
     @root_validator
@@ -182,7 +183,7 @@ class EligibleEvidence(BaseModel):
 
 class BaseRequirementCreateData(BaseModel):
     title: constr(strip_whitespace=True, min_length=1, max_length=250)
-    dataType: DataTypeEnum = Field(None, max_length=100)
+    dataType: DataTypeEnum
 
     unit: Optional[Unit] = None
     description: Optional[str] = Field(None, max_length=1000)
@@ -220,7 +221,7 @@ class ProfileRequirementCreateData(BaseRequirementCreateData, ProfileRequirement
 
 class BaseRequirementUpdateData(BaseModel):
     title: constr(strip_whitespace=True, min_length=1, max_length=250) = None
-    dataType: DataTypeEnum = Field(None, max_length=100)
+    dataType: Optional[DataTypeEnum]
 
     unit: Optional[Unit] = None
     description: Optional[str] = Field(None, max_length=1000)
@@ -253,7 +254,7 @@ class ProfileRequirementUpdateData(BaseRequirementUpdateData):
 class Requirement(BaseModel):
     id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     title: str = Field(..., min_length=1, max_length=250)
-    dataType: DataTypeEnum = Field(..., max_length=100)
+    dataType: DataTypeEnum
 
     unit: Optional[Unit] = None
     description: Optional[str] = Field(None, max_length=1000)

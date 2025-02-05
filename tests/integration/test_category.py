@@ -364,6 +364,18 @@ async def test_130_requirement_create(api, category):
 
     resp = await api.post(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json={"access": category["access"], "data": {"title": "TITLE", "dataType": "bulean"}},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "value is not a valid enumeration member; permitted: 'string', "
+        "'date-time', 'number', 'integer', 'boolean': data.dataType"
+    ]
+
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
         json=requirement_data,
         auth=TEST_AUTH,
     )
@@ -611,6 +623,29 @@ async def test_131_requirement_patch(api, category):
     assert resp.status == 201
     resp_json = await resp.json()
     requirement_id = resp_json["data"][0]["id"]
+
+    resp = await api.patch(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
+        json={"data": {"dataType": None}, "access": access},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "field required: dataType"
+    ]
+
+    resp = await api.patch(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
+        json={"data": {"dataType": "bulean"}, "access": access},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "value is not a valid enumeration member; permitted: 'string', "
+        "'date-time', 'number', 'integer', 'boolean': data.dataType"
+    ]
 
     resp = await api.patch(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
