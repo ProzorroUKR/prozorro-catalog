@@ -1,6 +1,7 @@
 import asyncio
 from copy import deepcopy
 from uuid import uuid4
+from decimal import Decimal
 
 import logging
 import sentry_sdk
@@ -142,9 +143,6 @@ async def migrate():
     category_collection = get_category_collection()
     profiles_collection = get_profiles_collection()
 
-    localization_category = await category_collection.find_one({"_id": CATEGORY_ID})
-    localization_category.pop("additionalClassifications", None)
-
     MARKET_ADMINISTRATOR_UPDATE_DATA = {
         "address": {
             "countryName": "Україна",
@@ -166,15 +164,26 @@ async def migrate():
         "name": "ДЕРЖАВНА УСТАНОВА \"Прозорро\"",
     }
 
-    localization_category["marketAdministrator"].update(MARKET_ADMINISTRATOR_UPDATE_DATA)
-
     async with transaction_context_manager() as session:
+        localization_category = await category_collection.find_one_and_update(
+            filter={"_id": CATEGORY_ID},
+            update={"$set": {"status": "hidden"}},
+        )
+        localization_category.pop("additionalClassifications", None)
+        localization_category["marketAdministrator"].update(MARKET_ADMINISTRATOR_UPDATE_DATA)
+
         async for profile in profiles_collection.find(
             {"_id": {"$in": PROFILES_IDS}},
             {"unit": 1, "title": 1, "classification": 1},
         ):
             category_data = deepcopy(localization_category)
             category_data.update(profile)
+
+            for c in category_data["criteria"]:
+                if c["classification"]["id"] == "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL":
+                    c["requirementGroups"][0]["requirements"][0]["minValue"] = 25.0
+                    break
+
             category_data["_id"] = uuid4().hex
             category_data["status"] = "active"
             category_data["dateModified"] = get_now().isoformat()
