@@ -1,5 +1,6 @@
 import asyncio
 from uuid import uuid4
+from copy import deepcopy
 
 import logging
 import sentry_sdk
@@ -185,7 +186,7 @@ LOCALIZATION_CRITERION_DATA = {
                              "перевищує або дорівнює ступеню локалізації виробництва, "
                              "встановленому на відповідний рік",
                     "dataType": "number",
-                    "minValue": 25,
+                    "minValue": 25.0,
                     "unit": {
                         "name": "Відсоток",
                         "code": "P1"
@@ -262,6 +263,33 @@ LOCALIZATION_CRITERION_DATA = {
 CATEGORY_CACHE = dict()
 
 
+def get_localization_criteria() -> dict:
+    localization_criteria = deepcopy(LOCALIZATION_CRITERION_DATA)
+    for c in [localization_criteria]:
+        c["id"] = uuid4().hex
+        for rg in c.get("requirementGroups", ""):
+            rg["id"] = uuid4().hex
+            for req in rg.get("requirements", ""):
+                req["id"] = uuid4().hex
+
+    return localization_criteria
+
+
+def set_new_localization_criteria(category_criteria: list) -> list:
+    localization_criteria = get_localization_criteria()
+
+    is_lc_exist = False
+    for i, value in enumerate(category_criteria):
+        if value["classification"]["id"] == "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL":
+            is_lc_exist = True
+            category_criteria[i] = localization_criteria
+
+    if not is_lc_exist:
+        category_criteria.append(localization_criteria)
+
+    return category_criteria
+
+
 async def migrate_categories():
     logger.info("Start categories migration of set localization criteria to specialized categories")
     category_collection = get_category_collection()
@@ -273,14 +301,11 @@ async def migrate_categories():
                 {"criteria": 1},
 
         ):
-            category_criteria = category.get("criteria", [])
-            localization_criteria = LOCALIZATION_CRITERION_DATA.copy()
-            localization_criteria["id"] = uuid4().hex
-            category_criteria.append(localization_criteria)
+            updated_category_criteria = set_new_localization_criteria(category.get("criteria", []))
             try:
                 await category_collection.update_one(
                     {"_id": category["_id"]},
-                    {"$set": {"criteria": category_criteria, "dateModified": get_now().isoformat()}},
+                    {"$set": {"criteria": updated_category_criteria, "dateModified": get_now().isoformat()}},
                     session=session,
                 )
                 counter += 1
@@ -302,12 +327,14 @@ async def migrate_profiles():
     async with transaction_context_manager() as session:
         async for profile in profiles_collection.find(
             {"_id": {"$in": PROFILES_IDS}},
-            {"classification": 1},
+            {"classification": 1, "criteria": 1},
         ):
             classification_id = profile["classification"]["id"]
-            category = await category_collection.find_one(
-                {"classification.id": classification_id},
-                {"_id": 1, "agreementID": 1},
+            category = await category_collection.find_one_and_update(
+                filter={"classification.id": classification_id},
+                update={"$set": {"status": "active"}},
+                projection={"_id": 1, "agreementID": 1},
+                sort={"dateModified": -1}
             )
 
             if not category:
@@ -319,6 +346,12 @@ async def migrate_profiles():
                 updated_data = {"relatedCategory": category["_id"], "dateModified": get_now().isoformat()}
                 if classification_id in SPECIAL_CATEGORIES_CLASSIFICATIONS:
                     updated_data["agreementID"] = category["agreementID"]
+
+            for c in profile.get("criteria", ""):
+                if c["classification"]["id"] == "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL":
+                    c["requirementGroups"][0]["requirements"][0]["minValue"] = 25.0
+                    updated_data["criteria"] = profile["criteria"]
+                    break
             try:
                 await profiles_collection.update_one(
                     {"_id": profile["_id"]},
