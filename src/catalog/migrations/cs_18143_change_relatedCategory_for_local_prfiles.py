@@ -345,7 +345,8 @@ async def migrate_profiles():
             if category:
                 updated_data = {"relatedCategory": category["_id"], "dateModified": get_now().isoformat()}
                 if classification_id in SPECIAL_CATEGORIES_CLASSIFICATIONS:
-                    updated_data["agreementID"] = category["agreementID"]
+                    if agreement_id := category.get("agreementID"):
+                        updated_data["agreementID"] = agreement_id
 
             for c in profile.get("criteria", ""):
                 if c["classification"]["id"] == "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL":
