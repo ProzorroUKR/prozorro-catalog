@@ -941,7 +941,6 @@ async def test_two_criteria(api, mock_agreement):
 
     # create vendor
     data = api.get_fixture_json('vendor')
-    data['categories'] = [{"id": category_data["data"]["id"]}]
     resp = await api.post(
         f"/api/vendors",
         json={"data": data},

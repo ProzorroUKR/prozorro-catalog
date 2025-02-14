@@ -220,9 +220,8 @@ async def test_vendor_banned(api, vendor, vendor_ban, category):
         assert resp.status == 201
 
 
-async def test_ban_inactive_vendor(api, category):
+async def test_ban_inactive_vendor(api):
     data = api.get_fixture_json('vendor')
-    data['categories'] = [{"id": category["data"]["id"]}]
     resp = await api.post(
         "/api/vendors",
         json={"data": data},
