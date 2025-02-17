@@ -219,6 +219,10 @@ def validate_profile_requirements(new_requirements: list, category: dict) -> Non
                 raise HTTPBadRequest(
                     text=f"requirement '{key}' expectedValues should have values from category requirement"
                 )
+            if req.get("dataSchema") !=  requirements_statuses[key].get("dataSchema"):
+                raise HTTPBadRequest(
+                    text=f"requirement '{key}' dataSchema should be the same in category and profile requirement"
+                )
             validate_requirement_values_range(req, requirements_statuses, key, "expectedMinItems", "expectedMaxItems")
         validate_requirement_values_range(req, requirements_statuses, key, "minValue", "maxValue")
 
