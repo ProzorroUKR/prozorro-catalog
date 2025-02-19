@@ -9,14 +9,14 @@ import standards
 import re
 
 
-UNIT_CODES = standards.load("unit_codes/recommended.json")
+UNIT_CODES_DATA = standards.load("unit_codes/recommended.json")
 UA_REGIONS = standards.load("classifiers/ua_regions.json")
 COUNTRY_NAMES = standards.load("classifiers/countries.json")
 ORA_CODES = [i["code"] for i in standards.load("organizations/identifier_scheme.json")["data"]]
 LANGUAGE_CODES = standards.load("classifiers/languages.json").keys()
 
 COUNTRY_NAMES_UK = [names.get("name_uk") for names in COUNTRY_NAMES.values()]
-UNIT_CODES = UNIT_CODES.keys()
+UNIT_CODES = UNIT_CODES_DATA.keys()
 
 UKRAINE_COUNTRY_NAME_UK = COUNTRY_NAMES.get("UA").get("name_uk")
 AGREEMENT_ID_REGEX = r"^[a-f0-9]{32}$"
@@ -50,11 +50,13 @@ class Unit(BaseModel):
     code: str = Field(..., min_length=1, max_length=80)
     name: constr(strip_whitespace=True, min_length=1, max_length=256)
 
-    @validator('code')
-    def code_standard(cls, v):
-        if v not in UNIT_CODES:
-            raise ValueError("must be one of unit_codes/recommended.json keys")
-        return v
+    @root_validator
+    def name_standard(cls, values):
+        if values.get("code") not in UNIT_CODES:
+            raise ValueError("code must be one of unit_codes/recommended.json keys")
+        if values.get("name") != UNIT_CODES_DATA[values["code"]]["name_uk"]:
+            raise ValueError(f'name must be from unit_codes/recommended.json for {values["code"]}')
+        return values
 
 
 class Value(BaseModel):

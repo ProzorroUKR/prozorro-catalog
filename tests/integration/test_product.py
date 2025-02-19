@@ -188,7 +188,7 @@ async def test_420_product_patch(api, category, profile, product):
         "title": "Дворазова",
         "isArchived": True,
         "unit": {
-            "name": "Відсоток",
+            "name": "відсоток",
             "code": "P1",
         }
     }

@@ -456,7 +456,7 @@ async def test_130_requirement_create(api, category):
     requirement_data["data"]["expectedMaxItems"] = 1
     requirement_data["data"]["unit"] = {
         "code": "H87",
-        "name": "штуки"
+        "name": "штука"
     }
 
     resp = await api.post(
@@ -505,7 +505,7 @@ async def test_130_requirement_create(api, category):
     ]
 
     requirement_data["data"]["unit"] = {
-        "name": "Відсоток",
+        "name": "відсоток",
         "code": "P1",
     }
     requirement_data["data"]["maxValue"] = ""
@@ -691,7 +691,7 @@ async def test_131_requirement_patch(api, category):
                 "expectedMaxItems": None,
                 "minValue": 0,
                 "unit": {
-                    "name": "Відсоток",
+                    "name": "відсоток",
                     "code": "P1",
                 }
             },

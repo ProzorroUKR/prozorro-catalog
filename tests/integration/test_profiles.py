@@ -586,7 +586,7 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
         "minValue": 30,
         "title": "50 штук",
         "unit": {
-            "name": "Відсоток",
+            "name": "відсоток",
             "code": "P1",
         }
     }
