@@ -131,7 +131,31 @@ async def test_vendor_product_create(api, vendor, category, profile):
 
     assert resp.status == 400
     result = await resp.json()
-    assert result == {"errors": ["relatedCategory should be in `active` status."]}
+    assert result == {"errors": ["relatedCategory should be in `active` status"]}
+
+    # category without localization criteria
+    data = api.get_fixture_json('category')
+    data.pop("id")
+    resp = await api.post(
+        f"/api/categories",
+        json={"data": data},
+        auth=TEST_AUTH
+    )
+    assert resp.status == 201
+    category_wo_localization = await resp.json()
+    assert "criteria" not in category_wo_localization
+
+    test_product["relatedCategory"] = category_wo_localization["data"]["id"]
+
+    resp = await api.post(
+        f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',
+        json={'data': test_product},
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 400
+    result = await resp.json()
+    assert result == {"errors": ["relatedCategory must have localization criteria"]}
 
     test_product["relatedCategory"] = "0" * 32
     resp = await api.post(
@@ -217,44 +241,50 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
     )
     assert resp.status == 201
     data = await resp.json()
-    criteria_data = {"criteria": [{
-        "title": "Технічні характеристики предмета закупівлі",
-        "description": "Тести швидкі для визначення інфекційних захворювань",
-        "legislation": [{
-            "identifier": {
-                "id": "identifier_id",
-                "legalName": "legal_name",
-                "uri": "http://example.com",
-            },
-            "version": "1.0.0",
-            "article": "22.2.3"
-        }],
-        "classification": {
-            "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
-            "scheme": "ESPD211",
-        },
-        "requirementGroups": [{
-            "description": "Технічні характеристики",
-            "requirements": [
-                {
-                    "title": "Метод аналізу",
-                    "dataType": "string",
-                    "expectedMinItems": 1,
-                    "expectedValues": ["ІХА", "FOO", "BAR"]
-                },
-                {
-                    "title": "Специфічність",
-                    "dataType": "integer",
-                    "unit": {
-                        "code": "P1",
-                        "name": "%"
+    criteria_fixture = api.get_fixture_json("criteria")
+    criteria_data = {
+        "criteria": [
+            {
+                "title": "Технічні характеристики предмета закупівлі",
+                "description": "Тести швидкі для визначення інфекційних захворювань",
+                "legislation": [{
+                    "identifier": {
+                        "id": "identifier_id",
+                        "legalName": "legal_name",
+                        "uri": "http://example.com",
                     },
-                    "minValue": 90,
-                    "maxValue": 110,
-                }
-            ]
-        }]
-    }]}
+                    "version": "1.0.0",
+                    "article": "22.2.3"
+                }],
+                "classification": {
+                    "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
+                    "scheme": "ESPD211",
+                },
+                "requirementGroups": [{
+                    "description": "Технічні характеристики",
+                    "requirements": [
+                        {
+                            "title": "Метод аналізу",
+                            "dataType": "string",
+                            "expectedMinItems": 1,
+                            "expectedValues": ["ІХА", "FOO", "BAR"]
+                        },
+                        {
+                            "title": "Специфічність",
+                            "dataType": "integer",
+                            "unit": {
+                                "code": "P1",
+                                "name": "%"
+                            },
+                            "minValue": 90,
+                            "maxValue": 110,
+                        }
+                    ]
+                }]
+            },
+            criteria_fixture["criteria"][1]  # required localization criteria
+        ]
+    }
     category = await create_criteria(api, "categories", data, criteria=criteria_data)
 
     # create profile with expectedValue
@@ -292,7 +322,7 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
                     },
                     "minValue": 95,
                     "maxValue": 103,
-                }
+                },
             ]
         }]
     }]}
@@ -366,6 +396,14 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
             "value": 96,
             "requirement": "Специфічність"
         },
+        {
+            "value": 25,
+            "requirement": "Ступінь локалізації виробництва товару, що є предметом закупівлі, перевищує або дорівнює ступеню локалізації виробництва, встановленому на відповідний рік",
+        },
+        {
+            "values": ["GB"],
+            "requirement": "Товар походить з однієї з країн, що підписала Угоду про державні закупівлі Світової Організації торгівлі (GPA) або іншої країни з якою Україна має міжнародні договори про державні закупівлі",
+        }
     ]
     resp = await api.post(
         f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',
@@ -374,3 +412,4 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
     )
 
     assert resp.status == 201
+

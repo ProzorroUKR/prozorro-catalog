@@ -4,7 +4,6 @@ from catalog.doc_service import generate_test_url
 
 async def test_vendor_create_no_permission(api):
     test_vendor = api.get_fixture_json('vendor')
-    test_vendor.pop("categories")
     resp = await api.post(
         '/api/vendors',
         json={"data": test_vendor},
@@ -15,70 +14,8 @@ async def test_vendor_create_no_permission(api):
     assert {'errors': ["Forbidden 'vendors' write operation"]} == result
 
 
-async def test_vendor_create_without_category(api):
-    test_vendor = api.get_fixture_json('vendor')
-    test_vendor.pop("categories")
-    resp = await api.post(
-        '/api/vendors',
-        json={"data": test_vendor},
-        auth=TEST_AUTH,
-    )
-    result = await resp.json()
-    assert resp.status == 400, result
-    assert {'errors': ['field required: data.categories']} == result
-
-    test_vendor["categories"] = []
-    resp = await api.post(
-        '/api/vendors',
-        json={"data": test_vendor},
-        auth=TEST_AUTH,
-    )
-    result = await resp.json()
-    assert resp.status == 400, result
-    assert {'errors': ['ensure this value has at least 1 items: data.categories']} == result
-
-
-async def test_vendor_create_with_404_category(api):
-    test_vendor = api.get_fixture_json('vendor')
-    resp = await api.post(
-        '/api/vendors',
-        json={"data": test_vendor},
-        auth=TEST_AUTH,
-    )
-    result = await resp.json()
-    assert resp.status == 404, result
-    assert {'errors': ['Category not found']} == result
-
-
-async def test_vendor_create_with_hidden_category(api, mock_agreement):
-    data = api.get_fixture_json('category')
-    data["status"] = "hidden"
-    resp = await api.put(
-        f"/api/categories/{data['id']}",
-        json={"data": data},
-        auth=TEST_AUTH
-    )
-    assert resp.status == 201
-    category = await resp.json()
-    assert category["data"]["status"] == "hidden"
-    category_id = category["data"]["id"]
-
-    test_vendor = api.get_fixture_json('vendor')
-    test_vendor["categories"] = [{"id": category_id}]
-
-    resp = await api.post(
-        '/api/vendors',
-        json={"data": test_vendor},
-        auth=TEST_AUTH,
-    )
-    result = await resp.json()
-    assert resp.status == 400, result
-    assert {'errors': [f'Category {category_id} is not active']} == result
-
-
-async def test_vendor_without_region(api, category):
+async def test_vendor_without_region(api):
     data = api.get_fixture_json('vendor')
-    data['categories'] = [{"id": category["data"]["id"]}]
     # 1
     data['vendor']["address"].pop("region")
     resp = await api.post(
@@ -102,9 +39,8 @@ async def test_vendor_without_region(api, category):
     assert {'errors': ['field required: data.vendor.address.region']} == result
 
 
-async def test_vendor_ukrainian_region_dictionary(api, category):
+async def test_vendor_ukrainian_region_dictionary(api):
     data = api.get_fixture_json('vendor')
-    data['categories'] = [{"id": category["data"]["id"]}]
     data['vendor']["address"] = {
       "countryName": "Україна",
       "region": "невідомий"
@@ -120,17 +56,7 @@ async def test_vendor_ukrainian_region_dictionary(api, category):
 
 
 async def test_vendor_create(db, api, mock_agreement):
-    data = api.get_fixture_json('category')
-    resp = await api.put(
-        f"/api/categories/{data['id']}",
-        json={"data": data},
-        auth=TEST_AUTH
-    )
-    assert resp.status == 201
-    category = await resp.json()
-
     test_vendor = api.get_fixture_json('vendor')
-    test_vendor["categories"] = [{"id": category["data"]["id"]}]
     resp = await api.post(
         '/api/vendors',
         json={"data": test_vendor},
@@ -157,9 +83,8 @@ async def test_vendor_create(db, api, mock_agreement):
     assert data["status"] == "pending"
 
 
-async def test_vendor_patch(db, api, category):
+async def test_vendor_patch(db, api):
     data = api.get_fixture_json('vendor')
-    data['categories'] = [{"id": category["data"]["id"]}]
     resp = await api.post(
         f"/api/vendors",
         json={"data": data},
@@ -237,9 +162,8 @@ async def test_vendor_patch(db, api, category):
     assert result["data"]["dateModified"] == result2["data"]["dateModified"]
 
 
-async def test_vendor_duplicate(db, api, category):
+async def test_vendor_duplicate(db, api):
     data = api.get_fixture_json('vendor')
-    data['categories'] = [{"id": category["data"]["id"]}]
     resp = await api.post(
         f"/api/vendors",
         json={"data": data},
@@ -268,7 +192,7 @@ async def test_vendor_get(api, vendor):
     assert resp.status == 200
     result = await resp.json()
     assert set(result.keys()) == {'data'}
-    assert set(result["data"].keys()) == {'categories', 'id', 'vendor', 'owner', 'status',
+    assert set(result["data"].keys()) == {'id', 'vendor', 'owner', 'status',
                                           'isActivated', 'dateCreated', 'dateModified'}
     assert result["data"]["status"] == "active"
 
@@ -299,7 +223,7 @@ async def test_vendor_get_for_sign(api, vendor):
     assert resp.status == 200
     result = await resp.json()
     assert set(result.keys()) == {'data'}
-    assert set(result["data"].keys()) == {'categories', 'vendor', 'documents'}
+    assert set(result["data"].keys()) == {'vendor', 'documents'}
 
     doc_result = result["data"]["documents"][0]
     assert {"url", "title", "format", "hash"} == set(doc_result.keys())
@@ -317,7 +241,6 @@ async def test_vendor_list(db, api, vendor):
 
     # adding inactive one
     test_vendor = api.get_fixture_json('vendor')
-    test_vendor["categories"] = vendor["categories"]
     test_vendor["vendor"]["identifier"]["id"] = "1234"
     resp = await api.post(
         '/api/vendors',

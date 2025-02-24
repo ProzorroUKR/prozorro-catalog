@@ -9,13 +9,24 @@ from aiohttp_client_cache import CachedSession
 from catalog.models.category import CategoryStatus
 from catalog.models.profile import ProfileStatus
 from catalog.models.criteria import TYPEMAP
-from catalog.settings import CACHE_BACKEND, MEDICINE_API_URL, MEDICINE_SCHEMES, OPENPROCUREMENT_API_URL
+from catalog.settings import (
+    CACHE_BACKEND,
+    LOCALIZATION_CRITERIA,
+    MEDICINE_API_URL,
+    MEDICINE_SCHEMES,
+    OPENPROCUREMENT_API_URL,
+)
 from catalog.utils import get_now
 
 
 def validate_product_related_category(category):
     if category['status'] != CategoryStatus.active:
-        raise HTTPBadRequest(text="relatedCategory should be in `active` status.")
+        raise HTTPBadRequest(text="relatedCategory should be in `active` status")
+    localization_criteria = [
+        cr for cr in category['criteria'] if cr.get("classification", {}).get("id") == LOCALIZATION_CRITERIA
+    ]
+    if not localization_criteria:
+        raise HTTPBadRequest(text="relatedCategory must have localization criteria")
 
 
 def validate_active_vendor(vendor):
