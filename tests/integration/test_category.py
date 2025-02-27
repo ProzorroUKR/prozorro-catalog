@@ -1011,3 +1011,87 @@ async def test_criteria_batch(api, mock_agreement):
     assert resp.status == 201
     criterion_data = await resp.json()
     assert len(criterion_data["data"]) == 2
+
+
+async def test_requirement_data_schema(api, category):
+    category_id = category["data"]["id"]
+    criteria_id = category["data"]["criteria"][0]["id"]
+    rg_id = category["data"]["criteria"][0]["requirementGroups"][0]["id"]
+    requirement_data = {
+        "title": "Requirement with expectedValues",
+        "dataType": "boolean",
+        "expectedValue": True,
+        "dataSchema": "ISO 639-3",
+    }
+
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json={"access": category["access"], "data": requirement_data},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == ['dataSchema is forbidden with dataType boolean: data.__root__']
+
+    requirement_data = {
+        "title": "Мова",
+        "description": "?",
+        "dataType": "string",
+        "expectedMinItems": 1,
+        "expectedValues": ["Українська"],
+        "dataSchema": "",
+    }
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json={"access": category["access"], "data": requirement_data},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "value is not a valid enumeration member; permitted: 'ISO 639-3', 'ISO 3166-1 alpha-2': data.dataSchema"
+    ]
+
+    requirement_data["dataSchema"] = "ISO 639-3"
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json={"access": category["access"], "data": requirement_data},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedValues should have ISO 639-3 format and include codes from standards: data.__root__"
+    ]
+
+    requirement_data["expectedValues"] = ["eng", "ukr", "fra"]
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json={"access": category["access"], "data": requirement_data},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 201
+    resp_json = await resp.json()
+    req_id = resp_json["data"][0]["id"]
+
+    # PATCH
+    resp = await api.patch(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{req_id}",
+        json={"access": category["access"], "data": {"dataSchema": "ISO 3166-1 alpha-2"}},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "expectedValues should have ISO 3166-1 alpha-2 format and include codes from standards: __root__"
+    ]
+
+    resp = await api.patch(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{req_id}",
+        json={
+            "access": category["access"],
+            "data": {"dataSchema": "ISO 3166-1 alpha-2", "expectedValues": ["UA", "CA", "GB"]}
+        },
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 200

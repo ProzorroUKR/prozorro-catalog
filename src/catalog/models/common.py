@@ -13,6 +13,7 @@ UNIT_CODES = standards.load("unit_codes/recommended.json")
 UA_REGIONS = standards.load("classifiers/ua_regions.json")
 COUNTRY_NAMES = standards.load("classifiers/countries.json")
 ORA_CODES = [i["code"] for i in standards.load("organizations/identifier_scheme.json")["data"]]
+LANGUAGE_CODES = standards.load("classifiers/languages.json").keys()
 
 COUNTRY_NAMES_UK = [names.get("name_uk") for names in COUNTRY_NAMES.values()]
 UNIT_CODES = UNIT_CODES.keys()
@@ -32,6 +33,17 @@ class DataTypeEnum(str, Enum):
     number = "number"
     integer = "integer"
     boolean = "boolean"
+
+
+class DataSchemaEnum(str, Enum):
+    ISO_639 = "ISO 639-3"
+    ISO_3166 = "ISO 3166-1 alpha-2"
+
+
+ISO_MAPPING = {
+    DataSchemaEnum.ISO_639.value: LANGUAGE_CODES,
+    DataSchemaEnum.ISO_3166.value: COUNTRY_NAMES.keys(),
+}
 
 
 class Unit(BaseModel):

@@ -15,7 +15,7 @@ from pydantic import (
 )
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, BulkInput, ListResponse, AuthorizedInput
-from catalog.models.common import Unit, DataTypeEnum, Period
+from catalog.models.common import Unit, DataTypeEnum, Period, DataSchemaEnum, ISO_MAPPING
 import logging
 
 from catalog.settings import CRITERIA_LIST
@@ -96,6 +96,21 @@ class RequirementBaseValidators(BaseModel):
         else:
             if data_type in (DataTypeEnum.integer.value, DataTypeEnum.number.value):
                 raise ValueError(f"Unit is required with dataType {data_type}")
+
+        return values
+
+    @root_validator
+    def validate_data_schema(cls, values):
+        data_type = values.get("dataType")
+        data_schema = values.get("dataSchema")
+
+        if data_schema:
+            if not data_type == DataTypeEnum.string.value:
+                raise ValueError(f"dataSchema is forbidden with dataType {data_type}")
+            if values.get("expectedValues") and set(values["expectedValues"]) - set(ISO_MAPPING[values["dataSchema"]]):
+                raise ValueError(
+                    f"expectedValues should have {values['dataSchema']} format and include codes from standards"
+                )
 
         return values
 
@@ -197,6 +212,7 @@ class BaseRequirementCreateData(BaseModel):
     expectedValues: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]]
     expectedMinItems: Optional[PositiveInt] = None
     expectedMaxItems: Optional[PositiveInt] = None
+    dataSchema: Optional[DataSchemaEnum]
 
     eligibleEvidences: Optional[List[EligibleEvidence]] = Field(None, max_items=100)
 
@@ -235,6 +251,7 @@ class BaseRequirementUpdateData(BaseModel):
     expectedValues: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]]
     expectedMinItems: Optional[PositiveInt]
     expectedMaxItems: Optional[PositiveInt]
+    dataSchema: Optional[DataSchemaEnum]
 
     eligibleEvidences: Optional[List[EligibleEvidence]] = Field(None, max_items=100)
 
@@ -269,6 +286,7 @@ class Requirement(BaseModel):
     expectedValues: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]]
     expectedMinItems: Optional[PositiveInt] = None
     expectedMaxItems: Optional[PositiveInt] = None
+    dataSchema: Optional[DataSchemaEnum]
 
     eligibleEvidences: Optional[List[EligibleEvidence]] = Field(None, max_items=100)
 
