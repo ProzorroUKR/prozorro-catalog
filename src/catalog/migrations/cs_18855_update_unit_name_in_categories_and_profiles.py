@@ -21,20 +21,48 @@ from catalog.utils import get_now
 logger = logging.getLogger(__name__)
 
 
-async def get_unit_from_category(obj, requirement):
+async def get_unit_from_category(obj, requirement=None):
     category = await get_category_collection().find_one(
-        {"_id": obj["relatedCategory"]}, {"criteria": 1}
+        {"_id": obj["relatedCategory"]}, {"criteria": 1, "unit": 1}
     )
     if category:
-        for criterion in category.get("criteria", []):
-            for group in criterion["requirementGroups"]:
-                for req in group["requirements"]:
-                    if req["title"] == requirement["title"] and req.get("unit"):
-                        return req["unit"]
+        if requirement:  # get unit from requirement
+            for criterion in category.get("criteria", []):
+                for group in criterion["requirementGroups"]:
+                    for req in group["requirements"]:
+                        if req["title"] == requirement["title"] and req.get("unit"):
+                            return req["unit"]
+        elif category.get("unit"):
+            return category["unit"]
+
+
+async def update_unit(obj: dict):
+    updated = False
+
+    # for profiles
+    if obj.get("relatedCategory"):
+        if category_unit := await get_unit_from_category(obj):
+            if category_unit != obj.get("unit"):
+                obj["unit"] = category_unit
+                updated = True
+        elif obj.get("unit"):
+            try:
+                if obj["unit"]["name"] != UNIT_CODES_DATA[obj["unit"]["code"]]["name_uk"]:
+                    obj["unit"]["name"] = UNIT_CODES_DATA[obj["unit"]["code"]]["name_uk"]
+                    updated = True
+            except KeyError:
+                logger.info(f"Unit code not from standard {obj['_id']}, status: {obj['status']}")
+
+    # for categories
+    elif obj.get("unit"):
+        if obj["unit"]["name"] != UNIT_CODES_DATA[obj["unit"]["code"]]["name_uk"]:
+            obj["unit"]["name"] = UNIT_CODES_DATA[obj["unit"]["code"]]["name_uk"]
+            updated = True
+    return obj["unit"] if updated else None
 
 
 async def update_criteria(obj: dict):
-    if not obj["criteria"]:
+    if not obj.get("criteria"):
         return []
     updated = False
     updated_criteria = []
@@ -45,7 +73,7 @@ async def update_criteria(obj: dict):
         for req_group in updated_criterion.get("requirementGroups", []):
             updated_requirements = []
             for requirement in req_group.get("requirements", []):
-                if requirement["dataType"] in ("number", "integer"):
+                if requirement.get("dataType") in ("number", "integer"):
                     # for profiles
                     if obj.get("relatedCategory") and (category_unit := await get_unit_from_category(obj, requirement)):
                         if category_unit != requirement.get("unit"):
@@ -76,22 +104,25 @@ async def migrate_categories_and_profiles():
         bulk = []
         counter = 0
         cursor = collection.find(
-            {"criteria": {"$exists": True}},
-            projection={"_id": 1, "criteria": 1, "relatedCategory": 1},
+            {"$or": [{"criteria": {"$exists": True}}, {"unit": {"$exists": True}}]},
+            projection={"_id": 1, "criteria": 1, "relatedCategory": 1, "unit": 1, "status": 1},
             no_cursor_timeout=True,
             batch_size=200,
         )
         async for obj in cursor:
             try:
+                set_data = dict()
                 if updated_criteria := await update_criteria(obj):
+                    set_data["criteria"] = updated_criteria
+                if updated_unit := await update_unit(obj):
+                    set_data["unit"] = updated_unit
+                if set_data:
                     counter += 1
+                    set_data["dateModified"] = get_now().isoformat()
                     bulk.append(
                         UpdateOne(
                             filter={"_id": obj["_id"]},
-                            update={"$set": {
-                                "criteria": updated_criteria,
-                                "dateModified": get_now().isoformat(),
-                            }},
+                            update={"$set": set_data},
                         )
                     )
 
