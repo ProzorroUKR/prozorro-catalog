@@ -274,7 +274,7 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
                             "dataType": "integer",
                             "unit": {
                                 "code": "P1",
-                                "name": "%"
+                                "name": "відсоток"
                             },
                             "minValue": 90,
                             "maxValue": 110,
@@ -318,7 +318,7 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
                     "dataType": "integer",
                     "unit": {
                         "code": "P1",
-                        "name": "%"
+                        "name": "відсоток"
                     },
                     "minValue": 95,
                     "maxValue": 103,
