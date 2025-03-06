@@ -522,7 +522,10 @@ async def test_product_request_rejection_validations(api, product_request):
 
 async def test_product_request_rejection(api, product_request):
     rejection_data = deepcopy(request_review_data)
-    rejection_data.update({"reason": ["invalidTitle"], "description": "Невірно зазначена назва товару"})
+    rejection_data.update({
+        "reason": ["invalidTitle", "alreadyAvailable"],
+        "description": "Невірно зазначена назва товару",
+    })
     resp = await api.post(
         f"api/crowd-sourcing/requests/{product_request['data']['id']}/reject",
         json={"data": rejection_data},
