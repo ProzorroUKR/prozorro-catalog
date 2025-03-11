@@ -501,24 +501,36 @@ LOCALIZATION_CRITERION_DATA = {
 
 PRODUCTS_CLASSIFICATION_MAPPING = {
     "34200000-9": {
-        "id": "34210000-2",
-        "description": "Кузови транспортних засобів",
-        "schema": "ДК021"
+        "title": "Кузови транспортних засобів",
+        "classification": {
+            "id": "34210000-2",
+            "description": "Кузови транспортних засобів",
+            "schema": "ДК021"
+        }
     },
     "34600000-3": {
-        "id": "34610000-6",
-        "description": "Залізничні локомотиви та тендери",
-        "schema": "ДК021"
+        "title": "Залізничні локомотиви та тендери",
+        "classification": {
+            "id": "34610000-6",
+            "description": "Залізничні локомотиви та тендери",
+            "schema": "ДК021"
+        }
     },
     "43000000-3": {
-        "id": "43120000-0",
-        "description": "Врубові та тунелепрохідні, бурильні чи прохідницькі машини для добування вугілля чи гірських порід",
-        "schema": "ДК021"
+        "title": "Врубові та тунелепрохідні, бурильні чи прохідницькі машини для добування вугілля чи гірських порід",
+        "classification": {
+            "id": "43120000-0",
+            "description": "Врубові та тунелепрохідні, бурильні чи прохідницькі машини для добування вугілля чи гірських порід",
+            "schema": "ДК021"
+        }
     },
     "43200000-5": {
-        "id": "43210000-8",
-        "description": "Машини для земляних робіт",
-        "schema": "ДК021"
+        "title": "Машини для земляних робіт",
+        "classification": {
+            "id": "43210000-8",
+            "description": "Машини для земляних робіт",
+            "schema": "ДК021"
+        }
     },
 }
 
@@ -647,18 +659,29 @@ async def migrate_product_classification():
     logger.info("Start localized products migration for changing classification id")
     counter = 0
     bulk = []
+    category_collection = get_category_collection()
     products_collection = get_products_collection()
     # Migrate products classification for hidden profiles
-    for prev_class_id, new_class_data in PRODUCTS_CLASSIFICATION_MAPPING.items():
+    for prev_class_id, new_product_data in PRODUCTS_CLASSIFICATION_MAPPING.items():
         async for product in products_collection.find(
                 {"classification.id": prev_class_id},
                 {"classification": 1},
         ):
+            updated_data = {
+                "classification": new_product_data["classification"],
+                "dateModified": get_now().isoformat(),
+            }
+            category = await category_collection.find_one(
+                filter={"classification.id": new_product_data["classification"]["id"], "title": new_product_data["title"]},
+                projection={"_id": 1},
+                sort={"dateModified": -1}
+            )
+            if category:
+                updated_data["relatedCategory"] = category["_id"]
             bulk.append(
                 UpdateOne(
                     filter={"_id": product["_id"]},
-                    update={
-                        "$set": {"classification": new_class_data, "dateModified": get_now().isoformat()}}
+                    update={"$set": updated_data}
                 )
             )
             counter += 1
