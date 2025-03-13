@@ -21,7 +21,42 @@ requestBody:
   content:
     application/json:
       schema:
-        $ref: '#/components/schemas/AuthorizedInput_ProfileRequirementCreateData_'
+        oneOf:
+          - $ref: '#/components/schemas/AuthorizedInput_ProfileRequirementCreateData_'
+          - type: array
+            items:
+              $ref: '#/components/schemas/BulkInput_ProfileRequirementCreateData_'
+      examples:
+        singleItem:
+          summary: Single item example
+          value:
+            data:
+              title: "Requirement 1"
+              dataType: "string"
+              expectedValues: ["A", "B", "C"]
+              expectedMinItems: 1
+            access:
+              token: "string"
+        multipleItems:
+          summary: Multiple items example
+          value:
+            data:
+              - title: "Requirement 1"
+                dataType: "string"
+                expectedValues: [ "A", "B", "C" ]
+                expectedMinItems: 1
+              - title: "Requirement 2"
+                dataType: "boolean"
+                expectedValue: true
+              - title: "Requirement 3"
+                dataType: "integer"
+                minValue: 0
+                maxValue: 20
+                unit:
+                  code: "E11"
+                  name: "гігакалорія"
+            access:
+              token: "string"
 responses:
   "200":
     description: successful operation
