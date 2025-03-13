@@ -10,6 +10,10 @@ class VendorState(BaseState):
 
     @classmethod
     async def on_post(cls, data):
+        for cat in data.get("categories", ""):
+            category = await db.read_category(cat["id"], projection={"status": 1})
+            if category["status"] != "active":
+                raise HTTPBadRequest(text=f"Category {cat['id']} is not active")
         await cls.validate_vendor_identifier(
             action="create",
             identifier_id=data["vendor"]["identifier"]["id"],
