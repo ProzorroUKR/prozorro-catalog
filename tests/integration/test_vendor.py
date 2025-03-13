@@ -14,6 +14,53 @@ async def test_vendor_create_no_permission(api):
     assert {'errors': ["Forbidden 'vendors' write operation"]} == result
 
 
+async def test_vendor_create_without_category(api):
+    test_vendor = api.get_fixture_json('vendor')
+    resp = await api.post(
+        '/api/vendors',
+        json={"data": test_vendor},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+
+    test_vendor["categories"] = []
+    resp = await api.post(
+        '/api/vendors',
+        json={"data": test_vendor},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': ['ensure this value has at least 1 items: data.categories']} == result
+
+
+async def test_vendor_create_with_hidden_category(api, mock_agreement):
+    data = api.get_fixture_json('category')
+    data["status"] = "hidden"
+    resp = await api.put(
+        f"/api/categories/{data['id']}",
+        json={"data": data},
+        auth=TEST_AUTH
+    )
+    assert resp.status == 201
+    category = await resp.json()
+    assert category["data"]["status"] == "hidden"
+    category_id = category["data"]["id"]
+
+    test_vendor = api.get_fixture_json('vendor')
+    test_vendor["categories"] = [{"id": category_id}]
+
+    resp = await api.post(
+        '/api/vendors',
+        json={"data": test_vendor},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 400, result
+    assert {'errors': [f'Category {category_id} is not active']} == result
+
+
 async def test_vendor_without_region(api):
     data = api.get_fixture_json('vendor')
     # 1
@@ -192,7 +239,7 @@ async def test_vendor_get(api, vendor):
     assert resp.status == 200
     result = await resp.json()
     assert set(result.keys()) == {'data'}
-    assert set(result["data"].keys()) == {'id', 'vendor', 'owner', 'status',
+    assert set(result["data"].keys()) == {'categories', 'id', 'vendor', 'owner', 'status',
                                           'isActivated', 'dateCreated', 'dateModified'}
     assert result["data"]["status"] == "active"
 
@@ -223,7 +270,7 @@ async def test_vendor_get_for_sign(api, vendor):
     assert resp.status == 200
     result = await resp.json()
     assert set(result.keys()) == {'data'}
-    assert set(result["data"].keys()) == {'vendor', 'documents'}
+    assert set(result["data"].keys()) == {'categories', 'vendor', 'documents'}
 
     doc_result = result["data"]["documents"][0]
     assert {"url", "title", "format", "hash"} == set(doc_result.keys())

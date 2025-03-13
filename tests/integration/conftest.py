@@ -94,8 +94,9 @@ async def offer(db, api, product):
 
 
 @pytest.fixture
-async def vendor(db, api):
+async def vendor(db, api, category):
     data = get_fixture_json('vendor')
+    data['categories'] = [{"id": category["data"]["id"]}]
     resp = await api.post(
         f"/api/vendors",
         json={"data": data},
