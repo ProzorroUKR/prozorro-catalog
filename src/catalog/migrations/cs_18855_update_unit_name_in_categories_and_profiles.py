@@ -39,7 +39,7 @@ async def get_unit_from_category(obj, requirement=None):
 def get_unit_name_from_standard(obj, unit):
     try:
         if unit["name"] != UNIT_CODES_DATA[unit["code"]]["name_uk"]:
-            return UNIT_CODES_DATA[obj["unit"]["code"]]["name_uk"]
+            return UNIT_CODES_DATA[unit["code"]]["name_uk"]
     except KeyError:
         logger.info(f"Unit code not from standard {obj['_id']}, status: {obj['status']}, unit: {unit['name']}")
     return
