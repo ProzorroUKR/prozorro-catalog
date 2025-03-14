@@ -28,7 +28,7 @@ responses:
     content:
       application/json:
         schema:
-          $ref: '#/components/schemas/Response_Criterion_'
+          $ref: '#/components/schemas/ListResponse_Criterion_'
   "400":
     description: validation errors
     content:
