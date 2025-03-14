@@ -36,6 +36,15 @@ async def get_unit_from_category(obj, requirement=None):
             return category["unit"]
 
 
+def get_unit_name_from_standard(obj, unit):
+    try:
+        if unit["name"] != UNIT_CODES_DATA[unit["code"]]["name_uk"]:
+            return UNIT_CODES_DATA[obj["unit"]["code"]]["name_uk"]
+    except KeyError:
+        logger.info(f"Unit code not from standard {obj['_id']}, status: {obj['status']}, unit: {unit['name']}")
+    return
+
+
 async def update_unit(obj: dict):
     updated = False
 
@@ -46,17 +55,14 @@ async def update_unit(obj: dict):
                 obj["unit"] = category_unit
                 updated = True
         elif obj.get("unit"):
-            try:
-                if obj["unit"]["name"] != UNIT_CODES_DATA[obj["unit"]["code"]]["name_uk"]:
-                    obj["unit"]["name"] = UNIT_CODES_DATA[obj["unit"]["code"]]["name_uk"]
-                    updated = True
-            except KeyError:
-                logger.info(f"Unit code not from standard {obj['_id']}, status: {obj['status']}")
+            if correct_unit_name := get_unit_name_from_standard(obj, obj["unit"]):
+                obj["unit"]["name"] = correct_unit_name
+                updated = True
 
     # for categories
     elif obj.get("unit"):
-        if obj["unit"]["name"] != UNIT_CODES_DATA[obj["unit"]["code"]]["name_uk"]:
-            obj["unit"]["name"] = UNIT_CODES_DATA[obj["unit"]["code"]]["name_uk"]
+        if correct_unit_name := get_unit_name_from_standard(obj, obj["unit"]):
+            obj["unit"]["name"] = correct_unit_name
             updated = True
     return obj["unit"] if updated else None
 
@@ -79,10 +85,10 @@ async def update_criteria(obj: dict):
                         if category_unit != requirement.get("unit"):
                             requirement["unit"] = category_unit
                             updated = True
-                    # for categories
+                    # for categories or profiles that has requirement that doesn't exist in category criteria
                     elif unit := requirement.get("unit"):
-                        if unit["name"] != UNIT_CODES_DATA[unit["code"]]["name_uk"]:
-                            unit["name"] = UNIT_CODES_DATA[unit["code"]]["name_uk"]
+                        if correct_unit_name := get_unit_name_from_standard(obj, unit):
+                            unit["name"] = correct_unit_name
                             updated = True
                 updated_requirements.append(requirement)
             req_group["requirements"] = updated_requirements
