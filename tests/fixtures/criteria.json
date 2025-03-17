@@ -41,6 +41,7 @@
             {
               "dataType": "number",
               "minValue": 49.9,
+              "maxValue": 60.5,
               "pattern": "[0-9]*",
               "title": "50 штук",
               "unit": {
