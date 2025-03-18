@@ -312,6 +312,7 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
                     "title": "Метод аналізу",
                     "dataType": "string",
                     "expectedValues": ["ІХА", "FOO"],
+                    "expectedMinItems": 1
                 },
                 {
                     "title": "Специфічність",

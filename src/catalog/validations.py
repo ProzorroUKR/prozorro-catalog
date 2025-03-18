@@ -219,23 +219,38 @@ def validate_profile_requirements(new_requirements: list, category: dict) -> Non
                 raise HTTPBadRequest(
                     text=f"requirement '{key}' expectedValues should have values from category requirement"
                 )
-            if req.get("dataSchema") !=  requirements_statuses[key].get("dataSchema"):
+            if req.get("dataSchema") != requirements_statuses[key].get("dataSchema"):
                 raise HTTPBadRequest(
                     text=f"requirement '{key}' dataSchema should be the same in category and profile requirement"
                 )
             validate_requirement_values_range(req, requirements_statuses, key, "expectedMinItems", "expectedMaxItems")
-        validate_requirement_values_range(req, requirements_statuses, key, "minValue", "maxValue")
+        if "maxValue" in requirements_statuses[key] or "minValue" in requirements_statuses[key]:
+            if req.get("expectedValue") is not None:
+                exp_value = req["expectedValue"]
+                if 'minValue' in requirements_statuses[key] and exp_value < requirements_statuses[key]['minValue']:
+                    raise HTTPBadRequest(
+                        text=f"requirement '{key}' expectedValue shouldn't be less than minValue in category"
+                    )
+                if 'maxValue' in requirements_statuses[key] and exp_value > requirements_statuses[key]['maxValue']:
+                    raise HTTPBadRequest(
+                        text=f"requirement '{key}' expectedValue shouldn't be more than maxValue in category"
+                    )
+            else:
+                validate_requirement_values_range(req, requirements_statuses, key, "minValue", "maxValue")
 
 
 def validate_requirement_values_range(requirement, parent_requirement, key, min_value_field, max_value_field):
     # TODO: remove after migration data type check
     if (
         parent_requirement[key].get(min_value_field) is not None
-        and (
-            requirement.get(min_value_field) is not None
-            and isinstance(requirement[min_value_field], (float, int))
-            and isinstance(parent_requirement[key][min_value_field], (float, int))
-            and requirement[min_value_field] < parent_requirement[key][min_value_field]
+        and
+        (
+            requirement.get(min_value_field) is None
+            or (
+                isinstance(requirement[min_value_field], (float, int))
+                and isinstance(parent_requirement[key][min_value_field], (float, int))
+                and requirement[min_value_field] < parent_requirement[key][min_value_field]
+            )
         )
     ):
         raise HTTPBadRequest(text=f"requirement '{key}' {min_value_field} should be equal or greater than in category")
