@@ -24,7 +24,7 @@ def update_criteria(criteria):
     for c in criteria:
         for rg in c.get("requirementGroups", []):
             for req in rg.get("requirements", []):
-                if req.get("expectedValues") and not req.get("expectedMinItems"):
+                if req.get("expectedValues") and req.get("dataType") == "string" and not req.get("expectedMinItems"):
                     req["expectedMinItems"] = 1
                     changed = True
     return changed
