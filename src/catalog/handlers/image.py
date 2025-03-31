@@ -50,7 +50,7 @@ class ImageView(View):
 
             # check img size
             if size > IMG_SIZE_LIMIT:
-                raise HTTPBadRequest(text=f"Image must be less than {IMG_SIZE_LIMIT} bites")
+                raise HTTPBadRequest(text=f"Image must be less than {IMG_SIZE_LIMIT} bytes")
 
             # adding .png or .jpeg to the file
             filename = f"{tmp_file}.{img_type}"

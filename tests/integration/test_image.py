@@ -49,4 +49,4 @@ async def test_600_image_create(api):
     with patch("catalog.image.uuid4", uuid_mock):
         resp = await api.post('/api/images', data=data, auth=TEST_AUTH)
     assert resp.status == 400
-    assert {'errors': ["Image must be less than 1000000 bites"]} == await resp.json()
+    assert {'errors': ["Image must be less than 1000000 bytes"]} == await resp.json()
