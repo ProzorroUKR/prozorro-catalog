@@ -12,8 +12,7 @@ from catalog.models.profile import ProfileStatus
 from catalog.models.criteria import TYPEMAP
 from catalog.logging import setup_logging
 from catalog.utils import get_now
-from catalog.settings import SENTRY_DSN
-
+from catalog.settings import SENTRY_DSN, TECHNICAL_FEATURES_CRITERIA
 
 logger = logging.getLogger(__name__)
 
@@ -85,18 +84,34 @@ async def run_task():
 async def get_product_relatedProfiles(product, profiles):
     related_profiles = []
     for profile in profiles:
-        profile_requirements = {
-            r["title"]: r
-            for c in profile.get("criteria", "")
-            for group in c.get("requirementGroups", "")
-            for r in group.get("requirements", "")
-        }
+        profile_requirements = {}
+        profile_requirements_ids_by_criteria = dict()  # separated by group
+        for criterion in profile.get("criteria", []):
+            profile_requirements_ids_by_criteria[criterion["id"]] = {}
+            for group in criterion.get("requirementGroups", []):
+                profile_requirements_ids_by_criteria[criterion["id"]][group["id"]] = set()
+                for req in group.get("requirements", []):
+                    profile_requirements_ids_by_criteria[criterion["id"]][group["id"]].add(req["title"])
+                    profile_requirements[req["title"]] = req
 
         if not profile_requirements:
             continue
 
-        profile_requirements_ids = set(profile_requirements.keys())
-        if not profile_requirements_ids.issubset({rr["requirement"] for rr in product.get("requirementResponses", "")}):
+        product_requirements = {rr["requirement"] for rr in product.get("requirementResponses", [])}
+
+        # for each criterion should be all responses at least for one whole requirementGroup
+        has_unanswered_criterion = False
+        for criterion in profile_requirements_ids_by_criteria.keys():
+            group_answered = False
+            for group, req_ids in profile_requirements_ids_by_criteria[criterion].items():
+                if req_ids.issubset(product_requirements):
+                    group_answered = True
+                    break
+            if group_answered:
+                break
+            has_unanswered_criterion = True
+
+        if has_unanswered_criterion:
             continue
 
         is_valid_profile = False
