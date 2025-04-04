@@ -10,6 +10,7 @@ from tests.integration.conftest import (
     category,
     product,
     profile,
+    mock_agreement,
     profile_without_criteria,
 )
 
@@ -17,7 +18,6 @@ from tests.integration.conftest import (
 async def test_migrate_profiles(db, api, category, profile, product):
 
     profile_fixture = get_fixture_json("profile")
-    criteria_fixture = get_fixture_json("criteria")
     product_fixture = get_fixture_json("product")
 
     product_without_responses = deepcopy(product_fixture)
@@ -25,6 +25,13 @@ async def test_migrate_profiles(db, api, category, profile, product):
     product_without_responses["relatedCategory"] = category["data"]["id"]
     del product_without_responses["requirementResponses"]
     await db.products.insert_one(product_without_responses)
+
+    product_with_not_all_responses = deepcopy(product_fixture)
+    product_with_not_all_responses["_id"] = "2" * 32
+    product_with_not_all_responses["relatedCategory"] = category["data"]["id"]
+    req_responses = deepcopy(product["data"]["requirementResponses"])
+    product_with_not_all_responses["requirementResponses"] = req_responses[2:]
+    await db.products.insert_one(product_with_not_all_responses)
 
     #
     # profile_data_1 = deepcopy(profile_fixture)
@@ -53,16 +60,10 @@ async def test_migrate_profiles(db, api, category, profile, product):
     profile_4_id = "4" * 32
     profile_data_4['id'] = profile_4_id
     profile_data_4['relatedCategory'] = category["data"]["id"]
-    resp = await api.put(
-        f"/api/profiles/{profile_4_id}",
-        json={"data": profile_data_4, "access": category["access"]},
-        auth=TEST_AUTH,
-    )
-    assert resp.status == 201
-    profile_data_4 = await resp.json()
-    criteria = deepcopy(criteria_fixture)
-    criteria["criteria"][0]["requirementGroups"][0]["requirements"][0]["expectedValue"] = "Одноразова1"
-    profile_data_4 = await create_criteria(api, "profiles", profile_data_4, criteria)
+    criteria = deepcopy(profile["data"]["criteria"])
+    criteria[0]["requirementGroups"][0]["requirements"][0]["expectedValues"] = ["Одноразова1"]
+    profile_data_4['criteria'] = criteria
+    await db.profiles.insert_one(profile_data_4)
 
     res = await run_task()
 
@@ -70,6 +71,9 @@ async def test_migrate_profiles(db, api, category, profile, product):
     assert resp.status == 200
     resp_json = await resp.json()
     prod = resp_json["data"]
+    for criterion in profile_data_4["criteria"]:
+        for rg in criterion["requirementGroups"]:
+            req = [req["title"] for req in rg["requirements"]]
     assert prod["relatedProfiles"] == [profile["data"]["id"]]
 
     resp = await api.get(f'/api/products/{product_without_responses["_id"]}')
@@ -77,4 +81,11 @@ async def test_migrate_profiles(db, api, category, profile, product):
     resp_json = await resp.json()
     prod = resp_json["data"]
     assert "requirementResponses" not in prod
+    assert "relatedProfiles" not in prod
+
+    resp = await api.get(f'/api/products/{product_with_not_all_responses["_id"]}')
+    assert resp.status == 200
+    resp_json = await resp.json()
+    prod = resp_json["data"]
+    assert "requirementResponses" in prod
     assert "relatedProfiles" not in prod
