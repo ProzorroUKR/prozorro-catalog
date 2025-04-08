@@ -10,10 +10,6 @@ from catalog.models.common import Identifier, Organization, ContactPoint, Addres
 from catalog.models.document import Document, DocumentSign
 
 
-class CategoryLink(BaseModel):
-    id: str = Field(..., min_length=20, max_length=32)
-
-
 class VendorContactPoint(ContactPoint):
     email: EmailStr
 
@@ -48,7 +44,6 @@ class VendorOrganization(PostVendorOrganization):
 
 class VendorPostData(BaseModel):
     vendor: PostVendorOrganization
-    categories: Optional[List[CategoryLink]] = Field(None, min_items=1, max_items=1)
 
 
 class VendorPatchData(BaseModel):
@@ -80,7 +75,6 @@ class Vendor(VendorPostData):
 
 class VendorSign(VendorPostData):
     vendor: VendorOrganization
-    categories: List[CategoryLink]
     documents: List[DocumentSign]
 
 

@@ -14,7 +14,7 @@ class VendorSerializer(RootSerializer):
 
 
 class VendorSignSerializer(RootSerializer):
-    whitelist = {"categories", "vendor", "documents"}
+    whitelist = {"vendor", "documents"}
     serializers = {
         "documents": ListSerializer(DocumentSignSerializer)
     }
