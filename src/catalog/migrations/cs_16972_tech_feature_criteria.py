@@ -1,5 +1,7 @@
 import asyncio
 import logging
+from copy import deepcopy
+
 import sentry_sdk
 
 from pymongo import UpdateOne
@@ -12,7 +14,7 @@ from catalog.db import (
 )
 from catalog.logging import setup_logging
 from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
-from catalog.settings import SENTRY_DSN
+from catalog.settings import SENTRY_DSN, TECHNICAL_FEATURES_CRITERIA
 from catalog.utils import get_now
 
 logger = logging.getLogger(__name__)
@@ -22,12 +24,12 @@ EXCLUDE_CATEGORY_ID = "99999999-919912-02426097"
 
 
 CRITERIA_ADDITIONAL_DATA = {
-    "title": "Технічні, якісні та кількісні характеристики предмету закупівлі",
-    "description": "Учасники процедури закупівлі повинні надати у складі "
-                   "тендерних пропозицій інформацію та документи, які "
-                   "підтверджують відповідність тендерної пропозиції учасника "
-                   "технічним, якісним, кількісним та іншим вимогам до предмета "
-                   "закупівлі, установленим замовником",
+    "title": "Технічні, якісні та кількісні характеристики предмета закупівлі",
+    "description": "Технічна специфікація повинна містити опис усіх необхідних характеристик товарів, робіт "
+                   "або послуг, що закуповуються, у тому числі їх технічні, функціональні та якісні характеристики. "
+                   "Характеристики товарів, робіт або послуг можуть містити опис конкретного технологічного процесу "
+                   "або технології виробництва чи порядку постачання товару (товарів), виконання необхідних робіт, "
+                   "надання послуги (послуг)",
     "classification": {
         "scheme": "ESPD211",
         "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES"
@@ -37,11 +39,21 @@ CRITERIA_ADDITIONAL_DATA = {
             "version": "2024-04-19",
             "type": "NATIONAL_LEGISLATION",
             "identifier": {
-                "uri": "https://zakon.rada.gov.ua/laws/show/922-19#Text",
+                "uri": "https://zakon.rada.gov.ua/laws/show/922-19#n1398",
                 "id": "922-VIII",
                 "legalName": "Закон України \"Про публічні закупівлі\""
             },
             "article": "22.2.3"
+        },
+        {
+            "version": "2024-04-19",
+            "type": "NATIONAL_LEGISLATION",
+            "identifier": {
+                "uri": "https://zakon.rada.gov.ua/laws/show/922-19#n1426",
+                "id": "922-VIII",
+                "legalName": "Закон України \"Про публічні закупівлі\""
+            },
+            "article": "23"
         },
         {
             "version": "2023-10-31",
@@ -64,11 +76,16 @@ NEW_CRITERION_RG_DATA = {
 
 
 def update_criteria(criteria):
+    updated = False
     for criterion in criteria:
-        criterion.update(CRITERIA_ADDITIONAL_DATA)
-        for rg in criterion.get("requirementGroups", ""):
-            rg.update(NEW_CRITERION_RG_DATA)
-    return criteria
+        previous_criterion = deepcopy(criterion)
+        if criterion["classification"]["id"] == TECHNICAL_FEATURES_CRITERIA:
+            criterion.update(CRITERIA_ADDITIONAL_DATA)
+            for rg in criterion.get("requirementGroups", ""):
+                rg.update(NEW_CRITERION_RG_DATA)
+            if previous_criterion != criterion:
+                updated = True
+    return criteria if updated else None
 
 
 async def migrate_categories():
