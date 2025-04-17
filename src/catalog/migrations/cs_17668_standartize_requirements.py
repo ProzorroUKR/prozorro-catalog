@@ -138,6 +138,8 @@ async def requirement_not_in_category(obj, requirement):
             }
             if requirement["title"] not in category_requirements:
                 return True
+            elif requirement["dataType"] != category_requirements[requirement["title"]]["dataType"]:
+                logger.info(f"Profile {obj['_id']}: dataType '{requirement['title']}' mismatch with category")
 
 
 def convert_min_max_value_to_string(requirement):
