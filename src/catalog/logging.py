@@ -52,9 +52,19 @@ def setup_logging():
     logging.setLogRecordFactory(custom_factory)
 
     formatter = CustomJsonFormatter(json_ensure_ascii=False, timestamp=True)
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
-    logging.basicConfig(level=logging.DEBUG, handlers=[handler])
+
+    # Handler for stdout (DEBUG/INFO/WARNING)
+    stdout_handler = logging.StreamHandler(stream=sys.stdout)
+    stdout_handler.setLevel(logging.DEBUG)
+    stdout_handler.addFilter(lambda record: record.levelno < logging.ERROR)
+    stdout_handler.setFormatter(formatter)
+
+    # Handler for stderr (ERROR/CRITICAL)
+    stderr_handler = logging.StreamHandler(stream=sys.stderr)
+    stderr_handler.setLevel(logging.ERROR)
+    stderr_handler.setFormatter(formatter)
+
+    logging.basicConfig(level=logging.DEBUG, handlers=[stdout_handler, stderr_handler])
 
     logging.getLogger('pymongo').setLevel(logging.WARNING)
 
