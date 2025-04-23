@@ -91,8 +91,8 @@ def validate_product_req_responses_to_category(
 ):
 
     category_requirements = {
-        r["title"]: (r, c.get("classification", {}).get("id"))
-        for c in category.get("criteria", "")
+        r["title"]: (r, c.get("classification", {}).get("id"), group.get("id"))
+        for c in category.get("criteria", [])
         for group in c["requirementGroups"]
         for r in group["requirements"]
     }
@@ -103,15 +103,16 @@ def validate_product_req_responses_to_category(
     required_criteria = required_criteria if required_criteria else category_criteria
     required_classifications = {i[1] for i in category_requirements.values() if i[1] in required_criteria}
     responded_classifications = set()
+    localization_responded_groups = set()
 
     if category_requirements and not product.get("requirementResponses"):
         raise HTTPBadRequest(text='should be responded at least on one category requirement')
 
     before_responded_requirements = {}
     if product_before:
-        before_responded_requirements = {r["requirement"] for r in product_before.get("requirementResponses", "")}
+        before_responded_requirements = {r["requirement"] for r in product_before.get("requirementResponses", [])}
 
-    for req_response in product.get("requirementResponses", ""):
+    for req_response in product.get("requirementResponses", []):
         key = req_response['requirement']
 
         if key not in category_requirements:
@@ -124,10 +125,16 @@ def validate_product_req_responses_to_category(
         ):
             raise HTTPBadRequest(text=f'requirement {key} is archived')
 
-        requirement, classification = category_requirements[key]
+        requirement, classification, group = category_requirements[key]
+        if classification == LOCALIZATION_CRITERIA:
+            localization_responded_groups.add(group)
         validate_req_response(req_response, requirement)
         responded_classifications.add(classification)
 
+    if len(localization_responded_groups) > 1:
+        raise HTTPBadRequest(
+            text=f"forbidden to respond at more than one group's requirements for {LOCALIZATION_CRITERIA}"
+        )
     for required_classification in required_classifications:
         if required_classification not in responded_classifications:
             raise HTTPBadRequest(text=f'should be responded at least on one category '
@@ -135,9 +142,10 @@ def validate_product_req_responses_to_category(
 
 
 def validate_product_req_response_to_profile(profile: dict, product: dict):
+    localization_responded_groups = set()
     for criterion in profile.get("criteria", ""):
         requirements = {
-            r["title"]: r
+            r["title"]: (r, group.get("id"))
             for group in criterion["requirementGroups"]
             for r in group["requirements"]
         }
@@ -149,11 +157,17 @@ def validate_product_req_response_to_profile(profile: dict, product: dict):
             key = req_response["requirement"]
             if key in requirements:
                 is_requirement_responded = True
-                requirement = requirements[key]
+                requirement, group = requirements[key]
+                if criterion.get("classification", {}).get("id") == LOCALIZATION_CRITERIA:
+                    localization_responded_groups.add(group)
                 validate_req_response(req_response, requirement)
 
         if not is_requirement_responded:
             raise HTTPBadRequest(text=f"should be responded at least on one profile({profile['id']}) requirement for criteria {criterion['title']}")
+    if len(localization_responded_groups) > 1:
+        raise HTTPBadRequest(
+            text=f"forbidden to respond at more than one group's requirements for {LOCALIZATION_CRITERIA}"
+        )
 
 
 def validate_product_to_category(

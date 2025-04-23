@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, patch
 
 from catalog.doc_service import generate_test_url
 from catalog.models.product import VendorProductIdentifierScheme
+from catalog.settings import LOCALIZATION_CRITERIA
 from catalog.utils import get_now
 
 from .base import TEST_AUTH, TEST_AUTH_CPB
@@ -400,6 +401,29 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
         {
             "value": 25,
             "requirement": "Ступінь локалізації виробництва товару, що є предметом закупівлі, перевищує або дорівнює ступеню локалізації виробництва, встановленому на відповідний рік",
+        }
+    ]
+    resp = await api.post(
+        f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',
+        json={'data': test_product},
+        auth=TEST_AUTH,
+    )
+
+    assert resp.status == 201
+
+    # try to respond on both localization groups in one product
+    test_product['requirementResponses'] = [
+        {
+            "values": ["ІХА"],
+            "requirement": "Метод аналізу"
+        },
+        {
+            "value": 96,
+            "requirement": "Специфічність"
+        },
+        {
+            "value": 25,
+            "requirement": "Ступінь локалізації виробництва товару, що є предметом закупівлі, перевищує або дорівнює ступеню локалізації виробництва, встановленому на відповідний рік",
         },
         {
             "values": ["GB"],
@@ -412,5 +436,8 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
         auth=TEST_AUTH,
     )
 
-    assert resp.status == 201
-
+    assert resp.status == 400
+    result = await resp.json()
+    assert result == {
+        'errors': [f"forbidden to respond at more than one group's requirements for {LOCALIZATION_CRITERIA}"]
+    }
