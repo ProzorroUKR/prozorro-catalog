@@ -7,7 +7,7 @@ from aiohttp.web import HTTPBadRequest
 from catalog import db
 from catalog.models.api import PaginatedList, ErrorResponse
 from catalog.auth import set_access_token, validate_accreditation, validate_access_token
-from catalog.utils import pagination_params
+from catalog.utils import pagination_params, get_revision_changes
 from catalog.models.category import CategoryCreateInput, CategoryUpdateInput, DeprecatedCategoryCreateInput, \
     CategoryResponse
 from catalog.models.criteria import (
@@ -76,6 +76,7 @@ class CategoryView(PydanticView):
         data = body.data.dict_without_none()
         await self.state.on_put(data)
         access = set_access_token(self.request, data)
+        get_revision_changes(self.request, new_obj=data)
         await db.insert_category(data)
 
         logger.info(
@@ -122,6 +123,7 @@ class CategoryItemView(PydanticView):
         data = body.data.dict_without_none()
         await self.state.on_put(data)
         access = set_access_token(self.request, data)
+        get_revision_changes(self.request, new_obj=data)
         await db.insert_category(data)
 
         logger.info(
@@ -150,6 +152,7 @@ class CategoryItemView(PydanticView):
             old_category = deepcopy(category)
             category.update(data)
             await self.state.on_patch(old_category, category)
+            get_revision_changes(self.request, new_obj=category, old_obj=old_category)
 
             logger.info(
                 f"Updated category {category_id}",

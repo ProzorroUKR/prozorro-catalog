@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 
 from aiohttp.web import HTTPNotFound
 
@@ -7,7 +8,7 @@ from catalog.models.ban import RequestBanPostInput
 
 from catalog.serializers.ban import BanSerializer
 from catalog.state.ban import BanState
-
+from catalog.utils import get_revision_changes
 
 logger = logging.getLogger(__name__)
 
@@ -37,13 +38,15 @@ class BaseBanViewMixin(BaseBanMixin):
 
     async def post(self, parent_obj_id: str, /, body: RequestBanPostInput):
         data = body.data.dict_without_none()
-        async with self.read_and_update_object(parent_obj_id) as obj:
-            await self.validate_data(body, obj)
-            await self.state.on_post(data, obj)
-            obj["dateModified"] = get_now().isoformat()
-            if "bans" not in obj:
-                obj["bans"] = []
-            obj["bans"].append(data)
+        async with self.read_and_update_object(parent_obj_id) as parent_obj:
+            old_parent_obj = deepcopy(parent_obj)
+            await self.validate_data(body, parent_obj)
+            await self.state.on_post(data, parent_obj)
+            parent_obj["dateModified"] = get_now().isoformat()
+            if "bans" not in parent_obj:
+                parent_obj["bans"] = []
+            parent_obj["bans"].append(data)
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
             logger.info(
                 f"Created {self.parent_obj_name} ban {data['id']}",

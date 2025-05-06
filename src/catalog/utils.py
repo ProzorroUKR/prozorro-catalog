@@ -3,6 +3,10 @@ import csv
 import hashlib
 import io
 import logging
+from uuid import uuid4
+
+from jsonpatch import make_patch
+from jsonpointer import resolve_pointer
 from hashlib import sha256
 from json import dumps
 from unittest.mock import ANY
@@ -147,3 +151,69 @@ def find_contributor_ban(contributor, ban_id):
             return ban
     else:
         raise HTTPNotFound(text="Ban not found")
+
+
+def generate_revision(obj, patch, author, date=None):
+    return {
+        "author": author,
+        "changes": patch,
+        "rev": obj.get("rev"),
+        "date": (date or get_now()).isoformat(),
+    }
+
+
+def append_revision(request, obj, patch, date=None):
+    author = request.user.name
+    revision_data = generate_revision(obj, patch, author, date)
+    if "revisions" not in obj:
+        obj["revisions"] = []
+    obj["revisions"].append(revision_data)
+    return obj["revisions"]
+
+
+def append_obj_revision(request, obj, patch, date):
+    status_changes = [p for p in patch if all([p["path"].endswith("/status"), p["op"] == "replace"])]
+    changed_obj = obj
+    for change in status_changes:
+        changed_obj = resolve_pointer(obj, change["path"].replace("/status", ""))
+        if changed_obj and hasattr(changed_obj, "date") and hasattr(changed_obj, "revisions"):
+            date_path = change["path"].replace("/status", "/date")
+            if changed_obj.date and not any(p for p in patch if date_path == p["path"]):
+                patch.append(
+                    {
+                        "op": "replace",
+                        "path": date_path,
+                        "value": changed_obj.date.isoformat(),
+                    }
+                )
+            elif not changed_obj.date:
+                patch.append({"op": "remove", "path": date_path})
+            changed_obj.date = date
+        else:
+            changed_obj = obj
+    return append_revision(request, changed_obj, patch)
+
+
+def get_revision_changes(request, new_obj, old_obj=None):
+    if old_obj is None:
+        old_obj = dict()
+    patch = make_patch(new_obj, old_obj).patch
+    if patch:
+        now = get_now()
+        append_obj_revision(request, new_obj, patch, now)
+
+
+def get_next_rev(current_rev=None):
+    """
+    This mimics couchdb _rev field
+    that prevents concurrent updates
+    :param current_rev:
+    :return:
+    """
+    if current_rev:
+        version, _ = current_rev.split("-")
+        version = int(version)
+    else:
+        version = 1
+    next_rev = f"{version + 1}-{uuid4().hex}"
+    return next_rev

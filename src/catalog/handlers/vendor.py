@@ -7,7 +7,7 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from catalog.state.vendor import VendorState
 from catalog.auth import set_access_token, validate_accreditation, validate_access_token
-from catalog.utils import pagination_params
+from catalog.utils import pagination_params, get_revision_changes
 from catalog.models.vendor import VendorPostInput, VendorPatchInput, VendorCreateResponse, VendorResponse, \
     VendorSignResponse
 from catalog.serializers.vendor import VendorSignSerializer, VendorSerializer
@@ -49,6 +49,7 @@ class VendorView(PydanticView):
         data = body.data.dict_without_none()
         await self.state.on_post(data)
         access = set_access_token(self.request, data)
+        get_revision_changes(self.request, new_obj=data)
         await db.insert_vendor(data)
 
         logger.info(
@@ -93,6 +94,7 @@ class VendorItemView(PydanticView):
             initial_data = dict(vendor)
             vendor.update(data)
             await self.state.on_patch(initial_data, vendor)
+            get_revision_changes(self.request, new_obj=vendor, old_obj=initial_data)
 
             logger.info(
                 f"Updated vendor {vendor_id}",

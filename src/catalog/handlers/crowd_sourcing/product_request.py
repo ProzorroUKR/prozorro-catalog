@@ -21,8 +21,7 @@ from catalog.validations import (
     validate_previous_product_reviews,
     validate_category_administrator,
 )
-from catalog.utils import pagination_params, get_now
-
+from catalog.utils import pagination_params, get_now, get_revision_changes
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +133,7 @@ class ProductRequestAcceptionView(PydanticView):
 
         # add product to the market
         access = set_access_token(self.request, product_request["product"])
+        get_revision_changes(self.request, new_obj=product_request["product"])
         await db.insert_product(product_request["product"])
 
         logger.info(
