@@ -318,7 +318,7 @@ class RequirementGroupsUpdateData(BaseModel):
 class RequirementGroup(BaseModel):
     id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
     description: str = Field(..., min_length=1, max_length=1000)
-    requirements: List[Requirement] = Field(..., min_items=1, max_items=100)
+    requirements: List[Requirement] = Field(..., min_items=1, max_items=200)
 
 
 class LegislationIdentifier(BaseModel):

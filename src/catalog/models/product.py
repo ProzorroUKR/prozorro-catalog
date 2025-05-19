@@ -52,7 +52,7 @@ class RequirementResponse(BaseModel):
 
 
 class ProductRequirementResponses(BaseModel):
-    requirementResponses: Optional[List[RequirementResponse]] = Field(None, min_items=1, max_items=100)
+    requirementResponses: Optional[List[RequirementResponse]] = Field(None, min_items=1, max_items=200)
 
     @validator('requirementResponses')
     def unique_responses_ids(cls, v):
