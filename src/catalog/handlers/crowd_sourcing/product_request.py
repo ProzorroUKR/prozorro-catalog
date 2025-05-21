@@ -10,6 +10,7 @@ from catalog.models.product_request import (
     ProductRequestAcceptionPostInput,
 )
 from catalog.serializers.product_request import ProductRequestSerializer
+from catalog.settings import CRITERIA_LIST
 from catalog.state.product_request import ProductRequestState
 from catalog.swagger import class_view_swagger_path
 from catalog.handlers.base import BaseView
@@ -40,7 +41,7 @@ class ContributorProductRequestView(BaseView):
 
         # category validations
         category = await db.read_category(data["product"]["relatedCategory"])
-        validate_product_to_category(category, data["product"])
+        validate_product_to_category(category, data["product"], required_criteria=CRITERIA_LIST)
         validate_contributor_banned_categories(category, contributor)
 
         data["contributor_id"] = contributor["id"]

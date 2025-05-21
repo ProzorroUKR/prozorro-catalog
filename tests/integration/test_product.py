@@ -373,3 +373,57 @@ async def test_create_product_from_cabinet_category(api, mock_agreement):
     assert resp.status == 201
     product_data = await resp.json()
     assert product_data["access"]["owner"] != category_data["access"]["owner"]
+
+
+async def test_product_without_required_responses(api, category):
+    category_id = category['data']['id']
+    test_product = {"data": api.get_fixture_json('product')}
+    test_product["data"]["relatedCategory"] = category["data"]["id"]
+    req_responses = test_product["data"].pop("requirementResponses")
+
+    test_product['data']['relatedCategory'] = category_id
+    test_product['access'] = category['access']
+
+    resp = await api.post('/api/products', json=test_product, auth=TEST_AUTH)
+    assert resp.status == 400
+    result = await resp.json()
+    assert result == {'errors': ['should be responded at least on one category requirement']}
+
+    # try to response only for technical characteristics
+    test_product["data"]["requirementResponses"] = [req_responses[0]]
+    set_requirements_to_responses(test_product["data"]["requirementResponses"], category)
+    resp = await api.post('/api/products', json=test_product, auth=TEST_AUTH)
+    assert resp.status == 201
+
+    # try to response only for local characteristics
+    test_product["data"]["requirementResponses"] = [
+        {
+            "requirement": "Ступінь локалізації виробництва товару, що є предметом закупівлі, перевищує або дорівнює ступеню локалізації виробництва, встановленому на відповідний рік",
+            "value": 50
+        }
+    ]
+    set_requirements_to_responses(test_product["data"]["requirementResponses"], category)
+    resp = await api.post('/api/products', json=test_product, auth=TEST_AUTH)
+    assert resp.status == 201
+
+    # try to response only for local characteristics
+    test_product["data"]["requirementResponses"] = [
+        {
+            "requirement": "Ступінь локалізації виробництва товару, що є предметом закупівлі, перевищує або дорівнює ступеню локалізації виробництва, встановленому на відповідний рік",
+            "value": 50
+        },
+        {
+            "requirement": "Товар походить з однієї з країн, що підписала Угоду про державні закупівлі Світової Організації торгівлі (GPA) або іншої країни з якою Україна має міжнародні договори про державні закупівлі",
+            "values": ["US"]
+        }
+    ]
+    set_requirements_to_responses(test_product["data"]["requirementResponses"], category)
+    resp = await api.post('/api/products', json=test_product, auth=TEST_AUTH)
+    assert resp.status == 400
+    result = await resp.json()
+    assert result == {
+        'errors': [
+            "forbidden to respond at more than one group's requirements "
+            "for CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL"
+        ]
+    }
