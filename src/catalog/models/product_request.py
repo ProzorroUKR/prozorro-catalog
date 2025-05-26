@@ -21,7 +21,7 @@ class RequestReviewPostData(BaseModel):
 
 class RequestRejectionPostData(RequestReviewPostData):
     reason: List[str] = Field(..., min_items=1)
-    description: Optional[str] = Field(None, min_length=1, max_length=2000)
+    description: Optional[str] = Field(None, min_length=1, max_length=2000, example="description")
 
     @validator('reason')
     def reason_standard(cls, values):
@@ -43,7 +43,15 @@ class RequestRejection(RequestRejectionPostData, RequestReview):
 
 class ProductRequestPostData(BaseModel):
     product: ProductCreateData
-    documents: Optional[List[DocumentPostData]]
+    documents: Optional[List[DocumentPostData]] = Field(
+        None,
+        example=[{
+            "title": "name.doc",
+            "url": "/documents/name.doc",
+            "hash": f"md5:0000000000000000000000",
+            "format": "application/msword",
+        }]
+    )
 
     @property
     def id(self):
@@ -56,9 +64,40 @@ class ProductRequest(BaseModel):
     dateModified: datetime
     dateCreated: datetime
     owner: str
-    acception: Optional[RequestReview]
-    rejection: Optional[RequestRejection]
-    documents: Optional[List[Document]]
+    acception: Optional[RequestReview] = Field(
+        None,
+        example=[{
+            "date": "string",
+            "administrator": {
+                "identifier": {
+                    "id": "string",
+                    "scheme": "string",
+                }
+            }
+        }],
+    )
+    rejection: Optional[RequestRejection] = Field(
+        None,
+        example=[{
+            "date": "string",
+            "reason": "string",
+            "administrator": {
+                "identifier": {
+                    "id": "string",
+                    "scheme": "string",
+                }
+            }
+        }],
+    )
+    documents: Optional[List[Document]] = Field(
+        None,
+        example=[{
+            "title": "name.doc",
+            "url": "/documents/name.doc",
+            "hash": f"md5:0000000000000000000000",
+            "format": "application/msword",
+        }]
+    )
     product: ProductCreateData
 
 

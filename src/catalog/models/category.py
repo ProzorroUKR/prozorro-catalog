@@ -21,11 +21,15 @@ class BaseCategoryCreateData(BaseModel):
     marketAdministrator: CategoryMarketAdministrator
     title: str = Field(..., min_length=1, max_length=80)
     unit: Unit
-    description: Optional[str] = Field(None, min_length=1, max_length=1000)
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
+    description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
+    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100, example=[{
+        "description": "description",
+        "id": "33190000-8",
+        "scheme": "ДК021"
+    }])
     status: CategoryStatus = CategoryStatus.active
-    images: Optional[List[Image]] = Field(None, max_items=100)
-    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
+    images: Optional[List[Image]] = Field(None, max_items=100, example=[{"url": "/image/1.jpg"}])
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example="string")
 
     @property
     def criteria(self):
@@ -42,7 +46,7 @@ class DeprecatedCategoryCreateData(BaseCategoryCreateData):
     """
     Deprecated soon the Catalog Category Create Data with required id and creation via PUT method
     """
-    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{20,32}$")
+    id: str = Field(..., pattern=r"^[0-9A-Za-z_-]{20,32}$")
 
     @validator('id')
     def id_format(cls, v, values, **kwargs):
@@ -57,13 +61,17 @@ class DeprecatedCategoryCreateData(BaseCategoryCreateData):
 
 
 class CategoryUpdateData(BaseModel):
-    title: Optional[str] = Field(None, min_length=1, max_length=80)
-    unit: Optional[Unit]
-    description: Optional[str] = Field(None, min_length=1, max_length=1000)
-    status: Optional[CategoryStatus]
-    images: Optional[List[Image]] = Field(None, max_items=100)
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
-    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
+    title: Optional[str] = Field(None, min_length=1, max_length=80, example="string")
+    unit: Optional[Unit] = Field(None, example={"code": "string", "name": "string"})
+    description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
+    status: Optional[CategoryStatus] = Field(None, example=CategoryStatus.active)
+    images: Optional[List[Image]] = Field(None, max_items=100, example=[{"url": "/image/1.jpg"}])
+    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100, example=[{
+        "description": "description",
+        "id": "33190000-8",
+        "scheme": "ДК021"
+    }])
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example="string")
 
 
 class Category(BaseModel):
@@ -72,16 +80,16 @@ class Category(BaseModel):
     """
     classification: Classification
     marketAdministrator: CategoryMarketAdministrator
-    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{20,32}$")
-    title: Optional[str] = Field(..., min_length=1, max_length=80)
+    id: str = Field(..., pattern=r"^[0-9A-Za-z_-]{20,32}$")
+    title: Optional[str] = Field(..., min_length=1, max_length=80, example="title")
     unit: Unit
-    description: Optional[str] = Field(..., min_length=1, max_length=1000)
+    description: Optional[str] = Field(..., min_length=1, max_length=1000, example="description")
     additionalClassifications: Optional[List[Classification]] = Field(..., max_items=100)
     status: CategoryStatus = CategoryStatus.active
     images: Optional[List[Image]] = Field(..., max_items=100)
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     criteria: List[Criterion] = Field(...)
-    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example="string")
     owner: str
 
 

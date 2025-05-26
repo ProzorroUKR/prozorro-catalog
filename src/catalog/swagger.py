@@ -1,5 +1,4 @@
-from pydantic.schema import schema
-from pydantic import BaseModel
+from pydantic import BaseModel, schema_json_of
 from types import MethodType
 from catalog import models
 from catalog.settings import SWAGGER_DOC_AVAILABLE
@@ -39,7 +38,7 @@ def get_definitions():
                     if isinstance(obj, type) and issubclass(obj, BaseModel):
                         model_classes.append(obj)
 
-    generated_schema = schema(
+    generated_schema = schema_json_of(
         model_classes,
         ref_prefix='#/components/schemas/'
     )

@@ -17,9 +17,17 @@ BAN_REASONS = standards.load("market/ban_reason.json")
 
 class BaseBanPostData(BaseModel):
     reason: str
-    description: Optional[str] = Field(None, min_length=1, max_length=500)
+    description: Optional[str] = Field(None, min_length=1, max_length=500, example="description")
     administrator: MarketAdministrator
-    documents: Optional[List[DocumentPostData]]
+    documents: Optional[List[DocumentPostData]] = Field(
+        None,
+        example=[{
+            "title": "name.doc",
+            "url": "/documents/name.doc",
+            "hash": f"md5:0000000000000000000000",
+            "format": "application/msword",
+        }]
+    )
 
     @property
     def id(self):
@@ -33,7 +41,7 @@ class BaseBanPostData(BaseModel):
 
 
 class ContributorBanPostData(BaseBanPostData):
-    dueDate: Optional[datetime]
+    dueDate: Optional[datetime] = Field(None, example=get_now().isoformat())
 
     @validator('dueDate')
     def validate_date(cls, v):
@@ -46,13 +54,21 @@ class ContributorBanPostData(BaseBanPostData):
 class Ban(BaseModel):
     id: str = Field(..., min_length=32, max_length=32)
     reason: str
-    description: Optional[str] = Field(None, min_length=1, max_length=500)
-    dueDate: Optional[datetime]
+    description: Optional[str] = Field(None, min_length=1, max_length=500, example="description")
+    dueDate: Optional[datetime] = Field(None, example=get_now().isoformat())
     administrator: MarketAdministrator
     dateCreated: datetime
     dateModified: datetime
     owner: str
-    documents: Optional[List[Document]]
+    documents: Optional[List[Document]] = Field(
+        None,
+        example=[{
+            "title": "name.doc",
+            "url": "/documents/name.doc",
+            "hash": f"md5:0000000000000000000000",
+            "format": "application/msword",
+        }]
+    )
 
 
 ContributorBanPostInput = Input[ContributorBanPostData]

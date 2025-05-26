@@ -1,40 +1,57 @@
 import random
 from copy import deepcopy
 import logging
+from typing import Union, Optional
+from unittest.mock import ANY
 
+from aiohttp.web_request import Request
 from aiohttp.web_urldispatcher import View
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from aiohttp.web import HTTPBadRequest, HTTPConflict
 from pymongo.errors import OperationFailure
 from catalog import db
+from catalog.models.api import PaginatedList, ErrorResponse
 from catalog.swagger import class_view_swagger_path
 from catalog.auth import set_access_token, validate_accreditation, validate_access_token
 from catalog.utils import pagination_params, async_retry
-from catalog.models.category import CategoryCreateInput, CategoryUpdateInput, DeprecatedCategoryCreateInput
+from catalog.models.category import CategoryCreateInput, CategoryUpdateInput, DeprecatedCategoryCreateInput, \
+    CategoryResponse
 from catalog.models.criteria import (
     CategoryRequirementCreateInput,
     CategoryBulkRequirementCreateInput,
     CategoryRequirementUpdateInput,
-    CategoryRequirement,
+    CategoryRequirement, CriterionCreateInput, CriterionListResponse, CriterionResponse, CriterionUpdateInput,
+    RGResponse, RGCreateInput, RGListResponse, RGUpdateInput, RequirementListResponse, RequirementCreateInput,
+    RequirementResponse, RequirementUpdateInput,
 )
 from catalog.serializers.base import RootSerializer
 from catalog.state.category import CategoryState
 from catalog.handlers.base_criteria import (
-    BaseCriteriaView,
-    BaseCriteriaRGView,
-    BaseCriteriaRGRequirementView,
+    BaseCriteriaViewMixin,
+    BaseCriteriaItemViewMixin,
+    BaseCriteriaRGViewMixin,
+    BaseCriteriaRGItemViewMixin,
+    BaseCriteriaRGRequirementViewMixin,
+    BaseCriteriaRGRequirementItemViewMixin,
 )
 
 
 logger = logging.getLogger(__name__)
 
 
-@class_view_swagger_path('/app/swagger/categories')
-class CategoryView(View):
+class CategoryView(PydanticView):
     state = CategoryState
 
-    @classmethod
-    async def collection_get(cls, request):
-        offset, limit, reverse = pagination_params(request)
+    async def get(
+            self, /, offset: Optional[str] = None,  limit: Optional[int] = 100, descending: Optional[int] = 0,
+    ) -> r200[PaginatedList]:
+        """
+        Get a list of categories
+
+        Tags: Categories
+        """
+        offset, limit, reverse = pagination_params(self.request)
         response = await db.find_categories(
             offset=offset,
             limit=limit,
@@ -42,46 +59,21 @@ class CategoryView(View):
         )
         return response
 
-    @classmethod
-    async def get(cls, request, category_id):
-        obj = await db.read_category(category_id)
-        return {"data": RootSerializer(obj, show_owner=False).data}
+    async def post(
+            self, /, body: CategoryCreateInput
+    ) -> Union[r201[CategoryResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        """
+        Create category
 
-    @classmethod
-    async def put(cls, request, category_id):
-        validate_accreditation(request, "category")
-
-        # import and validate data
-        json = await request.json()
-        body = DeprecatedCategoryCreateInput(**json)
-        if category_id != body.data.id:
-            raise HTTPBadRequest(text='id mismatch')
-
-        data = body.data.dict_without_none()
-        await cls.state.on_put(data)
-        access = set_access_token(request, data)
-        await db.insert_category(data)
-
-        logger.info(
-            f"Created category {data['id']}",
-            extra={"MESSAGE_ID": "category_create_put"},
-        )
-        response = {"data": RootSerializer(data, show_owner=False).data,
-                    "access": access}
-        return response
-
-    @classmethod
-    async def post(cls, request):
-        validate_accreditation(request, "category")
-
-        # import and validate data
-        json = await request.json()
-        body = CategoryCreateInput(**json)
+        Security: Basic: []
+        Tags: Categories
+        """
+        validate_accreditation(self.request, "category")
 
         # export data back to dict
         data = body.data.dict_without_none()
-        await cls.state.on_put(data)
-        access = set_access_token(request, data)
+        await self.state.on_put(data)
+        access = set_access_token(self.request, data)
         await db.insert_category(data)
 
         logger.info(
@@ -98,23 +90,66 @@ class CategoryView(View):
         }
         return response
 
-    @classmethod
-    @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
-                 fail_exception=HTTPConflict(text="Try again later"))
-    async def patch(cls, request, category_id):
-        validate_accreditation(request, "category")
-        async with db.read_and_update_category(category_id) as category:
-            # import and validate data
-            json = await request.json()
-            body = CategoryUpdateInput(**json)
 
-            validate_access_token(request, category, body.access)
+class CategoryItemView(PydanticView):
+    state = CategoryState
+
+    async def get(self, category_id: str, /) -> Union[r201[CategoryResponse], r400[ErrorResponse], r404[ErrorResponse]]:
+        """
+        Get category
+
+        Tags: Categories
+        """
+        obj = await db.read_category(category_id)
+        return {"data": RootSerializer(obj, show_owner=False).data}
+
+    async def put(
+            self, category_id: str, /, body: DeprecatedCategoryCreateInput
+    ) -> Union[r201[CategoryResponse], r400[ErrorResponse]]:
+        """
+        Create category
+
+        Security: Basic: []
+        Tags: Categories
+        """
+
+        validate_accreditation(self.request, "category")
+        if category_id != body.data.id:
+            raise HTTPBadRequest(text='id mismatch')
+
+        data = body.data.dict_without_none()
+        await self.state.on_put(data)
+        access = set_access_token(self.request, data)
+        await db.insert_category(data)
+
+        logger.info(
+            f"Created category {data['id']}",
+            extra={"MESSAGE_ID": "category_create_put"},
+        )
+        response = {"data": RootSerializer(data, show_owner=False).data,
+                    "access": access}
+        return response
+
+    # @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
+    #              fail_exception=HTTPConflict(text="Try again later"))
+    async def patch(
+            self, category_id: str, /, body: CategoryUpdateInput
+    ) -> Union[r200[CategoryResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
+        """
+        Category update
+
+        Security: Basic: []
+        Tags: Categories
+        """
+        validate_accreditation(self.request, "category")
+        async with db.read_and_update_category(category_id) as category:
+            validate_access_token(self.request, category, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
             # update profile with valid data
             old_category = deepcopy(category)
             category.update(data)
-            await cls.state.on_patch(old_category, category)
+            await self.state.on_patch(old_category, category)
 
             logger.info(
                 f"Updated category {category_id}",
@@ -133,32 +168,153 @@ class CategoryCriteriaViewMixin:
         return db.read_and_update_category(obj_id)
 
 
-@class_view_swagger_path('/app/swagger/categories/criterion')
-class CategoryCriteriaView(CategoryCriteriaViewMixin, BaseCriteriaView):
-    pass
+class CategoryCriteriaView(CategoryCriteriaViewMixin, BaseCriteriaViewMixin, PydanticView):
+    async def get(self, obj_id: str, /) -> r200[CriterionListResponse]:
+        """
+        Get a list of object criteria
+
+        Tags: Category/Criteria
+        """
+        return await BaseCriteriaViewMixin.get(self, obj_id)
+
+    async def post(
+        self, obj_id: str, /, body: CriterionCreateInput
+    ) -> Union[r201[CriterionListResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        """
+        Object criteria create
+
+        Security: Basic: []
+        Tags: Category/Criteria
+        """
+        return await BaseCriteriaViewMixin.post(self, obj_id, body)
 
 
-@class_view_swagger_path('/app/swagger/categories/criterion/requirementGroups')
-class CategoryCriteriaRGView(CategoryCriteriaViewMixin, BaseCriteriaRGView):
-    pass
+class CategoryCriteriaItemView(CategoryCriteriaViewMixin, BaseCriteriaItemViewMixin, PydanticView):
+    async def get(self, obj_id: str, criterion_id: str, /) -> Union[r200[CriterionResponse], r404[ErrorResponse]]:
+        """
+        Get an object criterion
+
+        Tags: Category/Criteria
+        """
+        return await BaseCriteriaItemViewMixin.get(self, obj_id, criterion_id)
+
+    async def patch(
+        self, obj_id: str, criterion_id: str, /, body: CriterionUpdateInput
+    ) -> Union[r200[CriterionResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
+        """
+        Object criterion update
+
+        Security: Basic: []
+        Tags: Category/Criteria
+        """
+        return await BaseCriteriaItemViewMixin.patch(self, obj_id, criterion_id, body)
 
 
-@class_view_swagger_path('/app/swagger/categories/criterion/requirementGroups/requirements')
-class CategoryCriteriaRGRequirementView(CategoryCriteriaViewMixin, BaseCriteriaRGRequirementView):
-    @classmethod
-    async def get_body_from_model(cls, request):
-        json = await request.json()
+class CategoryCriteriaRGView(CategoryCriteriaViewMixin, BaseCriteriaRGViewMixin, PydanticView):
+    async def get(self, obj_id: str, criterion_id: str, /) -> r200[RGListResponse]:
+        """
+        Get a list of requirementGroups
+
+        Tags: Category/Criteria/RequirementGroups
+        """
+        return await BaseCriteriaRGViewMixin.get(self, obj_id, criterion_id)
+
+    async def post(
+        self, obj_id: str, criterion_id: str, /, body: RGCreateInput
+    ) -> Union[r201[RGResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        """
+        RequirementGroup create
+
+        Security: Basic: []
+        Tags: Category/Criteria/RequirementGroups
+        """
+        return await BaseCriteriaRGViewMixin.post(self, obj_id, criterion_id, body)
+
+
+class CategoryCriteriaRGItemView(CategoryCriteriaViewMixin, BaseCriteriaRGItemViewMixin, PydanticView):
+    async def get(self, obj_id: str, criterion_id: str, rg_id: str, /) -> Union[r200[RGResponse], r404[ErrorResponse]]:
+        """
+        Get a requirementGroup
+
+        Tags: Category/Criteria/RequirementGroups
+        """
+        return await BaseCriteriaRGItemViewMixin.get(self, obj_id, criterion_id, rg_id)
+
+    async def patch(
+            self, obj_id: str, criterion_id: str, rg_id: str, /, body: RGUpdateInput
+    ) -> Union[r200[RGResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
+        """
+        RequirementGroup update
+
+        Security: Basic: []
+        Tags: Category/Criteria/RequirementGroups
+        """
+        return await BaseCriteriaRGItemViewMixin.patch(self, obj_id, criterion_id, rg_id, body)
+
+
+class CategoryCriteriaRGRequirementView(CategoryCriteriaViewMixin, BaseCriteriaRGRequirementViewMixin, PydanticView):
+    async def get_body_from_model(self):
+        json = await self.request.json()
         body = None
-        if request.method == "POST":
+        if self.request.method == "POST":
             if isinstance(json.get("data", {}), dict):
                 body = CategoryRequirementCreateInput(**json)
                 body.data = [body.data]
             elif isinstance(json["data"], list):
                 body = CategoryBulkRequirementCreateInput(**json)
-        elif request.method == "PATCH":
-            return CategoryRequirementUpdateInput(**json)
         return body
 
     @classmethod
     def get_main_model_class(cls):
         return CategoryRequirement
+
+    async def get(self, obj_id: str, criterion_id: str, rg_id: str, /) -> r200[RequirementListResponse]:
+        """
+        Get a list of requirements
+
+        Tags: Category/Criteria/RequirementGroups/Requirements
+        """
+        return await BaseCriteriaRGRequirementViewMixin.get(self, obj_id, criterion_id, rg_id)
+
+
+    async def post(
+        self, obj_id: str, criterion_id: str, rg_id: str, /, body: RequirementCreateInput
+    ) -> Union[r201[RequirementResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        """
+        Requirement create
+
+        Security: Basic: []
+        Tags: Category/Criteria/RequirementGroups/Requirements
+        """
+        return await BaseCriteriaRGRequirementViewMixin.post(self, obj_id, criterion_id, rg_id, body)
+
+
+class CategoryCriteriaRGRequirementItemView(CategoryCriteriaViewMixin, BaseCriteriaRGRequirementItemViewMixin, PydanticView):
+    async def get_body_from_model(self):
+        json = await self.request.json()
+        return CategoryRequirementUpdateInput(**json)
+
+    @classmethod
+    def get_main_model_class(cls):
+        return CategoryRequirement
+
+    async def get(
+        self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /
+    ) -> Union[r200[RequirementResponse], r404[ErrorResponse]]:
+        """
+        Get a requirement
+
+        Tags: Category/Criteria/RequirementGroups/Requirements
+        """
+        return await BaseCriteriaRGRequirementItemViewMixin.get(self, obj_id, criterion_id, rg_id, requirement_id)
+
+    async def patch(
+        self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /, body: RequirementUpdateInput
+    ) -> Union[r200[RequirementResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
+        """
+        Requirement update
+
+        Security: Basic: []
+        Tags: Category/Criteria/RequirementGroups/Requirements
+        """
+        return await BaseCriteriaRGRequirementItemViewMixin.patch(self, obj_id, criterion_id, rg_id, requirement_id, body)

@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import EmailStr, Field, validator, root_validator
+from pydantic import EmailStr, Field, validator
 from enum import Enum
 
 from catalog.models.ban import Ban
@@ -15,13 +15,13 @@ class VendorContactPoint(ContactPoint):
 
 
 class PostVendorAddress(Address):
-    locality: Optional[str] = Field(None, min_length=1, max_length=80)
-    postalCode: Optional[str] = Field(None, min_length=1, max_length=20)
-    streetAddress: Optional[str] = Field(None, min_length=1, max_length=250)
+    locality: Optional[str] = Field(None, min_length=1, max_length=80, example="string")
+    postalCode: Optional[str] = Field(None, min_length=1, max_length=20, example="string")
+    streetAddress: Optional[str] = Field(None, min_length=1, max_length=250, example="string")
 
 
 class VendorAddress(PostVendorAddress):
-    region: Optional[str] = Field(None, min_length=1, max_length=80)
+    region: Optional[str] = Field(None, min_length=1, max_length=80, example="string")
 
 
 class VendorIdentifier(Identifier):
@@ -47,7 +47,7 @@ class VendorPostData(BaseModel):
 
 
 class VendorPatchData(BaseModel):
-    isActivated: Optional[bool]
+    isActivated: Optional[bool] = Field(None, example=True)
 
     @validator('isActivated')
     def activation_only(cls, v, values, **kwargs):
@@ -70,7 +70,19 @@ class Vendor(VendorPostData):
     owner: str
     status: VendorStatus = VendorStatus.pending
     documents: List[Document]
-    bans: Optional[List[Ban]]
+    bans: Optional[List[Ban]] = Field(
+        None,
+        example=[{
+            "id": "string",
+            "reason": "string",
+            "marketAdministrator": {
+                "identifier": {
+                    "id": "string",
+                    "scheme": "string",
+                }
+            }
+        }],
+    )
 
 
 class VendorSign(VendorPostData):

@@ -6,17 +6,18 @@ from catalog.auth import validate_access_token
 
 @class_view_swagger_path('/app/swagger/vendors/documents')
 class VendorDocumentView(BaseDocumentView):
+    pass
 
-    parent_obj_name = "vendor"
-
-    @classmethod
-    async def get_parent_obj(cls, **kwargs):
-        return await db.read_vendor(kwargs.get("vendor_id"))
-
-    @classmethod
-    def read_and_update_object(cls, **kwargs):
-        return db.read_and_update_vendor(kwargs.get("vendor_id"))
-
-    @classmethod
-    async def validate_data(cls, request, body, parent_obj, **kwargs):
-        validate_access_token(request, parent_obj, body.access)
+    # parent_obj_name = "vendor"
+    #
+    # @classmethod
+    # async def get_parent_obj(cls, **kwargs):
+    #     return await db.read_vendor(kwargs.get("vendor_id"))
+    #
+    # @classmethod
+    # def read_and_update_object(cls, **kwargs):
+    #     return db.read_and_update_vendor(kwargs.get("vendor_id"))
+    #
+    # @classmethod
+    # async def validate_data(cls, request, body, parent_obj, **kwargs):
+    #     validate_access_token(request, parent_obj, body.access)

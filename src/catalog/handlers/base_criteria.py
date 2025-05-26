@@ -1,18 +1,22 @@
 import logging
 
-from aiohttp.web_urldispatcher import View as BaseView
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
+from typing import Union
 
 from catalog import db
 from catalog.auth import validate_accreditation, validate_access_token
 from catalog.settings import LOCALIZATION_CRITERIA
 from catalog.utils import get_now, find_item_by_id, delete_sent_none_values
+from catalog.models.api import ErrorResponse
 from catalog.models.criteria import (
     CriterionBulkCreateInput,
     CriterionCreateInput,
     CriterionUpdateInput,
     RGCreateInput,
     RGUpdateInput,
-    Requirement,
+    Requirement, CriterionListResponse, CriterionResponse, RGResponse, RGListResponse, RequirementListResponse,
+    RequirementResponse, RequirementCreateInput, RequirementUpdateInput,
 )
 from catalog.serializers.base import RootSerializer
 from catalog.validations import (
@@ -24,13 +28,12 @@ from catalog.validations import (
 logger = logging.getLogger(__name__)
 
 
-class View(BaseView):
+class BaseCriteriaMixin:
 
     obj_name: str
     serializer_class = RootSerializer
 
-    @classmethod
-    async def get_body_from_model(cls, request):
+    async def get_body_from_model(self):
         raise NotImplementedError("provide `get_model_cls` method")
 
     @classmethod
@@ -50,52 +53,40 @@ class View(BaseView):
         return db.read_and_update_obj_criterion(cls.obj_name, obj_id, criterion_id)
 
     @classmethod
-    def delete_obj_criterion(cls, obj_id: str, criterion_id: str, dateModified):
+    def delete_obj_criterion(cls, obj_id: str, criterion_id: str, dateModified: str):
         return db.delete_obj_criterion(cls.obj_name, obj_id, criterion_id, dateModified)
 
-    @classmethod
-    def validations(cls, request):
-        validate_accreditation(request, cls.obj_name)
+    def validations(self):
+        validate_accreditation(self.request, self.obj_name)
 
 
-class BaseCriteriaView(View):
+class BaseCriteriaViewMixin(BaseCriteriaMixin):
     """
-    Base view for criterion
+    Base view mixin for criterion
     """
 
-    @classmethod
-    async def get_body_from_model(cls, request):
-        json = await request.json()
-        if request.method == "POST":
-            if isinstance(json.get("data", {}), dict):
-                body = CriterionCreateInput(**json)
-                body.data = [body.data]
-            elif isinstance(json["data"], list):
-                body = CriterionBulkCreateInput(**json)
-        elif request.method == "PATCH":
-            return CriterionUpdateInput(**json)
+    async def get_body_from_model(self):
+        json = await self.request.json()
+        if isinstance(json.get("data", {}), dict):
+            body = CriterionCreateInput(**json)
+            body.data = [body.data]
+        elif isinstance(json["data"], list):
+            body = CriterionBulkCreateInput(**json)
         return body
 
-    @classmethod
-    async def collection_get(cls, request, obj_id):
-        obj_criteria = await cls.get_parent_obj(obj_id=obj_id)
-        data = cls.serializer_class(obj_criteria, show_owner=False).data
+    async def get(self, obj_id: str, /) -> r200[CriterionListResponse]:
+        obj_criteria = await self.get_parent_obj(obj_id=obj_id)
+        data = self.serializer_class(obj_criteria, show_owner=False).data
         return {"data": data["criteria"]}
 
-    @classmethod
-    async def get(cls, request, obj_id, criterion_id):
-        criterion = await cls.get_criterion(obj_id, criterion_id)
-        data = cls.serializer_class(criterion, show_owner=False).data
-        return {"data": data["criteria"]}
 
-    @classmethod
-    async def post(cls, request, obj_id):
-        cls.validations(request)
-        async with cls.read_and_update_parent_obj(obj_id) as parent_obj:
+    async def post(self, obj_id: str, /, body: CriterionCreateInput) -> Union[r201[CriterionListResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        self.validations()
+        async with self.read_and_update_parent_obj(obj_id) as parent_obj:
             # import and validate data
-            body = await cls.get_body_from_model(request)
+            body = await self.get_body_from_model()
 
-            validate_access_token(request, parent_obj, body.access)
+            validate_access_token(self.request, parent_obj, body.access)
             # export data back to dict
             data = [criterion.dict_without_none() for criterion in body.data]
             # update profile with valid data
@@ -107,76 +98,64 @@ class BaseCriteriaView(View):
             parent_obj["dateModified"] = get_now().isoformat()
             for criterion in data:
                 logger.info(
-                    f"Created {cls.obj_name} criterion {criterion['id']}",
+                    f"Created {self.obj_name} criterion {criterion['id']}",
                     extra={
-                        "MESSAGE_ID": f"{cls.obj_name}_criterion_create",
-                        f"{cls.obj_name}_criterion_id": criterion['id']
+                        "MESSAGE_ID": f"{self.obj_name}_criterion_create",
+                        f"{self.obj_name}_criterion_id": criterion['id']
                     },
                 )
-        return {"data": [cls.serializer_class(criterion).data for criterion in data]}
+        return {"data": [self.serializer_class(criterion).data for criterion in data]}
 
-    @classmethod
-    async def patch(cls, request, obj_id, criterion_id):
-        cls.validations(request)
-        async with cls.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
-            # import and validate data
-            json = await request.json()
-            body = await cls.get_body_from_model(request)
 
-            validate_access_token(request, parent_obj, body.access)
+class BaseCriteriaItemViewMixin(BaseCriteriaMixin):
+
+    async def get(self, obj_id: str, criterion_id: str, /) -> Union[r200[CriterionResponse], r404[ErrorResponse]]:
+        criterion = await self.get_criterion(obj_id, criterion_id)
+        data = self.serializer_class(criterion, show_owner=False).data
+        return {"data": data["criteria"]}
+
+    async def patch(
+        self, obj_id: str, criterion_id: str, /, body: CriterionUpdateInput
+    ) -> Union[r200[CriterionResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
+        self.validations()
+        async with self.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
+            validate_access_token(self.request, parent_obj, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
             # update obj with valid data
             # mongo unwinded criteria, so here is only one item in `criteria`
             parent_obj["criteria"].update(data)
-            criteria_parent = await cls.get_parent_obj(obj_id)
+            criteria_parent = await self.get_parent_obj(obj_id)
             validate_criteria_classification_uniq(criteria_parent, updated_criterion=parent_obj["criteria"])
             parent_obj["dateModified"] = get_now().isoformat()
 
             logger.info(
-                f"Updated {cls.obj_name} criterion {criterion_id}",
-                extra={"MESSAGE_ID": f"{cls.obj_name}_criterion_patch"},
+                f"Updated {self.obj_name} criterion {criterion_id}",
+                extra={"MESSAGE_ID": f"{self.obj_name}_criterion_patch"},
             )
 
-        return {"data": cls.serializer_class(parent_obj["criteria"]).data}
+        return {"data": self.serializer_class(parent_obj["criteria"]).data}
 
 
-class BaseCriteriaRGView(View):
+class BaseCriteriaRGViewMixin(BaseCriteriaMixin):
     """
-    Base view for criterion requirement group
+    Base view mixin for criterion requirement group
     """
 
-    @classmethod
-    async def get_body_from_model(cls, request):
-        json = await request.json()
-        if request.method == "POST":
-            return RGCreateInput(**json)
-        elif request.method == "PATCH":
-            return RGUpdateInput(**json)
-
-    @classmethod
-    async def collection_get(cls, request, obj_id, criterion_id):
-        parent_criteria = await cls.get_criterion(obj_id, criterion_id)
+    async def get(self, obj_id: str, criterion_id: str, /) -> r200[RGListResponse]:
+        parent_criteria = await self.get_criterion(obj_id, criterion_id)
         data = RootSerializer(parent_criteria, show_owner=False).data
         return {"data": [
-            cls.serializer_class(rg, show_owner=False).data
+            self.serializer_class(rg, show_owner=False).data
             for rg in data["criteria"]["requirementGroups"]
         ]}
 
-    @classmethod
-    async def get(cls, request, obj_id, criterion_id, rg_id):
-        parent_criterion = await cls.get_criterion(obj_id, criterion_id)
-        rg = find_item_by_id(parent_criterion, rg_id, "requirementGroups")
-        return {"data": cls.serializer_class(rg, show_owner=False).data}
-
-    @classmethod
-    async def post(cls, request, obj_id, criterion_id):
-        cls.validations(request)
-        async with cls.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
-            # import and validate data
-            body = await cls.get_body_from_model(request)
-
-            validate_access_token(request, parent_obj, body.access)
+    async def post(
+        self, obj_id: str, criterion_id: str, /, body: RGCreateInput
+    ) -> Union[r201[RGResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        self.validations()
+        async with self.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
+            validate_access_token(self.request, parent_obj, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
             # update obj with valid data
@@ -186,22 +165,28 @@ class BaseCriteriaRGView(View):
             parent_obj["dateModified"] = get_now().isoformat()
 
             logger.info(
-                f"Created {cls.obj_name} criteria requirement group {data['id']}",
+                f"Created {self.obj_name} criteria requirement group {data['id']}",
                 extra={
-                    "MESSAGE_ID": f"{cls.obj_name}_requirement_group_create",
+                    "MESSAGE_ID": f"{self.obj_name}_requirement_group_create",
                     "requirement_group_id": data["id"]
                 },
             )
-        return {"data": cls.serializer_class(data).data}
+        return {"data": self.serializer_class(data).data}
 
-    @classmethod
-    async def patch(cls, request, obj_id, criterion_id, rg_id):
-        cls.validations(request)
-        async with cls.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
-            # import and validate data
-            body = await cls.get_body_from_model(request)
 
-            validate_access_token(request, parent_obj, body.access)
+class BaseCriteriaRGItemViewMixin(BaseCriteriaMixin):
+
+    async def get(self, obj_id: str, criterion_id: str, rg_id: str, /) -> Union[r200[RGResponse], r404[ErrorResponse]]:
+        parent_criterion = await self.get_criterion(obj_id, criterion_id)
+        rg = find_item_by_id(parent_criterion["criteria"]["requirementGroups"], rg_id, "requirementGroups")
+        return {"data": self.serializer_class(rg, show_owner=False).data}
+
+    async def patch(
+        self, obj_id: str, criterion_id: str, rg_id: str, /, body: RGUpdateInput
+    ) -> Union[r200[RGResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
+        self.validations()
+        async with self.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
+            validate_access_token(self.request, parent_obj, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
             # update object with valid data
@@ -210,20 +195,19 @@ class BaseCriteriaRGView(View):
             parent_obj["dateModified"] = get_now().isoformat()
 
             logger.info(
-                f"Updated {cls.obj_name} criteria requirement group {rg_id}",
-                extra={"MESSAGE_ID": f"{cls.obj_name}_requirement_group_patch"},
+                f"Updated {self.obj_name} criteria requirement group {rg_id}",
+                extra={"MESSAGE_ID": f"{self.obj_name}_requirement_group_patch"},
             )
 
-        return {"data": cls.serializer_class(rg).data}
+        return {"data": self.serializer_class(rg).data}
 
 
-class BaseCriteriaRGRequirementView(View):
+class BaseCriteriaRGRequirementViewMixin(BaseCriteriaMixin):
     """
-    Base view for criterion requirement
+    Base view mixin for criterion requirement
     """
 
-    @classmethod
-    async def get_body_from_model(cls, request):
+    async def get_body_from_model(self):
         pass
 
     @classmethod
@@ -234,32 +218,26 @@ class BaseCriteriaRGRequirementView(View):
     async def requirement_validations(cls, parent_obj, data):
         pass
 
-    @classmethod
-    async def collection_get(cls, request, obj_id, criterion_id, rg_id):
-        criteria = await cls.get_criterion(obj_id, criterion_id)
+    async def get(self, obj_id: str, criterion_id: str, rg_id: str, /) -> r200[RequirementListResponse]:
+        criteria = await self.get_criterion(obj_id, criterion_id)
         rg = find_item_by_id(criteria["criteria"]["requirementGroups"], rg_id, "requirementGroups")
-        return {"data": [cls.serializer_class(i, show_owner=False).data for i in rg.get("requirements", [])]}
+        return {"data": [self.serializer_class(i, show_owner=False).data for i in rg.get("requirements", [])]}
 
-    @classmethod
-    async def get(cls, request, obj_id, criterion_id, rg_id, requirement_id):
-        criterion = await cls.get_criterion(obj_id, criterion_id)
-        rg = find_item_by_id(criterion["criteria"]["requirementGroups"], rg_id, "requirementGroups")
-        requirement = find_item_by_id(rg["requirements"], requirement_id, "requirements")
-        return {"data": cls.serializer_class(requirement, show_owner=False).data}
 
-    @classmethod
-    async def post(cls, request, obj_id, criterion_id, rg_id):
-        cls.validations(request)
-        async with cls.read_and_update_parent_obj(obj_id) as obj:
+    async def post(
+        self, obj_id: str, criterion_id: str, rg_id: str, /, body: RequirementCreateInput
+    ) -> Union[r201[RequirementResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        self.validations()
+        async with self.read_and_update_parent_obj(obj_id) as obj:
             # import and validate data
             criterion = find_item_by_id(obj["criteria"], criterion_id, "criteria")
             rg = find_item_by_id(criterion["requirementGroups"], rg_id, "requirementGroups")
-            body = await cls.get_body_from_model(request)
-            validate_access_token(request, obj, body.access)
+            body = await self.get_body_from_model()
+            validate_access_token(self.request, obj, body.access)
             # export data back to dict
             data = [r.dict_without_none() for r in body.data]
             # update obj with valid data
-            await cls.requirement_validations(obj, data)
+            await self.requirement_validations(obj, data)
             rg["requirements"].extend(data)
             validate_requirement_title_uniq(obj)
             obj["dateModified"] = get_now().isoformat()
@@ -267,42 +245,57 @@ class BaseCriteriaRGRequirementView(View):
             for i in data:
 
                 logger.info(
-                    f"Created {cls.obj_name} criteria requirement {i['id']}",
+                    f"Created {self.obj_name} criteria requirement {i['id']}",
                     extra={
-                        "MESSAGE_ID": f"{cls.obj_name}_requirement_create",
+                        "MESSAGE_ID": f"{self.obj_name}_requirement_create",
                         "requirement_group_id": i["id"],
                     },
                 )
-        return {"data": [cls.serializer_class(r).data for r in data]}
+        return {"data": [self.serializer_class(r).data for r in data]}
 
+
+class BaseCriteriaRGRequirementItemViewMixin(BaseCriteriaMixin):
     @classmethod
-    async def patch(cls, request, obj_id, criterion_id, rg_id, requirement_id):
-        cls.validations(request)
-        async with cls.read_and_update_parent_obj(obj_id) as obj:
+    async def requirement_validations(cls, parent_obj, data):
+        pass
+
+    async def get(
+        self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /
+    ) -> Union[r200[RequirementResponse], r404[ErrorResponse]]:
+        criterion = await self.get_criterion(obj_id, criterion_id)
+        rg = find_item_by_id(criterion["criteria"]["requirementGroups"], rg_id, "requirementGroups")
+        requirement = find_item_by_id(rg["requirements"], requirement_id, "requirements")
+        return {"data": self.serializer_class(requirement, show_owner=False).data}
+
+    async def patch(
+        self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /, body: RequirementUpdateInput
+    ) -> Union[r200[RequirementResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
+        self.validations()
+        async with self.read_and_update_parent_obj(obj_id) as obj:
             # import and validate data
             criterion = find_item_by_id(obj["criteria"], criterion_id, "criteria")
             rg = find_item_by_id(criterion["requirementGroups"], rg_id, "requirementGroups")
             requirement = find_item_by_id(rg["requirements"], requirement_id, "requirements")
-            body = await cls.get_body_from_model(request)
-            json = await request.json()
+            body = await self.get_body_from_model()
+            json = await self.request.json()
 
-            validate_access_token(request, obj, body.access)
+            validate_access_token(self.request, obj, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
             # update profile with valid data
             requirement.update(data)
             delete_sent_none_values(requirement, json["data"])
 
-            requirement_model = cls.get_main_model_class()
+            requirement_model = self.get_main_model_class()
             requirement_model(**requirement)
 
-            await cls.requirement_validations(obj, [requirement])
+            await self.requirement_validations(obj, [requirement])
             validate_requirement_title_uniq(obj)
             obj["dateModified"] = get_now().isoformat()
 
             logger.info(
-                f"Updared {cls.obj_name} criteria requirement {requirement_id}",
-                extra={"MESSAGE_ID": f"{cls.obj_name}_requirement_create"},
+                f"Updated {self.obj_name} criteria requirement {requirement_id}",
+                extra={"MESSAGE_ID": f"{self.obj_name}_requirement_create"},
             )
 
-        return {"data": cls.serializer_class(requirement).data}
+        return {"data": self.serializer_class(requirement).data}

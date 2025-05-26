@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Union
 from uuid import uuid4
 
 from pydantic import Field
@@ -42,11 +42,16 @@ class BaseProfileCreateData(BaseModel):
         description='Profile details',
         min_length=1,
         max_length=1000,
+        example="description",
     )
     status: ProfileStatus = ProfileStatus.active
-    relatedCategory: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
-    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
+    relatedCategory: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
+    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100, example=[{
+        "description": "description",
+        "id": "33190000-8",
+        "scheme": "ДК021"
+    }])
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example=uuid4().hex)
 
     @property
     def criteria(self):
@@ -63,12 +68,12 @@ class DeprecatedProfileCreateData(BaseProfileCreateData):
     """
     Deprecated soon the Catalog Profile Create Data with required id and creation via PUT method
     """
-    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
+    id: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
 
 
 class BaseLocalizationProfileCreateData(BaseProfileCreateData):
     unit: Unit
-    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example=uuid4().hex)
     classification: Classification
 
 
@@ -82,30 +87,41 @@ class DeprecatedLocalizationProfileCreateData(BaseLocalizationProfileCreateData)
     """
     Deprecated soon the Localization Catalog Profile Create Data with required id and creation via PUT method
     """
-    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
+    id: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
 
 
 class ProfileUpdateData(BaseModel):
     """
     The Catalog Profile Update Data
     """
-    title: Optional[str] = Field(None, min_length=1, max_length=250)
-    description: Optional[str] = Field(None, min_length=1, max_length=1000)
-    status: Optional[ProfileStatus]
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
-    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
+    title: Optional[str] = Field(None, min_length=1, max_length=250, example="title")
+    description: Optional[str] = Field(None, min_length=1, max_length=1000, example="description")
+    status: Optional[ProfileStatus] = Field(None, example=ProfileStatus.active)
+    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100, example=[{
+        "description": "description",
+        "id": "33190000-8",
+        "scheme": "ДК021"
+    }])
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example=uuid4().hex)
 
 
 class LocalizationProfileUpdateData(ProfileUpdateData):
-    unit: Optional[Unit]
-    classification: Optional[Classification]
+    unit: Optional[Unit] = Field(None, example={"code": "string", "name": "string"})
+    classification: Optional[Classification] = Field(
+        None,
+        example={
+            "description": "description",
+            "id": "33190000-8",
+            "scheme": "ДК021"
+        }
+    )
 
 
 class Profile(BaseModel):
     """
     The Catalog Profile
     """
-    id: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
+    id: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
     title: str = Field(
         ...,
         title='Profile Name',
@@ -119,24 +135,36 @@ class Profile(BaseModel):
         description='Profile details',
         min_length=1,
         max_length=1000,
+        example="description",
     )
     status: ProfileStatus = ProfileStatus.active
     marketAdministrator: CategoryMarketAdministrator
-    unit: Optional[Unit]
-    relatedCategory: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
+    unit: Optional[Unit] = Field(None, example={"code": "string", "name": "string"})
+    relatedCategory: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
     classification: Classification
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100)
-    agreementID: Optional[str] = Field(None, regex=AGREEMENT_ID_REGEX)
+    additionalClassifications: Optional[List[Classification]] = Field(
+        None,
+        max_items=100,
+        example={
+            "description": "description",
+            "id": "33190000-8",
+            "scheme": "ДК021"
+        }
+    )
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example=uuid4().hex)
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     dateCreated: datetime
     owner: str
     criteria: List[Criterion] = Field(...)
 
 
+RequestProfileCreateInput = AuthorizedInput[Union[ProfileCreateData, LocalizationProfileCreateData]]
+DeprecatedRequestProfileCreateInput = AuthorizedInput[Union[DeprecatedProfileCreateData, DeprecatedLocalizationProfileCreateData]]
 ProfileCreateInput = AuthorizedInput[ProfileCreateData]
 DeprecatedProfileCreateInput = AuthorizedInput[DeprecatedProfileCreateData]
 LocalizationProfileInput = AuthorizedInput[LocalizationProfileCreateData]
 DeprecatedLocProfileInput = AuthorizedInput[DeprecatedLocalizationProfileCreateData]
+RequestProfileUpdateInput = AuthorizedInput[Union[ProfileUpdateData, LocalizationProfileUpdateData]]
 ProfileUpdateInput = AuthorizedInput[ProfileUpdateData]
 LocalizationProfileUpdateInput = AuthorizedInput[LocalizationProfileUpdateData]
 ProfileResponse = Response[Profile]

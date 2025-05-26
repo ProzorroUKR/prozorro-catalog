@@ -22,7 +22,7 @@ class Supplier(BaseModel):
 
 class MinOrderValue(BaseModel):
     amount: float = Field(ge=0.01, le=999999999)
-    currency: str = Field(..., regex=r"^[A-Z]{3}$")
+    currency: str = Field(..., pattern=r"^[A-Z]{3}$")
 
 
 class OfferValue(MinOrderValue):
@@ -30,13 +30,13 @@ class OfferValue(MinOrderValue):
 
 
 class Offer(BaseModel):
-    id: str = Field(..., regex=r"^[0-9a-z]{32}$")
-    relatedProduct: str = Field(..., regex=r"^[0-9A-Za-z_-]{1,32}$")
+    id: str = Field(..., pattern=r"^[0-9a-z]{32}$")
+    relatedProduct: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
     deliveryAddresses: List[OfferDeliveryAddress] = Field(..., min_items=1, max_items=100)
     status: OfferStatus
     suppliers: List[Supplier] = Field(..., min_items=1, max_items=1)
     value: OfferValue
-    minOrderValue: Optional[MinOrderValue]
-    comment: Optional[constr(max_length=250)]
+    minOrderValue: Optional[MinOrderValue] = Field(None, example={"amount": 0.0, "currency": "USD"})
+    comment: Optional[constr(max_length=250)] = Field(None, example="string")
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     owner: str

@@ -3,8 +3,8 @@ aiohttp==3.10.5 # TODO: remove version later maybe after aiohttp-client-cache up
 aiohttp-client-cache
 motor
 pytz
-aiohttp-swagger>=1.0.14, <2
-pydantic[email]==1.7.3
+aiohttp_pydantic>=2.5
+pydantic[email]>=2.0
 aiocache>=0.11.1, <1
 ujson # requirements for aiocache
 msgpack # requirements for aiocache

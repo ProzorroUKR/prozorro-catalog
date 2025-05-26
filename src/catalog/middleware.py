@@ -1,3 +1,5 @@
+import json
+
 from catalog.serialization import json_response, json_dumps
 from aiohttp.web import (
     HTTPUnprocessableEntity,
@@ -46,19 +48,30 @@ async def error_middleware(request, handler):
             content_type="application/json",
         )
     else:
+        # aiohttp-pydantic returns response instead of ValidationError
+        if response.status == 400:
+            error_text = json.loads(response.body)
+            text = json_dumps(dict(errors=[
+                f"{e['msg']}: {'.'.join(str(part) for part in e['loc'])}"
+                for e in error_text
+            ]))
+            raise HTTPBadRequest(
+                text=text,
+                content_type="application/json",
+            )
         return response
 
 
-@middleware
-async def request_unpack_params(request, handler):
-    """
-    middleware for the func views
-    to pass variables from url
-    as kwargs
-    """
-    if 'swagger' in request.path or '/static/' in request.path:
-        return await handler(request)
-    return await handler(request, **request.match_info)
+# @middleware
+# async def request_unpack_params(request, handler):
+#     """
+#     middleware for the func views
+#     to pass variables from url
+#     as kwargs
+#     """
+#     if 'swagger' in request.path or '/static/' in request.path:
+#         return await handler(request)
+#     return await handler(request, **request.match_info)
 
 
 @middleware

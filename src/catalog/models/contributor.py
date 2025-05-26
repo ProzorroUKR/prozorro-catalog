@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, List
 from uuid import uuid4
 
-from pydantic import Field, validator, root_validator
+from pydantic import Field, validator, model_validator
 
 from catalog.models.ban import Ban
 from catalog.models.base import BaseModel
@@ -13,11 +13,12 @@ from catalog.models.document import Document, DocumentPostData
 
 
 class PostContributorAddress(PostVendorAddress):
-    region: Optional[str] = Field(None, min_length=1, max_length=80)
+    region: Optional[str] = Field(None, min_length=1, max_length=80, example="string")
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def check_ua_region(cls, values):
-        if values["countryName"] == UKRAINE_COUNTRY_NAME_UK and not values.get("region"):
+        if values.countryName == UKRAINE_COUNTRY_NAME_UK and not values.region:
             raise ValueError(f"region is required for countryName {UKRAINE_COUNTRY_NAME_UK}")
         return values
 
@@ -28,7 +29,15 @@ class PostContributorOrganization(PostVendorOrganization):
 
 class ContributorPostData(BaseModel):
     contributor: PostContributorOrganization
-    documents: Optional[List[DocumentPostData]]
+    documents: Optional[List[DocumentPostData]] = Field(
+        None,
+        example=[{
+            "title": "name.doc",
+            "url": "/documents/name.doc",
+            "hash": f"md5:0000000000000000000000",
+            "format": "application/msword",
+        }]
+    )
 
     @property
     def id(self):
@@ -41,8 +50,28 @@ class Contributor(BaseModel):
     dateModified: datetime
     dateCreated: datetime
     owner: str
-    bans: Optional[List[Ban]]
-    documents: Optional[List[Document]]
+    bans: Optional[List[Ban]] = Field(
+        None,
+        example=[{
+            "id": "string",
+            "reason": "string",
+            "marketAdministrator": {
+                "identifier": {
+                    "id": "string",
+                    "scheme": "string",
+                }
+            }
+        }],
+    )
+    documents: Optional[List[Document]] = Field(
+        None,
+        example=[{
+            "title": "name.doc",
+            "url": "/documents/name.doc",
+            "hash": f"md5:0000000000000000000000",
+            "format": "application/msword",
+        }]
+    )
 
 
 ContributorPostInput = Input[ContributorPostData]
