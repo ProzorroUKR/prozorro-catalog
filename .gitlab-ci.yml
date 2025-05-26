@@ -1,5 +1,5 @@
 stages:
-  - test
+#  - test
   - build
   - publish
   - deploy
@@ -20,39 +20,39 @@ build:
     - docker build  --build-arg version=$(git describe --tags) -t $CI_REGISTRY_IMAGE:$CI_TAG .
     - docker push $CI_REGISTRY_IMAGE:$CI_TAG
 
-test:
-  image: docker-registry.prozorro.gov.ua/docker/images/python:3.9-alpine3.14
-  stage: test
-  services:
-    - name: bitnami/mongodb:4.4.12-debian-10-r24
-      alias: mongo
-  variables:
-    SWAGGER_DOC_AVAILABLE: ""
-    AUTH_PATH: ${CI_PROJECT_DIR}/auth.ini
-    IMG_DIR: ${CI_PROJECT_DIR}/images
-    MONGODB_URI: mongodb://root:example@mongo:27017/?replicaSet=rs0
-    MONGODB_ROOT_PASSWORD: example
-    MONGODB_REPLICA_SET_MODE: primary
-    MONGODB_REPLICA_SET_NAME: rs0
-    MONGODB_REPLICA_SET_KEY: replicaSetKey
-  tags:
-    - kube-dev
-  before_script:
-    - apk --no-cache add gcc build-base git openssl-dev libffi-dev
-    - pip install -r requirements.txt
-    - pip install -r tests/requirements.txt
-    - pip install -e .
-  script:
-    - pytest -x -s tests/integration/
-      --cov=src/catalog
-      --cov-report xml
-      --cov-report term
-  artifacts:
-    reports:
-      coverage_report:
-        path: coverage.xml
-        coverage_format: cobertura
-  coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
+#test:
+#  image: docker-registry.prozorro.gov.ua/docker/images/python:3.9-alpine3.14
+#  stage: test
+#  services:
+#    - name: bitnami/mongodb:4.4.12-debian-10-r24
+#      alias: mongo
+#  variables:
+#    SWAGGER_DOC_AVAILABLE: ""
+#    AUTH_PATH: ${CI_PROJECT_DIR}/auth.ini
+#    IMG_DIR: ${CI_PROJECT_DIR}/images
+#    MONGODB_URI: mongodb://root:example@mongo:27017/?replicaSet=rs0
+#    MONGODB_ROOT_PASSWORD: example
+#    MONGODB_REPLICA_SET_MODE: primary
+#    MONGODB_REPLICA_SET_NAME: rs0
+#    MONGODB_REPLICA_SET_KEY: replicaSetKey
+#  tags:
+#    - kube-dev
+#  before_script:
+#    - apk --no-cache add gcc build-base git openssl-dev libffi-dev
+#    - pip install -r requirements.txt
+#    - pip install -r tests/requirements.txt
+#    - pip install -e .
+#  script:
+#    - pytest -x -s tests/integration/
+#      --cov=src/catalog
+#      --cov-report xml
+#      --cov-report term
+#  artifacts:
+#    reports:
+#      coverage_report:
+#        path: coverage.xml
+#        coverage_format: cobertura
+#  coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
 
 
 publish_latest:

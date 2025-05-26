@@ -30,7 +30,8 @@ services:
             - mongo
 
     mongo:
-        image: 'bitnami/mongodb:4.4.10'
+        image: 'bitnami/mongodb:latest'
+        platform: 'linux/amd64'
         environment:
             MONGODB_ROOT_PASSWORD: example
             MONGODB_REPLICA_SET_MODE: primary
