@@ -22,11 +22,12 @@ async def test_create_ban_by_not_market_administrator(api, contributor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['must be one of market administrators: data.administrator.identifier']} == result
+    assert {'errors': ['Value error, must be one of market administrators: data.administrator.identifier']} == result
 
 
 async def test_create_ban_permission(api, contributor):
     data = api.get_fixture_json('ban')
+    data.pop("documents", None)
     resp = await api.post(
         f"/api/crowd-sourcing/contributors/{contributor['data']['id']}/bans",
         json={"data": data},
@@ -46,8 +47,8 @@ async def test_ban_create_invalid_fields(api, contributor):
     result = await resp.json()
     assert resp.status == 400, result
     errors = [
-        'field required: data.reason',
-        'field required: data.administrator',
+        'Field required: data.reason',
+        'Field required: data.administrator',
     ]
     assert {'errors': errors} == result
 
@@ -59,7 +60,7 @@ async def test_ban_create_invalid_fields(api, contributor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Can add document only from document service: data.documents.0.__root__']} == result
+    assert {'errors': ['Value error, can add document only from document service: data.documents.0']} == result
 
     data['documents'][0]['url'] = generate_test_url(data["documents"][0]["hash"])
     resp = await api.post(
@@ -69,7 +70,7 @@ async def test_ban_create_invalid_fields(api, contributor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Document url signature is invalid: data.documents.0.__root__']} == result
+    assert {'errors': ['Value error, document url signature is invalid: data.documents.0']} == result
 
     del data["documents"]
     data["reason"] = "some other reason"
@@ -80,7 +81,7 @@ async def test_ban_create_invalid_fields(api, contributor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['must be one of market/ban_reason.json keys: data.reason']} == result
+    assert {'errors': ['Value error, must be one of market/ban_reason.json keys: data.reason']} == result
 
     data = deepcopy(api.get_fixture_json('ban'))
     data["dueDate"] = (get_now() - timedelta(days=1)).isoformat()
@@ -92,7 +93,7 @@ async def test_ban_create_invalid_fields(api, contributor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['should be greater than now: data.dueDate']} == result
+    assert {'errors': ['Value error, should be greater than now: data.dueDate']} == result
 
 
 async def test_ban_create(api, contributor):

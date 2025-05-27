@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, Union
-from pydantic import Field, validator, AnyUrl, constr, model_validator
+from pydantic import Field, field_validator, AnyUrl, constr, model_validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Response
 from catalog.settings import IMG_PATH
@@ -88,7 +88,7 @@ class Image(BaseModel):
     format: Optional[str] = Field(None, pattern=r"^image/[a-z]{2,10}$", example="image/immage1")
     hash: Optional[str] = Field(None, pattern=r"^md5:[0-9a-f]{32}$", example="md5:0000000000000000000000000000000")
 
-    @validator('url')
+    @field_validator('url')
     def valid_url(cls, v):
         if not v.startswith(IMG_PATH):
             raise ValueError(f"Invalid url, should start with {IMG_PATH}")
@@ -108,14 +108,14 @@ class Address(BaseModel):
     region: str = Field(..., min_length=1, max_length=80)
     streetAddress: str = Field(..., min_length=1, max_length=250)
 
-    @validator('region')
+    @field_validator('region')
     def region_standard(cls, v, values):
-        country_name = values.countryName
+        country_name = values.data.get("countryName")
         if country_name == UKRAINE_COUNTRY_NAME_UK and v not in UA_REGIONS:
             raise ValueError("must be one of classifiers/ua_regions.json")
         return v
 
-    @validator('countryName')
+    @field_validator('countryName')
     def country_standard(cls, v):
         if v not in COUNTRY_NAMES_UK:
             raise ValueError("must be one of classifiers/countries.json")
@@ -132,9 +132,9 @@ class OfferDeliveryAddress(Address):  # only countryName is required
     region: Optional[constr(max_length=80)] = Field(None, example="string")
     streetAddress: Optional[constr(max_length=250)] = Field(None, example="string")
 
-    @validator('region')
+    @field_validator('region')
     def region_for_ukraine_only(cls, v, values):
-        country_name = values.countryName
+        country_name = values.data.get("countryName")
         if country_name != UKRAINE_COUNTRY_NAME_UK and v:
             raise ValueError("can be provided only for Ukraine")
         return v
@@ -147,7 +147,7 @@ class ContactPoint(BaseModel):
     email: Optional[str] = Field(None, max_length=250, example="string")
     faxNumber: Optional[str] = Field(None, max_length=250, example="string")
 
-    @validator('telephone')
+    @field_validator('telephone')
     def telephone_format(cls, v):
         if not re.match(r"^(\+)?[0-9]{2,}(,( )?(\+)?[0-9]{2,})*$", v):
             raise ValueError("Invalid phone format")
@@ -180,7 +180,7 @@ class BaseAdministratorIdentifier(BaseModel):
     id: str = Field(..., min_length=4, max_length=50)
     scheme: str = Field(..., min_length=1, max_length=20)
 
-    @validator("scheme")
+    @field_validator("scheme")
     def scheme_standard(cls, v):
         if v not in ORA_CODES:
             raise ValueError("must be one of organizations/identifier_scheme.json codes")
@@ -199,7 +199,7 @@ class CategoryAdministratorIdentifier(BaseAdministratorIdentifier):
 class MarketAdministrator(BaseModel):
     identifier: MarketAdministratorIdentifier
 
-    @validator('identifier')
+    @field_validator('identifier')
     def entity_is_market_administrator(cls, value):
         identifier = value.id
         if identifier not in ADMINISTRATOR_IDENTIFIERS:

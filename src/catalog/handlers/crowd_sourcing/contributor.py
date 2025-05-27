@@ -1,25 +1,33 @@
 import logging
+from typing import Union, Optional
+
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 
 from catalog import db
 from catalog.auth import validate_accreditation
-from catalog.models.contributor import ContributorPostInput
+from catalog.models.api import ErrorResponse, PaginatedList
+from catalog.models.contributor import ContributorPostInput, ContributorResponse
 from catalog.serializers.contributor import ContributorSerializer
 from catalog.state.contributor import ContributorState
-from catalog.swagger import class_view_swagger_path
-from catalog.handlers.base import BaseView
 from catalog.utils import pagination_params
 
 
 logger = logging.getLogger(__name__)
 
 
-@class_view_swagger_path('/app/swagger/crowd_sourcing/contributors')
-class ContributorView(BaseView):
+class ContributorView(PydanticView):
     state = ContributorState
 
-    @classmethod
-    async def collection_get(cls, request):
-        offset, limit, reverse = pagination_params(request)
+    async def get(
+        self, /, offset: Optional[str] = None, limit: Optional[int] = 100, descending: Optional[int] = 0,
+    ) -> r200[PaginatedList]:
+        """
+        Get a list of contributors
+
+        Tags: Contributors
+        """
+        offset, limit, reverse = pagination_params(self.request)
         response = await db.find_contributors(
             offset=offset,
             limit=limit,
@@ -27,19 +35,19 @@ class ContributorView(BaseView):
         )
         return response
 
-    @classmethod
-    async def get(cls, request, contributor_id):
-        obj = await db.read_contributor(contributor_id)
-        return {"data": ContributorSerializer(obj).data}
+    async def post(
+        self, /, body: ContributorPostInput
+    ) -> Union[r201[ContributorResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        """
+        Create contributor
 
-    @classmethod
-    async def post(cls, request):
-        validate_accreditation(request, "contributors")
-        # import and validate data
-        json = await request.json()
-        body = ContributorPostInput(**json)
+        Security: Basic: []
+        Tags: Contributors
+        """
+        validate_accreditation(self.request, "contributors")
+
         data = body.data.dict_without_none()
-        await cls.state.on_post(data)
+        await self.state.on_post(data)
         await db.insert_contributor(data)
 
         logger.info(
@@ -50,3 +58,18 @@ class ContributorView(BaseView):
             },
         )
         return {"data": ContributorSerializer(data).data}
+
+
+class ContributorItemView(PydanticView):
+    state = ContributorState
+
+    async def get(
+        self, contributor_id: str, /,
+    ) -> Union[r200[ContributorResponse], r400[ErrorResponse], r404[ErrorResponse]]:
+        """
+        Get contributor
+
+        Tags: Contributors
+        """
+        obj = await db.read_contributor(contributor_id)
+        return {"data": ContributorSerializer(obj).data}

@@ -81,8 +81,8 @@ async def test_vendor_product_create(api, vendor, category, profile):
     assert resp.status == 400
     result = await resp.json()
     assert result == {'errors': [
-        "value is not a valid enumeration member; permitted: 'EAN-13': data.identifier.scheme",
-        'extra fields not permitted: data.alternativeIdentifiers',
+        "Input should be 'EAN-13': data.identifier.scheme",
+        'Extra inputs are not permitted: data.alternativeIdentifiers',
     ]}
 
     invalid_product = deepcopy(test_product)
@@ -96,7 +96,7 @@ async def test_vendor_product_create(api, vendor, category, profile):
     assert resp.status == 400
     result = await resp.json()
     assert result == {'errors': [
-        "unexpected value; permitted: <ProductStatus.active: 'active'>: data.status"
+        "Input should be <ProductStatus.active: 'active'>: data.status"
     ]}
 
     invalid_product = deepcopy(test_product)
@@ -189,7 +189,7 @@ async def test_vendor_product_update(api, vendor, category, vendor_product):
     assert resp.status == 400
     result = await resp.json()
     assert 'errors' in result
-    assert result['errors'][0] == 'extra fields not permitted: data.description'
+    assert result['errors'][0] == 'Extra inputs are not permitted: data.description'
 
     # update status and documents in one request
     doc_hash = "0" * 32

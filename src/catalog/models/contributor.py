@@ -18,7 +18,7 @@ class PostContributorAddress(PostVendorAddress):
     @model_validator(mode="before")
     @classmethod
     def check_ua_region(cls, values):
-        if values.countryName == UKRAINE_COUNTRY_NAME_UK and not values.region:
+        if values.get("countryName") == UKRAINE_COUNTRY_NAME_UK and not values.get("region"):
             raise ValueError(f"region is required for countryName {UKRAINE_COUNTRY_NAME_UK}")
         return values
 
@@ -32,9 +32,10 @@ class ContributorPostData(BaseModel):
     documents: Optional[List[DocumentPostData]] = Field(
         None,
         example=[{
+            "id": uuid4().hex,
             "title": "name.doc",
             "url": "/documents/name.doc",
-            "hash": f"md5:0000000000000000000000",
+            "hash": f"md5:{uuid4().hex}",
             "format": "application/msword",
         }]
     )
@@ -66,9 +67,10 @@ class Contributor(BaseModel):
     documents: Optional[List[Document]] = Field(
         None,
         example=[{
+            "id": uuid4().hex,
             "title": "name.doc",
             "url": "/documents/name.doc",
-            "hash": f"md5:0000000000000000000000",
+            "hash": f"md5:{uuid4().hex}",
             "format": "application/msword",
         }]
     )

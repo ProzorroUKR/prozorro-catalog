@@ -46,7 +46,7 @@ class BaseProfileCreateData(BaseModel):
     )
     status: ProfileStatus = ProfileStatus.active
     relatedCategory: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100, example=[{
+    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[{
         "description": "description",
         "id": "33190000-8",
         "scheme": "ДК021"
@@ -97,7 +97,7 @@ class ProfileUpdateData(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=250, example="title")
     description: Optional[str] = Field(None, min_length=1, max_length=1000, example="description")
     status: Optional[ProfileStatus] = Field(None, example=ProfileStatus.active)
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100, example=[{
+    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[{
         "description": "description",
         "id": "33190000-8",
         "scheme": "ДК021"
@@ -144,7 +144,7 @@ class Profile(BaseModel):
     classification: Classification
     additionalClassifications: Optional[List[Classification]] = Field(
         None,
-        max_items=100,
+        max_length=100,
         example={
             "description": "description",
             "id": "33190000-8",

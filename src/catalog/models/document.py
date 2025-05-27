@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import Field, validator, model_validator
+from pydantic import Field, field_validator, model_validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse, AuthorizedInput, ListResponse
 from catalog.doc_service import validate_url_from_doc_service, validate_url_signature, build_api_document_url
@@ -8,28 +8,26 @@ from uuid import uuid4
 
 
 class DocumentPostData(BaseModel):
-    id: str = None
+    id: Optional[str] = Field(None, example=uuid4().hex)
     hash: str = Field(..., pattern=r"^md5:[0-9a-f]{32}$")
     title: str = Field(..., min_length=1)
     format: str
     url: str
     description: Optional[str] = Field(None, example="description")
 
-    @validator("id", always=True)
-    def generate_id(cls, v, values, **kwargs):
-        return uuid4().hex
-
-    @model_validator(mode="after")
+    @model_validator(mode="before")
     def process_url(cls, values):
+        if "id" not in values:
+            values["id"] = uuid4().hex
         if 'url' in values and 'hash' in values:
-            validate_url_from_doc_service(values.url)
-            validate_url_signature(values.url, values.hash)
-            values.url = build_api_document_url(values.id, values.url)
+            validate_url_from_doc_service(values["url"])
+            validate_url_signature(values["url"], values["hash"])
+            values["url"] = build_api_document_url(values["id"], values["url"])
         return values
 
 
 class DocumentPutData(DocumentPostData):
-    @validator("id", always=True)
+    @field_validator("id")
     def generate_id(cls, v, values, **kwargs):
         return v or uuid4().hex
 

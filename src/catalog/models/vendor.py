@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import EmailStr, Field, validator
+from pydantic import EmailStr, Field, field_validator
 from enum import Enum
 
 from catalog.models.ban import Ban
@@ -25,7 +25,7 @@ class VendorAddress(PostVendorAddress):
 
 
 class VendorIdentifier(Identifier):
-    @validator("scheme")
+    @field_validator("scheme")
     def scheme_standard(cls, v):
         if v not in ORA_CODES:
             raise ValueError("must be one of organizations/identifier_scheme.json codes")
@@ -49,7 +49,7 @@ class VendorPostData(BaseModel):
 class VendorPatchData(BaseModel):
     isActivated: Optional[bool] = Field(None, example=True)
 
-    @validator('isActivated')
+    @field_validator('isActivated')
     def activation_only(cls, v, values, **kwargs):
         assert v is True, "activation is only allowed action"
         return v

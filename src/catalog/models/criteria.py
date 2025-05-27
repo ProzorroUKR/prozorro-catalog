@@ -11,7 +11,7 @@ from pydantic import (
     PositiveInt,
     constr,
     conset,
-    validator,
+    field_validator,
 )
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, BulkInput, ListResponse, AuthorizedInput
@@ -219,7 +219,7 @@ class BaseRequirementCreateData(BaseModel):
 
     eligibleEvidences: Optional[List[EligibleEvidence]] = Field(
         None,
-        max_items=100,
+        max_length=100,
         example=[{"id": uuid4().hex, "title": "string"}]
     )
 
@@ -268,7 +268,7 @@ class BaseRequirementUpdateData(BaseModel):
 
     eligibleEvidences: Optional[List[EligibleEvidence]] = Field(
         None,
-        max_items=100,
+        max_length=100,
         example=[{"id": uuid4().hex, "title": "string"}]
     )
 
@@ -312,7 +312,7 @@ class Requirement(BaseModel):
     expectedMaxItems: Optional[PositiveInt] = Field(None, example=1)
     dataSchema: Optional[DataSchemaEnum] = Field(None, example=DataSchemaEnum.ISO_639)
 
-    eligibleEvidences: Optional[List[EligibleEvidence]] = Field(None, max_items=100, example=[{"id": uuid4().hex, "title": "string"}])
+    eligibleEvidences: Optional[List[EligibleEvidence]] = Field(None, max_length=100, example=[{"id": uuid4().hex, "title": "string"}])
 
 
 class CategoryRequirement(Requirement, CategoryRequirementValidators):
@@ -342,7 +342,7 @@ class RequirementGroupsUpdateData(BaseModel):
 class RequirementGroup(BaseModel):
     id: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
     description: str = Field(..., min_length=1, max_length=1000)
-    requirements: List[Requirement] = Field(..., min_items=1, max_items=200)
+    requirements: List[Requirement] = Field(..., min_length=1, max_length=200)
 
 
 class LegislationIdentifier(BaseModel):
@@ -365,7 +365,7 @@ class CriterionClassification(BaseModel):
     scheme: Literal["ESPD211"]
     id: str = Field(..., min_length=1, max_length=250)
 
-    @validator('id')
+    @field_validator('id')
     def validate_id(cls, value):
         if value not in CRITERIA_LIST:
             raise ValueError(f"must be one of {CRITERIA_LIST}")
@@ -376,7 +376,7 @@ class CriterionCreateData(BaseModel):
     classification: CriterionClassification
     title: str = Field(..., min_length=1, max_length=250)
     description: str = Field(..., min_length=1, max_length=1000)
-    legislation: List[LegislationItem] = Field(..., min_items=1, max_items=100)
+    legislation: List[LegislationItem] = Field(..., min_length=1, max_length=100)
     source: str = Field("tenderer", min_length=1, max_length=100)
 
     @property
@@ -392,7 +392,7 @@ class CriterionUpdateData(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=250, example="string")
     code: Optional[str] = Field(None, pattern=r"^[0-9A-Za-z_-]{1,32}$", example="string")
     description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
-    legislation: Optional[List[LegislationItem]] = Field(None, min_items=1, max_items=100, example=[
+    legislation: Optional[List[LegislationItem]] = Field(None, min_length=1, max_length=100, example=[
         {
             "identifier": {
                 "id": "string",
@@ -411,10 +411,10 @@ class CriterionUpdateData(BaseModel):
 
 class Criterion(BaseModel):
     id: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
-    requirementGroups: List[RequirementGroup] = Field(..., min_items=1, max_items=100)
+    requirementGroups: List[RequirementGroup] = Field(..., min_length=1, max_length=100)
     title: str = Field(..., min_length=1, max_length=250)
     description: str = Field(..., min_length=1, max_length=1000)
-    legislation: Optional[List[LegislationItem]] = Field(None, min_items=1, max_items=100, example=[
+    legislation: Optional[List[LegislationItem]] = Field(None, min_length=1, max_length=100, example=[
         {
             "identifier": {
                 "id": "string",
@@ -453,6 +453,18 @@ RequirementCreateInput = AuthorizedInput[
     Union[
         CategoryRequirementCreateData,
         List[CategoryRequirementCreateData],
+        ProfileRequirementCreateData,
+        List[ProfileRequirementCreateData],
+    ]
+]
+RequestCategoryRequirementCreateInput = AuthorizedInput[
+    Union[
+        CategoryRequirementCreateData,
+        List[CategoryRequirementCreateData],
+    ]
+]
+RequestProfileRequirementCreateInput = AuthorizedInput[
+    Union[
         ProfileRequirementCreateData,
         List[ProfileRequirementCreateData],
     ]

@@ -1,16 +1,25 @@
-from aiohttp.web_urldispatcher import View
+from typing import Optional, Union
+
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r400, r404
 from catalog import db
-from catalog.swagger import class_view_swagger_path
+from catalog.models.api import PaginatedList, ErrorResponse
+from catalog.models.offer import OfferResponse
 from catalog.utils import pagination_params
 from catalog.serializers.base import RootSerializer
 
 
-@class_view_swagger_path('/app/swagger/offers')
-class OfferView(View):
+class OfferView(PydanticView):
 
-    @classmethod
-    async def collection_get(cls, request):
-        offset, limit, reverse = pagination_params(request)
+    async def get(
+        self, /, offset: Optional[str] = None, limit: Optional[int] = 100, descending: Optional[int] = 0,
+    ) -> r200[PaginatedList]:
+        """
+        Get a list of offers
+
+        Tags: Offers
+        """
+        offset, limit, reverse = pagination_params(self.request)
         response = await db.find_offers(
             offset=offset,
             limit=limit,
@@ -18,7 +27,14 @@ class OfferView(View):
         )
         return response
 
-    @classmethod
-    async def get(cls, request, offer_id):
+
+class OfferItemView(PydanticView):
+
+    async def get(self, offer_id: str, /) -> Union[r200[OfferResponse], r400[ErrorResponse], r404[ErrorResponse]]:
+        """
+        Get an offer
+
+        Tags: Offers
+        """
         data = await db.read_offer(offer_id)
         return {"data": RootSerializer(data).data}

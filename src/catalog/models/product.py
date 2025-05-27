@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, List, Union, Literal
 from uuid import uuid4
 
-from pydantic import Field, validator, constr, StrictInt, StrictFloat, StrictBool, StrictStr
+from pydantic import Field, field_validator, constr, StrictInt, StrictFloat, StrictBool, StrictStr
 
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, CreateResponse, AuthorizedInput
@@ -52,9 +52,9 @@ class RequirementResponse(BaseModel):
 
 
 class ProductRequirementResponses(BaseModel):
-    requirementResponses: Optional[List[RequirementResponse]] = Field(None, min_items=1, max_items=200, example=[{"requirement": "string", "value": 2}])
+    requirementResponses: Optional[List[RequirementResponse]] = Field(None, min_length=1, max_length=200, example=[{"requirement": "string", "value": 2}])
 
-    @validator('requirementResponses')
+    @field_validator('requirementResponses')
     def unique_responses_ids(cls, v):
         if v:
             requirements = [e.requirement for e in v]
@@ -68,7 +68,7 @@ class BaseProductCreateData(ProductRequirementResponses):
     relatedCategory: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
     description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
     classification: Classification
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100, example=[{
+    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[{
         "description": "description",
         "id": "33190000-8",
         "scheme": "ДК021"
@@ -78,7 +78,7 @@ class BaseProductCreateData(ProductRequirementResponses):
 
 
 class VendorProductCreateData(BaseProductCreateData):
-    relatedProfiles: Optional[List[str]] = Field(List[str], min_items=1, max_items=1)
+    relatedProfiles: Optional[List[str]] = Field(None, min_length=1, max_length=1, example=[uuid4().hex,])
 
     @property
     def id(self):
@@ -87,8 +87,8 @@ class VendorProductCreateData(BaseProductCreateData):
 
 class BaseProductData(BaseProductCreateData):
     identifier: Optional[ProductIdentifier] = Field(None, example={"id": "463234567819", "scheme": "UPC"})
-    alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_items=100, example=[{"id": "463234567819", "scheme": "UPC"}])
-    images: List[Image] = Field(None, max_items=20, example=[{"url": "/image/1.jpg"}])
+    alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_length=100, example=[{"id": "463234567819", "scheme": "UPC"}])
+    images: List[Image] = Field(None, max_length=20, example=[{"url": "/image/1.jpg"}])
 
 
 class ProductCreateData(BaseProductData):
@@ -106,14 +106,14 @@ class ProductUpdateData(ProductRequirementResponses):
         "id": "33190000-8",
         "scheme": "ДК021"
     })
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100, example=[{
+    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[{
         "description": "description",
         "id": "33190000-8",
         "scheme": "ДК021"
     }])
     identifier: Optional[ProductIdentifier] = Field(None, example={"id": "463234567819", "scheme": "UPC"})
-    alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_items=100, example=[{"id": "463234567819", "scheme": "UPC"}])
-    images: Optional[List[Image]] = Field(None, max_items=20, example=[{"url": "/image/1.jpg"}])
+    alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_length=100, example=[{"id": "463234567819", "scheme": "UPC"}])
+    images: Optional[List[Image]] = Field(None, max_length=20, example=[{"url": "/image/1.jpg"}])
     status: Optional[ProductStatus] = Field(None, example=ProductStatus.inactive)
 
 
@@ -122,9 +122,10 @@ class LocalizationProductUpdateData(BaseModel):
     documents: Optional[List[DocumentPostData]] = Field(
         None,
         example=[{
+            "id": uuid4().hex,
             "title": "name.doc",
             "url": "/documents/name.doc",
-            "hash": f"md5:0000000000000000000000",
+            "hash": f"md5:{uuid4().hex}",
             "format": "application/msword",
         }]
     )
@@ -141,13 +142,14 @@ class Product(BaseProductData):
     documents: Optional[Document] = Field(
         None,
         example=[{
+            "id": uuid4().hex,
             "title": "name.doc",
             "url": "/documents/name.doc",
-            "hash": f"md5:0000000000000000000000",
+            "hash": f"md5:{uuid4().hex}",
             "format": "application/msword",
         }]
     )
-    images: Optional[List[Image]] = Field(None, max_items=100, example=[{"url": "/image/1.jpg"}])
+    images: Optional[List[Image]] = Field(None, max_length=100, example=[{"url": "/image/1.jpg"}])
     expirationDate: Optional[datetime] = Field(None, example=get_now().isoformat())
 
 

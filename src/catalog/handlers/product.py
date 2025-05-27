@@ -1,12 +1,10 @@
-import random
 from copy import deepcopy
 import logging
 from typing import Optional, Union
 
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
-from aiohttp.web import HTTPConflict, HTTPNotFound
-from pymongo.errors import OperationFailure
+from aiohttp.web import HTTPNotFound
 
 from catalog import db
 from catalog.models.api import PaginatedList, ErrorResponse

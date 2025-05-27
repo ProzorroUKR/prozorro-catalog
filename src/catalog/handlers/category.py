@@ -1,29 +1,31 @@
-import random
 from copy import deepcopy
 import logging
 from typing import Union, Optional
-from unittest.mock import ANY
-
-from aiohttp.web_request import Request
-from aiohttp.web_urldispatcher import View
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
-from aiohttp.web import HTTPBadRequest, HTTPConflict
-from pymongo.errors import OperationFailure
+from aiohttp.web import HTTPBadRequest
 from catalog import db
 from catalog.models.api import PaginatedList, ErrorResponse
-from catalog.swagger import class_view_swagger_path
 from catalog.auth import set_access_token, validate_accreditation, validate_access_token
-from catalog.utils import pagination_params, async_retry
+from catalog.utils import pagination_params
 from catalog.models.category import CategoryCreateInput, CategoryUpdateInput, DeprecatedCategoryCreateInput, \
     CategoryResponse
 from catalog.models.criteria import (
     CategoryRequirementCreateInput,
     CategoryBulkRequirementCreateInput,
     CategoryRequirementUpdateInput,
-    CategoryRequirement, CriterionCreateInput, CriterionListResponse, CriterionResponse, CriterionUpdateInput,
-    RGResponse, RGCreateInput, RGListResponse, RGUpdateInput, RequirementListResponse, RequirementCreateInput,
-    RequirementResponse, RequirementUpdateInput,
+    CategoryRequirement,
+    CriterionCreateInput,
+    CriterionListResponse,
+    CriterionResponse,
+    CriterionUpdateInput,
+    RGResponse,
+    RGCreateInput,
+    RGListResponse,
+    RGUpdateInput,
+    RequirementListResponse,
+    RequirementResponse,
+    RequestCategoryRequirementCreateInput,
 )
 from catalog.serializers.base import RootSerializer
 from catalog.state.category import CategoryState
@@ -44,7 +46,7 @@ class CategoryView(PydanticView):
     state = CategoryState
 
     async def get(
-            self, /, offset: Optional[str] = None,  limit: Optional[int] = 100, descending: Optional[int] = 0,
+        self, /, offset: Optional[str] = None,  limit: Optional[int] = 100, descending: Optional[int] = 0,
     ) -> r200[PaginatedList]:
         """
         Get a list of categories
@@ -60,7 +62,7 @@ class CategoryView(PydanticView):
         return response
 
     async def post(
-            self, /, body: CategoryCreateInput
+        self, /, body: CategoryCreateInput
     ) -> Union[r201[CategoryResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         """
         Create category
@@ -94,7 +96,7 @@ class CategoryView(PydanticView):
 class CategoryItemView(PydanticView):
     state = CategoryState
 
-    async def get(self, category_id: str, /) -> Union[r201[CategoryResponse], r400[ErrorResponse], r404[ErrorResponse]]:
+    async def get(self, category_id: str, /) -> Union[r200[CategoryResponse], r400[ErrorResponse], r404[ErrorResponse]]:
         """
         Get category
 
@@ -104,7 +106,7 @@ class CategoryItemView(PydanticView):
         return {"data": RootSerializer(obj, show_owner=False).data}
 
     async def put(
-            self, category_id: str, /, body: DeprecatedCategoryCreateInput
+        self, category_id: str, /, body: DeprecatedCategoryCreateInput
     ) -> Union[r201[CategoryResponse], r400[ErrorResponse]]:
         """
         Create category
@@ -130,10 +132,8 @@ class CategoryItemView(PydanticView):
                     "access": access}
         return response
 
-    # @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
-    #              fail_exception=HTTPConflict(text="Try again later"))
     async def patch(
-            self, category_id: str, /, body: CategoryUpdateInput
+        self, category_id: str, /, body: CategoryUpdateInput
     ) -> Union[r200[CategoryResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Category update
@@ -278,7 +278,7 @@ class CategoryCriteriaRGRequirementView(CategoryCriteriaViewMixin, BaseCriteriaR
 
 
     async def post(
-        self, obj_id: str, criterion_id: str, rg_id: str, /, body: RequirementCreateInput
+        self, obj_id: str, criterion_id: str, rg_id: str, /, body: RequestCategoryRequirementCreateInput
     ) -> Union[r201[RequirementResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         """
         Requirement create
@@ -309,7 +309,7 @@ class CategoryCriteriaRGRequirementItemView(CategoryCriteriaViewMixin, BaseCrite
         return await BaseCriteriaRGRequirementItemViewMixin.get(self, obj_id, criterion_id, rg_id, requirement_id)
 
     async def patch(
-        self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /, body: RequirementUpdateInput
+        self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /, body: CategoryRequirementUpdateInput
     ) -> Union[r200[RequirementResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Requirement update

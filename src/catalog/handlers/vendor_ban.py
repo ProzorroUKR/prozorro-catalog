@@ -1,45 +1,66 @@
+from typing import Union
+
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from catalog.auth import validate_access_token
 
 from catalog import db
-from catalog.handlers.base_ban import BaseBanView
-from catalog.models.ban import VendorBanPostInput
+from catalog.handlers.base_ban import BaseBanViewMixin, BaseBanViewItemMixin
+from catalog.models.api import ErrorResponse
+from catalog.models.ban import VendorBanPostInput, BanResponse, BanList
 from catalog.state.vendor_ban import VendorBanState
-from catalog.swagger import class_view_swagger_path
 from catalog.validations import validate_active_vendor
 
 
-@class_view_swagger_path('/app/swagger/vendors/bans')
-class VendorBanView(BaseBanView):
+class VendorBanView(BaseBanViewMixin, PydanticView):
     state = VendorBanState
 
     parent_obj_name = "vendor"
 
-    @classmethod
-    async def get_parent_obj(cls, **kwargs):
-        return await db.read_vendor(kwargs.get("vendor_id"))
+    async def get_parent_obj(self, parent_obj_id):
+        return await db.read_vendor(parent_obj_id)
 
-    @classmethod
-    def read_and_update_object(cls, **kwargs):
-        return db.read_and_update_vendor(kwargs.get("vendor_id"))
+    def read_and_update_object(cls, parent_obj_id):
+        return db.read_and_update_vendor(parent_obj_id)
 
-    @classmethod
-    async def validate_data(cls, request, body, parent_obj, **kwargs):
-        validate_access_token(request, parent_obj, parent_obj["access"])
+    async def validate_data(self, body, parent_obj):
+        validate_access_token(self.request, parent_obj, parent_obj["access"])
         validate_active_vendor(parent_obj)
 
-    @classmethod
-    async def get_body_from_model(cls, request):
-        json = await request.json()
-        return VendorBanPostInput(**json)
+    async def get(self, vendor_id: str, /) -> r200[BanList]:
+        """
+        Get a list of vendor bans
 
-    @classmethod
-    async def collection_get(cls, request, **kwargs):
-        return await super().collection_get(request, **kwargs)
+        Tags: Vendor/Bans
+        """
+        return await BaseBanViewMixin.get(self, vendor_id)
 
-    @classmethod
-    async def get(cls, request, **kwargs):
-        return await super().get(request, **kwargs)
+    async def post(
+        self, vendor_id: str, /, body: VendorBanPostInput
+    ) -> Union[r201[BanResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        """
+        Create a vendor ban
 
-    @classmethod
-    async def post(cls, request, **kwargs):
-        return await super().post(request, **kwargs)
+        Security: Basic: []
+        Tags: Vendor/Bans
+        """
+        return await BaseBanViewMixin.post(self, vendor_id, body)
+
+
+class VendorBanItemView(BaseBanViewItemMixin, PydanticView):
+    state = VendorBanState
+
+    parent_obj_name = "vendor"
+
+    async def get_parent_obj(self, parent_obj_id):
+        return await db.read_vendor(parent_obj_id)
+
+    async def get(
+        self, vendor_id: str, ban_id: str, /,
+    ) -> Union[r200[BanResponse], r400[ErrorResponse], r404[ErrorResponse]]:
+        """
+        Get a vendor ban
+
+        Tags: Vendor/Bans
+        """
+        return await BaseBanViewItemMixin.get(self, vendor_id, ban_id)

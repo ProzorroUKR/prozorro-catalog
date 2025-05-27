@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, List, Union
 from uuid import uuid4
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse
@@ -20,17 +20,17 @@ class RequestReviewPostData(BaseModel):
 
 
 class RequestRejectionPostData(RequestReviewPostData):
-    reason: List[str] = Field(..., min_items=1)
+    reason: List[str] = Field(..., min_length=1)
     description: Optional[str] = Field(None, min_length=1, max_length=2000, example="description")
 
-    @validator('reason')
-    def reason_standard(cls, values):
-        for reason in values:
+    @field_validator('reason')
+    def reason_standard(cls, v):
+        for reason in v:
             if reason not in REJECT_REASONS:
                 raise ValueError(f"invalid value: '{reason}'. Must be one of market/product_reject_reason.json keys")
-        if len(values) != len(set(values)):
+        if len(v) != len(set(v)):
             raise ValueError("there are duplicated reasons")
-        return values
+        return v
 
 
 class RequestReview(RequestReviewPostData):
@@ -46,9 +46,10 @@ class ProductRequestPostData(BaseModel):
     documents: Optional[List[DocumentPostData]] = Field(
         None,
         example=[{
+            "id": uuid4().hex,
             "title": "name.doc",
             "url": "/documents/name.doc",
-            "hash": f"md5:0000000000000000000000",
+            "hash": f"md5:{uuid4().hex}",
             "format": "application/msword",
         }]
     )
@@ -92,9 +93,10 @@ class ProductRequest(BaseModel):
     documents: Optional[List[Document]] = Field(
         None,
         example=[{
+            "id": uuid4().hex,
             "title": "name.doc",
             "url": "/documents/name.doc",
-            "hash": f"md5:0000000000000000000000",
+            "hash": f"md5:{uuid4().hex}",
             "format": "application/msword",
         }]
     )

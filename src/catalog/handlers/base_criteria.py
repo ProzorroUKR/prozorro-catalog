@@ -1,6 +1,5 @@
 import logging
 
-from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from typing import Union
 

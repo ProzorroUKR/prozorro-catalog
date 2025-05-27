@@ -1,28 +1,24 @@
-import random
 from typing import Union
 
-from aiohttp.web import HTTPConflict, HTTPForbidden
+from aiohttp.web import HTTPForbidden
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
-from pymongo.errors import OperationFailure
 
 from catalog import db
 from catalog.models.api import ErrorResponse
 from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput, DocumentList, \
     DocumentResponse
-from catalog.swagger import class_view_swagger_path
 from catalog.handlers.base_document import BaseDocumentView, BaseDocumentItemView
-from catalog.utils import async_retry
 from catalog.auth import validate_access_token, validate_accreditation
 
 
 class ProductDocumentMixin:
     @classmethod
-    async def get_parent_obj(cls, parent_obj_id):
+    async def get_parent_obj(cls, parent_obj_id, child_obj_id=None):
         return await db.read_product(parent_obj_id)
 
     @classmethod
-    def read_and_update_object(cls, parent_obj_id):
+    def read_and_update_object(cls, parent_obj_id, child_obj_id=None):
         return db.read_and_update_product(parent_obj_id)
 
     @classmethod
@@ -34,7 +30,7 @@ class ProductDocumentMixin:
 
 class ProductDocumentView(ProductDocumentMixin, BaseDocumentView, PydanticView):
     async def post(
-        self, parent_obj_id: str, /, body: DocumentPostInput
+        self, product_id: str, /, body: DocumentPostInput
     ) -> Union[r201[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         """
         Product document create
@@ -43,29 +39,29 @@ class ProductDocumentView(ProductDocumentMixin, BaseDocumentView, PydanticView):
         Tags: Products/Documents
         """
         validate_accreditation(self.request, "product")
-        return await BaseDocumentView.post(self, parent_obj_id, body)
+        return await BaseDocumentView.post(self, product_id, body)
 
-    async def get(self, parent_obj_id: str, /) -> r200[DocumentList]:
+    async def get(self, product_id: str, /) -> r200[DocumentList]:
         """
         Get list of product documents
 
         Tags: Products/Documents
         """
-        return await BaseDocumentView.get(self, parent_obj_id)
+        return await BaseDocumentView.get(self, product_id)
 
 
-class ProductDocumentItemView(ProductDocumentMixin, BaseDocumentItemView):
+class ProductDocumentItemView(ProductDocumentMixin, BaseDocumentItemView, PydanticView):
 
-    async def get(self, parent_obj_id: str, doc_id: str, /) -> Union[r200[DocumentResponse], r404[ErrorResponse]]:
+    async def get(self, product_id: str, doc_id: str, /) -> Union[r200[DocumentResponse], r404[ErrorResponse]]:
         """
         Get product document
 
         Tags: Products/Documents
         """
-        return await BaseDocumentItemView.get(parent_obj_id, doc_id)
+        return await BaseDocumentItemView.get(self, product_id, doc_id)
 
     async def put(
-        self, parent_obj_id: str, doc_id: str, /, body: DocumentPutInput,
+        self, product_id: str, doc_id: str, /, body: DocumentPutInput,
     ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Product document replace
@@ -74,10 +70,10 @@ class ProductDocumentItemView(ProductDocumentMixin, BaseDocumentItemView):
         Tags: Products/Documents
         """
         validate_accreditation(self.request, "product")
-        return await BaseDocumentItemView.put(parent_obj_id, doc_id, body)
+        return await BaseDocumentItemView.put(self, product_id, doc_id, body)
 
     async def patch(
-        self, parent_obj_id: str, doc_id: str, /, body: DocumentPatchInput,
+        self, product_id: str, doc_id: str, /, body: DocumentPatchInput,
     ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Product document update
@@ -86,5 +82,5 @@ class ProductDocumentItemView(ProductDocumentMixin, BaseDocumentItemView):
         Tags: Products/Documents
         """
         validate_accreditation(self.request, "product")
-        return await BaseDocumentItemView.patch(parent_obj_id, doc_id, body)
+        return await BaseDocumentItemView.patch(self, product_id, doc_id, body)
 

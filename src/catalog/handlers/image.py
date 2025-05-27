@@ -1,6 +1,5 @@
 from aiohttp.web_urldispatcher import View
 from aiohttp.web import HTTPBadRequest
-from catalog.swagger import class_view_swagger_path
 from catalog.settings import IMG_PATH, IMG_DIR, ALLOWED_IMG_TYPES, IMG_SIZE_LIMIT
 from catalog.image import monkey_patch_jpeg_tests, generate_filename
 import aiofiles
@@ -13,7 +12,6 @@ import logging
 monkey_patch_jpeg_tests()
 
 
-@class_view_swagger_path('/app/swagger/images')
 class ImageView(View):
 
     @classmethod

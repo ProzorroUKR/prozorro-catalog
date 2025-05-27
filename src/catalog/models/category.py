@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, List
 from uuid import uuid4
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, AuthorizedInput, Response, CreateResponse
 from catalog.models.common import Classification, Image, CategoryMarketAdministrator, Unit, AGREEMENT_ID_REGEX
@@ -22,13 +22,13 @@ class BaseCategoryCreateData(BaseModel):
     title: str = Field(..., min_length=1, max_length=80)
     unit: Unit
     description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100, example=[{
+    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[{
         "description": "description",
         "id": "33190000-8",
         "scheme": "ДК021"
     }])
     status: CategoryStatus = CategoryStatus.active
-    images: Optional[List[Image]] = Field(None, max_items=100, example=[{"url": "/image/1.jpg"}])
+    images: Optional[List[Image]] = Field(None, max_length=100, example=[{"url": "/image/1.jpg"}])
     agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example="string")
 
     @property
@@ -48,14 +48,14 @@ class DeprecatedCategoryCreateData(BaseCategoryCreateData):
     """
     id: str = Field(..., pattern=r"^[0-9A-Za-z_-]{20,32}$")
 
-    @validator('id')
+    @field_validator('id')
     def id_format(cls, v, values, **kwargs):
         """
         instead of generating id, we ask user to pass through all these validations
         """
-        if "classification" in values and values["classification"].id[:8] not in v:
+        if "classification" in values.data and values.data["classification"].id[:8] not in v:
             raise ValueError('id must include cpv')
-        if "marketAdministrator" in values and values["marketAdministrator"].identifier.id not in v:
+        if "marketAdministrator" in values.data and values.data["marketAdministrator"].identifier.id not in v:
             raise ValueError('id must include edr')
         return v
 
@@ -65,8 +65,8 @@ class CategoryUpdateData(BaseModel):
     unit: Optional[Unit] = Field(None, example={"code": "string", "name": "string"})
     description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
     status: Optional[CategoryStatus] = Field(None, example=CategoryStatus.active)
-    images: Optional[List[Image]] = Field(None, max_items=100, example=[{"url": "/image/1.jpg"}])
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_items=100, example=[{
+    images: Optional[List[Image]] = Field(None, max_length=100, example=[{"url": "/image/1.jpg"}])
+    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[{
         "description": "description",
         "id": "33190000-8",
         "scheme": "ДК021"
@@ -84,9 +84,9 @@ class Category(BaseModel):
     title: Optional[str] = Field(..., min_length=1, max_length=80, example="title")
     unit: Unit
     description: Optional[str] = Field(..., min_length=1, max_length=1000, example="description")
-    additionalClassifications: Optional[List[Classification]] = Field(..., max_items=100)
+    additionalClassifications: Optional[List[Classification]] = Field(..., max_length=100)
     status: CategoryStatus = CategoryStatus.active
-    images: Optional[List[Image]] = Field(..., max_items=100)
+    images: Optional[List[Image]] = Field(..., max_length=100)
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     criteria: List[Criterion] = Field(...)
     agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example="string")

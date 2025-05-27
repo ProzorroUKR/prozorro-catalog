@@ -85,7 +85,7 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['field required: data.product']} == result
+    assert {'errors': ['Field required: data.product']} == result
 
     data = api.get_fixture_json('product_request')
     category_id = category['data']['id']
@@ -106,7 +106,7 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Can add document only from document service: data.documents.0.__root__']} == result
+    assert {'errors': ['Value error, can add document only from document service: data.documents.0']} == result
 
     data['documents'][0]['url'] = generate_test_url(data["documents"][0]["hash"])
     resp = await api.post(
@@ -116,7 +116,7 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Document url signature is invalid: data.documents.0.__root__']} == result
+    assert {'errors': ['Value error, document url signature is invalid: data.documents.0']} == result
 
     del data["documents"]
 
@@ -317,7 +317,7 @@ async def test_product_request_acception_validations(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['field required: data.administrator']} == result
+    assert {'errors': ['Field required: data.administrator']} == result
 
     invalid_data = deepcopy(request_review_data)
     invalid_data["administrator"]["identifier"]["id"] = "12121212"
@@ -328,7 +328,7 @@ async def test_product_request_acception_validations(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['must be one of market administrators: data.administrator.identifier']} == result
+    assert {'errors': ['Value error, must be one of market administrators: data.administrator.identifier']} == result
 
 
 async def test_product_request_acception(api, product_request):
@@ -458,8 +458,8 @@ async def test_product_request_rejection_validations(api, product_request):
     result = await resp.json()
     assert resp.status == 400, result
     errors = [
-        'field required: data.administrator',
-        'field required: data.reason',
+        'Field required: data.administrator',
+        'Field required: data.reason',
     ]
     assert {'errors': errors} == result
 
@@ -471,7 +471,7 @@ async def test_product_request_rejection_validations(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['must be one of market administrators: data.administrator.identifier']} == result
+    assert {'errors': ['Value error, must be one of market administrators: data.administrator.identifier']} == result
 
     rejection_data = deepcopy(request_review_data)
     rejection_data.update({
@@ -485,7 +485,7 @@ async def test_product_request_rejection_validations(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['value is not a valid list: data.reason']} == result
+    assert {'errors': ['Input should be a valid list: data.reason']} == result
 
     rejection_data["reason"] = []
     resp = await api.post(
@@ -495,7 +495,7 @@ async def test_product_request_rejection_validations(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['ensure this value has at least 1 items: data.reason']} == result
+    assert {'errors': ['List should have at least 1 item after validation, not 0: data.reason']} == result
 
     rejection_data["reason"] = ["invalidTitle", "invalidCharacteristics", "invalidTitle"]
     resp = await api.post(
@@ -505,7 +505,7 @@ async def test_product_request_rejection_validations(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['there are duplicated reasons: data.reason']} == result
+    assert {'errors': ['Value error, there are duplicated reasons: data.reason']} == result
 
     rejection_data["reason"] = ["invalidTitle", "some other reason"]
     resp = await api.post(
@@ -516,7 +516,7 @@ async def test_product_request_rejection_validations(api, product_request):
     result = await resp.json()
     assert resp.status == 400, result
     assert {'errors': [
-        "invalid value: 'some other reason'. Must be one of market/product_reject_reason.json keys: data.reason"
+        "Value error, invalid value: 'some other reason'. Must be one of market/product_reject_reason.json keys: data.reason"
     ]} == result
 
 

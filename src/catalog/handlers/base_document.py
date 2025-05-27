@@ -1,10 +1,8 @@
-import random
 import logging
+from typing import Optional
 
-from aiohttp_pydantic import PydanticView
-from aiohttp.web import HTTPConflict, HTTPFound, HTTPNotFound
-from pymongo.errors import OperationFailure
-from catalog.utils import get_now, async_retry
+from aiohttp.web import HTTPFound, HTTPNotFound
+from catalog.utils import get_now
 from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput
 from catalog.serializers.document import DocumentSerializer
 from catalog.doc_service import get_doc_download_url, get_ds_id_from_api_url
@@ -17,11 +15,11 @@ class BaseDocumentMixin:
     parent_obj_name = None
 
     @classmethod
-    async def get_parent_obj(cls, parent_obj_id):
+    async def get_parent_obj(cls, parent_obj_id, child_obj_id=None):
         pass
 
     @classmethod
-    def read_and_update_object(cls, parent_obj_id):
+    def read_and_update_object(cls, parent_obj_id, child_obj_id=None):
         pass
 
     @classmethod
@@ -31,15 +29,15 @@ class BaseDocumentMixin:
 
 class BaseDocumentView(BaseDocumentMixin):
 
-    async def get(self, parent_obj_id: str):
-        obj = await self.get_parent_obj(parent_obj_id)
+    async def get(self, parent_obj_id: str, child_obj_id: Optional[str] = None):
+        obj = await self.get_parent_obj(parent_obj_id, child_obj_id)
         return {"data": [DocumentSerializer(d).data for d in obj.get("documents", "")]}
 
-    async def post(self, parent_obj_id: str, body: DocumentPostInput):
+    async def post(self, parent_obj_id: str, body: DocumentPostInput, child_obj_id: Optional[str] = None):
 
         data = body.data.dict_without_none()
 
-        async with self.read_and_update_object(parent_obj_id) as obj:
+        async with self.read_and_update_object(parent_obj_id, child_obj_id) as obj:
             await self.validate_data(self.request, body, obj, parent_obj_id)
             obj['dateModified'] = data['datePublished'] = data['dateModified'] = get_now().isoformat()
             if "documents" not in obj:
@@ -59,8 +57,8 @@ class BaseDocumentView(BaseDocumentMixin):
 
 class BaseDocumentItemView(BaseDocumentMixin):
 
-    async def get(self, parent_obj_id: str, doc_id: str):
-        obj = await self.get_parent_obj(parent_obj_id)
+    async def get(self, parent_obj_id: str, doc_id: str, child_obj_id: Optional[str] = None):
+        obj = await self.get_parent_obj(parent_obj_id, child_obj_id)
         request_ds_id = self.request.query.get("download")
         for d in obj.get("documents", "")[::-1]:
             if d["id"] == doc_id:
@@ -74,9 +72,9 @@ class BaseDocumentItemView(BaseDocumentMixin):
         else:
             raise HTTPNotFound(text="Document not found")
 
-    async def put(self, parent_obj_id: str, doc_id: str, body: DocumentPutInput):
+    async def put(self, parent_obj_id: str, doc_id: str, body: DocumentPutInput, child_obj_id: Optional[str] = None):
         # validate_accreditation(request, "category")
-        async with self.read_and_update_object(parent_obj_id) as obj:
+        async with self.read_and_update_object(parent_obj_id, child_obj_id) as obj:
             # import and validate data
             json = await self.request.json()
             json["data"]["id"] = doc_id
@@ -99,9 +97,9 @@ class BaseDocumentItemView(BaseDocumentMixin):
             )
         return {"data": DocumentSerializer(data).data}
 
-    async def patch(self, parent_obj_id: str, doc_id: str, body: DocumentPatchInput):
+    async def patch(self, parent_obj_id: str, doc_id: str, body: DocumentPatchInput, child_obj_id: Optional[str] = None):
         # validate_accreditation(request, "category")
-        async with self.read_and_update_object(parent_obj_id) as obj:
+        async with self.read_and_update_object(parent_obj_id, child_obj_id) as obj:
             await self.validate_data(self.request, body, obj, parent_obj_id)
             # export data back to dict
             data = body.data.dict_without_none()

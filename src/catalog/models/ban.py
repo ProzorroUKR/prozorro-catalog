@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Union
 from uuid import uuid4
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, ListResponse
@@ -22,9 +22,10 @@ class BaseBanPostData(BaseModel):
     documents: Optional[List[DocumentPostData]] = Field(
         None,
         example=[{
+            "id": uuid4().hex,
             "title": "name.doc",
             "url": "/documents/name.doc",
-            "hash": f"md5:0000000000000000000000",
+            "hash": f"md5:{uuid4().hex}",
             "format": "application/msword",
         }]
     )
@@ -33,7 +34,7 @@ class BaseBanPostData(BaseModel):
     def id(self):
         return uuid4().hex
 
-    @validator('reason')
+    @field_validator('reason')
     def reason_standard(cls, v):
         if v not in BAN_REASONS:
             raise ValueError("must be one of market/ban_reason.json keys")
@@ -43,7 +44,7 @@ class BaseBanPostData(BaseModel):
 class ContributorBanPostData(BaseBanPostData):
     dueDate: Optional[datetime] = Field(None, example=get_now().isoformat())
 
-    @validator('dueDate')
+    @field_validator('dueDate')
     def validate_date(cls, v):
         if v and isinstance(v, datetime):
             if v < get_now():
@@ -63,14 +64,16 @@ class Ban(BaseModel):
     documents: Optional[List[Document]] = Field(
         None,
         example=[{
+            "id": uuid4().hex,
             "title": "name.doc",
             "url": "/documents/name.doc",
-            "hash": f"md5:0000000000000000000000",
+            "hash": f"md5:{uuid4().hex}",
             "format": "application/msword",
         }]
     )
 
 
+RequestBanPostInput = Input[Union[ContributorBanPostData, BaseBanPostData]]
 ContributorBanPostInput = Input[ContributorBanPostData]
 VendorBanPostInput = Input[BaseBanPostData]
 BanResponse = Response[Ban]

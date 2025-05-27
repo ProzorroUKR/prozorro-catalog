@@ -1,12 +1,10 @@
-import random
 from copy import deepcopy
 import logging
 from typing import Optional, Union
 
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
-from aiohttp.web import HTTPBadRequest, HTTPConflict
-from pymongo.errors import OperationFailure
+from aiohttp.web import HTTPBadRequest
 
 from catalog import db
 from catalog.models.api import PaginatedList, ErrorResponse
@@ -17,11 +15,14 @@ from catalog.models.profile import (
     ProfileCreateInput,
     ProfileUpdateInput,
     DeprecatedProfileCreateInput,
-    DeprecatedLocProfileInput, ProfileCreateResponse, ProfileResponse, RequestProfileCreateInput,
-    DeprecatedRequestProfileCreateInput, RequestProfileUpdateInput,
+    DeprecatedLocProfileInput,
+    ProfileCreateResponse,
+    ProfileResponse,
+    RequestProfileCreateInput,
+    DeprecatedRequestProfileCreateInput,
+    RequestProfileUpdateInput,
 )
-from catalog.swagger import class_view_swagger_path
-from catalog.utils import pagination_params, get_now, async_retry, find_item_by_id
+from catalog.utils import pagination_params, get_now, find_item_by_id
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
 from catalog.serializers.base import RootSerializer
 from catalog.handlers.base_criteria import (
@@ -36,9 +37,18 @@ from catalog.models.criteria import (
     ProfileRequirementCreateInput,
     ProfileBulkRequirementCreateInput,
     ProfileRequirementUpdateInput,
-    ProfileRequirement, CriterionListResponse, CriterionCreateInput, CriterionResponse, CriterionUpdateInput,
-    RGListResponse, RGCreateInput, RGResponse, RGUpdateInput, RequirementListResponse, RequirementResponse,
-    RequirementCreateInput, RequirementUpdateInput,
+    ProfileRequirement,
+    CriterionListResponse,
+    CriterionCreateInput,
+    CriterionResponse,
+    CriterionUpdateInput,
+    RGListResponse,
+    RGCreateInput,
+    RGResponse,
+    RGUpdateInput,
+    RequirementListResponse,
+    RequirementResponse,
+    RequestProfileRequirementCreateInput,
 )
 from catalog.validations import validate_profile_requirements
 from catalog.state.profile import ProfileState, LocalizationProfileState
@@ -135,7 +145,7 @@ class ProfileView(ProfileViewMixin, PydanticView):
 
 class ProfileItemView(ProfileViewMixin, PydanticView):
 
-    async def get(self, profile_id: str, /) -> Union[r201[ProfileResponse], r400[ErrorResponse], r404[ErrorResponse]]:
+    async def get(self, profile_id: str, /) -> Union[r200[ProfileResponse], r400[ErrorResponse], r404[ErrorResponse]]:
         """
         Get profile
 
@@ -365,7 +375,7 @@ class ProfileCriteriaRGRequirementView(ProfileCriteriaMixin, BaseCriteriaRGRequi
         return await BaseCriteriaRGRequirementViewMixin.get(self, obj_id, criterion_id, rg_id)
 
     async def post(
-            self, obj_id: str, criterion_id: str, rg_id: str, /, body: RequirementCreateInput
+            self, obj_id: str, criterion_id: str, rg_id: str, /, body: RequestProfileRequirementCreateInput
     ) -> Union[r201[RequirementResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         """
         Requirement create
@@ -401,7 +411,7 @@ class ProfileCriteriaRGRequirementItemView(ProfileCriteriaMixin, BaseCriteriaRGR
         return await BaseCriteriaRGRequirementItemViewMixin.get(self, obj_id, criterion_id, rg_id, requirement_id)
 
     async def patch(
-            self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /, body: RequirementUpdateInput
+            self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /, body: ProfileRequirementUpdateInput
     ) -> Union[r200[RequirementResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Requirement update

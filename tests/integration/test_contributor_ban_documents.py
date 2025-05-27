@@ -120,4 +120,4 @@ async def test_contributor_ban_doc_invalid_signature(api, contributor, ban):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Document url signature is invalid: data.__root__']} == result
+    assert {'errors': ['Value error, document url signature is invalid: data']} == result

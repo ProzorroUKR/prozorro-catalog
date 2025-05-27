@@ -51,8 +51,11 @@ async def error_middleware(request, handler):
         # aiohttp-pydantic returns response instead of ValidationError
         if response.status == 400:
             error_text = json.loads(response.body)
+            # New Pydantic generate awkward nested error messages,
+            # if error raises during validation function
+            # that's why we ignore 'function-after' and 'lis' in loc msg
             text = json_dumps(dict(errors=[
-                f"{e['msg']}: {'.'.join(str(part) for part in e['loc'])}"
+                f"{e['msg']}: {'.'.join(str(part) for part in e['loc'] if not str(part).startswith(('function-after', 'list')))}"
                 for e in error_text
             ]))
             raise HTTPBadRequest(
@@ -60,18 +63,6 @@ async def error_middleware(request, handler):
                 content_type="application/json",
             )
         return response
-
-
-# @middleware
-# async def request_unpack_params(request, handler):
-#     """
-#     middleware for the func views
-#     to pass variables from url
-#     as kwargs
-#     """
-#     if 'swagger' in request.path or '/static/' in request.path:
-#         return await handler(request)
-#     return await handler(request, **request.match_info)
 
 
 @middleware
