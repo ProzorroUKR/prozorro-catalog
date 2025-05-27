@@ -11,8 +11,8 @@ from pydantic import (
     PositiveInt,
     conset,
     field_validator,
-    StringConstraints,
 )
+from pydantic.types import StringConstraints
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, BulkInput, ListResponse, AuthorizedInput
 from catalog.models.common import Unit, DataTypeEnum, Period, DataSchemaEnum, ISO_MAPPING

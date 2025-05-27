@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional, List, Annotated
-from pydantic import Field, StringConstraints
+from pydantic import Field
+from pydantic.types import StringConstraints
 
 from catalog.models.api import Response
 from catalog.models.base import BaseModel

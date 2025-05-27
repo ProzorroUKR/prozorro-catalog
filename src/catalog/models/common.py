@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional, Union, Annotated
-from pydantic import Field, field_validator, AnyUrl, model_validator, StringConstraints
+from pydantic import Field, field_validator, AnyUrl, model_validator
+from pydantic.types import StringConstraints
 from catalog.models.base import BaseModel
 from catalog.models.api import Response
 from catalog.settings import IMG_PATH
