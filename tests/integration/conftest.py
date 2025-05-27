@@ -10,6 +10,8 @@ from catalog.doc_service import generate_test_url
 from .base import TEST_AUTH, TEST_AUTH_CPB
 from .utils import get_fixture_json, create_profile, create_criteria
 
+import pydantic
+print(pydantic.__version__)
 
 @pytest.fixture
 def event_loop():
