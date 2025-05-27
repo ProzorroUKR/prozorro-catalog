@@ -4,7 +4,7 @@ aiohttp-client-cache
 motor
 pytz
 aiohttp_pydantic>=2.5
-pydantic[email]>=2.0
+pydantic[email]==2.11.4
 aiocache>=0.11.1, <1
 ujson # requirements for aiocache
 msgpack # requirements for aiocache
