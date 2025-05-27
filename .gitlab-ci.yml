@@ -41,7 +41,6 @@ test:
     - apk --no-cache add gcc build-base git openssl-dev libffi-dev
     - pip install -r requirements.txt
     - pip install -r tests/requirements.txt
-    - pip show pydantic
     - pip install -e .
   script:
     - pytest -x -s tests/integration/

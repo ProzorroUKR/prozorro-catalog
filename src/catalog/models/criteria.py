@@ -12,7 +12,6 @@ from pydantic import (
     conset,
     field_validator,
 )
-from pydantic.types import StringConstraints
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, BulkInput, ListResponse, AuthorizedInput
 from catalog.models.common import Unit, DataTypeEnum, Period, DataSchemaEnum, ISO_MAPPING
@@ -191,13 +190,18 @@ class EligibleEvidenceType(str, Enum):
 
 class EligibleEvidence(BaseModel):
     id: str = Field(pattern=r"^[0-9A-Za-z_-]{1,32}$", default_factory=lambda: uuid4().hex)
-    title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=250)]
+    title: str = Field(..., min_length=1, max_length=250)
     description: Optional[str] = Field(None, max_length=1000, example="string")
     type: Optional[EligibleEvidenceType] = Field(None, example=EligibleEvidenceType.statement)
 
+    @field_validator("title")
+    @classmethod
+    def strip_whitespace(cls, v: str) -> str:
+        return v.strip()
+
 
 class BaseRequirementCreateData(BaseModel):
-    title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=250)]
+    title: str = Field(..., min_length=1, max_length=250)
     dataType: DataTypeEnum
 
     unit: Optional[Unit] = Field(None, example={"code": "string", "name": "string"})
@@ -229,6 +233,11 @@ class BaseRequirementCreateData(BaseModel):
         self.__dict__['id'] = new_id
         return new_id
 
+    @field_validator("title")
+    @classmethod
+    def strip_whitespace(cls, v: str) -> str:
+        return v.strip()
+
 
 class CategoryRequirementCreateData(BaseRequirementCreateData, CategoryRequirementValidators):
     isArchived: bool = False
@@ -246,7 +255,7 @@ class ProfileRequirementCreateData(BaseRequirementCreateData, ProfileRequirement
 
 
 class BaseRequirementUpdateData(BaseModel):
-    title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=250)] = None
+    title: Optional[str] = Field(None, min_length=1, max_length=250, example="title")
     dataType: Optional[DataTypeEnum] = Field(None, example=DataTypeEnum.string)
 
     unit: Optional[Unit] = Field(None, example={"code": "string", "name": "string"})
@@ -271,6 +280,11 @@ class BaseRequirementUpdateData(BaseModel):
         max_length=100,
         example=[{"id": uuid4().hex, "title": "string"}]
     )
+
+    @field_validator("title")
+    @classmethod
+    def strip_whitespace(cls, v: str) -> str:
+        return v.strip()
 
 
 

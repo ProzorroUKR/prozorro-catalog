@@ -4,9 +4,6 @@ from uuid import uuid4
 from unittest.mock import patch, AsyncMock
 import pytest
 
-import pydantic
-print(pydantic.__version__)
-
 from catalog.api import create_application
 from catalog.db import flush_database, init_mongo, get_database, get_offers_collection, insert_object
 from catalog.doc_service import generate_test_url

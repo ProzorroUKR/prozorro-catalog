@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import Optional, List, Annotated
+from typing import Optional, List
 from pydantic import Field
-from pydantic.types import StringConstraints
 
 from catalog.models.api import Response
 from catalog.models.base import BaseModel
@@ -16,8 +15,8 @@ class OfferStatus(str, Enum):
 
 
 class Supplier(BaseModel):
-    name: Annotated[str, StringConstraints(max_length=250)]
-    scale: Annotated[str, StringConstraints(max_length=50)]
+    name: str = Field(..., max_length=250)
+    scale: str = Field(..., max_length=50)
     address: OfferSuppliersAddress
     contactPoint: ContactPoint
     identifier: Identifier
@@ -40,7 +39,7 @@ class Offer(BaseModel):
     suppliers: List[Supplier] = Field(..., min_length=1, max_length=1)
     value: OfferValue
     minOrderValue: Optional[MinOrderValue] = Field(None, example={"amount": 0.0, "currency": "USD"})
-    comment: Optional[Annotated[str, StringConstraints(max_length=250)]] = Field(None, example="string")
+    comment: Optional[str] = Field(None, max_length=250, example="string")
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     owner: str
 
