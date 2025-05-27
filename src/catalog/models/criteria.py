@@ -9,7 +9,6 @@ from pydantic import (
     StrictBool,
     StrictStr,
     PositiveInt,
-    conset,
     field_validator,
 )
 from catalog.models.base import BaseModel
@@ -244,8 +243,9 @@ class CategoryRequirementCreateData(BaseRequirementCreateData, CategoryRequireme
     expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat]] = Field(None, example="string")
     maxValue: Optional[Union[StrictInt, StrictFloat]] = Field(None, example=1)
     minValue: Optional[Union[StrictInt, StrictFloat]] = Field(None, example=1)
-    expectedValues: Optional[conset(StrictStr, min_length=1)] = Field(
+    expectedValues: Optional[Set[StrictStr]] = Field(
         None,
+        min_length=1,
         example=["string1", "string2"],
     )
 
