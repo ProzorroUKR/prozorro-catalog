@@ -21,7 +21,6 @@ services:
         volumes:
             - ./src/catalog:/app/catalog
             - ./tests:/app/tests
-            - ./swagger:/app/swagger
             - ./auth.ini:/app/auth.ini
             - ./migrations:/app/migrations
             - ./cron:/app/cron

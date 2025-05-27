@@ -6,7 +6,6 @@ WORKDIR /app
 RUN apk --no-cache add gcc build-base git openssl-dev libffi-dev dcron
 COPY requirements.txt .
 RUN pip install -r requirements.txt
-COPY swagger /app/swagger
 COPY migrations /app/migrations
 COPY cron /app/cron
 COPY cron/cron.txt /etc/crontabs/root
