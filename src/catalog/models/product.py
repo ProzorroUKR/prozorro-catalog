@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, List, Union, Literal
 from uuid import uuid4
 
-from pydantic import Field, field_validator, constr, StrictInt, StrictFloat, StrictBool, StrictStr
+from pydantic import Field, field_validator, StrictInt, StrictFloat, StrictBool, StrictStr
 
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, CreateResponse, AuthorizedInput

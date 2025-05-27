@@ -1,4 +1,4 @@
-from typing import Optional, Set, Union, List, Literal
+from typing import Optional, Set, Union, List, Literal, Annotated
 from uuid import uuid4
 from enum import Enum
 from pydantic import (
@@ -9,9 +9,9 @@ from pydantic import (
     StrictBool,
     StrictStr,
     PositiveInt,
-    constr,
     conset,
     field_validator,
+    StringConstraints,
 )
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, BulkInput, ListResponse, AuthorizedInput
@@ -191,13 +191,13 @@ class EligibleEvidenceType(str, Enum):
 
 class EligibleEvidence(BaseModel):
     id: str = Field(pattern=r"^[0-9A-Za-z_-]{1,32}$", default_factory=lambda: uuid4().hex)
-    title: constr(strip_whitespace=True, min_length=1, max_length=250)
+    title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=250)]
     description: Optional[str] = Field(None, max_length=1000, example="string")
     type: Optional[EligibleEvidenceType] = Field(None, example=EligibleEvidenceType.statement)
 
 
 class BaseRequirementCreateData(BaseModel):
-    title: constr(strip_whitespace=True, min_length=1, max_length=250)
+    title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=250)]
     dataType: DataTypeEnum
 
     unit: Optional[Unit] = Field(None, example={"code": "string", "name": "string"})
@@ -246,7 +246,7 @@ class ProfileRequirementCreateData(BaseRequirementCreateData, ProfileRequirement
 
 
 class BaseRequirementUpdateData(BaseModel):
-    title: constr(strip_whitespace=True, min_length=1, max_length=250) = None
+    title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=250)] = None
     dataType: Optional[DataTypeEnum] = Field(None, example=DataTypeEnum.string)
 
     unit: Optional[Unit] = Field(None, example={"code": "string", "name": "string"})

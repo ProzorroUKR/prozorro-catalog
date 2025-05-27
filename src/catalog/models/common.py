@@ -1,6 +1,6 @@
 from datetime import datetime
-from typing import Optional, Union
-from pydantic import Field, field_validator, AnyUrl, constr, model_validator
+from typing import Optional, Union, Annotated
+from pydantic import Field, field_validator, AnyUrl, model_validator, StringConstraints
 from catalog.models.base import BaseModel
 from catalog.models.api import Response
 from catalog.settings import IMG_PATH
@@ -48,7 +48,7 @@ ISO_MAPPING = {
 
 class Unit(BaseModel):
     code: str = Field(..., min_length=1, max_length=80)
-    name: constr(strip_whitespace=True, min_length=1, max_length=256)
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=256)]
 
     @model_validator(mode="after")
     @classmethod
@@ -123,14 +123,14 @@ class Address(BaseModel):
 
 
 class OfferSuppliersAddress(Address):
-    locality: Optional[constr(max_length=80)] = Field(None, example="string")
+    locality: Optional[Annotated[str, StringConstraints(max_length=80)]] = Field(None, example="string")
 
 
 class OfferDeliveryAddress(Address):  # only countryName is required
-    locality: Optional[constr(max_length=80)] = Field(None, example="string")
-    postalCode: Optional[constr(max_length=20)] = Field(None, example="string")
-    region: Optional[constr(max_length=80)] = Field(None, example="string")
-    streetAddress: Optional[constr(max_length=250)] = Field(None, example="string")
+    locality: Optional[Annotated[str, StringConstraints(max_length=80)]] = Field(None, example="string")
+    postalCode: Optional[Annotated[str, StringConstraints(max_length=20)]] = Field(None, example="string")
+    region: Optional[Annotated[str, StringConstraints(max_length=80)]] = Field(None, example="string")
+    streetAddress: Optional[Annotated[str, StringConstraints(max_length=250)]] = Field(None, example="string")
 
     @field_validator('region')
     def region_for_ukraine_only(cls, v, values):
