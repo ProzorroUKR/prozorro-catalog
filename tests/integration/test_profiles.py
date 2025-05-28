@@ -734,7 +734,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "Value error, expectedMinItems couldn't be greater then count of items in expectedValues: "
+        "Value error, expectedMinItems couldn't be greater then count of items in expectedValues"
     ]
 
     resp = await api.patch(
@@ -745,7 +745,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "Value error, expectedMinItems couldn't be greater then count of items in expectedValues: "
+        "Value error, expectedMinItems couldn't be greater then count of items in expectedValues"
     ]
 
     resp = await api.patch(
@@ -756,7 +756,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "Value error, expectedMinItems couldn't be greater then expectedMaxItems: "
+        "Value error, expectedMinItems couldn't be greater then expectedMaxItems"
     ]
 
     resp = await api.patch(
@@ -767,7 +767,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "Value error, expectedMaxItems couldn't be greater then count of items in expectedValues: "
+        "Value error, expectedMaxItems couldn't be greater then count of items in expectedValues"
     ]
 
     resp = await api.patch(
@@ -778,7 +778,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "Value error, expectedMinItems couldn't be greater then expectedMaxItems: "
+        "Value error, expectedMinItems couldn't be greater then expectedMaxItems"
     ]
 
     resp = await api.patch(
@@ -789,7 +789,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "Value error, expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: "
+        "Value error, expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']"
     ]
 
     resp = await api.patch(
@@ -800,7 +800,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "Value error, expectedValues couldn't exists together with one of ['minValue', 'maxValue', 'expectedValue']: "
+        "Value error, expectedValues couldn't exists together with one of ['minValue', 'maxValue', 'expectedValue']"
     ]
 
     resp = await api.patch(

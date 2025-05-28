@@ -73,8 +73,8 @@ class Value(BaseModel):
 
 class Period(BaseModel):
     durationInDays: Optional[int] = Field(None, example=1)
-    startDate: Optional[datetime] = Field(None, example=datetime(2020, 1, 1))
-    endDate: Optional[datetime] = Field(None, example=datetime(2020, 1, 1))
+    startDate: Optional[datetime] = Field(None, example=datetime(2020, 1, 1).isoformat())
+    endDate: Optional[datetime] = Field(None, example=datetime(2020, 1, 1).isoformat())
 
 
 class BaseImage(BaseModel):

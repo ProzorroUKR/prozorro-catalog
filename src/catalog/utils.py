@@ -97,7 +97,7 @@ def cached(*args, **kwargs):
 def async_retry(tries=-1, exceptions=Exception,
                 delay=0, max_delay=None, backoff=1, fail_exception=None):
     def func_wrapper(f):
-        async def wrapper(*args: tuple[ANY, ...], **kwargs: dict[str, ANY]):
+        async def wrapper(*args, **kwargs):
             _tries, _delay = tries, delay
             if callable(_delay):
                 _delay = _delay()

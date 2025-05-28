@@ -648,7 +648,7 @@ async def test_131_requirement_patch(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "Value error, expectedMinItems and expectedMaxItems couldn't exist without expectedValues: "
+        "Value error, expectedMinItems and expectedMaxItems couldn't exist without expectedValues"
     ]
 
     resp = await api.patch(
@@ -659,7 +659,7 @@ async def test_131_requirement_patch(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "Value error, expectedMinItems is required when expectedValues exists and should be equal 1: "
+        "Value error, expectedMinItems is required when expectedValues exists and should be equal 1"
     ]
 
     resp = await api.patch(
@@ -670,7 +670,7 @@ async def test_131_requirement_patch(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "Value error, expectedMaxItems should be equal 1 or not exist at all: "
+        "Value error, expectedMaxItems should be equal 1 or not exist at all"
     ]
 
     resp = await api.patch(
@@ -695,7 +695,7 @@ async def test_131_requirement_patch(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "Value error, expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: "
+        "Value error, expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']"
     ]
 
     resp = await api.patch(
@@ -1075,7 +1075,7 @@ async def test_requirement_data_schema(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "Value error, expectedValues should have ISO 3166-1 alpha-2 format and include codes from standards: "
+        "Value error, expectedValues should have ISO 3166-1 alpha-2 format and include codes from standards"
     ]
 
     resp = await api.patch(

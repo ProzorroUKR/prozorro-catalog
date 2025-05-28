@@ -2,7 +2,6 @@ import json
 
 from catalog.serialization import json_response, json_dumps
 from aiohttp.web import (
-    HTTPUnprocessableEntity,
     HTTPInternalServerError,
     HTTPBadRequest
 )
@@ -25,7 +24,7 @@ async def error_middleware(request, handler):
         response = await handler(request)
     except ValidationError as exc:
         text = json_dumps(dict(errors=[
-            f"{e['msg']}: {'.'.join(str(part) for part in e['loc'])}"
+            f"{e['msg']}: {'.'.join(str(part) for part in e['loc'])}" if e['loc'] else e['msg']
             for e in exc.errors()
         ]))
         raise HTTPBadRequest(
