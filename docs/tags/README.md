@@ -26,7 +26,8 @@ POST /tags
    "data": {
        "id": "NT1",
        "name": "Новий",
-       "name_en": "New"
+       "name_en": "New",
+       "active": True
    }
 }
 
@@ -49,7 +50,8 @@ POST /tags
    "data": {
        "id": "hit-sale",
        "name": "Хіт продажу",
-       "name_en": "Hit sale"
+       "name_en": "Hit sale",
+       "active": True
    }
 }
 
@@ -70,12 +72,14 @@ GET /tags
        {
            "id": "NT1",
            "name": "Новий",
-           "name_en": "New tag"
+           "name_en": "New tag",
+           "active": True
        },
        {
            "id": "hit-sale",
            "name": "Хіт продажу",
-           "name_en": "Hit sale"
+           "name_en": "Hit sale",
+           "active": True
        },
    ]
 }
@@ -94,7 +98,8 @@ GET /tags/hit-sale
    "data": {
        "id": "hit-sale",
        "name": "Хіт продажу",
-       "name_en": "Hit sale"
+       "name_en": "Hit sale",
+       "active": True
    }
 }
 
@@ -116,7 +121,8 @@ PATCH /tags/NT1
    "data": {
        "id": "NT1",
        "name": "Новий",
-       "name_en": "New tag"
+       "name_en": "New tag",
+       "active": True
    }
 }
 
