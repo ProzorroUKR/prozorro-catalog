@@ -708,3 +708,46 @@ async def read_and_update_product_request(uid):
     data = await read_product_request(uid)
     yield data
     await update_product_request(data)
+
+
+# tags
+def get_tag_collection():
+    return get_collection("tag")
+
+
+async def find_tags(limit, active):
+    collection = get_tag_collection()
+    limit = min(limit, MAX_LIST_LIMIT)
+    limit = max(limit, 1)
+    filters = {}
+    if active is not None:
+        filters["active"] = active
+    items = await collection.find(filters).limit(limit).to_list(None)
+    result = {"data": [rename_id(i) for i in items]}
+    return result
+
+
+async def read_tag(tag_id):
+    tag = await get_tag_collection().find_one(
+        {'_id': tag_id},
+        session=session_var.get(),
+    )
+    if not tag:
+        raise web.HTTPNotFound(text="Tag not found")
+    return rename_id(tag)
+
+
+async def insert_tag(data):
+    inserted_id = await insert_object(get_tag_collection(), data)
+    return inserted_id
+
+
+async def update_tag(tag):
+    await update_object(get_tag_collection(), tag)
+
+
+@asynccontextmanager
+async def read_and_update_tag(uid):
+    data = await read_tag(uid)
+    yield data
+    await update_tag(data)
