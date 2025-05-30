@@ -69,6 +69,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def apply_custom_validation_error_handler():
+    from aiohttp_pydantic import PydanticView
+
+    async def custom_validation_error_handler(self, exception, context):
+        raise exception
+
+    # Monkey patch PydanticView to use our custom validation error handler
+    PydanticView.on_validation_error = custom_validation_error_handler
+
+
 def create_application(on_cleanup=None):
     app = web.Application(
         middlewares=(
@@ -91,6 +101,9 @@ def create_application(on_cleanup=None):
             "in": "header",
             "name": "Authorization"
         }})
+
+    apply_custom_validation_error_handler()
+
     app.router.add_get("/api/ping", ping_handler, allow_head=False)
     app.router.add_get("/api/version", get_version, allow_head=False)
 

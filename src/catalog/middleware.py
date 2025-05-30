@@ -24,7 +24,8 @@ async def error_middleware(request, handler):
         response = await handler(request)
     except ValidationError as exc:
         text = json_dumps(dict(errors=[
-            f"{e['msg']}: {'.'.join(str(part) for part in e['loc'])}" if e['loc'] else e['msg']
+            f"{e['msg']}: {'.'.join(str(part) for part in e['loc'] if not str(part).startswith(('function-after', 'list')))}"
+            if e['loc'] else e['msg']
             for e in exc.errors()
         ]))
         raise HTTPBadRequest(
@@ -46,22 +47,7 @@ async def error_middleware(request, handler):
             text=json_dumps({"errors": [str(exc)]}),
             content_type="application/json",
         )
-    else:
-        # aiohttp-pydantic returns response instead of ValidationError
-        if response.status == 400:
-            error_text = json.loads(response.body)
-            # New Pydantic generate awkward nested error messages,
-            # if error raises during validation function
-            # that's why we ignore 'function-after' and 'lis' in loc msg
-            text = json_dumps(dict(errors=[
-                f"{e['msg']}: {'.'.join(str(part) for part in e['loc'] if not str(part).startswith(('function-after', 'list')))}"
-                for e in error_text
-            ]))
-            raise HTTPBadRequest(
-                text=text,
-                content_type="application/json",
-            )
-        return response
+    return response
 
 
 @middleware
