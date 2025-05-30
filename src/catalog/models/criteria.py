@@ -13,7 +13,7 @@ from pydantic import (
 )
 from catalog.models.base import BaseModel
 from catalog.models.api import Response, BulkInput, ListResponse, AuthorizedInput
-from catalog.models.common import Unit, DataTypeEnum, Period, DataSchemaEnum, ISO_MAPPING
+from catalog.models.common import Unit, DataTypeEnum, Period, DataSchemaEnum, ISO_MAPPING, UNIT_EXAMPLE, PERIOD_EXAMPLE
 import logging
 
 from catalog.settings import CRITERIA_LIST
@@ -203,9 +203,9 @@ class BaseRequirementCreateData(BaseModel):
     title: str = Field(..., min_length=1, max_length=250)
     dataType: DataTypeEnum
 
-    unit: Optional[Unit] = Field(None, example={"code": "string", "name": "string"})
+    unit: Optional[Unit] = Field(None, example=UNIT_EXAMPLE)
     description: Optional[str] = Field(None, max_length=1000, example="description")
-    period: Optional[Period] = Field(None, example={"startDate": "2020-01-01", "endDate": "2020-12-31"})
+    period: Optional[Period] = Field(None, example=PERIOD_EXAMPLE)
 
     pattern: Optional[str] = Field(None, max_length=250, example="string")
     expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(None, example="string")
@@ -258,9 +258,9 @@ class BaseRequirementUpdateData(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=250, example="title")
     dataType: Optional[DataTypeEnum] = Field(None, example=DataTypeEnum.string)
 
-    unit: Optional[Unit] = Field(None, example={"code": "string", "name": "string"})
+    unit: Optional[Unit] = Field(None, example=UNIT_EXAMPLE)
     description: Optional[str] = Field(None, max_length=1000, example="description")
-    period: Optional[Period] = Field(None, example={"startDate": "2020-01-01", "endDate": "2020-12-31"})
+    period: Optional[Period] = Field(None, example=PERIOD_EXAMPLE)
 
     pattern: Optional[str] = Field(None, max_length=250, example="string")
     expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(None, example="string")
@@ -308,9 +308,9 @@ class Requirement(BaseModel):
     title: str = Field(..., min_length=1, max_length=250)
     dataType: DataTypeEnum
 
-    unit: Optional[Unit] = Field(None, example={"code": "string", "name": "string"})
+    unit: Optional[Unit] = Field(None, example=UNIT_EXAMPLE)
     description: Optional[str] = Field(None, max_length=1000, example="description")
-    period: Optional[Period] = Field(None, example={"startDate": "2020-01-01", "endDate": "2020-12-31"})
+    period: Optional[Period] = Field(None, example=PERIOD_EXAMPLE)
     isArchived: Optional[bool] = Field(None, example=True)
 
     pattern: Optional[str] = Field(None, max_length=250, example="string")
@@ -375,6 +375,18 @@ class LegislationItem(BaseModel):
     article: str = Field(..., min_length=1, max_length=250)
 
 
+LEGISLATION_ITEM_EXAMPLE = LegislationItem(
+    version="2024-04-19",
+    type="NATIONAL_LEGISLATION",
+    identifier=LegislationIdentifier(
+        uri="https://zakon.rada.gov.ua/laws/show/922-19#Text",
+        id="922-VIII",
+        legalName="Закон України \"Про публічні закупівлі\""
+    ),
+    article="22.2.3"
+).model_dump(exclude_none=True)
+
+
 class CriterionClassification(BaseModel):
     scheme: Literal["ESPD211"]
     id: str = Field(..., min_length=1, max_length=250)
@@ -385,6 +397,11 @@ class CriterionClassification(BaseModel):
             raise ValueError(f"must be one of {CRITERIA_LIST}")
         return value
 
+
+CRITERION_CLASSIFICATION_EXAMPLE = CriterionClassification(
+    scheme="ESPD211",
+    id="CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
+).model_dump()
 
 class CriterionCreateData(BaseModel):
     classification: CriterionClassification
@@ -406,21 +423,13 @@ class CriterionUpdateData(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=250, example="string")
     code: Optional[str] = Field(None, pattern=r"^[0-9A-Za-z_-]{1,32}$", example="string")
     description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
-    legislation: Optional[List[LegislationItem]] = Field(None, min_length=1, max_length=100, example=[
-        {
-            "identifier": {
-                "id": "string",
-                "uri": "string",
-            },
-            "version": "string",
-            "type": "NATIONAL_LEGISLATION",
-            "article": "string"
-        }
-    ])
-    classification: Optional[CriterionClassification] = Field(None, example={
-        "scheme": "ESPD211",
-        "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
-    })
+    legislation: Optional[List[LegislationItem]] = Field(
+        None,
+        min_length=1,
+        max_length=100,
+        example=[LEGISLATION_ITEM_EXAMPLE],
+    )
+    classification: Optional[CriterionClassification] = Field(None, example=CRITERION_CLASSIFICATION_EXAMPLE)
 
 
 class Criterion(BaseModel):
@@ -428,21 +437,13 @@ class Criterion(BaseModel):
     requirementGroups: List[RequirementGroup] = Field(..., min_length=1, max_length=100)
     title: str = Field(..., min_length=1, max_length=250)
     description: str = Field(..., min_length=1, max_length=1000)
-    legislation: Optional[List[LegislationItem]] = Field(None, min_length=1, max_length=100, example=[
-        {
-            "identifier": {
-                "id": "string",
-                "uri": "string",
-            },
-            "version": "string",
-            "type": "NATIONAL_LEGISLATION",
-            "article": "string"
-        }
-    ])
-    classification: Optional[CriterionClassification] = Field(None, example={
-        "scheme": "ESPD211",
-        "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
-    })
+    legislation: Optional[List[LegislationItem]] = Field(
+        None,
+        min_length=1,
+        max_length=100,
+        example=[LEGISLATION_ITEM_EXAMPLE],
+    )
+    classification: Optional[CriterionClassification] = Field(None, example=CRITERION_CLASSIFICATION_EXAMPLE)
     source: str = "tenderer"
 
 

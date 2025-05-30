@@ -10,9 +10,9 @@ from catalog.models.common import (
     Image,
     Classification,
     Identifier,
-    CategoryMarketAdministrator,
+    CategoryMarketAdministrator, CLASSIFICATION_EXAMPLE,
 )
-from catalog.models.document import Document, DocumentPostData
+from catalog.models.document import Document, DocumentPostData, DOCUMENT_EXAMPLE
 from catalog.utils import get_now
 from enum import Enum
 
@@ -33,6 +33,9 @@ class ProductIdentifier(BaseModel):
     uri: Optional[str] = Field(None, min_length=1, max_length=250, example="string")
 
 
+IDENTIFIER_EXAMPLE = ProductIdentifier(id="463234567819", scheme="UPC").model_dump(exclude_none=True)
+
+
 class VendorProductIdentifier(BaseModel):
     id: str = Field(..., min_length=1, max_length=30)
     scheme: VendorProductIdentifierScheme = VendorProductIdentifierScheme.ean_13
@@ -45,6 +48,13 @@ class VendorInfo(BaseModel):
     identifier: Identifier
 
 
+VENDOR_INFO_EXAMPLE = VendorInfo(
+    id="string",
+    name="string",
+    identifier=Identifier(id="463234567819", scheme="UPC", legalName="string")
+).model_dump(exclude_none=True)
+
+
 class RequirementResponse(BaseModel):
     requirement: str
     value: Optional[Union[StrictInt, StrictFloat, StrictBool, StrictStr]] = Field(None, example="string")
@@ -52,7 +62,12 @@ class RequirementResponse(BaseModel):
 
 
 class ProductRequirementResponses(BaseModel):
-    requirementResponses: Optional[List[RequirementResponse]] = Field(None, min_length=1, max_length=200, example=[{"requirement": "string", "value": 2}])
+    requirementResponses: Optional[List[RequirementResponse]] = Field(
+        None,
+        min_length=1,
+        max_length=200,
+        example=[{"requirement": "string", "value": 2}],
+    )
 
     @field_validator('requirementResponses')
     def unique_responses_ids(cls, v):
@@ -68,11 +83,7 @@ class BaseProductCreateData(ProductRequirementResponses):
     relatedCategory: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
     description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
     classification: Classification
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[{
-        "description": "description",
-        "id": "33190000-8",
-        "scheme": "ДК021"
-    }])
+    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[CLASSIFICATION_EXAMPLE])
     identifier: VendorProductIdentifier
     status: Literal[ProductStatus.active] = ProductStatus.active
 
@@ -86,8 +97,8 @@ class VendorProductCreateData(BaseProductCreateData):
 
 
 class BaseProductData(BaseProductCreateData):
-    identifier: Optional[ProductIdentifier] = Field(None, example={"id": "463234567819", "scheme": "UPC"})
-    alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_length=100, example=[{"id": "463234567819", "scheme": "UPC"}])
+    identifier: Optional[ProductIdentifier] = Field(None, example=IDENTIFIER_EXAMPLE)
+    alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_length=100, example=[IDENTIFIER_EXAMPLE])
     images: List[Image] = Field(None, max_length=20, example=[{"url": "/image/1.jpg"}])
 
 
@@ -99,36 +110,23 @@ class ProductCreateData(BaseProductData):
 
 class ProductUpdateData(ProductRequirementResponses):
     title: Optional[str] = Field(None, min_length=1, max_length=160, example="title")
-    relatedCategory: Optional[str] = Field(None, pattern=r"^[0-9A-Za-z_-]{1,32}$", example="296917d994963ae6f8aaadaf3290bb80")
+    relatedCategory: Optional[str] = Field(None, pattern=r"^[0-9A-Za-z_-]{1,32}$", example=uuid4().hex)
     description: Optional[str] = Field(None, min_length=1, max_length=1000, example="description")
-    classification: Optional[Classification] = Field(None, example={
-        "description": "description",
-        "id": "33190000-8",
-        "scheme": "ДК021"
-    })
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[{
-        "description": "description",
-        "id": "33190000-8",
-        "scheme": "ДК021"
-    }])
-    identifier: Optional[ProductIdentifier] = Field(None, example={"id": "463234567819", "scheme": "UPC"})
-    alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_length=100, example=[{"id": "463234567819", "scheme": "UPC"}])
+    classification: Optional[Classification] = Field(None, example=CLASSIFICATION_EXAMPLE)
+    additionalClassifications: Optional[List[Classification]] = Field(
+        None,
+        max_length=100,
+        example=[CLASSIFICATION_EXAMPLE],
+    )
+    identifier: Optional[ProductIdentifier] = Field(None, example=IDENTIFIER_EXAMPLE)
+    alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_length=100, example=[IDENTIFIER_EXAMPLE])
     images: Optional[List[Image]] = Field(None, max_length=20, example=[{"url": "/image/1.jpg"}])
     status: Optional[ProductStatus] = Field(None, example=ProductStatus.inactive)
 
 
 class LocalizationProductUpdateData(BaseModel):
     status: Optional[ProductStatus] = Field(None, example=ProductStatus.inactive)
-    documents: Optional[List[DocumentPostData]] = Field(
-        None,
-        example=[{
-            "id": uuid4().hex,
-            "title": "name.doc",
-            "url": "/documents/name.doc",
-            "hash": f"md5:{uuid4().hex}",
-            "format": "application/msword",
-        }]
-    )
+    documents: Optional[List[DocumentPostData]] = Field(None, example=[DOCUMENT_EXAMPLE])
 
 
 class Product(BaseProductData):
@@ -138,17 +136,8 @@ class Product(BaseProductData):
     dateCreated: Optional[datetime] = Field(None, example=get_now().isoformat())
     relatedProfiles: Optional[List[str]] = Field(None, example=["string", ])
     owner: str
-    vendor: Optional[VendorInfo] = Field(None, example={"id": "string", "name": "string", "identifier": {"id": "463234567819", "scheme": "UPC"}})
-    documents: Optional[Document] = Field(
-        None,
-        example=[{
-            "id": uuid4().hex,
-            "title": "name.doc",
-            "url": "/documents/name.doc",
-            "hash": f"md5:{uuid4().hex}",
-            "format": "application/msword",
-        }]
-    )
+    vendor: Optional[VendorInfo] = Field(None, example=VENDOR_INFO_EXAMPLE)
+    documents: Optional[Document] = Field(None, example=[DOCUMENT_EXAMPLE])
     images: Optional[List[Image]] = Field(None, max_length=100, example=[{"url": "/image/1.jpg"}])
     expirationDate: Optional[datetime] = Field(None, example=get_now().isoformat())
 

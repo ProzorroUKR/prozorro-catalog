@@ -2,14 +2,14 @@ from datetime import datetime
 from typing import Optional, List
 from uuid import uuid4
 
-from pydantic import Field, validator, model_validator
+from pydantic import Field, model_validator
 
-from catalog.models.ban import Ban
+from catalog.models.ban import Ban, BAN_EXAMPLE
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response
 from catalog.models.common import UKRAINE_COUNTRY_NAME_UK
 from catalog.models.vendor import PostVendorOrganization, VendorOrganization, PostVendorAddress
-from catalog.models.document import Document, DocumentPostData
+from catalog.models.document import Document, DocumentPostData, DOCUMENT_EXAMPLE
 
 
 class PostContributorAddress(PostVendorAddress):
@@ -29,16 +29,7 @@ class PostContributorOrganization(PostVendorOrganization):
 
 class ContributorPostData(BaseModel):
     contributor: PostContributorOrganization
-    documents: Optional[List[DocumentPostData]] = Field(
-        None,
-        example=[{
-            "id": uuid4().hex,
-            "title": "name.doc",
-            "url": "/documents/name.doc",
-            "hash": f"md5:{uuid4().hex}",
-            "format": "application/msword",
-        }]
-    )
+    documents: Optional[List[DocumentPostData]] = Field(None, example=[DOCUMENT_EXAMPLE])
 
     @property
     def id(self):
@@ -51,29 +42,8 @@ class Contributor(BaseModel):
     dateModified: datetime
     dateCreated: datetime
     owner: str
-    bans: Optional[List[Ban]] = Field(
-        None,
-        example=[{
-            "id": "string",
-            "reason": "string",
-            "marketAdministrator": {
-                "identifier": {
-                    "id": "string",
-                    "scheme": "string",
-                }
-            }
-        }],
-    )
-    documents: Optional[List[Document]] = Field(
-        None,
-        example=[{
-            "id": uuid4().hex,
-            "title": "name.doc",
-            "url": "/documents/name.doc",
-            "hash": f"md5:{uuid4().hex}",
-            "format": "application/msword",
-        }]
-    )
+    bans: Optional[List[Ban]] = Field(None, example=[BAN_EXAMPLE])
+    documents: Optional[List[Document]] = Field(None, example=[DOCUMENT_EXAMPLE])
 
 
 ContributorPostInput = Input[ContributorPostData]

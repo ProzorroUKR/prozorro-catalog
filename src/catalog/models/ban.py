@@ -6,8 +6,8 @@ from pydantic import Field, field_validator
 
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, ListResponse
-from catalog.models.common import MarketAdministrator
-from catalog.models.document import DocumentPostData, Document
+from catalog.models.common import MarketAdministrator, MarketAdministratorIdentifier
+from catalog.models.document import DocumentPostData, Document, DOCUMENT_EXAMPLE
 from catalog.utils import get_now
 import standards
 
@@ -19,16 +19,7 @@ class BaseBanPostData(BaseModel):
     reason: str
     description: Optional[str] = Field(None, min_length=1, max_length=500, example="description")
     administrator: MarketAdministrator
-    documents: Optional[List[DocumentPostData]] = Field(
-        None,
-        example=[{
-            "id": uuid4().hex,
-            "title": "name.doc",
-            "url": "/documents/name.doc",
-            "hash": f"md5:{uuid4().hex}",
-            "format": "application/msword",
-        }]
-    )
+    documents: Optional[List[DocumentPostData]] = Field(None, example=[DOCUMENT_EXAMPLE])
 
     @property
     def id(self):
@@ -61,17 +52,24 @@ class Ban(BaseModel):
     dateCreated: datetime
     dateModified: datetime
     owner: str
-    documents: Optional[List[Document]] = Field(
-        None,
-        example=[{
-            "id": uuid4().hex,
-            "title": "name.doc",
-            "url": "/documents/name.doc",
-            "hash": f"md5:{uuid4().hex}",
-            "format": "application/msword",
-        }]
-    )
+    documents: Optional[List[Document]] = Field(None, example=[DOCUMENT_EXAMPLE])
 
+
+BAN_EXAMPLE = Ban(
+    id=uuid4().hex,
+    reason="string",
+    administrator=MarketAdministrator(
+        identifier=MarketAdministratorIdentifier(
+            id="42574629",
+            scheme="UA-EDR",
+            legalName_en="STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
+            legalName_uk="ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
+        )
+    ),
+    dateCreated=datetime.now().isoformat(),
+    dateModified=datetime.now().isoformat(),
+    owner="broker",
+).model_dump(exclude_none=True)
 
 RequestBanPostInput = Input[Union[ContributorBanPostData, BaseBanPostData]]
 ContributorBanPostInput = Input[ContributorBanPostData]

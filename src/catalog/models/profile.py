@@ -9,7 +9,7 @@ from catalog.models.common import (
     Unit,
     Classification,
     CategoryMarketAdministrator,
-    AGREEMENT_ID_REGEX,
+    AGREEMENT_ID_REGEX, CLASSIFICATION_EXAMPLE, UNIT_EXAMPLE,
 )
 from catalog.models.criteria import Criterion
 from catalog.utils import get_now
@@ -46,11 +46,11 @@ class BaseProfileCreateData(BaseModel):
     )
     status: ProfileStatus = ProfileStatus.active
     relatedCategory: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[{
-        "description": "description",
-        "id": "33190000-8",
-        "scheme": "ДК021"
-    }])
+    additionalClassifications: Optional[List[Classification]] = Field(
+        None,
+        max_length=100,
+        example=[CLASSIFICATION_EXAMPLE],
+    )
     agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example=uuid4().hex)
 
     @property
@@ -97,24 +97,17 @@ class ProfileUpdateData(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=250, example="title")
     description: Optional[str] = Field(None, min_length=1, max_length=1000, example="description")
     status: Optional[ProfileStatus] = Field(None, example=ProfileStatus.active)
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[{
-        "description": "description",
-        "id": "33190000-8",
-        "scheme": "ДК021"
-    }])
+    additionalClassifications: Optional[List[Classification]] = Field(
+        None,
+        max_length=100,
+        example=[CLASSIFICATION_EXAMPLE],
+    )
     agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example=uuid4().hex)
 
 
 class LocalizationProfileUpdateData(ProfileUpdateData):
-    unit: Optional[Unit] = Field(None, example={"code": "string", "name": "string"})
-    classification: Optional[Classification] = Field(
-        None,
-        example={
-            "description": "description",
-            "id": "33190000-8",
-            "scheme": "ДК021"
-        }
-    )
+    unit: Optional[Unit] = Field(None, example=UNIT_EXAMPLE)
+    classification: Optional[Classification] = Field(None, example=CLASSIFICATION_EXAMPLE)
 
 
 class Profile(BaseModel):
@@ -139,17 +132,13 @@ class Profile(BaseModel):
     )
     status: ProfileStatus = ProfileStatus.active
     marketAdministrator: CategoryMarketAdministrator
-    unit: Optional[Unit] = Field(None, example={"code": "string", "name": "string"})
+    unit: Optional[Unit] = Field(None, example=UNIT_EXAMPLE)
     relatedCategory: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
     classification: Classification
     additionalClassifications: Optional[List[Classification]] = Field(
         None,
         max_length=100,
-        example={
-            "description": "description",
-            "id": "33190000-8",
-            "scheme": "ДК021"
-        }
+        example=CLASSIFICATION_EXAMPLE,
     )
     agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example=uuid4().hex)
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())

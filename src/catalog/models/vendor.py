@@ -3,7 +3,7 @@ from typing import Optional, List
 from pydantic import EmailStr, Field, field_validator
 from enum import Enum
 
-from catalog.models.ban import Ban
+from catalog.models.ban import Ban, BAN_EXAMPLE
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse, AuthorizedInput
 from catalog.models.common import Identifier, Organization, ContactPoint, Address, ORA_CODES
@@ -70,19 +70,7 @@ class Vendor(VendorPostData):
     owner: str
     status: VendorStatus = VendorStatus.pending
     documents: List[Document]
-    bans: Optional[List[Ban]] = Field(
-        None,
-        example=[{
-            "id": "string",
-            "reason": "string",
-            "marketAdministrator": {
-                "identifier": {
-                    "id": "string",
-                    "scheme": "string",
-                }
-            }
-        }],
-    )
+    bans: Optional[List[Ban]] = Field(None, example=[BAN_EXAMPLE])
 
 
 class VendorSign(VendorPostData):

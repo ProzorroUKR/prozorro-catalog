@@ -1,5 +1,7 @@
 from datetime import datetime
 from typing import Optional, Union, Annotated
+from uuid import uuid4
+
 from pydantic import Field, field_validator, AnyUrl, model_validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Response
@@ -65,6 +67,8 @@ class Unit(BaseModel):
         return values
 
 
+UNIT_EXAMPLE = Unit(code="H87", name="штука").model_dump()
+
 class Value(BaseModel):
     amount: Union[float, int]
     currency: str = Field(..., pattern=r"^[A-Z]{3}$")
@@ -77,10 +81,13 @@ class Period(BaseModel):
     endDate: Optional[datetime] = Field(None, example=datetime(2020, 1, 1).isoformat())
 
 
+PERIOD_EXAMPLE = Period(startDate="2020-01-01", endDate="2020-12-31").model_dump(exclude_none=True)
+
+
 class BaseImage(BaseModel):
     url: AnyUrl
     size: Optional[int] = Field(None, example=100)
-    hash: Optional[str] = Field(None, pattern=r"^md5:[0-9a-z]{32}$", example="md5:0000000000000000000000000000000")
+    hash: Optional[str] = Field(None, pattern=r"^md5:[0-9a-z]{32}$", example=f"md5:{uuid4().hex}")
 
 
 ImageResponse = Response[BaseImage]
@@ -91,7 +98,7 @@ class Image(BaseModel):
     sizes: Optional[str] = Field(None, pattern=r"^[0-9]{2,4}x[0-9]{2,4}$", example="string")
     title: Optional[str] = Field(None, min_length=1, max_length=250, example="string")
     format: Optional[str] = Field(None, pattern=r"^image/[a-z]{2,10}$", example="image/immage1")
-    hash: Optional[str] = Field(None, pattern=r"^md5:[0-9a-f]{32}$", example="md5:0000000000000000000000000000000")
+    hash: Optional[str] = Field(None, pattern=r"^md5:[0-9a-f]{32}$", example=f"md5:{uuid4().hex}")
 
     @field_validator('url')
     def valid_url(cls, v):
@@ -104,6 +111,13 @@ class Classification(BaseModel):
     id: str = Field(..., min_length=1, max_length=100)
     description: str = Field(..., min_length=1, max_length=250)
     scheme: str = Field(..., min_length=1, max_length=10)
+
+
+CLASSIFICATION_EXAMPLE = Classification(
+    description="description",
+    id="33190000-8",
+    scheme="ДК021"
+).model_dump()
 
 
 class Address(BaseModel):

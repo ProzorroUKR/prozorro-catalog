@@ -6,9 +6,9 @@ from pydantic import Field, field_validator
 
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse
-from catalog.models.common import MarketAdministrator
+from catalog.models.common import MarketAdministrator, MarketAdministratorIdentifier
 from catalog.models.product import ProductCreateData, Product
-from catalog.models.document import DocumentPostData, Document
+from catalog.models.document import DocumentPostData, Document, DOCUMENT_EXAMPLE
 import standards
 
 
@@ -37,22 +37,40 @@ class RequestReview(RequestReviewPostData):
     date: datetime
 
 
+REQUEST_REVIEW_EXAMPLE = RequestReview(
+    date=datetime.now().isoformat(),
+    administrator=MarketAdministrator(
+        identifier=MarketAdministratorIdentifier(
+            id="42574629",
+            scheme="UA-EDR",
+            legalName_en="STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
+            legalName_uk="ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
+        )
+    )
+).model_dump(exclude_none=True)
+
+
 class RequestRejection(RequestRejectionPostData, RequestReview):
     pass
 
 
+REQUEST_REJECTION_EXAMPLE = RequestRejection(
+    date=datetime.now().isoformat(),
+    administrator=MarketAdministrator(
+        identifier=MarketAdministratorIdentifier(
+            id="42574629",
+            scheme="UA-EDR",
+            legalName_en="STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
+            legalName_uk="ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
+        )
+    ),
+    reason=["invalidTitle",],
+).model_dump(exclude_none=True)
+
+
 class ProductRequestPostData(BaseModel):
     product: ProductCreateData
-    documents: Optional[List[DocumentPostData]] = Field(
-        None,
-        example=[{
-            "id": uuid4().hex,
-            "title": "name.doc",
-            "url": "/documents/name.doc",
-            "hash": f"md5:{uuid4().hex}",
-            "format": "application/msword",
-        }]
-    )
+    documents: Optional[List[DocumentPostData]] = Field(None, example=[DOCUMENT_EXAMPLE])
 
     @property
     def id(self):
@@ -65,41 +83,9 @@ class ProductRequest(BaseModel):
     dateModified: datetime
     dateCreated: datetime
     owner: str
-    acception: Optional[RequestReview] = Field(
-        None,
-        example=[{
-            "date": "string",
-            "administrator": {
-                "identifier": {
-                    "id": "string",
-                    "scheme": "string",
-                }
-            }
-        }],
-    )
-    rejection: Optional[RequestRejection] = Field(
-        None,
-        example=[{
-            "date": "string",
-            "reason": "string",
-            "administrator": {
-                "identifier": {
-                    "id": "string",
-                    "scheme": "string",
-                }
-            }
-        }],
-    )
-    documents: Optional[List[Document]] = Field(
-        None,
-        example=[{
-            "id": uuid4().hex,
-            "title": "name.doc",
-            "url": "/documents/name.doc",
-            "hash": f"md5:{uuid4().hex}",
-            "format": "application/msword",
-        }]
-    )
+    acception: Optional[RequestReview] = Field(None, example=[REQUEST_REVIEW_EXAMPLE])
+    rejection: Optional[RequestRejection] = Field(None, example=[REQUEST_REJECTION_EXAMPLE])
+    documents: Optional[List[Document]] = Field(None, example=[DOCUMENT_EXAMPLE])
     product: ProductCreateData
 
 

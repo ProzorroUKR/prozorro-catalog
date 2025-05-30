@@ -271,7 +271,9 @@ class ProfileCriteriaItemView(ProfileCriteriaMixin, BaseCriteriaItemViewMixin, P
         """
         return await BaseCriteriaItemViewMixin.patch(self, obj_id, criterion_id, body)
 
-    async def delete(self, obj_id: str, criterion_id: str, /) -> Union[r200[SuccessResponse], r404[ErrorResponse]]:
+    async def delete(
+        self, obj_id: str, criterion_id: str, /, access_token: Optional[str] = None,
+    ) -> Union[r200[SuccessResponse], r404[ErrorResponse]]:
         """
         Object criterion delete
 
@@ -328,7 +330,7 @@ class ProfileCriteriaRGItemView(ProfileCriteriaMixin, BaseCriteriaRGItemViewMixi
         return await BaseCriteriaRGItemViewMixin.patch(self, obj_id, criterion_id, rg_id, body)
 
     async def delete(
-        self, obj_id: str, criterion_id: str, rg_id: str, /
+        self, obj_id: str, criterion_id: str, rg_id: str, /, access_token: Optional[str] = None,
     ) -> Union[r200[SuccessResponse], r404[ErrorResponse]]:
         """
         Object criterion requirement group delete
@@ -422,7 +424,7 @@ class ProfileCriteriaRGRequirementItemView(ProfileCriteriaMixin, BaseCriteriaRGR
         return await BaseCriteriaRGRequirementItemViewMixin.patch(self, obj_id, criterion_id, rg_id, requirement_id, body)
 
     async def delete(
-        self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /
+        self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /, access_token: Optional[str] = None,
     ) -> Union[r200[SuccessResponse], r404[ErrorResponse]]:
         """
         Object criterion requirement delete

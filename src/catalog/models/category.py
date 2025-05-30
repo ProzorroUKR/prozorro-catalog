@@ -5,7 +5,8 @@ from uuid import uuid4
 from pydantic import Field, field_validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, AuthorizedInput, Response, CreateResponse
-from catalog.models.common import Classification, Image, CategoryMarketAdministrator, Unit, AGREEMENT_ID_REGEX
+from catalog.models.common import Classification, Image, CategoryMarketAdministrator, Unit, AGREEMENT_ID_REGEX, \
+    CLASSIFICATION_EXAMPLE, UNIT_EXAMPLE
 from catalog.models.criteria import Criterion
 from catalog.utils import get_now
 from enum import Enum
@@ -22,11 +23,7 @@ class BaseCategoryCreateData(BaseModel):
     title: str = Field(..., min_length=1, max_length=80)
     unit: Unit
     description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[{
-        "description": "description",
-        "id": "33190000-8",
-        "scheme": "ДК021"
-    }])
+    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[CLASSIFICATION_EXAMPLE])
     status: CategoryStatus = CategoryStatus.active
     images: Optional[List[Image]] = Field(None, max_length=100, example=[{"url": "/image/1.jpg"}])
     agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example="string")
@@ -62,15 +59,11 @@ class DeprecatedCategoryCreateData(BaseCategoryCreateData):
 
 class CategoryUpdateData(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=80, example="string")
-    unit: Optional[Unit] = Field(None, example={"code": "string", "name": "string"})
+    unit: Optional[Unit] = Field(None, example=UNIT_EXAMPLE)
     description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
     status: Optional[CategoryStatus] = Field(None, example=CategoryStatus.active)
     images: Optional[List[Image]] = Field(None, max_length=100, example=[{"url": "/image/1.jpg"}])
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[{
-        "description": "description",
-        "id": "33190000-8",
-        "scheme": "ДК021"
-    }])
+    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[])
     agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example="string")
 
 

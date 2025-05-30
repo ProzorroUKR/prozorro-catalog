@@ -42,6 +42,16 @@ class Document(DocumentPostData):
     datePublished: datetime
 
 
+DOCUMENT_EXAMPLE = {
+    "id": uuid4().hex,
+    "title": "name.doc",
+    "url": "/documents/name.doc",
+    "hash": f"md5:{uuid4().hex}",
+    "format": "application/msword",
+    "dateModified": datetime.now().isoformat(),
+    "datePublished": datetime.now().isoformat(),
+}
+
 class DocumentSign(BaseModel):
     hash: str
     title: str
