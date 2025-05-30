@@ -89,12 +89,12 @@ GET /tags
 {
    "data": [
        {
-           "id": "NT1",
+           "code": "NT1",
            "name": "Новий",
            "name_en": "New tag"
        },
        {
-           "id": "hit-sale",
+           "code": "hit-sale",
            "name": "Хіт продажу",
            "name_en": "Hit sale"
        },
@@ -113,7 +113,7 @@ GET /tags/hit-sale
 200 OK
 {
    "data": {
-       "id": "hit-sale",
+       "code": "hit-sale",
        "name": "Хіт продажу",
        "name_en": "Hit sale",
    }
@@ -135,7 +135,7 @@ PATCH /tags/NT1
 200 OK
 {
    "data": {
-       "id": "NT1",
+       "code": "NT1",
        "name": "Новий",
        "name_en": "New tag"
    }
