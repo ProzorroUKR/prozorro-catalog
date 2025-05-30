@@ -1,16 +1,15 @@
 import logging
 from typing import Optional, Union
 
-from aiohttp.web_exceptions import HTTPBadRequest
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 
 from catalog import db
 from catalog.models.api import ErrorResponse
+from catalog.models.common import SuccessResponse
 from catalog.models.tag import TagList, TagResponse, TagCreateInput, TagUpdateInput
 from catalog.auth import validate_accreditation
-from catalog.serializers.base import BaseSerializer
-
+from catalog.serializers.tag import TagSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +21,8 @@ class TagView(PydanticView):
 
         Tags: Tags
         """
-        response = await db.find_tags(limit=limit, active=active)
-        return response
+        tags = await db.find_tags(limit=limit, active=active)
+        return {"data": [TagSerializer(tag).data for tag in tags]}
 
     async def post(
         self, /, body: TagCreateInput
@@ -48,7 +47,7 @@ class TagView(PydanticView):
                 "tag_id": data['id']
             },
         )
-        return {"data": BaseSerializer(data).data}
+        return {"data": TagSerializer(data).data}
 
 
 class TagItemView(PydanticView):
@@ -60,7 +59,7 @@ class TagItemView(PydanticView):
         Tags: Tags
         """
         tag = await db.read_tag(tag_id)
-        return {"data": BaseSerializer(tag).data}
+        return {"data": TagSerializer(tag).data}
 
     async def patch(
         self, tag_id: str, /, body: TagUpdateInput
@@ -75,10 +74,6 @@ class TagItemView(PydanticView):
         async with db.read_and_update_tag(tag_id) as tag:
             # export data back to dict
             data = body.data.dict_without_none()
-            # update tag with valid data
-            if tag["active"] is False and not data.get("active"):
-                raise HTTPBadRequest(text="Forbidden to update inactive tag")
-
             tag.update(data)
 
             logger.info(
@@ -86,4 +81,15 @@ class TagItemView(PydanticView):
                 extra={"MESSAGE_ID": "tag_patch"},
             )
 
-        return {"data": BaseSerializer(tag).data}
+        return {"data": TagSerializer(tag).data}
+
+    async def delete(self, tag_id: str, /) -> Union[r200[SuccessResponse], r404[ErrorResponse]]:
+        """
+        Tag delete
+
+        Security: Basic: []
+        Tags: Tags
+        """
+        validate_accreditation(self.request, "category")
+        await db.delete_tag(tag_id)
+        return {"result": "success"}

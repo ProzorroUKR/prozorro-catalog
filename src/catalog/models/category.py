@@ -8,6 +8,7 @@ from catalog.models.api import Input, AuthorizedInput, Response, CreateResponse
 from catalog.models.common import Classification, Image, CategoryMarketAdministrator, Unit, AGREEMENT_ID_REGEX, \
     CLASSIFICATION_EXAMPLE, UNIT_EXAMPLE
 from catalog.models.criteria import Criterion
+from catalog.models.tag import TagsMixin
 from catalog.utils import get_now
 from enum import Enum
 
@@ -17,7 +18,7 @@ class CategoryStatus(str, Enum):
     hidden = "hidden"
 
 
-class BaseCategoryCreateData(BaseModel):
+class BaseCategoryCreateData(TagsMixin, BaseModel):
     classification: Classification
     marketAdministrator: CategoryMarketAdministrator
     title: str = Field(..., min_length=1, max_length=80)
@@ -57,7 +58,7 @@ class DeprecatedCategoryCreateData(BaseCategoryCreateData):
         return v
 
 
-class CategoryUpdateData(BaseModel):
+class CategoryUpdateData(TagsMixin, BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=80, example="string")
     unit: Optional[Unit] = Field(None, example=UNIT_EXAMPLE)
     description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
@@ -67,7 +68,7 @@ class CategoryUpdateData(BaseModel):
     agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example="string")
 
 
-class Category(BaseModel):
+class Category(TagsMixin, BaseModel):
     """
     The Catalog Profile
     """

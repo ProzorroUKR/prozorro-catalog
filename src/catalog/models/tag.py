@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Optional, List
+from uuid import uuid4
 
-from pydantic import Field, model_validator, ValidationError
+from pydantic import Field, model_validator, ValidationError, field_validator
 from slugify import slugify
 
 from catalog.models.api import Input, Response, ListResponse
@@ -8,33 +9,43 @@ from catalog.models.base import BaseModel
 
 
 class PostTag(BaseModel):
-    id: Optional[str] = Field(None, example="tag1")
+    code: Optional[str] = Field(None, example="tag1")
     name: str
     name_en: str
 
     @model_validator(mode="before")
-    def generate_id(cls, values):
-        if values.get("id") and not values["id"].isalnum():
+    def generate_code(cls, values):
+        if values.get("code") and not values["code"].isalnum():
             raise ValidationError("must be alphanumeric")
-        values["id"] = values.get("id") or slugify(values["name_en"])
+        values["code"] = values.get("code") or slugify(values["name_en"])
         return values
 
     @property
-    def active(self):
-        return True
+    def id(self):
+        return uuid4().hex
 
 
 class PatchTag(BaseModel):
     name: Optional[str] = Field(None, example="Тег")
     name_en: Optional[str] = Field(None, example="Tag")
-    active: Optional[bool] = Field(None, example=False)
 
 
 class Tag(BaseModel):
-    id: str
+    id: str = Field(..., min_length=32, max_length=32)
+    code: str
     name: str
     name_en: str
-    active: bool
+
+
+class TagsMixin:
+    tags: Optional[List[str]] = Field(None, example=["tag1", "tag2"])
+
+    @field_validator("tags")
+    @classmethod
+    def tags_must_be_unique(cls, tags: List[str]):
+        if len(tags) != len(set(tags)):
+            raise ValueError("Tags must be unique")
+        return tags
 
 
 TagCreateInput = Input[PostTag]

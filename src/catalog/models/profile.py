@@ -12,6 +12,7 @@ from catalog.models.common import (
     AGREEMENT_ID_REGEX, CLASSIFICATION_EXAMPLE, UNIT_EXAMPLE,
 )
 from catalog.models.criteria import Criterion
+from catalog.models.tag import TagsMixin
 from catalog.utils import get_now
 from enum import Enum
 import logging
@@ -25,7 +26,7 @@ class ProfileStatus(str, Enum):
     hidden = 'hidden'
 
 
-class BaseProfileCreateData(BaseModel):
+class BaseProfileCreateData(TagsMixin, BaseModel):
     """
     The Catalog Profile Create Data
     """
@@ -90,7 +91,7 @@ class DeprecatedLocalizationProfileCreateData(BaseLocalizationProfileCreateData)
     id: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
 
 
-class ProfileUpdateData(BaseModel):
+class ProfileUpdateData(TagsMixin, BaseModel):
     """
     The Catalog Profile Update Data
     """
@@ -110,7 +111,7 @@ class LocalizationProfileUpdateData(ProfileUpdateData):
     classification: Optional[Classification] = Field(None, example=CLASSIFICATION_EXAMPLE)
 
 
-class Profile(BaseModel):
+class Profile(TagsMixin, BaseModel):
     """
     The Catalog Profile
     """

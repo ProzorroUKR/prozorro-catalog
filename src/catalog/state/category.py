@@ -3,7 +3,7 @@ from pymongo import UpdateOne
 
 from catalog.state.base import BaseState
 from catalog.context import get_now
-from catalog.db import get_profiles_collection
+from catalog.db import get_profiles_collection, validate_tags_exist
 from catalog.validations import validate_medicine_additional_classifications, validate_agreement
 
 
@@ -14,6 +14,7 @@ class CategoryState(BaseState):
         if "agreementID" in data:
             await validate_agreement(data)
         await validate_medicine_additional_classifications(data)
+        await validate_tags_exist(data.get("tags", []))
         data['dateModified'] = get_now().isoformat()
         super().on_post(data)
 
@@ -35,6 +36,8 @@ class CategoryState(BaseState):
 
             if before.get("additionalClassifications", "") != after.get("additionalClassifications", ""):
                 await validate_medicine_additional_classifications(after)
+
+            await validate_tags_exist(after.get("tags", []))
 
         super().on_patch(before, after)
 
