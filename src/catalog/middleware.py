@@ -52,12 +52,7 @@ async def error_middleware(request, handler):
         if exc.content_type == "text/plain":
              exc.content_type = "application/json"
              exc.text = json_dumps({"errors": [exc.text]})
-             raise exc
-    except JSONDecodeError as exc:
-        raise HTTPBadRequest(
-            content_type="application/json",
-            text=json_dumps({"errors": [f"Bad request: required valid json body. {exc}"]}),
-        )
+        raise exc
     except Exception as exc:
         logger.exception(exc)
         raise HTTPInternalServerError(
