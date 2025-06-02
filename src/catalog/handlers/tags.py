@@ -91,5 +91,6 @@ class TagItemView(PydanticView):
         Tags: Tags
         """
         validate_accreditation(self.request, "category")
+        await db.find_objects_with_tag(tag_id)
         await db.delete_tag(tag_id)
         return {"result": "success"}

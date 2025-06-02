@@ -1,7 +1,7 @@
 from typing import Optional, List
 from uuid import uuid4
 
-from pydantic import Field, model_validator, ValidationError, field_validator
+from pydantic import Field, model_validator, field_validator
 from slugify import slugify
 
 from catalog.models.api import Input, Response, ListResponse
@@ -15,8 +15,8 @@ class PostTag(BaseModel):
 
     @model_validator(mode="before")
     def generate_code(cls, values):
-        if values.get("code") and not values["code"].isalnum():
-            raise ValidationError("must be alphanumeric")
+        if values.get("code") and not values["code"].replace("-", "").isalnum():
+            raise ValueError("`code` must be alphanumeric")
         values["code"] = values.get("code") or slugify(values["name_en"])
         return values
 
@@ -43,8 +43,8 @@ class TagsMixin:
     @field_validator("tags")
     @classmethod
     def tags_must_be_unique(cls, tags: List[str]):
-        if len(tags) != len(set(tags)):
-            raise ValueError("Tags must be unique")
+        if tags and len(tags) != len(set(tags)):
+            raise ValueError("tags must be unique")
         return tags
 
 

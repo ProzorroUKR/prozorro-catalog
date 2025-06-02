@@ -92,6 +92,7 @@ async def flush_database(*_):
         get_vendor_collection().delete_many({}),
         get_contributor_collection().delete_many({}),
         get_product_request_collection().delete_many({}),
+        get_tag_collection().delete_many({}),
     )
 
 
@@ -263,9 +264,10 @@ def get_category_collection():
 
 async def init_category_indexes():
     modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    tags_index = IndexModel([("tags", ASCENDING)], background=True)
     try:
         await get_category_collection().create_indexes(
-            [modified_index]
+            [modified_index, tags_index]
         )
     except PyMongoError as e:
         logger.exception(e)
@@ -315,9 +317,10 @@ def get_profiles_collection():
 async def init_profile_indexes():
     # db.contributors.createIndex({ "dateModified": 1 })
     modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    tags_index = IndexModel([("tags", ASCENDING)], background=True)
     try:
         await get_profiles_collection().create_indexes(
-            [modified_index]
+            [modified_index, tags_index]
         )
     except PyMongoError as e:
         logger.exception(e)
@@ -786,6 +789,25 @@ async def delete_tag(tag_id):
     )
     if result.deleted_count == 0:
         raise web.HTTPNotFound(text="Tag not found")
+
+
+async def find_objects_with_tag(tag_id):
+    """
+    Find categories and profiles with particular tag.
+    Limit by 10 results just for mentioning list of objects in exception.
+    """
+    category_ids = await get_category_collection().find(
+        {'tags': tag_id},
+        session=session_var.get(),
+    ).limit(10).distinct("_id")
+    if category_ids:
+        raise web.HTTPBadRequest(text=f"Tag `{tag_id}` is used in categories {category_ids}")
+    profile_ids = await get_profiles_collection().find(
+        {'tags': tag_id},
+        session=session_var.get(),
+    ).limit(10).distinct("_id")
+    if profile_ids:
+        raise web.HTTPBadRequest(text=f"Tag `{tag_id}` is used in profiles {profile_ids}")
 
 
 async def validate_tags_exist(tag_codes: list[str]) -> None:
