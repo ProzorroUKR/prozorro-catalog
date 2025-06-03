@@ -39,9 +39,10 @@ async def create_blank_criterion(api, profile):
     assert resp.status == 400
     assert {
                "errors": [
-                   "unexpected value; permitted: 'ESPD211': data.classification.scheme",
-                   "must be one of ('CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL', "
-                   "'CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES'): data.classification.id",
+                   "Input should be 'ESPD211': data.CriterionCreateData.classification.scheme",
+                   "Value error, must be one of ('CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL', "
+                   "'CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES'): data.CriterionCreateData.classification.id",
+                   "Input should be a valid list: data",
                ]
            } == await resp.json()
 
@@ -92,7 +93,7 @@ async def test_310_profile_create(api, category):
     assert resp.status == 404
 
     resp = await api.patch('/api/profiles/%s' % profile_id,
-                           json=test_profile, auth=TEST_AUTH)
+                           json={"data": {}}, auth=TEST_AUTH)
     assert resp.status == 404
     assert await resp.json() == {"errors": ["Profile not found"]}
 
@@ -194,15 +195,17 @@ async def test_profile_post(api, category):
         "data": profile,
     }
 
+    resp = await api.post('/api/profiles', json=test_profile, auth=TEST_AUTH)
+    assert resp.status == 400, await resp.json()
+    resp_data = await resp.json()
+    assert "Extra inputs are not permitted: data.ProfileCreateData.id" == resp_data["errors"][0]
+
+    test_profile["data"].pop("id", None)
+
     resp = await api.post('/api/profiles', json=test_profile, auth=TEST_AUTH_NO_PERMISSION)
     assert resp.status == 403
     assert {'errors': ["Forbidden 'profile' write operation"]} == await resp.json()
 
-    resp = await api.post('/api/profiles', json=test_profile, auth=TEST_AUTH)
-    assert resp.status == 400, await resp.json()
-    assert {'errors': ['extra fields not permitted: data.id']} == await resp.json()
-
-    test_profile["data"].pop("id", None)
     resp = await api.post('/api/profiles', json=test_profile, auth=TEST_AUTH)
     assert resp.status == 201, await resp.json()
     resp = await resp.json()
@@ -372,11 +375,11 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedMinItems and expectedMaxItems couldn't exist without expectedValues: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+        "Value error, expectedMinItems couldn't be greater then count of items in expectedValues: data"
+    )
 
-    requirement_data["data"]["expectedMaxItems"] = 2
+    requirement_data["data"]["expectedMaxItems"] = 4
 
     resp = await api.post(
         f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
@@ -386,9 +389,11 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
 
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedMinItems and expectedMaxItems couldn't exist without expectedValues: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+        "Value error, expectedMinItems couldn't be greater then count of items in expectedValues: data"
+    )
+
+    requirement_data["data"]["expectedMaxItems"] = 2
 
     requirement_data["data"]["expectedValues"] = ["value1", "value2", "value3", "value4"]
 
@@ -400,9 +405,9 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
 
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedMinItems couldn't be greater then expectedMaxItems: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+        "Value error, expectedMinItems couldn't be greater then expectedMaxItems: data"
+    )
 
     requirement_data["data"]["expectedMaxItems"] = 6
     resp = await api.post(
@@ -412,9 +417,9 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedMaxItems couldn't be greater then count of items in expectedValues: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+        "Value error, expectedMaxItems couldn't be greater then count of items in expectedValues: data"
+    )
 
     requirement_data["data"]["expectedMinItems"] = 5
     resp = await api.post(
@@ -424,9 +429,9 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedMinItems couldn't be greater then count of items in expectedValues: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+        "Value error, expectedMinItems couldn't be greater then count of items in expectedValues: data"
+    )
     # check values with category requirement
     requirement_data["data"]["expectedMinItems"] = 1
     requirement_data["data"]["expectedMaxItems"] = 2
@@ -481,9 +486,9 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+        "Value error, expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data"
+    )
 
     # create requirement with another dataType
     requirement_data["data"] = {
@@ -534,9 +539,9 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+        "Value error, expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data"
+    )
 
     category_id = category["data"]["id"]
     c_criteria_id = category["data"]["criteria"][0]["id"]
@@ -610,9 +615,9 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-         "minValue couldn't be greater than maxValue: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+         "Value error, minValue couldn't be greater than maxValue: data"
+    )
 
     requirement_data["data"]["maxValue"] = 60.9
     resp = await api.post(
@@ -707,7 +712,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "field required: dataType"
+        "Field required: dataType"
     ]
 
     resp = await api.patch(
@@ -718,8 +723,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "value is not a valid enumeration member; permitted: 'string', "
-        "'date-time', 'number', 'integer', 'boolean': data.dataType"
+        "Input should be 'string', 'date-time', 'number', 'integer' or 'boolean': data.dataType"
     ]
 
     resp = await api.patch(
@@ -730,18 +734,18 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedMinItems couldn't be greater then count of items in expectedValues: __root__"
+        "Value error, expectedMinItems couldn't be greater then count of items in expectedValues"
     ]
 
     resp = await api.patch(
         f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements/{requirement_id}",
-        json={"data": {"expectedMinItems": 3, "expectedValues": None}, "access": access},
+        json={"data": {"expectedMinItems": 1, "expectedValues": None}, "access": access},
         auth=TEST_AUTH,
     )
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedMinItems and expectedMaxItems couldn't exist without expectedValues: __root__"
+        "Value error, expectedMinItems couldn't be greater then count of items in expectedValues"
     ]
 
     resp = await api.patch(
@@ -752,7 +756,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedMinItems couldn't be greater then expectedMaxItems: __root__"
+        "Value error, expectedMinItems couldn't be greater then expectedMaxItems"
     ]
 
     resp = await api.patch(
@@ -763,7 +767,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedMaxItems couldn't be greater then count of items in expectedValues: __root__"
+        "Value error, expectedMaxItems couldn't be greater then count of items in expectedValues"
     ]
 
     resp = await api.patch(
@@ -774,7 +778,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedMinItems couldn't be greater then expectedMaxItems: __root__"
+        "Value error, expectedMinItems couldn't be greater then expectedMaxItems"
     ]
 
     resp = await api.patch(
@@ -785,7 +789,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: __root__"
+        "Value error, expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']"
     ]
 
     resp = await api.patch(
@@ -796,7 +800,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedValues couldn't exists together with one of ['minValue', 'maxValue', 'expectedValue']: __root__"
+        "Value error, expectedValues couldn't exists together with one of ['minValue', 'maxValue', 'expectedValue']"
     ]
 
     resp = await api.patch(
@@ -807,7 +811,7 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "ensure this value is greater than 0: data.expectedMinItems"
+        "Input should be greater than 0: data.expectedMinItems"
     ]
 
     resp = await api.patch(

@@ -3,8 +3,8 @@ aiohttp==3.10.5 # TODO: remove version later maybe after aiohttp-client-cache up
 aiohttp-client-cache
 motor
 pytz
-aiohttp-swagger>=1.0.14, <2
-pydantic[email]==1.7.3
+aiohttp_pydantic>=2.5
+pydantic[email]==2.11.5
 aiocache>=0.11.1, <1
 ujson # requirements for aiocache
 msgpack # requirements for aiocache
@@ -12,4 +12,5 @@ aiofiles>=0.7.0
 python-json-logger==2.0.1
 PyNaCl>=1.5.0, <2
 sentry-sdk
+standard-imghdr  # for python 3.13
 git+https://github.com/ProzorroUKR/standards.git@1.0.162#egg=standards

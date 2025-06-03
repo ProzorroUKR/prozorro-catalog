@@ -1,42 +1,43 @@
 from typing import Generic, TypeVar, Optional, List, Any
+from uuid import uuid4
+
 from pydantic import BaseModel, Field
-from pydantic.generics import GenericModel
 
 DataT = TypeVar('DataT')
 
 
 class Access(BaseModel):
-    token: str = Field(..., regex=r"[0-9a-f]{32}")
+    token: str = Field(..., pattern=r"[0-9a-f]{32}")
 
 
 class AccessOwner(Access):
     owner: str
 
 
-class Input(GenericModel, Generic[DataT]):
+class Input(BaseModel, Generic[DataT]):
     data: DataT
 
 
-class AuthorizedInput(GenericModel, Generic[DataT]):
+class AuthorizedInput(BaseModel, Generic[DataT]):
     data: DataT
-    access: Optional[Access]  # will be checked later cos we want 401 not 400
+    access: Optional[Access] = Field(None, example={"token": uuid4().hex})  # will be checked later cos we want 401 not 400
 
 
-class BulkInput(GenericModel, Generic[DataT]):
+class BulkInput(BaseModel, Generic[DataT]):
     data: List[DataT]
-    access: Optional[Access]
+    access: Optional[Access] = Field(None, example={"token": uuid4().hex})
 
 
-class CreateResponse(GenericModel, Generic[DataT]):
+class CreateResponse(BaseModel, Generic[DataT]):
     data: DataT
     access: AccessOwner
 
 
-class Response(GenericModel, Generic[DataT]):
+class Response(BaseModel, Generic[DataT]):
     data: DataT
 
 
-class ListResponse(GenericModel, Generic[DataT]):
+class ListResponse(BaseModel, Generic[DataT]):
     data: List[DataT]
 
 

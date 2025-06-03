@@ -1,10 +1,12 @@
 import logging
+from typing import Union
 
-from aiohttp.web_urldispatcher import View
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 
 from catalog import db
-from catalog.models.product import VendorProductCreateInput
-from catalog.swagger import class_view_swagger_path
+from catalog.models.api import ErrorResponse
+from catalog.models.product import VendorProductCreateInput, ProductResponse
 from catalog.auth import validate_access_token, validate_accreditation
 from catalog.serializers.product import ProductSerializer
 from catalog.state.vendor_product import VendorProductState
@@ -13,25 +15,29 @@ from catalog.state.vendor_product import VendorProductState
 logger = logging.getLogger(__name__)
 
 
-@class_view_swagger_path('/app/swagger/vendors/products')
-class VendorProductView(View):
+class VendorProductView(PydanticView):
 
     state_class = VendorProductState
 
-    @classmethod
-    async def post(cls, request, vendor_id: str) -> dict:
-        validate_accreditation(request, "vendor_products")
+    async def post(
+        self, vendor_id: str, /, body: VendorProductCreateInput
+    ) -> Union[r201[ProductResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        """
+        Create vendor product
+
+        Security: Basic: []
+        Tags: Vendor/Products
+        """
+        validate_accreditation(self.request, "vendor_products")
         vendor = await db.read_vendor(vendor_id)
-        json = await request.json()
-        body = VendorProductCreateInput(**json)
-        validate_access_token(request, vendor, body.access)
+        validate_access_token(self.request, vendor, body.access)
         data = body.data.dict_without_none()
 
         category = await db.read_category(data["relatedCategory"])
-        await cls.state_class.on_post(data, vendor, category)
+        await self.state_class.on_post(data, vendor, category)
 
         data['vendor'] = {"id": vendor_id}
-        data['access'] = {'owner': request.user.name}
+        data['access'] = {'owner': self.request.user.name}
         await db.insert_product(data)
 
         logger.info(

@@ -1,15 +1,16 @@
-import random
 from copy import deepcopy
 import logging
+from typing import Optional, Union
 
-from aiohttp.web_urldispatcher import View
-from aiohttp.web import HTTPConflict, HTTPNotFound
-from pymongo.errors import OperationFailure
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
+from aiohttp.web import HTTPNotFound
 
 from catalog import db
-from catalog.models.product import ProductCreateInput, ProductUpdateInput, LocalizationProductUpdateInput
-from catalog.swagger import class_view_swagger_path
-from catalog.utils import pagination_params, get_now, async_retry
+from catalog.models.api import PaginatedList, ErrorResponse
+from catalog.models.product import ProductCreateInput, ProductUpdateInput, LocalizationProductUpdateInput, \
+    ProductCreateResponse, ProductResponse
+from catalog.utils import pagination_params, get_now
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
 from catalog.serializers.product import ProductSerializer
 from catalog.state.product import ProductState
@@ -18,14 +19,19 @@ from catalog.state.product import ProductState
 logger = logging.getLogger(__name__)
 
 
-@class_view_swagger_path('/app/swagger/products')
-class ProductView(View):
+class ProductView(PydanticView):
 
     state_class = ProductState
 
-    @classmethod
-    async def collection_get(cls, request):
-        offset, limit, reverse = pagination_params(request)
+    async def get(
+            self, /, offset: Optional[str] = None, limit: Optional[int] = 100, descending: Optional[int] = 0,
+    ) -> r200[PaginatedList]:
+        """
+        Get a list of products
+
+        Tags: Products
+        """
+        offset, limit, reverse = pagination_params(self.request)
         response = await db.find_products(
             offset=offset,
             limit=limit,
@@ -33,8 +39,50 @@ class ProductView(View):
         )
         return response
 
-    @classmethod
-    async def get(cls, request, product_id):
+    async def post(
+        self, /, body: ProductCreateInput
+    ) -> Union[r201[ProductCreateResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        """
+        Create product
+
+        Security: Basic: []
+        Tags: Products
+        """
+        validate_accreditation(self.request, "product")
+        # export data back to dict
+        data = body.data.dict_without_none()
+
+        category_id = data["relatedCategory"]
+        category = await db.read_category(category_id)  # ensure exists
+        validate_access_token(self.request, category, body.access)
+
+        await self.state_class.on_post(data, category)
+
+        access = set_access_token(self.request, data)
+        data["dateCreated"] = data["dateModified"] = get_now().isoformat()
+        await db.insert_product(data)
+
+        logger.info(
+            f"Created product {data['id']}",
+            extra={
+                "MESSAGE_ID": "product_create",
+                "product_id": data["id"],
+            },
+        )
+        return {"data": ProductSerializer(data, category=category).data,
+                "access": access}
+
+
+class ProductItemView(PydanticView):
+
+    state_class = ProductState
+
+    async def get(self, product_id: str, /) -> Union[r201[ProductResponse], r400[ErrorResponse], r404[ErrorResponse]]:
+        """
+        Get product
+
+        Tags: Products
+        """
         product = await db.read_product(product_id)
         category = await db.read_category(
             category_id=product.get("relatedCategory"),
@@ -50,54 +98,30 @@ class ProductView(View):
 
         return {"data": ProductSerializer(product, vendor=vendor, category=category).data}
 
-    @classmethod
-    async def post(cls, request):
-        validate_accreditation(request, "product")
-        # import and validate data
-        json = await request.json()
-        body = ProductCreateInput(**json)
-        # export data back to dict
-        data = body.data.dict_without_none()
+    async def patch(
+        self, product_id: str, /, body: ProductUpdateInput
+    ) -> Union[r200[ProductResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
+        """
+        Product update
 
-        category_id = data["relatedCategory"]
-        category = await db.read_category(category_id)  # ensure exists
-        validate_access_token(request, category, body.access)
-
-        await cls.state_class.on_post(data, category)
-
-        access = set_access_token(request, data)
-        data["dateCreated"] = data["dateModified"] = get_now().isoformat()
-        await db.insert_product(data)
-
-        logger.info(
-            f"Created product {data['id']}",
-            extra={
-                "MESSAGE_ID": "product_create",
-                "product_id": data["id"],
-            },
-        )
-        return {"data": ProductSerializer(data, category=category).data,
-                "access": access}
-
-    @classmethod
-    @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
-                 fail_exception=HTTPConflict(text="Try again later"))
-    async def patch(cls, request, product_id):
-        validate_accreditation(request, "product")
+        Security: Basic: []
+        Tags: Products
+        """
+        validate_accreditation(self.request, "product")
         async with db.read_and_update_product(product_id) as product:
             # import and validate data
-            json = await request.json()
+            json = await self.request.json()
             if product.get("vendor"):
                 body = LocalizationProductUpdateInput(**json)
             else:
                 body = ProductUpdateInput(**json)
-            validate_access_token(request, product, body.access)
+            validate_access_token(self.request, product, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
             product_before = deepcopy(product)
             product.update(data)
             category = await db.read_category(product["relatedCategory"])
-            await cls.state_class.on_patch(product_before, product)
+            await self.state_class.on_patch(product_before, product)
 
             logger.info(
                 f"Updated product {product_id}",

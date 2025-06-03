@@ -1,45 +1,63 @@
+from typing import Union
+
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
+
 from catalog.auth import validate_accreditation
 
 from catalog import db
-from catalog.handlers.base_ban import BaseBanView
-from catalog.models.ban import ContributorBanPostInput
-from catalog.swagger import class_view_swagger_path
+from catalog.handlers.base_ban import BaseBanViewMixin, BaseBanViewItemMixin
+from catalog.models.api import ErrorResponse
+from catalog.models.ban import ContributorBanPostInput, BanResponse, BanList
 from catalog.validations import validate_contributor_ban_already_exists
 
 
-@class_view_swagger_path('/app/swagger/crowd_sourcing/contributors/bans')
-class ContributorBanView(BaseBanView):
+class ContributorBanMixin:
 
     parent_obj_name = "contributor"
 
-    @classmethod
-    async def get_parent_obj(cls, **kwargs):
-        return await db.read_contributor(kwargs.get("contributor_id"))
+    async def get_parent_obj(self, parent_obj_id):
+        return await db.read_contributor(parent_obj_id)
 
-    @classmethod
-    def read_and_update_object(cls, **kwargs):
-        return db.read_and_update_contributor(kwargs.get("contributor_id"))
+    def read_and_update_object(self, parent_obj_id):
+        return db.read_and_update_contributor(parent_obj_id)
 
-    @classmethod
-    async def validate_data(cls, request, body, parent_obj, **kwargs):
+    async def validate_data(self, body, parent_obj):
         data = body.data.dict_without_none()
         administrator_id = data.get("administrator", {}).get("identifier", {}).get("id")
         validate_contributor_ban_already_exists(parent_obj, administrator_id)
 
-    @classmethod
-    async def get_body_from_model(cls, request):
-        json = await request.json()
-        return ContributorBanPostInput(**json)
 
-    @classmethod
-    async def collection_get(cls, request, **kwargs):
-        return await super().collection_get(request, **kwargs)
+class ContributorBanView(ContributorBanMixin, BaseBanViewMixin, PydanticView):
 
-    @classmethod
-    async def get(cls, request, **kwargs):
-        return await super().get(request, **kwargs)
+    async def get(self, contributor_id: str, /) -> r200[BanList]:
+        """
+        Get a list of contributor bans
 
-    @classmethod
-    async def post(cls, request, **kwargs):
-        validate_accreditation(request, "category")
-        return await super().post(request, **kwargs)
+        Tags: Contributor/Bans
+        """
+        return await BaseBanViewMixin.get(self, contributor_id)
+
+    async def post(
+        self, contributor_id: str, /, body: ContributorBanPostInput
+    ) -> Union[r201[BanResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        """
+        Create a contributor ban
+
+        Security: Basic: []
+        Tags: Contributor/Bans
+        """
+        validate_accreditation(self.request, "category")
+        return await BaseBanViewMixin.post(self, contributor_id, body)
+
+
+class ContributorBanItemView(ContributorBanMixin, BaseBanViewItemMixin, PydanticView):
+    async def get(
+        self, contributor_id: str, ban_id: str, /,
+    ) -> Union[r200[BanResponse], r400[ErrorResponse], r404[ErrorResponse]]:
+        """
+        Get a contributor ban
+
+        Tags: Contributor/Bans
+        """
+        return await BaseBanViewItemMixin.get(self, contributor_id, ban_id)

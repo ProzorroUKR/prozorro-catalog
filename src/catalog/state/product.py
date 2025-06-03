@@ -62,7 +62,7 @@ class ProductState(BaseState):
 
     @classmethod
     async def validate_product_to_profiles(cls, product):
-        profile_ids = product.get("relatedProfiles", "")
+        profile_ids = product.get("relatedProfiles", [])
         for profile_id in profile_ids:
             profile = await db.read_profile(profile_id)
             validate_product_to_profile(profile, product)

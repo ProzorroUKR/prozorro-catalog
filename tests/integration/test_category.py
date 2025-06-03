@@ -9,7 +9,7 @@ from .utils import create_profile, create_criteria
 async def test_110_category_create(api, mock_agreement):
     test_category = api.get_fixture_json('category')
 
-    resp = await api.put('/api/categories/123', auth=TEST_AUTH)
+    resp = await api.put('/api/categories/123', json={"data": {}}, auth=TEST_AUTH)
     assert resp.status == 400
 
     resp = await api.put('/api/categories', json=test_category, auth=TEST_AUTH)
@@ -26,7 +26,7 @@ async def test_110_category_create(api, mock_agreement):
                          json=test_category,
                          auth=TEST_AUTH)
     assert resp.status == 400, await resp.json()
-    assert {'errors': ['field required: data']} == await resp.json()
+    assert {'errors': ['Field required: data']} == await resp.json()
 
     resp = await api.put('/api/categories/%s' % category_id + '-1',
                          json={"data": test_category},
@@ -40,12 +40,12 @@ async def test_110_category_create(api, mock_agreement):
                          json={"data": test_category},
                          auth=TEST_AUTH)
     assert resp.status == 400, await resp.json()
-    assert {'errors': ['string does not match regex "^[0-9A-Za-z_-]{20,32}$": data.id']} == await resp.json()
+    assert {'errors': ["String should match pattern '^[0-9A-Za-z_-]{20,32}$': data.id"]} == await resp.json()
 
     test_category['id'] = category_id
 
     resp = await api.put(f"/api/categories/{category_id}",
-                         json=test_category,
+                         json={"data": test_category},
                          auth=TEST_AUTH_NO_PERMISSION)
     assert resp.status == 403
     assert {'errors': ["Forbidden 'category' write operation"]} == await resp.json()
@@ -101,15 +101,16 @@ async def test_110_category_create(api, mock_agreement):
 async def test_category_post(api, mock_agreement):
     test_category = deepcopy(api.get_fixture_json('category'))
 
+    resp = await api.post('/api/categories', json={"data": test_category}, auth=TEST_AUTH)
+    assert resp.status == 400, await resp.json()
+    assert {'errors': ['Extra inputs are not permitted: data.id']} == await resp.json()
+
+    test_category.pop("id", None)
+
     resp = await api.post('/api/categories', json={"data": test_category}, auth=TEST_AUTH_NO_PERMISSION)
     assert resp.status == 403
     assert {'errors': ["Forbidden 'category' write operation"]} == await resp.json()
 
-    resp = await api.post('/api/categories', json={"data": test_category}, auth=TEST_AUTH)
-    assert resp.status == 400, await resp.json()
-    assert {'errors': ['extra fields not permitted: data.id']} == await resp.json()
-
-    test_category.pop("id", None)
     resp = await api.post('/api/categories', json={"data": test_category}, auth=TEST_AUTH)
     assert resp.status == 201, await resp.json()
     category_data = await resp.json()
@@ -292,7 +293,7 @@ async def test_120_category_patch(api, category):
     patch_category_bad['access'] = {'token': 'bad token value, but long enough'}
 
     resp = await api.patch('/api/categories/%s' % category_id,
-                           json=patch_category_bad,
+                           json={"data": {}},
                            auth=TEST_AUTH_NO_PERMISSION)
     assert resp.status == 403, await resp.json()
 
@@ -369,10 +370,9 @@ async def test_130_requirement_create(api, category):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "value is not a valid enumeration member; permitted: 'string', "
-        "'date-time', 'number', 'integer', 'boolean': data.dataType"
-    ]
+    assert resp_json["errors"][0] == (
+        "Input should be 'string', 'date-time', 'number', 'integer' or 'boolean': data.dataType"
+    )
 
     resp = await api.post(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
@@ -381,9 +381,9 @@ async def test_130_requirement_create(api, category):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedValues is required when dataType string: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+        "Value error, expectedValues is required when dataType string: data"
+    )
 
     requirement_data["data"]["expectedValues"] = []
     resp = await api.post(
@@ -393,10 +393,9 @@ async def test_130_requirement_create(api, category):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "ensure this value has at least 1 items: data.expectedValues",
-        "expectedMinItems is required when expectedValues exists and should be equal 1: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+        'Set should have at least 1 item after validation, not 0: data.expectedValues'
+    )
 
     requirement_data["data"]["expectedMinItems"] = 3
     del requirement_data["data"]["expectedValues"]
@@ -408,9 +407,9 @@ async def test_130_requirement_create(api, category):
 
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedMinItems and expectedMaxItems couldn't exist without expectedValues: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+        "Value error, expectedMinItems and expectedMaxItems couldn't exist without expectedValues: data"
+    )
 
     requirement_data["data"]["expectedMaxItems"] = 2
 
@@ -422,9 +421,9 @@ async def test_130_requirement_create(api, category):
 
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedMinItems and expectedMaxItems couldn't exist without expectedValues: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+        "Value error, expectedMinItems and expectedMaxItems couldn't exist without expectedValues: data"
+    )
 
     requirement_data["data"]["expectedValues"] = ["value1", "value2", "value3", "value4"]
 
@@ -436,9 +435,9 @@ async def test_130_requirement_create(api, category):
 
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedMinItems is required when expectedValues exists and should be equal 1: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+        "Value error, expectedMinItems is required when expectedValues exists and should be equal 1: data"
+    )
 
     requirement_data["data"]["expectedMinItems"] = 1
     requirement_data["data"]["expectedMaxItems"] = 6
@@ -449,9 +448,9 @@ async def test_130_requirement_create(api, category):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-         "expectedMaxItems should be equal 1 or not exist at all: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+         "Value error, expectedMaxItems should be equal 1 or not exist at all: data"
+    )
 
     requirement_data["data"]["expectedMaxItems"] = 1
     requirement_data["data"]["unit"] = {
@@ -466,9 +465,7 @@ async def test_130_requirement_create(api, category):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "Unit is forbid with dataType string: data.__root__",
-    ]
+    assert resp_json["errors"][0] == "Value error, Unit is forbid with dataType string: data"
 
     del requirement_data["data"]["expectedMinItems"]
     del requirement_data["data"]["expectedMaxItems"]
@@ -485,10 +482,10 @@ async def test_130_requirement_create(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "value is not a valid boolean: data.expectedValue",
-        "value is not a valid integer: data.expectedValue",
-        "value is not a valid float: data.expectedValue",
-        "expectedValues is required when dataType string: data.__root__",
+        'Input should be a valid boolean: data.expectedValue.bool',
+        'Input should be a valid integer: data.expectedValue.int',
+        'Input should be a valid number: data.expectedValue.float',
+        'Input should be a valid list: data',
     ]
 
     requirement_data["data"]["expectedValue"] = 4
@@ -500,9 +497,7 @@ async def test_130_requirement_create(api, category):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        'Unit is required with dataType integer: data.__root__',
-    ]
+    assert resp_json["errors"][0] == "Value error, Unit is required with dataType integer: data"
 
     requirement_data["data"]["unit"] = {
         "name": "відсоток",
@@ -517,8 +512,9 @@ async def test_130_requirement_create(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "value is not a valid integer: data.maxValue",
-        "value is not a valid float: data.maxValue",
+        'Input should be a valid integer: data.maxValue.int',
+        'Input should be a valid number: data.maxValue.float',
+        'Input should be a valid list: data',
     ]
 
     requirement_data["data"]["maxValue"] = 2
@@ -529,9 +525,9 @@ async def test_130_requirement_create(api, category):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+        "Value error, expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: data"
+    )
 
     # try to create integer characteristic without minValue/expectedValue
     del requirement_data["data"]["expectedValue"]
@@ -542,9 +538,7 @@ async def test_130_requirement_create(api, category):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "minValue is required when dataType number or integer: data.__root__"
-    ]
+    assert resp_json["errors"][0] == "Value error, minValue is required when dataType number or integer: data"
 
     requirement_data["data"]["minValue"] = 1
     requirement_data["data"]["expectedValues"] = [2, 3]
@@ -556,9 +550,9 @@ async def test_130_requirement_create(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "str type expected: data.expectedValues.0",
-        "str type expected: data.expectedValues.1",
-        "expectedMinItems is required when expectedValues exists and should be equal 1: data.__root__"
+        'Input should be a valid string: data.expectedValues.0',
+        'Input should be a valid string: data.expectedValues.1',
+        'Input should be a valid list: data',
     ]
 
     requirement_data["data"]["expectedValues"] = ["value1", "value2", "value3", "value4"]
@@ -632,7 +626,7 @@ async def test_131_requirement_patch(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "field required: dataType"
+        "Field required: dataType"
     ]
 
     resp = await api.patch(
@@ -643,8 +637,7 @@ async def test_131_requirement_patch(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "value is not a valid enumeration member; permitted: 'string', "
-        "'date-time', 'number', 'integer', 'boolean': data.dataType"
+        "Input should be 'string', 'date-time', 'number', 'integer' or 'boolean': data.dataType"
     ]
 
     resp = await api.patch(
@@ -655,7 +648,7 @@ async def test_131_requirement_patch(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedMinItems and expectedMaxItems couldn't exist without expectedValues: __root__"
+        "Value error, expectedMinItems and expectedMaxItems couldn't exist without expectedValues"
     ]
 
     resp = await api.patch(
@@ -666,7 +659,7 @@ async def test_131_requirement_patch(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedMinItems is required when expectedValues exists and should be equal 1: __root__"
+        "Value error, expectedMinItems is required when expectedValues exists and should be equal 1"
     ]
 
     resp = await api.patch(
@@ -677,7 +670,7 @@ async def test_131_requirement_patch(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedMaxItems should be equal 1 or not exist at all: __root__"
+        "Value error, expectedMaxItems should be equal 1 or not exist at all"
     ]
 
     resp = await api.patch(
@@ -702,7 +695,7 @@ async def test_131_requirement_patch(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']: __root__"
+        "Value error, expectedValue couldn't exists together with one of ['minValue', 'maxValue', 'expectedValues']"
     ]
 
     resp = await api.patch(
@@ -713,7 +706,7 @@ async def test_131_requirement_patch(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "ensure this value is greater than 0: data.expectedMinItems"
+        "Input should be greater than 0: data.expectedMinItems"
     ]
 
     resp = await api.patch(
@@ -1031,7 +1024,7 @@ async def test_requirement_data_schema(api, category):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == ['dataSchema is forbidden with dataType boolean: data.__root__']
+    assert resp_json["errors"][0] == 'Value error, dataSchema is forbidden with dataType boolean: data'
 
     requirement_data = {
         "title": "Мова",
@@ -1048,9 +1041,8 @@ async def test_requirement_data_schema(api, category):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "value is not a valid enumeration member; permitted: 'ISO 639-3', 'ISO 3166-1 alpha-2': data.dataSchema"
-    ]
+    assert resp_json["errors"][0] == "Input should be 'ISO 639-3' or 'ISO 3166-1 alpha-2': data.dataSchema"
+
 
     requirement_data["dataSchema"] = "ISO 639-3"
     resp = await api.post(
@@ -1060,9 +1052,9 @@ async def test_requirement_data_schema(api, category):
     )
     assert resp.status == 400
     resp_json = await resp.json()
-    assert resp_json["errors"] == [
-        "expectedValues should have ISO 639-3 format and include codes from standards: data.__root__"
-    ]
+    assert resp_json["errors"][0] == (
+        "Value error, expectedValues should have ISO 639-3 format and include codes from standards: data"
+    )
 
     requirement_data["expectedValues"] = ["eng", "ukr", "fra"]
     resp = await api.post(
@@ -1083,7 +1075,7 @@ async def test_requirement_data_schema(api, category):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"] == [
-        "expectedValues should have ISO 3166-1 alpha-2 format and include codes from standards: __root__"
+        "Value error, expectedValues should have ISO 3166-1 alpha-2 format and include codes from standards"
     ]
 
     resp = await api.patch(

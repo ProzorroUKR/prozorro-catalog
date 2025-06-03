@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import Field, validator, root_validator
+from pydantic import Field, field_validator, model_validator
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse, AuthorizedInput, ListResponse
 from catalog.doc_service import validate_url_from_doc_service, validate_url_signature, build_api_document_url
@@ -8,19 +8,17 @@ from uuid import uuid4
 
 
 class DocumentPostData(BaseModel):
-    id: str = None
-    hash: str = Field(..., regex=r"^md5:[0-9a-f]{32}$")
+    id: Optional[str] = Field(None, example=uuid4().hex)
+    hash: str = Field(..., pattern=r"^md5:[0-9a-f]{32}$")
     title: str = Field(..., min_length=1)
     format: str
     url: str
-    description: Optional[str]
+    description: Optional[str] = Field(None, example="description")
 
-    @validator("id", always=True)
-    def generate_id(cls, v, values, **kwargs):
-        return uuid4().hex
-
-    @root_validator
+    @model_validator(mode="before")
     def process_url(cls, values):
+        if "id" not in values:
+            values["id"] = uuid4().hex
         if 'url' in values and 'hash' in values:
             validate_url_from_doc_service(values["url"])
             validate_url_signature(values["url"], values["hash"])
@@ -29,20 +27,30 @@ class DocumentPostData(BaseModel):
 
 
 class DocumentPutData(DocumentPostData):
-    @validator("id", always=True)
+    @field_validator("id")
     def generate_id(cls, v, values, **kwargs):
         return v or uuid4().hex
 
 
 class DocumentPatchData(BaseModel):
-    title: Optional[str] = Field(None, min_length=1)
-    description: Optional[str]
+    title: Optional[str] = Field(None, min_length=1, example="title")
+    description: Optional[str] = Field(None, example="description")
 
 
 class Document(DocumentPostData):
     dateModified: datetime
     datePublished: datetime
 
+
+DOCUMENT_EXAMPLE = {
+    "id": uuid4().hex,
+    "title": "name.doc",
+    "url": "/documents/name.doc",
+    "hash": f"md5:{uuid4().hex}",
+    "format": "application/msword",
+    "dateModified": datetime.now().isoformat(),
+    "datePublished": datetime.now().isoformat(),
+}
 
 class DocumentSign(BaseModel):
     hash: str

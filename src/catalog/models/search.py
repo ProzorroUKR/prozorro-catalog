@@ -2,7 +2,6 @@ from catalog.models.api import Input, Response
 from catalog.models.category import Category
 from catalog.models.profile import Profile
 from catalog.models.product import Product
-from catalog.models.offer import Offer
 from pydantic import BaseModel, Field
 from typing import Set, Union
 from enum import Enum
@@ -17,7 +16,7 @@ class ResourceType(str, Enum):
 
 class SearchData(BaseModel):
     resource: ResourceType
-    ids: Set[str] = Field(..., min_items=1, max_items=300)
+    ids: Set[str] = Field(..., min_length=1, max_length=300)
 
 
 SearchInput = Input[SearchData]

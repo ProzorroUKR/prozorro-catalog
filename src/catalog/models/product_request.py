@@ -2,13 +2,13 @@ from datetime import datetime
 from typing import Optional, List, Union
 from uuid import uuid4
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse
-from catalog.models.common import MarketAdministrator
+from catalog.models.common import MarketAdministrator, MarketAdministratorIdentifier
 from catalog.models.product import ProductCreateData, Product
-from catalog.models.document import DocumentPostData, Document
+from catalog.models.document import DocumentPostData, Document, DOCUMENT_EXAMPLE
 import standards
 
 
@@ -20,30 +20,57 @@ class RequestReviewPostData(BaseModel):
 
 
 class RequestRejectionPostData(RequestReviewPostData):
-    reason: List[str] = Field(..., min_items=1)
-    description: Optional[str] = Field(None, min_length=1, max_length=2000)
+    reason: List[str] = Field(..., min_length=1)
+    description: Optional[str] = Field(None, min_length=1, max_length=2000, example="description")
 
-    @validator('reason')
-    def reason_standard(cls, values):
-        for reason in values:
+    @field_validator('reason')
+    def reason_standard(cls, v):
+        for reason in v:
             if reason not in REJECT_REASONS:
                 raise ValueError(f"invalid value: '{reason}'. Must be one of market/product_reject_reason.json keys")
-        if len(values) != len(set(values)):
+        if len(v) != len(set(v)):
             raise ValueError("there are duplicated reasons")
-        return values
+        return v
 
 
 class RequestReview(RequestReviewPostData):
     date: datetime
 
 
+REQUEST_REVIEW_EXAMPLE = RequestReview(
+    date=datetime.now().isoformat(),
+    administrator=MarketAdministrator(
+        identifier=MarketAdministratorIdentifier(
+            id="42574629",
+            scheme="UA-EDR",
+            legalName_en="STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
+            legalName_uk="ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
+        )
+    )
+).model_dump(exclude_none=True)
+
+
 class RequestRejection(RequestRejectionPostData, RequestReview):
     pass
 
 
+REQUEST_REJECTION_EXAMPLE = RequestRejection(
+    date=datetime.now().isoformat(),
+    administrator=MarketAdministrator(
+        identifier=MarketAdministratorIdentifier(
+            id="42574629",
+            scheme="UA-EDR",
+            legalName_en="STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
+            legalName_uk="ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
+        )
+    ),
+    reason=["invalidTitle",],
+).model_dump(exclude_none=True)
+
+
 class ProductRequestPostData(BaseModel):
     product: ProductCreateData
-    documents: Optional[List[DocumentPostData]]
+    documents: Optional[List[DocumentPostData]] = Field(None, example=[DOCUMENT_EXAMPLE])
 
     @property
     def id(self):
@@ -56,9 +83,9 @@ class ProductRequest(BaseModel):
     dateModified: datetime
     dateCreated: datetime
     owner: str
-    acception: Optional[RequestReview]
-    rejection: Optional[RequestRejection]
-    documents: Optional[List[Document]]
+    acception: Optional[RequestReview] = Field(None, example=[REQUEST_REVIEW_EXAMPLE])
+    rejection: Optional[RequestRejection] = Field(None, example=[REQUEST_REJECTION_EXAMPLE])
+    documents: Optional[List[Document]] = Field(None, example=[DOCUMENT_EXAMPLE])
     product: ProductCreateData
 
 

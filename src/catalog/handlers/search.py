@@ -1,7 +1,10 @@
-from aiohttp.web_urldispatcher import View
+from typing import Union
+
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r201, r400
 from catalog import db
-from catalog.models.search import SearchInput
-from catalog.swagger import class_view_swagger_path
+from catalog.models.api import ErrorResponse
+from catalog.models.search import SearchInput, SearchResponse
 from catalog.serializers.base import RootSerializer
 
 
@@ -13,14 +16,14 @@ COLLECTIONS = {
 }
 
 
-@class_view_swagger_path('/app/swagger/search')
-class SearchView(View):
+class SearchView(PydanticView):
 
-    @classmethod
-    async def post(cls, request):
-        json = await request.json()
-        body = SearchInput(**json)
+    async def post(self, /, body: SearchInput) -> Union[r201[SearchResponse], r400[ErrorResponse]]:
+        """
+        Find resources by their ids
 
+        Tags: Search
+        """
         get_collection = COLLECTIONS[body.data.resource]
         items = await db.find_objects(get_collection(), body.data.ids)
 

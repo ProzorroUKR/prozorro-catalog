@@ -1,3 +1,4 @@
+import asyncio
 from copy import deepcopy
 from uuid import uuid4
 from unittest.mock import patch, AsyncMock
@@ -8,6 +9,13 @@ from catalog.db import flush_database, init_mongo, get_database, get_offers_coll
 from catalog.doc_service import generate_test_url
 from .base import TEST_AUTH, TEST_AUTH_CPB
 from .utils import get_fixture_json, create_profile, create_criteria
+
+
+@pytest.fixture
+def event_loop():
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
 
 
 def set_requirements_to_responses(requirement_responses, category):

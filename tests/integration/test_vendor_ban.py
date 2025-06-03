@@ -26,7 +26,7 @@ async def test_create_ban_by_not_market_administrator(api, vendor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['must be one of market administrators: data.administrator.identifier']} == result
+    assert {'errors': ['Value error, must be one of market administrators: data.administrator.identifier']} == result
 
 
 async def test_create_ban_permission(api, vendor):
@@ -54,8 +54,8 @@ async def test_ban_create_invalid_fields(api, vendor):
     result = await resp.json()
     assert resp.status == 400, result
     errors = [
-        'field required: data.reason',
-        'field required: data.administrator',
+        'Field required: data.reason',
+        'Field required: data.administrator',
     ]
     assert {'errors': errors} == result
 
@@ -68,7 +68,7 @@ async def test_ban_create_invalid_fields(api, vendor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Can add document only from document service: data.documents.0.__root__']} == result
+    assert {'errors': ['Value error, can add document only from document service: data.documents.0']} == result
 
     data['documents'][0]['url'] = generate_test_url(data["documents"][0]["hash"])
     resp = await api.post(
@@ -78,7 +78,7 @@ async def test_ban_create_invalid_fields(api, vendor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Document url signature is invalid: data.documents.0.__root__']} == result
+    assert {'errors': ['Value error, document url signature is invalid: data.documents.0']} == result
 
     del data["documents"]
     data["reason"] = "some other reason"
@@ -89,7 +89,7 @@ async def test_ban_create_invalid_fields(api, vendor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['must be one of market/ban_reason.json keys: data.reason']} == result
+    assert {'errors': ['Value error, must be one of market/ban_reason.json keys: data.reason']} == result
 
 
 async def test_ban_create(api, vendor):
@@ -379,4 +379,4 @@ async def test_vendor_ban_doc_invalid_signature(api, vendor, vendor_ban):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Document url signature is invalid: data.__root__']} == result
+    assert {'errors': ['Value error, document url signature is invalid: data']} == result

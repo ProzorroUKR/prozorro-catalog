@@ -29,16 +29,16 @@ verifiers_keyring = {
 def validate_url_from_doc_service(url):
     if not url.startswith(DOC_SERVICE_URL):
         if not DOC_SERVICE_DEP_URL or not url.startswith(DOC_SERVICE_DEP_URL):
-            raise ValueError("Can add document only from document service")
+            raise ValueError("can add document only from document service")
 
     parsed_url = urlparse(url)
     path_parts = parsed_url.path.split("/")
     if len(path_parts) != 3:
-        raise ValueError("Document service url has an unexpected path")
+        raise ValueError("document service url has an unexpected path")
 
     parsed_query = dict(parse_qsl(parsed_url.query))
     if {"Signature", "KeyID"} != set(parsed_query):
-        raise ValueError("Document service url has unexpected query params")
+        raise ValueError("document service url has unexpected query params")
 
 
 def validate_url_signature(url, doc_hash):
@@ -56,7 +56,7 @@ def validate_url_signature(url, doc_hash):
     try:
         signature = b64decode(unquote(signature))
     except Exception:
-        raise ValueError("Document url signature has an unexpected format")
+        raise ValueError("document url signature has an unexpected format")
 
     # compose the expected message
     doc_hash = doc_hash.split(":")[-1]
@@ -68,7 +68,7 @@ def validate_url_signature(url, doc_hash):
     try:
         verifier.verify(message, signature)
     except BadSignatureError:
-        raise ValueError("Document url signature is invalid")
+        raise ValueError("document url signature is invalid")
 
 
 def generate_test_url(doc_hash):

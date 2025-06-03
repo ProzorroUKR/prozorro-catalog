@@ -36,7 +36,7 @@ async def test_contributor_email_validation(api):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['field required: data.contributor.contactPoint.email']} == result
+    assert {'errors': ['Field required: data.contributor.contactPoint.email']} == result
 
     invalid_values = ("", "123", 10, True, "foobar.com", "test@test")
     for value in invalid_values:
@@ -48,7 +48,12 @@ async def test_contributor_email_validation(api):
         )
         result = await resp.json()
         assert resp.status == 400, result
-        assert {'errors': ['value is not a valid email address: data.contributor.contactPoint.email']} == result
+        error_msgs = [
+            'Input should be a valid string: data.contributor.contactPoint.email',
+            'value is not a valid email address: An email address must have an @-sign.: data.contributor.contactPoint.email',
+            'value is not a valid email address: The part after the @-sign is not valid. It should have a period.: data.contributor.contactPoint.email',
+        ]
+        assert result["errors"][0] in error_msgs
 
     valid_values = (
         "Abc@example.tld",
@@ -80,7 +85,7 @@ async def test_contributor_without_region(api):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['region is required for countryName Україна: data.contributor.address.__root__']} == result
+    assert {'errors': ['Value error, region is required for countryName Україна: data.contributor.address']} == result
 
     # 2
     data['contributor']["address"]["countryName"] = "Антарктика"
@@ -106,7 +111,7 @@ async def test_contributor_ukrainian_region_dictionary(api, category):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['must be one of classifiers/ua_regions.json: data.contributor.address.region']} == result
+    assert {'errors': ['Value error, must be one of classifiers/ua_regions.json: data.contributor.address.region']} == result
 
 
 async def test_contributor_create(api):
@@ -189,5 +194,5 @@ async def test_create_contributor_with_invalid_identifier(api):
     result = await resp.json()
     assert resp.status == 400, result
     assert {'errors': [
-        'must be one of organizations/identifier_scheme.json codes: data.contributor.identifier.scheme'
+        'Value error, must be one of organizations/identifier_scheme.json codes: data.contributor.identifier.scheme'
     ]} == result

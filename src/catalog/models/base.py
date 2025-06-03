@@ -12,7 +12,7 @@ class PropertySerializationModel(PydanticBaseModel):
         props = [
             prop for prop in dir(cls)
             if isinstance(getattr(cls, prop), property)
-            and prop not in ("__values__", "fields")  # excluding pydantic properties
+            and prop not in ("__values__", "fields", "model_extra", "__fields_set__", "model_fields_set")  # excluding pydantic properties
         ]
         # Include and exclude properties
         if include:

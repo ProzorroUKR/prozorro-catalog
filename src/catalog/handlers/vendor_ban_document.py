@@ -1,54 +1,62 @@
-import random
 import logging
 
+from typing import Union
+
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from aiohttp.web_exceptions import HTTPNotFound
-from aiohttp.web import HTTPConflict
-from pymongo.errors import OperationFailure
 
 from catalog import db
 from catalog.auth import validate_access_token
-from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput
+from catalog.models.api import ErrorResponse
+from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput, DocumentList, \
+    DocumentResponse
 from catalog.serializers.document import DocumentSerializer
-from catalog.swagger import class_view_swagger_path
-from catalog.handlers.base_document import BaseDocumentView
-from catalog.utils import async_retry, get_now, find_item_by_id
+from catalog.handlers.base_document import BaseDocumentView, BaseDocumentItemView
+from catalog.utils import get_now, find_item_by_id
 
 
 logger = logging.getLogger(__name__)
 
 
-@class_view_swagger_path('/app/swagger/vendors/bans/documents')
-class VendorBanDocumentView(BaseDocumentView):
+class VendorBanDocumentMixin:
 
     parent_obj_name = "vendor_ban"
 
     @classmethod
-    async def get_parent_obj(cls, **kwargs):
-        vendor = await db.read_vendor(kwargs.get("vendor_id"))
-        ban_id = kwargs.get("ban_id")
+    async def get_parent_obj(cls, vendor_id, ban_id):
+        vendor = await db.read_vendor(vendor_id)
         return find_item_by_id(vendor.get("bans", []), ban_id, "ban")
 
     @classmethod
-    async def validate_data(cls, request, body, parent_obj, **kwargs):
+    async def validate_data(cls, request, body, parent_obj, parent_obj_id):
         validate_access_token(request, parent_obj, body.access)
 
-    @classmethod
-    async def collection_get(cls, request, **kwargs):
-        return await super().collection_get(request, **kwargs)
 
-    @classmethod
-    async def get(cls, request, **kwargs):
-        return await super().get(request, **kwargs)
+class VendorBanDocumentView(VendorBanDocumentMixin, BaseDocumentView, PydanticView):
 
-    @classmethod
-    async def post(cls, request, **kwargs):
-        json = await request.json()
-        body = DocumentPostInput(**json)
+    async def get(self, vendor_id: str, ban_id: str, /) -> r200[DocumentList]:
+        """
+        Get list of vendor ban documents
+
+        Tags: Vendor/Bans/Documents
+        """
+        return await BaseDocumentView.get(self, vendor_id, ban_id)
+
+    async def post(
+        self, vendor_id: str, ban_id: str, /, body: DocumentPostInput
+    ) -> Union[r201[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        """
+        Vendor ban document create
+
+        Security: Basic: []
+        Tags: Vendor/Bans/Documents
+        """
         data = body.data.dict_without_none()
 
-        async with db.read_and_update_vendor(kwargs.get("vendor_id")) as obj:
-            await cls.validate_data(request, body, obj, **kwargs)
-            ban = find_item_by_id(obj.get("bans", []), kwargs.get("ban_id"), "ban")
+        async with db.read_and_update_vendor(vendor_id) as obj:
+            await self.validate_data(self.request, body, obj, vendor_id)
+            ban = find_item_by_id(obj.get("bans", []), ban_id, "ban")
             now = get_now().isoformat()
             obj["dateModified"] = ban['dateModified'] = data['datePublished'] = data['dateModified'] = now
             if "documents" not in ban:
@@ -56,28 +64,43 @@ class VendorBanDocumentView(BaseDocumentView):
             ban["documents"].append(data)
 
             logger.info(
-                f"Created {cls.parent_obj_name} document {data['id']}",
+                f"Created {self.parent_obj_name} document {data['id']}",
                 extra={
-                    "MESSAGE_ID": f"{cls.parent_obj_name}_document_create",
+                    "MESSAGE_ID": f"{self.parent_obj_name}_document_create",
                     "document_id": data["id"]
                 },
             )
 
         return {"data": DocumentSerializer(data).data}
 
-    @classmethod
-    @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
-                 fail_exception=HTTPConflict(text="Try again later"))
-    async def put(cls, request, **kwargs):
-        async with db.read_and_update_vendor(kwargs.get("vendor_id")) as obj:
+
+class VendorBanDocumentItemView(VendorBanDocumentMixin, BaseDocumentItemView, PydanticView):
+
+    async def get(self, vendor_id: str, ban_id: str, doc_id: str, /) -> Union[r200[DocumentResponse], r404[ErrorResponse]]:
+        """
+        Get vendor ban document
+
+        Tags: Vendor/Bans/Documents
+        """
+        return await BaseDocumentItemView.get(self, vendor_id, doc_id, ban_id)
+
+    async def put(
+        self, vendor_id: str, ban_id: str, doc_id: str, /, body: DocumentPutInput,
+    ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
+        """
+        Vendor ban document replace
+
+        Security: Basic: []
+        Tags: Vendor/Bans/Documents
+        """
+        async with db.read_and_update_vendor(vendor_id) as obj:
             # import and validate data
-            json = await request.json()
-            doc_id = kwargs.get("doc_id")
+            json = await self.request.json()
             json["data"]["id"] = doc_id
             body = DocumentPutInput(**json)
-            await cls.validate_data(request, body, obj, **kwargs)
+            await self.validate_data(self.request, body, obj, vendor_id)
             # find & append doc
-            ban = find_item_by_id(obj.get("bans", []), kwargs.get("ban_id"), "ban")
+            ban = find_item_by_id(obj.get("bans", []), ban_id, "ban")
             for doc in ban.get("documents", "")[::-1]:
                 if doc["id"] == doc_id:
                     data = body.data.dict_without_none()
@@ -89,26 +112,27 @@ class VendorBanDocumentView(BaseDocumentView):
                 raise HTTPNotFound(text="Document not found")
 
             logger.info(
-                f"Updated {cls.parent_obj_name} document {doc_id}",
-                extra={"MESSAGE_ID": f"{cls.parent_obj_name}_document_put"},
+                f"Updated {self.parent_obj_name} document {doc_id}",
+                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_put"},
             )
 
         return {"data": DocumentSerializer(data).data}
 
-    @classmethod
-    @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
-                 fail_exception=HTTPConflict(text="Try again later"))
-    async def patch(cls, request, **kwargs):
-        async with db.read_and_update_vendor(kwargs.get("vendor_id")) as obj:
-            doc_id = kwargs.get("doc_id")
-            # import and validate data
-            json = await request.json()
-            body = DocumentPatchInput(**json)
-            await cls.validate_data(request, body, obj, **kwargs)
+    async def patch(
+        self, vendor_id: str, ban_id: str, doc_id: str, /, body: DocumentPatchInput,
+    ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
+        """
+        Product vendor ban update
+
+        Security: Basic: []
+        Tags: Vendor/Bans/Documents
+        """
+        async with db.read_and_update_vendor(vendor_id) as obj:
+            await self.validate_data(self.request, body, obj, vendor_id)
             # export data back to dict
             data = body.data.dict_without_none()
             # find & update doc
-            ban = find_item_by_id(obj.get("bans", []), kwargs.get("ban_id"), "ban")
+            ban = find_item_by_id(obj.get("bans", []), ban_id, "ban")
             for doc in ban.get("documents", "")[::-1]:
                 if doc["id"] == doc_id:
                     initial = dict(doc)
@@ -120,7 +144,7 @@ class VendorBanDocumentView(BaseDocumentView):
                 raise HTTPNotFound(text="Document not found")
 
             logger.info(
-                f"Updated {cls.parent_obj_name} document {doc_id}",
-                extra={"MESSAGE_ID": f"{cls.parent_obj_name}_document_patch"},
+                f"Updated {self.parent_obj_name} document {doc_id}",
+                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_patch"},
             )
         return {"data": DocumentSerializer(doc).data}

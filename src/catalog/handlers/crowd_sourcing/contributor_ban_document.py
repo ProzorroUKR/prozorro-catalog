@@ -1,45 +1,52 @@
-import random
+from typing import Union
+
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from aiohttp.web_exceptions import HTTPNotFound
-from aiohttp.web import HTTPConflict
-from pymongo.errors import OperationFailure
 
 from catalog import db
 from catalog.auth import validate_accreditation
-from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput
+from catalog.models.api import ErrorResponse
+from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput, DocumentResponse, \
+    DocumentList
 from catalog.serializers.document import DocumentSerializer
-from catalog.swagger import class_view_swagger_path
-from catalog.handlers.base_document import BaseDocumentView
-from catalog.utils import async_retry, get_now, find_item_by_id
+from catalog.handlers.base_document import BaseDocumentView, BaseDocumentItemView
+from catalog.utils import get_now, find_item_by_id
 
 
-@class_view_swagger_path('/app/swagger/crowd_sourcing/contributors/bans/documents')
-class ContributorBanDocumentView(BaseDocumentView):
-
+class ContributorBanDocumentMixin:
     parent_obj_name = "contributor_ban"
 
     @classmethod
-    async def get_parent_obj(cls, **kwargs):
-        contributor = await db.read_contributor(kwargs.get("contributor_id"))
-        ban_id = kwargs.get("ban_id")
+    async def get_parent_obj(cls, contributor_id, ban_id):
+        contributor = await db.read_contributor(contributor_id)
         return find_item_by_id(contributor.get("bans", []), ban_id, "ban")
 
-    @classmethod
-    async def collection_get(cls, request, **kwargs):
-        return await super().collection_get(request, **kwargs)
 
-    @classmethod
-    async def get(cls, request, **kwargs):
-        return await super().get(request, **kwargs)
+class ContributorBanDocumentView(ContributorBanDocumentMixin, BaseDocumentView, PydanticView):
 
-    @classmethod
-    async def post(cls, request, **kwargs):
-        validate_accreditation(request, "category")
-        json = await request.json()
-        body = DocumentPostInput(**json)
+    async def get(self, contributor_id: str, ban_id: str, /) -> r200[DocumentList]:
+        """
+        Get list of contributor ban documents
+
+        Tags: Contributor/Bans/Documents
+        """
+        return await BaseDocumentView.get(self, contributor_id, ban_id)
+
+    async def post(
+            self, contributor_id: str, ban_id: str, /, body: DocumentPostInput
+    ) -> Union[r201[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        """
+        Contributor ban document create
+
+        Security: Basic: []
+        Tags: Contributor/Bans/Documents
+        """
+        validate_accreditation(self.request, "category")
         data = body.data.dict_without_none()
 
-        async with db.read_and_update_contributor(kwargs.get("contributor_id")) as obj:
-            ban = find_item_by_id(obj.get("bans", []), kwargs.get("ban_id"), "ban")
+        async with db.read_and_update_contributor(contributor_id) as obj:
+            ban = find_item_by_id(obj.get("bans", []), ban_id, "ban")
             now = get_now().isoformat()
             obj["dateModified"] = ban['dateModified'] = data['datePublished'] = data['dateModified'] = now
             if "documents" not in ban:
@@ -48,19 +55,36 @@ class ContributorBanDocumentView(BaseDocumentView):
 
         return {"data": DocumentSerializer(data).data}
 
-    @classmethod
-    @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
-                 fail_exception=HTTPConflict(text="Try again later"))
-    async def put(cls, request, **kwargs):
-        validate_accreditation(request, "category")
-        async with db.read_and_update_contributor(kwargs.get("contributor_id")) as obj:
+
+class ContributorBanDocumentItemView(ContributorBanDocumentMixin, BaseDocumentItemView, PydanticView):
+
+    async def get(
+        self, contributor_id: str, ban_id: str, doc_id: str, /,
+    ) -> Union[r200[DocumentResponse], r404[ErrorResponse]]:
+        """
+        Get contributor ban document
+
+        Tags: Contributor/Bans/Documents
+        """
+        return await BaseDocumentItemView.get(self, contributor_id, doc_id, ban_id)
+
+    async def put(
+        self, contributor_id: str, ban_id: str, doc_id: str, /, body: DocumentPutInput,
+    ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
+        """
+        Contributor ban document replace
+
+        Security: Basic: []
+        Tags: Contributor/Bans/Documents
+        """
+        validate_accreditation(self.request, "category")
+        async with db.read_and_update_contributor(contributor_id) as obj:
             # import and validate data
-            json = await request.json()
-            doc_id = kwargs.get("doc_id")
+            json = await self.request.json()
             json["data"]["id"] = doc_id
             body = DocumentPutInput(**json)
             # find & append doc
-            ban = find_item_by_id(obj.get("bans", []), kwargs.get("ban_id"), "ban")
+            ban = find_item_by_id(obj.get("bans", []), ban_id, "ban")
             for doc in ban.get("documents", "")[::-1]:
                 if doc["id"] == doc_id:
                     data = body.data.dict_without_none()
@@ -72,20 +96,21 @@ class ContributorBanDocumentView(BaseDocumentView):
                 raise HTTPNotFound(text="Document not found")
         return {"data": DocumentSerializer(data).data}
 
-    @classmethod
-    @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
-                 fail_exception=HTTPConflict(text="Try again later"))
-    async def patch(cls, request, **kwargs):
-        validate_accreditation(request, "category")
-        async with db.read_and_update_contributor(kwargs.get("contributor_id")) as obj:
-            doc_id = kwargs.get("doc_id")
-            # import and validate data
-            json = await request.json()
-            body = DocumentPatchInput(**json)
+    async def patch(
+        self, contributor_id: str, ban_id: str, doc_id: str, /, body: DocumentPatchInput,
+    ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
+        """
+        Product contributor ban update
+
+        Security: Basic: []
+        Tags: Contributor/Bans/Documents
+        """
+        validate_accreditation(self.request, "category")
+        async with db.read_and_update_contributor(contributor_id) as obj:
             # export data back to dict
             data = body.data.dict_without_none()
             # find & update doc
-            ban = find_item_by_id(obj.get("bans", []), kwargs.get("ban_id"), "ban")
+            ban = find_item_by_id(obj.get("bans", []), ban_id, "ban")
             for doc in ban.get("documents", "")[::-1]:
                 if doc["id"] == doc_id:
                     initial = dict(doc)

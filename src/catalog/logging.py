@@ -1,35 +1,18 @@
 import logging
 import sys
 from contextvars import ContextVar
-from datetime import datetime, timezone
 
 from aiohttp.abc import AbstractAccessLogger
 from pythonjsonlogger import jsonlogger
-
-# every request task will have its own context and request-id as a result
-from pythonjsonlogger.jsonlogger import merge_record_extra
 
 request_id_var = ContextVar('request_id')
 
 
 class CustomJsonFormatter(jsonlogger.JsonFormatter):
     def add_fields(self, log_record, record, message_dict):
-        for field in self._required_fields:
-            if field in self.rename_fields:
-                log_record[self.rename_fields[field]] = record.__dict__.get(field)
-            else:
-                log_record[field] = record.__dict__.get(field)
-        if not log_record['message'] and message_dict:
+        super().add_fields(log_record, record, {})
+        if not log_record.get("message") and message_dict:
             log_record['message'] = message_dict
-        else:
-            log_record.update(message_dict)
-        merge_record_extra(record, log_record, reserved=self._skip_fields)
-
-        if self.timestamp:
-            key = self.timestamp if type(
-                self.timestamp) == str else 'timestamp'
-            log_record[key] = datetime.fromtimestamp(record.created,
-                                                     tz=timezone.utc)
 
         log_record['levelname'] = record.levelname
         log_record['name'] = record.name

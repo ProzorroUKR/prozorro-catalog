@@ -5,6 +5,7 @@ import io
 import logging
 from hashlib import sha256
 from json import dumps
+from unittest.mock import ANY
 from urllib.parse import quote
 from aiocache import cached as aiocache_cached
 from aiohttp.hdrs import CONTENT_DISPOSITION, CONTENT_TYPE
@@ -34,7 +35,7 @@ def pagination_params(request, default_limit=100):
     q = request.query
     offset = q.get("offset", "")
     limit = get_int_from_query(request, "limit", default=default_limit)
-    reverse = bool(q.get('reverse') or q.get('descending'))
+    reverse = bool(q.get('reverse') or get_int_from_query(request, "descending"))
     return offset, limit, reverse
 
 

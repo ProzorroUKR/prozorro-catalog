@@ -25,7 +25,7 @@ async def test_vendor_without_region(api):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['field required: data.vendor.address.region']} == result
+    assert {'errors': ['Field required: data.vendor.address.region']} == result
 
     # 2
     data['vendor']["address"]["countryName"] = "Антарктика"
@@ -36,7 +36,7 @@ async def test_vendor_without_region(api):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['field required: data.vendor.address.region']} == result
+    assert {'errors': ['Field required: data.vendor.address.region']} == result
 
 
 async def test_vendor_ukrainian_region_dictionary(api):
@@ -52,7 +52,7 @@ async def test_vendor_ukrainian_region_dictionary(api):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['must be one of classifiers/ua_regions.json: data.vendor.address.region']} == result
+    assert {'errors': ['Value error, must be one of classifiers/ua_regions.json: data.vendor.address.region']} == result
 
 
 async def test_vendor_create(db, api, mock_agreement):
@@ -110,7 +110,7 @@ async def test_vendor_patch(db, api):
     )
     assert resp.status == 400
     result = await resp.json()
-    assert result == {'errors': ['activation is only allowed action: data.isActivated']}
+    assert result == {'errors': ['Assertion failed, activation is only allowed action: data.isActivated']}
 
     patch_data = {"isActivated": True}
     resp = await api.patch(
@@ -270,6 +270,6 @@ async def test_create_vendor_with_invalid_identifier(api):
     result = await resp.json()
     assert resp.status == 400, result
     assert {'errors': [
-        'must be one of organizations/identifier_scheme.json codes: data.vendor.identifier.scheme'
+        'Value error, must be one of organizations/identifier_scheme.json codes: data.vendor.identifier.scheme'
     ]} == result
 

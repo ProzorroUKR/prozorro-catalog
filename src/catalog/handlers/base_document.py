@@ -1,10 +1,8 @@
-import random
 import logging
+from typing import Optional
 
-from aiohttp.web_urldispatcher import View
-from aiohttp.web import HTTPConflict, HTTPFound, HTTPNotFound
-from pymongo.errors import OperationFailure
-from catalog.utils import get_now, async_retry
+from aiohttp.web import HTTPFound, HTTPNotFound
+from catalog.utils import get_now
 from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput
 from catalog.serializers.document import DocumentSerializer
 from catalog.doc_service import get_doc_download_url, get_ds_id_from_api_url
@@ -13,32 +11,55 @@ from catalog.doc_service import get_doc_download_url, get_ds_id_from_api_url
 logger = logging.getLogger(__name__)
 
 
-class BaseDocumentView(View):
-
+class BaseDocumentMixin:
     parent_obj_name = None
 
     @classmethod
-    async def get_parent_obj(cls, **kwargs):
+    async def get_parent_obj(cls, parent_obj_id, child_obj_id=None):
         pass
 
     @classmethod
-    def read_and_update_object(cls, **kwargs):
+    def read_and_update_object(cls, parent_obj_id, child_obj_id=None):
         pass
 
     @classmethod
-    async def validate_data(cls, request, body, parent_obj, **kwargs):
+    async def validate_data(cls, request, body, parent_obj, parent_obj_id):
         pass
 
-    @classmethod
-    async def collection_get(cls, request, **kwargs):
-        obj = await cls.get_parent_obj(**kwargs)
+
+class BaseDocumentView(BaseDocumentMixin):
+
+    async def get(self, parent_obj_id: str, child_obj_id: Optional[str] = None):
+        obj = await self.get_parent_obj(parent_obj_id, child_obj_id)
         return {"data": [DocumentSerializer(d).data for d in obj.get("documents", "")]}
 
-    @classmethod
-    async def get(cls, request, **kwargs):
-        obj = await cls.get_parent_obj(**kwargs)
-        doc_id = kwargs.get("doc_id")
-        request_ds_id = request.query.get("download")
+    async def post(self, parent_obj_id: str, body: DocumentPostInput, child_obj_id: Optional[str] = None):
+
+        data = body.data.dict_without_none()
+
+        async with self.read_and_update_object(parent_obj_id, child_obj_id) as obj:
+            await self.validate_data(self.request, body, obj, parent_obj_id)
+            obj['dateModified'] = data['datePublished'] = data['dateModified'] = get_now().isoformat()
+            if "documents" not in obj:
+                obj["documents"] = []
+            obj["documents"].append(data)
+
+            logger.info(
+                f"Created {self.parent_obj_name} document {data['id']}",
+                extra={
+                    "MESSAGE_ID": f"{self.parent_obj_name}_document_create",
+                    "document_id": data["id"]
+                },
+            )
+
+        return {"data": DocumentSerializer(data).data}
+
+
+class BaseDocumentItemView(BaseDocumentMixin):
+
+    async def get(self, parent_obj_id: str, doc_id: str, child_obj_id: Optional[str] = None):
+        obj = await self.get_parent_obj(parent_obj_id, child_obj_id)
+        request_ds_id = self.request.query.get("download")
         for d in obj.get("documents", "")[::-1]:
             if d["id"] == doc_id:
                 if request_ds_id:
@@ -51,42 +72,14 @@ class BaseDocumentView(View):
         else:
             raise HTTPNotFound(text="Document not found")
 
-    @classmethod
-    async def post(cls, request, **kwargs):
-
-        json = await request.json()
-        body = DocumentPostInput(**json)
-        data = body.data.dict_without_none()
-
-        async with cls.read_and_update_object(**kwargs) as obj:
-            await cls.validate_data(request, body, obj, **kwargs)
-            obj['dateModified'] = data['datePublished'] = data['dateModified'] = get_now().isoformat()
-            if "documents" not in obj:
-                obj["documents"] = []
-            obj["documents"].append(data)
-
-            logger.info(
-                f"Created {cls.parent_obj_name} document {data['id']}",
-                extra={
-                    "MESSAGE_ID": f"{cls.parent_obj_name}_document_create",
-                    "document_id": data["id"]
-                },
-            )
-
-        return {"data": DocumentSerializer(data).data}
-
-    @classmethod
-    @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
-                 fail_exception=HTTPConflict(text="Try again later"))
-    async def put(cls, request, **kwargs):
+    async def put(self, parent_obj_id: str, doc_id: str, body: DocumentPutInput, child_obj_id: Optional[str] = None):
         # validate_accreditation(request, "category")
-        async with cls.read_and_update_object(**kwargs) as obj:
+        async with self.read_and_update_object(parent_obj_id, child_obj_id) as obj:
             # import and validate data
-            json = await request.json()
-            doc_id = kwargs.get("doc_id")
+            json = await self.request.json()
             json["data"]["id"] = doc_id
             body = DocumentPutInput(**json)
-            await cls.validate_data(request, body, obj, **kwargs)
+            await self.validate_data(self.request, body, obj, parent_obj_id)
             # find & append doc
             for d in obj.get("documents", "")[::-1]:
                 if d["id"] == doc_id:
@@ -99,22 +92,15 @@ class BaseDocumentView(View):
                 raise HTTPNotFound(text="Document not found")
 
             logger.info(
-                f"Updated {cls.parent_obj_name} document {doc_id}",
-                extra={"MESSAGE_ID": f"{cls.parent_obj_name}_document_put"},
+                f"Updated {self.parent_obj_name} document {doc_id}",
+                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_put"},
             )
         return {"data": DocumentSerializer(data).data}
 
-    @classmethod
-    @async_retry(tries=3, exceptions=OperationFailure, delay=lambda: random.uniform(0, .5),
-                 fail_exception=HTTPConflict(text="Try again later"))
-    async def patch(cls, request, **kwargs):
+    async def patch(self, parent_obj_id: str, doc_id: str, body: DocumentPatchInput, child_obj_id: Optional[str] = None):
         # validate_accreditation(request, "category")
-        async with cls.read_and_update_object(**kwargs) as obj:
-            doc_id = kwargs.get("doc_id")
-            # import and validate data
-            json = await request.json()
-            body = DocumentPatchInput(**json)
-            await cls.validate_data(request, body, obj, **kwargs)
+        async with self.read_and_update_object(parent_obj_id, child_obj_id) as obj:
+            await self.validate_data(self.request, body, obj, parent_obj_id)
             # export data back to dict
             data = body.data.dict_without_none()
             # find & update doc
@@ -129,7 +115,7 @@ class BaseDocumentView(View):
                 raise HTTPNotFound(text="Document not found")
 
             logger.info(
-                f"Updated {cls.parent_obj_name} document {doc_id}",
-                extra={"MESSAGE_ID": f"{cls.parent_obj_name}_document_patch"},
+                f"Updated {self.parent_obj_name} document {doc_id}",
+                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_patch"},
             )
         return {"data": DocumentSerializer(d).data}

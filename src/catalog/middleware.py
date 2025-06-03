@@ -1,6 +1,9 @@
+import json
+
+from aiohttp import web
+
 from catalog.serialization import json_response, json_dumps
 from aiohttp.web import (
-    HTTPUnprocessableEntity,
     HTTPInternalServerError,
     HTTPBadRequest
 )
@@ -17,48 +20,46 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def json_dumps_validation_error(exc: ValidationError) -> str:
+    """Format ValidationError into JSON string with detailed error messages."""
+    formatted_errors = []
+
+    for error in exc.errors():
+        msg = error["msg"]
+        loc = error.get("loc", ())
+
+        if loc:
+            field_path = ".".join(str(part) for part in loc if not str(part).startswith(('function-after', 'list')))
+            formatted_error = f"{msg}: {field_path}"
+        else:
+            formatted_error = msg
+
+        formatted_errors.append(formatted_error)
+
+    return json_dumps({"errors": formatted_errors})
+
+
 @middleware
 async def error_middleware(request, handler):
     try:
         response = await handler(request)
     except ValidationError as exc:
-        text = json_dumps(dict(errors=[
-            f"{e['msg']}: {'.'.join(str(part) for part in e['loc'])}"
-            for e in exc.errors()
-        ]))
         raise HTTPBadRequest(
-            text=text,
             content_type="application/json",
+            text=json_dumps_validation_error(exc),
         )
-    except Exception as exc:
-        if isinstance(exc, HTTPException) and exc.content_type == "text/plain":
+    except HTTPException as exc:
+        if exc.content_type == "text/plain":
              exc.content_type = "application/json"
              exc.text = json_dumps({"errors": [exc.text]})
-             raise exc
-        elif isinstance(exc, JSONDecodeError):
-            raise HTTPBadRequest(
-                content_type="application/json",
-                text=json_dumps({"errors": [f"Bad request: required valid json body. {exc}"]})
-            )
+        raise exc
+    except Exception as exc:
         logger.exception(exc)
         raise HTTPInternalServerError(
-            text=json_dumps({"errors": [str(exc)]}),
             content_type="application/json",
+            text=json_dumps({"errors": [str(exc)]}),
         )
-    else:
-        return response
-
-
-@middleware
-async def request_unpack_params(request, handler):
-    """
-    middleware for the func views
-    to pass variables from url
-    as kwargs
-    """
-    if 'swagger' in request.path or '/static/' in request.path:
-        return await handler(request)
-    return await handler(request, **request.match_info)
+    return response
 
 
 @middleware

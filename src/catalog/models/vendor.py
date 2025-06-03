@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import EmailStr, Field, validator, root_validator
+from pydantic import EmailStr, Field, field_validator
 from enum import Enum
 
-from catalog.models.ban import Ban
+from catalog.models.ban import Ban, BAN_EXAMPLE
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse, AuthorizedInput
 from catalog.models.common import Identifier, Organization, ContactPoint, Address, ORA_CODES
@@ -15,17 +15,17 @@ class VendorContactPoint(ContactPoint):
 
 
 class PostVendorAddress(Address):
-    locality: Optional[str] = Field(None, min_length=1, max_length=80)
-    postalCode: Optional[str] = Field(None, min_length=1, max_length=20)
-    streetAddress: Optional[str] = Field(None, min_length=1, max_length=250)
+    locality: Optional[str] = Field(None, min_length=1, max_length=80, example="string")
+    postalCode: Optional[str] = Field(None, min_length=1, max_length=20, example="string")
+    streetAddress: Optional[str] = Field(None, min_length=1, max_length=250, example="string")
 
 
 class VendorAddress(PostVendorAddress):
-    region: Optional[str] = Field(None, min_length=1, max_length=80)
+    region: Optional[str] = Field(None, min_length=1, max_length=80, example="string")
 
 
 class VendorIdentifier(Identifier):
-    @validator("scheme")
+    @field_validator("scheme")
     def scheme_standard(cls, v):
         if v not in ORA_CODES:
             raise ValueError("must be one of organizations/identifier_scheme.json codes")
@@ -47,9 +47,9 @@ class VendorPostData(BaseModel):
 
 
 class VendorPatchData(BaseModel):
-    isActivated: Optional[bool]
+    isActivated: Optional[bool] = Field(None, example=True)
 
-    @validator('isActivated')
+    @field_validator('isActivated')
     def activation_only(cls, v, values, **kwargs):
         assert v is True, "activation is only allowed action"
         return v
@@ -70,7 +70,7 @@ class Vendor(VendorPostData):
     owner: str
     status: VendorStatus = VendorStatus.pending
     documents: List[Document]
-    bans: Optional[List[Ban]]
+    bans: Optional[List[Ban]] = Field(None, example=[BAN_EXAMPLE])
 
 
 class VendorSign(VendorPostData):

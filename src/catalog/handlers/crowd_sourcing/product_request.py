@@ -1,19 +1,20 @@
 import logging
+from typing import Union, Optional
 
-from aiohttp.web_urldispatcher import View
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from catalog.auth import set_access_token, validate_accreditation
 
 from catalog import db
+from catalog.models.api import ErrorResponse, PaginatedList
 from catalog.models.product_request import (
     ProductRequestPostInput,
     ProductRequestRejectionPostInput,
-    ProductRequestAcceptionPostInput,
+    ProductRequestAcceptionPostInput, ProductRequestResponse, ProductRequestReviewCreateResponse,
 )
 from catalog.serializers.product_request import ProductRequestSerializer
 from catalog.settings import CRITERIA_LIST
 from catalog.state.product_request import ProductRequestState
-from catalog.swagger import class_view_swagger_path
-from catalog.handlers.base import BaseView
 from catalog.validations import (
     validate_product_to_category,
     validate_contributor_banned_categories,
@@ -26,17 +27,20 @@ from catalog.utils import pagination_params, get_now
 logger = logging.getLogger(__name__)
 
 
-@class_view_swagger_path('/app/swagger/crowd_sourcing/contributors/product_request')
-class ContributorProductRequestView(BaseView):
+class ContributorProductRequestView(PydanticView):
     state = ProductRequestState
 
-    @classmethod
-    async def post(cls, request, **kwargs):
-        validate_accreditation(request, "contributors")
-        contributor = await db.read_contributor(kwargs.get("contributor_id"))
-        # import and validate data
-        json = await request.json()
-        body = ProductRequestPostInput(**json)
+    async def post(
+        self, contributor_id: str, /, body: ProductRequestPostInput,
+    ) -> Union[r201[ProductRequestResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        """
+        Create a contributor product request
+
+        Security: Basic: []
+        Tags: Contributor/ProductRequest
+        """
+        validate_accreditation(self.request, "contributors")
+        contributor = await db.read_contributor(contributor_id)
         data = body.data.dict_without_none()
 
         # category validations
@@ -45,7 +49,7 @@ class ContributorProductRequestView(BaseView):
         validate_contributor_banned_categories(category, contributor)
 
         data["contributor_id"] = contributor["id"]
-        await cls.state.on_post(data, category)
+        await self.state.on_post(data, category)
         await db.insert_product_request(data)
 
         logger.info(
@@ -59,14 +63,19 @@ class ContributorProductRequestView(BaseView):
         return {"data": ProductRequestSerializer(data, category=category).data}
 
 
-@class_view_swagger_path('/app/swagger/crowd_sourcing/product_requests')
-class ProductRequestView(View):
-    @classmethod
-    async def collection_get(cls, request):
-        opt_fields = request.query.get("opt_fields")
+class ProductRequestView(PydanticView):
+
+    async def get(
+        self, /, offset: Optional[str] = None,  limit: Optional[int] = 100, descending: Optional[int] = 0, opt_fields: Optional[str] = None,
+    ) -> r200[PaginatedList]:
+        """
+        Get list of product requests
+
+        Tags: Contributor/ProductRequest
+        """
         if opt_fields:
             opt_fields = opt_fields.split(",")
-        offset, limit, reverse = pagination_params(request)
+        offset, limit, reverse = pagination_params(self.request)
         response = await db.find_product_requests(
             offset=offset,
             limit=limit,
@@ -75,8 +84,16 @@ class ProductRequestView(View):
         )
         return response
 
-    @classmethod
-    async def get(cls, request, request_id):
+
+class ProductRequestItemView(PydanticView):
+    async def get(
+        self, request_id: str, /,
+    ) -> Union[r200[ProductRequestResponse], r400[ErrorResponse], r404[ErrorResponse]]:
+        """
+        Get product request
+
+        Tags: Contributor/ProductRequest
+        """
         obj = await db.read_product_request(request_id)
         category = await db.read_category(
             category_id=obj["product"].get("relatedCategory"),
@@ -85,18 +102,20 @@ class ProductRequestView(View):
         return {"data": ProductRequestSerializer(obj, category=category).data}
 
 
-@class_view_swagger_path('/app/swagger/crowd_sourcing/product_requests/accept')
-class ProductRequestAcceptionView(BaseView):
+class ProductRequestAcceptionView(PydanticView):
     state = ProductRequestState
 
-    @classmethod
-    async def post(cls, request, **kwargs):
-        validate_accreditation(request, "category")
-        request_id = kwargs.get("request_id")
+    async def post(
+        self, request_id: str, /, body: ProductRequestAcceptionPostInput,
+    ) -> Union[r201[ProductRequestReviewCreateResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        """
+        Accept product request
+
+        Security: Basic: []
+        Tags: Contributor/ProductRequest
+        """
+        validate_accreditation(self.request, "category")
         async with db.read_and_update_product_request(request_id) as product_request:
-            # import and validate data
-            json = await request.json()
-            body = ProductRequestAcceptionPostInput(**json)
             validate_previous_product_reviews(product_request)
             # export data back to dict
             data = body.data.dict_without_none()
@@ -106,7 +125,7 @@ class ProductRequestAcceptionView(BaseView):
             acceptation_date = get_now().isoformat()
             data["date"] = acceptation_date
             product_request.update({"acception": data})
-            await cls.state.on_accept(product_request, category, acceptation_date)
+            await self.state.on_accept(product_request, category, acceptation_date)
 
             logger.info(
                 f"Updated product request {request_id}",
@@ -114,7 +133,7 @@ class ProductRequestAcceptionView(BaseView):
             )
 
         # add product to the market
-        access = set_access_token(request, product_request["product"])
+        access = set_access_token(self.request, product_request["product"])
         await db.insert_product(product_request["product"])
 
         logger.info(
@@ -131,18 +150,20 @@ class ProductRequestAcceptionView(BaseView):
         }
 
 
-@class_view_swagger_path('/app/swagger/crowd_sourcing/product_requests/reject')
-class ProductRequestRejectionView(BaseView):
+class ProductRequestRejectionView(PydanticView):
     state = ProductRequestState
 
-    @classmethod
-    async def post(cls, request, **kwargs):
-        validate_accreditation(request, "category")
-        request_id = kwargs.get("request_id")
+    async def post(
+        self, request_id: str, /, body: ProductRequestRejectionPostInput,
+    ) -> Union[r201[ProductRequestResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+        """
+        Reject product request
+
+        Security: Basic: []
+        Tags: Contributor/ProductRequest
+        """
+        validate_accreditation(self.request, "category")
         async with db.read_and_update_product_request(request_id) as product_request:
-            # import and validate data
-            json = await request.json()
-            body = ProductRequestRejectionPostInput(**json)
             validate_previous_product_reviews(product_request)
             # export data back to dict
             data = body.data.dict_without_none()
