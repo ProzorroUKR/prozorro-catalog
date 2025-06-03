@@ -52,6 +52,7 @@ DOCUMENT_EXAMPLE = {
     "datePublished": datetime.now().isoformat(),
 }
 
+
 class DocumentSign(BaseModel):
     hash: str
     title: str
