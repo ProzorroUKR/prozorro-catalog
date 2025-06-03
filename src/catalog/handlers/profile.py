@@ -345,7 +345,7 @@ class ProfileCriteriaRGItemView(ProfileCriteriaMixin, BaseCriteriaRGItemViewMixi
         Tags: Profile/Criteria/RequirementGroups
         """
         self.validations()
-        async with self.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
+        async with self.read_and_update_parent_obj(obj_id) as parent_obj:
             validate_access_token(self.request, parent_obj, None)
             old_parent_obj = deepcopy(parent_obj)
             criterion = find_item_by_id(parent_obj["criteria"], criterion_id, "criteria")
@@ -442,7 +442,7 @@ class ProfileCriteriaRGRequirementItemView(ProfileCriteriaMixin, BaseCriteriaRGR
         Tags: Profile/Criteria/RequirementGroups/Requirements
         """
         validate_accreditation(self.request, "profile")
-        async with self.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
+        async with self.read_and_update_parent_obj(obj_id) as parent_obj:
             validate_access_token(self.request, parent_obj, None)
             old_parent_obj = deepcopy(parent_obj)
             criterion = find_item_by_id(parent_obj["criteria"], criterion_id, "criteria")

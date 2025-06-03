@@ -105,7 +105,7 @@ class BaseDocumentItemView(BaseDocumentMixin):
     async def patch(self, parent_obj_id: str, doc_id: str, body: DocumentPatchInput, child_obj_id: Optional[str] = None):
         # validate_accreditation(request, "category")
         async with self.read_and_update_object(parent_obj_id, child_obj_id) as parent_obj:
-            await self.validate_data(self.request, body, obj, parent_obj_id)
+            await self.validate_data(self.request, body, parent_obj, parent_obj_id)
             old_parent_obj = deepcopy(parent_obj)
             # export data back to dict
             data = body.data.dict_without_none()

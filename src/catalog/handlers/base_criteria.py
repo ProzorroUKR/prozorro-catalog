@@ -116,7 +116,7 @@ class BaseCriteriaItemViewMixin(BaseCriteriaMixin):
         self, obj_id: str, criterion_id: str, /, body: CriterionUpdateInput
     ) -> Union[r200[CriterionResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         self.validations()
-        async with self.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
+        async with self.read_and_update_parent_obj(obj_id) as parent_obj:
             old_parent_obj = deepcopy(parent_obj)
             validate_access_token(self.request, parent_obj, body.access)
             # export data back to dict
@@ -153,7 +153,7 @@ class BaseCriteriaRGViewMixin(BaseCriteriaMixin):
         self, obj_id: str, criterion_id: str, /, body: RGCreateInput
     ) -> Union[r201[RGResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         self.validations()
-        async with self.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
+        async with self.read_and_update_parent_obj(obj_id) as parent_obj:
             old_parent_obj = deepcopy(parent_obj)
             validate_access_token(self.request, parent_obj, body.access)
             # export data back to dict
@@ -187,7 +187,7 @@ class BaseCriteriaRGItemViewMixin(BaseCriteriaMixin):
         self, obj_id: str, criterion_id: str, rg_id: str, /, body: RGUpdateInput
     ) -> Union[r200[RGResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         self.validations()
-        async with self.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
+        async with self.read_and_update_parent_obj(obj_id) as parent_obj:
             old_parent_obj = deepcopy(parent_obj)
             validate_access_token(self.request, parent_obj, body.access)
             # export data back to dict
