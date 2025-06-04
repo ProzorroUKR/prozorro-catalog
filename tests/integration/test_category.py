@@ -540,6 +540,18 @@ async def test_130_requirement_create(api, category):
     resp_json = await resp.json()
     assert resp_json["errors"][0] == "Value error, minValue is required when dataType number or integer: data"
 
+    requirement_data["data"]["minValue"] = 2
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"][0] == (
+        "Value error, minValue couldn't be equal or greater than maxValue: data"
+    )
+
     requirement_data["data"]["minValue"] = 1
     requirement_data["data"]["expectedValues"] = [2, 3]
     resp = await api.post(

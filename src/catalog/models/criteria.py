@@ -74,13 +74,13 @@ class RequirementBaseValidators(BaseModel):
         max_value = values.maxValue
         # TODO: remove after migration data type check
         if (
-                min_value
-                and max_value
-                and isinstance(min_value, TYPEMAP.get(DataTypeEnum.number.value))
-                and isinstance(max_value, TYPEMAP.get(DataTypeEnum.number.value))
-                and min_value > max_value
+            min_value
+            and max_value
+            and isinstance(min_value, TYPEMAP.get(DataTypeEnum.number.value))
+            and isinstance(max_value, TYPEMAP.get(DataTypeEnum.number.value))
+            and min_value >= max_value
         ):
-            raise ValueError("minValue couldn't be greater than maxValue")
+            raise ValueError("minValue couldn't be equal or greater than maxValue")
         return values
 
     @model_validator(mode="after")
@@ -287,7 +287,6 @@ class BaseRequirementUpdateData(BaseModel):
         return v.strip()
 
 
-
 class CategoryRequirementUpdateData(BaseRequirementUpdateData):
     isArchived: Optional[bool] = Field(None, example=True)
     expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat]] = Field(None, example="string")
@@ -487,5 +486,3 @@ RequestProfileRequirementCreateInput = AuthorizedInput[
 RequirementUpdateInput = AuthorizedInput[Union[CategoryRequirementUpdateData, ProfileRequirementUpdateData]]
 RequirementResponse = Response[Requirement]
 RequirementListResponse = ListResponse[Requirement]
-
-

@@ -616,7 +616,7 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     assert resp.status == 400
     resp_json = await resp.json()
     assert resp_json["errors"][0] == (
-         "Value error, minValue couldn't be greater than maxValue: data"
+         "Value error, minValue couldn't be equal or greater than maxValue: data"
     )
 
     requirement_data["data"]["maxValue"] = 60.9
@@ -630,6 +630,18 @@ async def test_330_requirement_create(api, category, profile_without_criteria):
     assert resp_json["errors"] == [
         "requirement '50 штук' maxValue should be equal or less than in category"
     ]
+
+    requirement_data["data"]["maxValue"] = 50
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+        json=requirement_data,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"][0] == (
+        "Value error, minValue couldn't be equal or greater than maxValue: data"
+    )
 
     del requirement_data["data"]["maxValue"]
     del requirement_data["data"]["minValue"]
