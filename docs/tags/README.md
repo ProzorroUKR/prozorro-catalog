@@ -55,7 +55,7 @@ POST /tags
 
 ```
 
-Поля `code`, `name` і `name_en` мають бути унікальні для кожного тегу. Тому при додаванні нового тегу з таким смим полем, буде помила:
+Поля `code`, `name` і `name_en` мають бути унікальні для кожного тегу. Тому при додаванні нового тегу з таким самим полем, буде помилка:
 
 ```doctest
 POST /tags
@@ -70,7 +70,7 @@ POST /tags
 400 BadRequest
 {
    "errors": [
-        "Tag with `name` `Хіт продажу` already exists"
+        "Duplicate value for 'name': 'Хіт продажу'"
    ]
 }
 
@@ -170,7 +170,7 @@ DELETE /tags/hit-sale
 400 BadRequest
 {
    "errors": [
-        "Tag `hit-sale` is used in objects ['15240000-107114-40996564', ...]"
+        "Tag `hit-sale` is used in categories ['15240000-107114-40996564', ...]"
    ]
 }
 
