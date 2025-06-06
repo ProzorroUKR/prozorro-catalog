@@ -9,9 +9,14 @@ from catalog.models.base import BaseModel
 
 
 class PostTag(BaseModel):
-    code: Optional[str] = Field(None, example="tag1")
-    name: str
-    name_en: str
+    code: Optional[str] = Field(None, min_length=1, example="tag1")
+    name: str = Field(..., min_length=1)
+    name_en: str = Field(..., min_length=1)
+
+    @field_validator("name", "name_en", "code", mode="before")
+    @classmethod
+    def not_empty_or_whitespace(cls, v: str) -> str:
+        return v.strip()
 
     @model_validator(mode="before")
     def generate_code(cls, values):
@@ -26,8 +31,13 @@ class PostTag(BaseModel):
 
 
 class PatchTag(BaseModel):
-    name: Optional[str] = Field(None, example="Тег")
-    name_en: Optional[str] = Field(None, example="Tag")
+    name: Optional[str] = Field(None, min_length=1, example="Тег")
+    name_en: Optional[str] = Field(None, min_length=1, example="Tag")
+
+    @field_validator("name", "name_en",  mode="before")
+    @classmethod
+    def not_empty_or_whitespace(cls, v: str) -> str:
+        return v.strip()
 
 
 class Tag(BaseModel):
