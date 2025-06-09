@@ -53,6 +53,7 @@ async def init_mongo(*app) -> AsyncIOMotorDatabase:
         init_vendor_indexes(),
         init_contributor_indexes(),
         init_request_indexes(),
+        init_tag_indexes(),
     )
     return DB
 
@@ -91,6 +92,7 @@ async def flush_database(*_):
         get_vendor_collection().delete_many({}),
         get_contributor_collection().delete_many({}),
         get_product_request_collection().delete_many({}),
+        get_tag_collection().delete_many({}),
     )
 
 
@@ -128,7 +130,7 @@ async def transaction_context_manager():
 
 
 def rename_id(obj):
-    if obj:
+    if obj and "_id" in obj:
         obj["id"] = obj.pop("_id")
     return obj
 
@@ -233,7 +235,14 @@ async def insert_object(collection, data):
     document["_id"] = document.pop("id")
     try:
         result = await collection.insert_one(document)
-    except DuplicateKeyError:
+    except DuplicateKeyError as e:
+        detail = e.details
+        if detail and "keyValue" in detail:
+            duplicated_field = list(detail["keyValue"].keys())[0]
+            duplicated_value = detail["keyValue"][duplicated_field]
+            raise web.HTTPBadRequest(
+                text=f"Duplicate value for '{duplicated_field}': '{duplicated_value}'"
+            )
         raise web.HTTPBadRequest(text=f"Document with id {document['_id']} already exists")
     return result.inserted_id
 
@@ -255,9 +264,10 @@ def get_category_collection():
 
 async def init_category_indexes():
     modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    tags_index = IndexModel([("tags", ASCENDING)], background=True)
     try:
         await get_category_collection().create_indexes(
-            [modified_index]
+            [modified_index, tags_index]
         )
     except PyMongoError as e:
         logger.exception(e)
@@ -307,9 +317,10 @@ def get_profiles_collection():
 async def init_profile_indexes():
     # db.contributors.createIndex({ "dateModified": 1 })
     modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    tags_index = IndexModel([("tags", ASCENDING)], background=True)
     try:
         await get_profiles_collection().create_indexes(
-            [modified_index]
+            [modified_index, tags_index]
         )
     except PyMongoError as e:
         logger.exception(e)
@@ -708,3 +719,105 @@ async def read_and_update_product_request(uid):
     data = await read_product_request(uid)
     yield data
     await update_product_request(data)
+
+
+# tags
+def get_tag_collection():
+    return get_collection("tag")
+
+
+async def init_tag_indexes():
+    code_index = IndexModel([("code", ASCENDING)], background=True, unique=True)
+    name_index = IndexModel([("name", ASCENDING)], background=True, unique=True)
+    name_en_index = IndexModel([("name_en", ASCENDING)], background=True, unique=True)
+    try:
+        await get_tag_collection().create_indexes([code_index, name_index, name_en_index])
+    except PyMongoError as e:
+        logger.exception(e)
+
+
+async def find_tags(limit, active):
+    collection = get_tag_collection()
+    limit = min(limit, MAX_LIST_LIMIT)
+    limit = max(limit, 1)
+    filters = {}
+    items = await collection.find(filters).limit(limit).to_list(None)
+    items = [rename_id(i) for i in items]
+    return items
+
+
+async def read_tag(tag_id):
+    tag = await get_tag_collection().find_one(
+        {'code': tag_id},
+        session=session_var.get(),
+    )
+    if not tag:
+        raise web.HTTPNotFound(text="Tag not found")
+    return rename_id(tag)
+
+
+async def insert_tag(data):
+    inserted_id = await insert_object(get_tag_collection(), data)
+    return inserted_id
+
+
+async def update_tag(tag):
+    await update_object(get_tag_collection(), tag)
+
+
+@asynccontextmanager
+async def read_and_update_tag(uid):
+    data = await read_tag(uid)
+    yield data
+    try:
+        await update_tag(data)
+    except DuplicateKeyError as e:
+        detail = e.details
+        if detail and "keyValue" in detail:
+            duplicated_field = list(detail["keyValue"].keys())[0]
+            duplicated_value = detail["keyValue"][duplicated_field]
+            raise web.HTTPBadRequest(
+                text=f"Duplicate value for '{duplicated_field}': '{duplicated_value}'"
+            )
+        raise web.HTTPBadRequest(text=f"Document with id {data['_id']} already exists")
+
+
+async def delete_tag(tag_id):
+    result = await get_tag_collection().delete_one(
+        {'code': tag_id},
+        session=session_var.get(),
+    )
+    if result.deleted_count == 0:
+        raise web.HTTPNotFound(text="Tag not found")
+
+
+async def find_objects_with_tag(tag_id):
+    """
+    Find categories and profiles with particular tag.
+    Limit by 10 results just for mentioning list of objects in exception.
+    """
+    category_ids = await get_category_collection().find(
+        {'tags': tag_id},
+        session=session_var.get(),
+    ).limit(10).distinct("_id")
+    if category_ids:
+        raise web.HTTPBadRequest(text=f"Tag `{tag_id}` is used in categories {category_ids}")
+    profile_ids = await get_profiles_collection().find(
+        {'tags': tag_id},
+        session=session_var.get(),
+    ).limit(10).distinct("_id")
+    if profile_ids:
+        raise web.HTTPBadRequest(text=f"Tag `{tag_id}` is used in profiles {profile_ids}")
+
+
+async def validate_tags_exist(tag_codes: list[str]) -> None:
+    cursor = get_tag_collection().find(
+        {"code": {"$in": tag_codes}},
+        {"code": 1, "_id": 0},
+        session=session_var.get()
+    )
+    existing_tags = [doc["code"] async for doc in cursor]
+
+    missing = set(tag_codes) - set(existing_tags)
+    if missing:
+        raise web.HTTPBadRequest(text=f"Tags not found: {', '.join(missing)}")

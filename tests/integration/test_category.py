@@ -269,7 +269,7 @@ async def test_111_limit_offset(api, mock_agreement):
     assert len(resp_json['data']) == 0
 
 
-async def test_120_category_patch(api, category):
+async def test_120_category_patch(api, category, tag):
     category_id = category["data"]['id']
     patch_category_bad = {
         "data": {
@@ -349,6 +349,34 @@ async def test_120_category_patch(api, category):
     assert resp.status == 200
     resp_json = await resp.json()
     assert resp_json['data']['status'] == 'active'
+
+    patch_category["data"]["tags"] = ["new", "test"]
+    resp = await api.patch(
+        f'/api/categories/{category_id}',
+       json=patch_category,
+       auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    assert await resp.json() == {'errors': ['Tags not found: test']}
+
+    patch_category["data"]["tags"] = ["new", "new"]
+    resp = await api.patch(
+        f'/api/categories/{category_id}',
+        json=patch_category,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    assert await resp.json() == {'errors': ['Value error, tags must be unique: data.tags']}
+
+    patch_category["data"]["tags"] = ["new",]
+    resp = await api.patch(
+        f'/api/categories/{category_id}',
+        json=patch_category,
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 200
+    resp_json = await resp.json()
+    assert resp_json['data']['tags'] == ["new",]
 
 
 async def test_130_requirement_create(api, category):

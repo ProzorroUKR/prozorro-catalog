@@ -19,6 +19,7 @@ from catalog.handlers.crowd_sourcing.product_request_document import (
     ProductRequestDocumentView,
     ProductRequestDocumentItemView,
 )
+from catalog.handlers.tags import TagView, TagItemView
 from catalog.handlers.vendor_ban import VendorBanView, VendorBanItemView
 from catalog.handlers.vendor_ban_document import VendorBanDocumentView, VendorBanDocumentItemView
 from catalog.middleware import (
@@ -352,6 +353,16 @@ def create_application(on_cleanup=None):
     #     r"/api/crowd-sourcing/requests/{request_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
     #     ProductRequestDocumentItemView,
     # )
+
+    # tags
+    app.router.add_view(
+        "/api/tags",
+        TagView,
+    )
+    app.router.add_view(
+        "/api/tags/{tag_id}",
+        TagItemView,
+    )
 
     # search
     app.router.add_view(
