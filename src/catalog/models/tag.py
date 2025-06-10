@@ -16,7 +16,7 @@ class PostTag(BaseModel):
     @field_validator("name", "name_en", "code", mode="before")
     @classmethod
     def not_empty_or_whitespace(cls, v: str) -> str:
-        return v.strip()
+        return v.strip() if v is not None else v
 
     @model_validator(mode="before")
     def generate_code(cls, values):
@@ -37,7 +37,7 @@ class PatchTag(BaseModel):
     @field_validator("name", "name_en",  mode="before")
     @classmethod
     def not_empty_or_whitespace(cls, v: str) -> str:
-        return v.strip()
+        return v.strip() if v is not None else v
 
 
 class Tag(BaseModel):
