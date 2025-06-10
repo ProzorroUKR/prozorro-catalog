@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from .base import TEST_AUTH, TEST_AUTH_ANOTHER, TEST_AUTH_NO_PERMISSION
 from catalog.doc_service import generate_test_url
 
@@ -184,6 +186,35 @@ async def test_vendor_duplicate(db, api):
     expected = {'errors': [f'Cannot create vendor.identifier.id {identifier_id} already exists: {vendor["id"]}']}
     assert resp.status == 400, result
     assert expected == result
+
+
+async def test_vendor_activate(db, api):
+    data = api.get_fixture_json('vendor')
+    resp = await api.post(
+        f"/api/vendors",
+        json={"data": data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    vendor, access = result["data"], result["access"]
+
+    # imagine that duplicate vendor already exists in db (was created before validation release)
+    vendor_2 = api.get_fixture_json("vendor")
+    vendor_2["_id"] = uuid4().hex
+    vendor_2["status"] = "pending"
+    vendor_2["dateModified"] = "2025-02-02T00:00:00+02:00"
+    await db.vendors.insert_one(vendor_2)
+
+    # try to activate one of vendors
+    resp = await api.patch(
+        f'/api/vendors/{vendor["id"]}?access_token={access["token"]}',
+        json={"data": {"isActivated": True}},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 200, result
+    assert result["data"]["status"] == "active"
 
 
 async def test_vendor_get(api, vendor):
