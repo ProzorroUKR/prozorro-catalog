@@ -32,20 +32,24 @@ class VendorState(BaseState):
                     action="activate",
                     identifier_id=after["vendor"]["identifier"]["id"],
                     vendor_id=after["id"],
+                    activated=True,
                 )
             after["status"] = VendorStatus.active if after.get("isActivated") else VendorStatus.pending
         super().on_patch(before, after)
 
     @staticmethod
-    async def validate_vendor_identifier(action, identifier_id, vendor_id=None):
+    async def validate_vendor_identifier(action, identifier_id, vendor_id=None, activated=False):
+        filters = {
+            "vendor.identifier.id": identifier_id,
+            "_id": {"$ne": vendor_id},
+        }
+        if activated:
+            filters["isActivated"] = True
         existing = await db.find_vendors(
             offset=None,
             limit=1,
             reverse=False,
-            filters={
-                "vendor.identifier.id": identifier_id,
-                "_id": {"$ne": vendor_id},
-            }
+            filters=filters,
         )
         if existing["data"]:
             dup_id = existing["data"][0]["id"]
