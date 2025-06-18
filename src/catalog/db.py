@@ -19,7 +19,7 @@ from catalog.settings import (
     DB_NAME,
     MAX_LIST_LIMIT,
 )
-from urllib.parse import urlparse, parse_qsl, unquote, urlencode
+from urllib.parse import urlencode
 from catalog.context import get_request, get_request_scheme
 from catalog.utils import get_next_rev
 
