@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 
 from typing import Union
 
@@ -13,7 +14,7 @@ from catalog.models.document import DocumentPostInput, DocumentPutInput, Documen
     DocumentResponse
 from catalog.serializers.document import DocumentSerializer
 from catalog.handlers.base_document import BaseDocumentView, BaseDocumentItemView
-from catalog.utils import get_now, find_item_by_id
+from catalog.utils import get_now, find_item_by_id, get_revision_changes
 
 
 logger = logging.getLogger(__name__)
@@ -54,14 +55,16 @@ class VendorBanDocumentView(VendorBanDocumentMixin, BaseDocumentView, PydanticVi
         """
         data = body.data.dict_without_none()
 
-        async with db.read_and_update_vendor(vendor_id) as obj:
-            await self.validate_data(self.request, body, obj, vendor_id)
-            ban = find_item_by_id(obj.get("bans", []), ban_id, "ban")
+        async with db.read_and_update_vendor(vendor_id) as parent_obj:
+            old_parent_obj = deepcopy(parent_obj)
+            await self.validate_data(self.request, body, parent_obj, vendor_id)
+            ban = find_item_by_id(parent_obj.get("bans", []), ban_id, "ban")
             now = get_now().isoformat()
-            obj["dateModified"] = ban['dateModified'] = data['datePublished'] = data['dateModified'] = now
+            parent_obj["dateModified"] = ban['dateModified'] = data['datePublished'] = data['dateModified'] = now
             if "documents" not in ban:
                 ban["documents"] = []
             ban["documents"].append(data)
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
             logger.info(
                 f"Created {self.parent_obj_name} document {data['id']}",
@@ -93,23 +96,25 @@ class VendorBanDocumentItemView(VendorBanDocumentMixin, BaseDocumentItemView, Py
         Security: Basic: []
         Tags: Vendor/Bans/Documents
         """
-        async with db.read_and_update_vendor(vendor_id) as obj:
+        async with db.read_and_update_vendor(vendor_id) as parent_obj:
+            old_parent_obj = deepcopy(parent_obj)
             # import and validate data
             json = await self.request.json()
             json["data"]["id"] = doc_id
             body = DocumentPutInput(**json)
-            await self.validate_data(self.request, body, obj, vendor_id)
+            await self.validate_data(self.request, body, parent_obj, vendor_id)
             # find & append doc
-            ban = find_item_by_id(obj.get("bans", []), ban_id, "ban")
+            ban = find_item_by_id(parent_obj.get("bans", []), ban_id, "ban")
             for doc in ban.get("documents", "")[::-1]:
                 if doc["id"] == doc_id:
                     data = body.data.dict_without_none()
                     data["id"] = doc_id
-                    obj["dateModified"] = ban["dateModified"] = data["datePublished"] = data["dateModified"] = get_now().isoformat()
+                    parent_obj["dateModified"] = ban["dateModified"] = data["datePublished"] = data["dateModified"] = get_now().isoformat()
                     ban["documents"].append(data)
                     break
             else:
                 raise HTTPNotFound(text="Document not found")
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
             logger.info(
                 f"Updated {self.parent_obj_name} document {doc_id}",
@@ -127,21 +132,23 @@ class VendorBanDocumentItemView(VendorBanDocumentMixin, BaseDocumentItemView, Py
         Security: Basic: []
         Tags: Vendor/Bans/Documents
         """
-        async with db.read_and_update_vendor(vendor_id) as obj:
-            await self.validate_data(self.request, body, obj, vendor_id)
+        async with db.read_and_update_vendor(vendor_id) as parent_obj:
+            old_parent_obj = deepcopy(parent_obj)
+            await self.validate_data(self.request, body, parent_obj, vendor_id)
             # export data back to dict
             data = body.data.dict_without_none()
             # find & update doc
-            ban = find_item_by_id(obj.get("bans", []), ban_id, "ban")
+            ban = find_item_by_id(parent_obj.get("bans", []), ban_id, "ban")
             for doc in ban.get("documents", "")[::-1]:
                 if doc["id"] == doc_id:
                     initial = dict(doc)
                     doc.update(data)
                     if initial != doc:
-                        obj["dateModified"] = ban['dateModified'] = doc['dateModified'] = get_now().isoformat()
+                        parent_obj["dateModified"] = ban['dateModified'] = doc['dateModified'] = get_now().isoformat()
                     break
             else:
                 raise HTTPNotFound(text="Document not found")
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
             logger.info(
                 f"Updated {self.parent_obj_name} document {doc_id}",

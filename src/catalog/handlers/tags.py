@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 from typing import Optional, Union
 
 from aiohttp_pydantic import PydanticView
@@ -10,6 +11,7 @@ from catalog.models.common import SuccessResponse
 from catalog.models.tag import TagList, TagResponse, TagCreateInput, TagUpdateInput
 from catalog.auth import validate_accreditation
 from catalog.serializers.tag import TagSerializer
+from catalog.utils import get_revision_changes
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +39,7 @@ class TagView(PydanticView):
 
         # export data back to dict
         data = body.data.dict_without_none()
+        get_revision_changes(self.request, new_obj=data)
 
         await db.insert_tag(data)
 
@@ -74,7 +77,9 @@ class TagItemView(PydanticView):
         async with db.read_and_update_tag(tag_id) as tag:
             # export data back to dict
             data = body.data.dict_without_none()
+            old_tag = deepcopy(tag)
             tag.update(data)
+            get_revision_changes(self.request, new_obj=tag, old_obj=old_tag)
 
             logger.info(
                 f"Updated tag {tag_id}",

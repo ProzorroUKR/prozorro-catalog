@@ -14,4 +14,6 @@ PyNaCl>=1.5.0, <2
 sentry-sdk
 standard-imghdr  # for python 3.13
 python-slugify
+jsonpointer==3.0
+git+https://github.com/ProzorroUKR/python-json-patch.git@1.14+jsondiff.unicode.replacefix.0#egg=jsonpatch
 git+https://github.com/ProzorroUKR/standards.git@1.0.162#egg=standards

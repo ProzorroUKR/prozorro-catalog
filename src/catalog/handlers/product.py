@@ -10,7 +10,7 @@ from catalog import db
 from catalog.models.api import PaginatedList, ErrorResponse
 from catalog.models.product import ProductCreateInput, ProductUpdateInput, LocalizationProductUpdateInput, \
     ProductCreateResponse, ProductResponse
-from catalog.utils import pagination_params, get_now
+from catalog.utils import pagination_params, get_now, get_revision_changes
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
 from catalog.serializers.product import ProductSerializer
 from catalog.state.product import ProductState
@@ -60,6 +60,7 @@ class ProductView(PydanticView):
 
         access = set_access_token(self.request, data)
         data["dateCreated"] = data["dateModified"] = get_now().isoformat()
+        get_revision_changes(self.request, new_obj=data)
         await db.insert_product(data)
 
         logger.info(
@@ -122,6 +123,7 @@ class ProductItemView(PydanticView):
             product.update(data)
             category = await db.read_category(product["relatedCategory"])
             await self.state_class.on_patch(product_before, product)
+            get_revision_changes(self.request, new_obj=product, old_obj=product_before)
 
             logger.info(
                 f"Updated product {product_id}",

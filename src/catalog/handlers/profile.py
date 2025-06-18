@@ -22,7 +22,7 @@ from catalog.models.profile import (
     DeprecatedRequestProfileCreateInput,
     RequestProfileUpdateInput,
 )
-from catalog.utils import pagination_params, get_now, find_item_by_id
+from catalog.utils import pagination_params, get_now, find_item_by_id, get_revision_changes
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
 from catalog.serializers.base import RootSerializer
 from catalog.handlers.base_criteria import (
@@ -126,6 +126,7 @@ class ProfileView(ProfileViewMixin, PydanticView):
         await self.get_state_class(data).on_put(data, category)
 
         access = set_access_token(self.request, data)
+        get_revision_changes(self.request, new_obj=data)
         await db.insert_profile(data)
 
         logger.info(
@@ -179,6 +180,7 @@ class ProfileItemView(ProfileViewMixin, PydanticView):
         await self.get_state_class(data).on_put(data, category)
 
         access = set_access_token(self.request, data)
+        get_revision_changes(self.request, new_obj=data)
         await db.insert_profile(data)
 
         logger.info(
@@ -212,6 +214,7 @@ class ProfileItemView(ProfileViewMixin, PydanticView):
             old_profile = deepcopy(profile)
             profile.update(data)
             await self.get_state_class(data).on_patch(old_profile, profile)
+            get_revision_changes(self.request, new_obj=profile, old_obj=old_profile)
 
             logger.info(
                 f"Updated profile {profile_id}",
@@ -281,10 +284,13 @@ class ProfileCriteriaItemView(ProfileCriteriaMixin, BaseCriteriaItemViewMixin, P
         Tags: Profile/Criteria
         """
         self.validations()
-        obj = await db.get_access_token(self.obj_name, obj_id)
-        validate_access_token(self.request, obj, None)
-        dateModified = get_now().isoformat()
-        await self.delete_obj_criterion(obj_id, criterion_id, dateModified)
+        async with self.read_and_update_parent_obj(obj_id) as parent_obj:
+            validate_access_token(self.request, parent_obj, None)
+            old_parent_obj = deepcopy(parent_obj)
+            criterion = find_item_by_id(parent_obj["criteria"], criterion_id, "criteria")
+            parent_obj["criteria"].remove(criterion)
+            parent_obj["dateModified"] = get_now().isoformat()
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
         return {"result": "success"}
 
 
@@ -339,11 +345,14 @@ class ProfileCriteriaRGItemView(ProfileCriteriaMixin, BaseCriteriaRGItemViewMixi
         Tags: Profile/Criteria/RequirementGroups
         """
         self.validations()
-        async with self.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
+        async with self.read_and_update_parent_obj(obj_id) as parent_obj:
             validate_access_token(self.request, parent_obj, None)
-            rg = find_item_by_id(parent_obj["criteria"]["requirementGroups"], rg_id, "requirementGroups")
-            parent_obj["criteria"]["requirementGroups"].remove(rg)
+            old_parent_obj = deepcopy(parent_obj)
+            criterion = find_item_by_id(parent_obj["criteria"], criterion_id, "criteria")
+            rg = find_item_by_id(criterion["requirementGroups"], rg_id, "requirementGroups")
+            criterion["requirementGroups"].remove(rg)
             parent_obj["dateModified"] = get_now().isoformat()
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
         return {"result": "success"}
 
 
@@ -433,11 +442,14 @@ class ProfileCriteriaRGRequirementItemView(ProfileCriteriaMixin, BaseCriteriaRGR
         Tags: Profile/Criteria/RequirementGroups/Requirements
         """
         validate_accreditation(self.request, "profile")
-        async with self.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
+        async with self.read_and_update_parent_obj(obj_id) as parent_obj:
             validate_access_token(self.request, parent_obj, None)
-            rg = find_item_by_id(parent_obj["criteria"]["requirementGroups"], rg_id, "requirementGroups")
+            old_parent_obj = deepcopy(parent_obj)
+            criterion = find_item_by_id(parent_obj["criteria"], criterion_id, "criteria")
+            rg = find_item_by_id(criterion["requirementGroups"], rg_id, "requirementGroups")
             requirement = find_item_by_id(rg["requirements"], requirement_id, "requirements")
             rg["requirements"].remove(requirement)
             parent_obj["dateModified"] = get_now().isoformat()
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
         return {"result": "success"}
 

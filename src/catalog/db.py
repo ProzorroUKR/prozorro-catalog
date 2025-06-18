@@ -19,8 +19,9 @@ from catalog.settings import (
     DB_NAME,
     MAX_LIST_LIMIT,
 )
-from urllib.parse import urlparse, parse_qsl, unquote, urlencode
+from urllib.parse import urlencode
 from catalog.context import get_request, get_request_scheme
+from catalog.utils import get_next_rev
 
 logger = logging.getLogger(__name__)
 
@@ -132,6 +133,8 @@ async def transaction_context_manager():
 def rename_id(obj):
     if obj and "_id" in obj:
         obj["id"] = obj.pop("_id")
+        if obj.get("_rev"):  # if it is empty, just skip (e.g. not to mention rev for paginated results)
+            obj["rev"] = obj.pop("_rev")
     return obj
 
 
@@ -233,6 +236,7 @@ async def get_next_sequence_value(uid):
 async def insert_object(collection, data):
     document = dict(**data)
     document["_id"] = document.pop("id")
+    document["_rev"] = get_next_rev()
     try:
         result = await collection.insert_one(document)
     except DuplicateKeyError as e:
@@ -248,10 +252,16 @@ async def insert_object(collection, data):
 
 
 async def update_object(collection, data):
+    revision = data.pop("rev" if "rev" in data else "_rev", None)
     document = dict(**data)
     document["_id"] = uid = document.pop("id")
+    document["_rev"] = get_next_rev(revision)
+    match_dict = {'_id': uid}
+    # add revisions filter in match dict for object which already has this functionality
+    if revision is not None:
+        match_dict["_rev"] = revision
     await collection.find_one_and_replace(
-        {'_id': uid},
+        match_dict,
         document,
         session=session_var.get(),
     )
@@ -402,25 +412,6 @@ async def read_obj_criterion(obj_name, obj_id, criterion_id):
             raise web.HTTPNotFound(text="Criteria not found")
         return remove_id(profile_criterion)
     raise web.HTTPNotFound(text="Criteria not found")
-
-
-async def update_obj_criterion(obj_name, obj_id, data, criterion_id, dateModified):
-    collection = get_collection_by_obj_name(obj_name)
-    update_data = {"dateModified": dateModified}
-    for k, v in data.items():
-        update_data[f"criteria.$.{k}"] = v
-    await collection.update_one(
-        {'_id': obj_id, "criteria.id": criterion_id},
-        {"$set": update_data},
-        session=session_var.get(),
-    )
-
-
-@asynccontextmanager
-async def read_and_update_obj_criterion(obj_name, obj_id, criterion_id):
-    obj = await read_obj_criterion(obj_name, obj_id, criterion_id)
-    yield obj
-    await update_obj_criterion(obj_name, obj_id, obj["criteria"], criterion_id, obj["dateModified"])
 
 
 async def delete_obj_criterion(obj_name, obj_id, criterion_id, dateModified):

@@ -1,8 +1,9 @@
 import logging
 from typing import Optional
+from copy import deepcopy
 
 from aiohttp.web import HTTPFound, HTTPNotFound
-from catalog.utils import get_now
+from catalog.utils import get_now, get_revision_changes
 from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput
 from catalog.serializers.document import DocumentSerializer
 from catalog.doc_service import get_doc_download_url, get_ds_id_from_api_url
@@ -37,12 +38,14 @@ class BaseDocumentView(BaseDocumentMixin):
 
         data = body.data.dict_without_none()
 
-        async with self.read_and_update_object(parent_obj_id, child_obj_id) as obj:
-            await self.validate_data(self.request, body, obj, parent_obj_id)
-            obj['dateModified'] = data['datePublished'] = data['dateModified'] = get_now().isoformat()
-            if "documents" not in obj:
-                obj["documents"] = []
-            obj["documents"].append(data)
+        async with self.read_and_update_object(parent_obj_id, child_obj_id) as parent_obj:
+            old_parent_obj = deepcopy(parent_obj)
+            await self.validate_data(self.request, body, parent_obj, parent_obj_id)
+            parent_obj['dateModified'] = data['datePublished'] = data['dateModified'] = get_now().isoformat()
+            if "documents" not in parent_obj:
+                parent_obj["documents"] = []
+            parent_obj["documents"].append(data)
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
             logger.info(
                 f"Created {self.parent_obj_name} document {data['id']}",
@@ -74,22 +77,24 @@ class BaseDocumentItemView(BaseDocumentMixin):
 
     async def put(self, parent_obj_id: str, doc_id: str, body: DocumentPutInput, child_obj_id: Optional[str] = None):
         # validate_accreditation(request, "category")
-        async with self.read_and_update_object(parent_obj_id, child_obj_id) as obj:
+        async with self.read_and_update_object(parent_obj_id, child_obj_id) as parent_obj:
+            old_parent_obj = deepcopy(parent_obj)
             # import and validate data
             json = await self.request.json()
             json["data"]["id"] = doc_id
             body = DocumentPutInput(**json)
-            await self.validate_data(self.request, body, obj, parent_obj_id)
+            await self.validate_data(self.request, body, parent_obj, parent_obj_id)
             # find & append doc
-            for d in obj.get("documents", "")[::-1]:
+            for d in parent_obj.get("documents", "")[::-1]:
                 if d["id"] == doc_id:
                     data = body.data.dict_without_none()
                     data["id"] = doc_id
-                    obj["dateModified"] = data["datePublished"] = data["dateModified"] = get_now().isoformat()
-                    obj["documents"].append(data)
+                    parent_obj["dateModified"] = data["datePublished"] = data["dateModified"] = get_now().isoformat()
+                    parent_obj["documents"].append(data)
                     break
             else:
                 raise HTTPNotFound(text="Document not found")
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
             logger.info(
                 f"Updated {self.parent_obj_name} document {doc_id}",
@@ -99,20 +104,22 @@ class BaseDocumentItemView(BaseDocumentMixin):
 
     async def patch(self, parent_obj_id: str, doc_id: str, body: DocumentPatchInput, child_obj_id: Optional[str] = None):
         # validate_accreditation(request, "category")
-        async with self.read_and_update_object(parent_obj_id, child_obj_id) as obj:
-            await self.validate_data(self.request, body, obj, parent_obj_id)
+        async with self.read_and_update_object(parent_obj_id, child_obj_id) as parent_obj:
+            await self.validate_data(self.request, body, parent_obj, parent_obj_id)
+            old_parent_obj = deepcopy(parent_obj)
             # export data back to dict
             data = body.data.dict_without_none()
             # find & update doc
-            for d in obj.get("documents", "")[::-1]:
+            for d in parent_obj.get("documents", "")[::-1]:
                 if d["id"] == doc_id:
                     initial = dict(d)
                     d.update(data)
                     if initial != d:
-                        obj['dateModified'] = d['dateModified'] = get_now().isoformat()
+                        parent_obj['dateModified'] = d['dateModified'] = get_now().isoformat()
                     break
             else:
                 raise HTTPNotFound(text="Document not found")
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
             logger.info(
                 f"Updated {self.parent_obj_name} document {doc_id}",

@@ -10,7 +10,7 @@ from catalog.models.api import ErrorResponse, PaginatedList
 from catalog.models.contributor import ContributorPostInput, ContributorResponse
 from catalog.serializers.contributor import ContributorSerializer
 from catalog.state.contributor import ContributorState
-from catalog.utils import pagination_params
+from catalog.utils import pagination_params, get_revision_changes
 
 
 logger = logging.getLogger(__name__)
@@ -48,6 +48,7 @@ class ContributorView(PydanticView):
 
         data = body.data.dict_without_none()
         await self.state.on_post(data)
+        get_revision_changes(self.request, new_obj=data)
         await db.insert_contributor(data)
 
         logger.info(

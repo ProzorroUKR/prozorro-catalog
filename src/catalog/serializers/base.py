@@ -70,6 +70,10 @@ class BaseSerializer:
 
 
 class RootSerializer(BaseSerializer):
+    private_fields = {
+        "rev",
+        "revisions",
+    }
     def __init__(self, data: dict, **kwargs):
         access = data.pop("access", None)
         show_owner = kwargs.get("show_owner", True)

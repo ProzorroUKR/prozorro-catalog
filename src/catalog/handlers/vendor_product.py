@@ -10,7 +10,7 @@ from catalog.models.product import VendorProductCreateInput, ProductResponse
 from catalog.auth import validate_access_token, validate_accreditation
 from catalog.serializers.product import ProductSerializer
 from catalog.state.vendor_product import VendorProductState
-
+from catalog.utils import get_revision_changes
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,7 @@ class VendorProductView(PydanticView):
 
         data['vendor'] = {"id": vendor_id}
         data['access'] = {'owner': self.request.user.name}
+        get_revision_changes(self.request, new_obj=data)
         await db.insert_product(data)
 
         logger.info(

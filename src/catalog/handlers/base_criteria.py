@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from typing import Union
@@ -6,7 +7,7 @@ from typing import Union
 from catalog import db
 from catalog.auth import validate_accreditation, validate_access_token
 from catalog.settings import LOCALIZATION_CRITERIA
-from catalog.utils import get_now, find_item_by_id, delete_sent_none_values
+from catalog.utils import get_now, find_item_by_id, delete_sent_none_values, get_revision_changes
 from catalog.models.api import ErrorResponse
 from catalog.models.criteria import (
     CriterionBulkCreateInput,
@@ -48,10 +49,6 @@ class BaseCriteriaMixin:
         raise NotImplementedError
 
     @classmethod
-    def read_and_update_criterion(cls, obj_id: str, criterion_id: str):
-        return db.read_and_update_obj_criterion(cls.obj_name, obj_id, criterion_id)
-
-    @classmethod
     def delete_obj_criterion(cls, obj_id: str, criterion_id: str, dateModified: str):
         return db.delete_obj_criterion(cls.obj_name, obj_id, criterion_id, dateModified)
 
@@ -82,6 +79,7 @@ class BaseCriteriaViewMixin(BaseCriteriaMixin):
     async def post(self, obj_id: str, /, body: CriterionCreateInput) -> Union[r201[CriterionListResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         self.validations()
         async with self.read_and_update_parent_obj(obj_id) as parent_obj:
+            old_parent_obj = deepcopy(parent_obj)
             # import and validate data
             body = await self.get_body_from_model()
 
@@ -95,6 +93,7 @@ class BaseCriteriaViewMixin(BaseCriteriaMixin):
             parent_obj["criteria"].extend(data)
             validate_criteria_classification_uniq(parent_obj)
             parent_obj["dateModified"] = get_now().isoformat()
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
             for criterion in data:
                 logger.info(
                     f"Created {self.obj_name} criterion {criterion['id']}",
@@ -117,23 +116,24 @@ class BaseCriteriaItemViewMixin(BaseCriteriaMixin):
         self, obj_id: str, criterion_id: str, /, body: CriterionUpdateInput
     ) -> Union[r200[CriterionResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         self.validations()
-        async with self.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
+        async with self.read_and_update_parent_obj(obj_id) as parent_obj:
+            old_parent_obj = deepcopy(parent_obj)
             validate_access_token(self.request, parent_obj, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
             # update obj with valid data
-            # mongo unwinded criteria, so here is only one item in `criteria`
-            parent_obj["criteria"].update(data)
-            criteria_parent = await self.get_parent_obj(obj_id)
-            validate_criteria_classification_uniq(criteria_parent, updated_criterion=parent_obj["criteria"])
+            criterion = find_item_by_id(parent_obj["criteria"], criterion_id, "criteria")
+            criterion.update(data)
+            validate_criteria_classification_uniq(old_parent_obj, updated_criterion=criterion)
             parent_obj["dateModified"] = get_now().isoformat()
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
             logger.info(
                 f"Updated {self.obj_name} criterion {criterion_id}",
                 extra={"MESSAGE_ID": f"{self.obj_name}_criterion_patch"},
             )
 
-        return {"data": self.serializer_class(parent_obj["criteria"]).data}
+        return {"data": self.serializer_class(criterion).data}
 
 
 class BaseCriteriaRGViewMixin(BaseCriteriaMixin):
@@ -153,15 +153,18 @@ class BaseCriteriaRGViewMixin(BaseCriteriaMixin):
         self, obj_id: str, criterion_id: str, /, body: RGCreateInput
     ) -> Union[r201[RGResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         self.validations()
-        async with self.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
+        async with self.read_and_update_parent_obj(obj_id) as parent_obj:
+            old_parent_obj = deepcopy(parent_obj)
             validate_access_token(self.request, parent_obj, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
             # update obj with valid data
-            parent_obj["criteria"]["requirementGroups"].append(data)
-            if parent_obj["criteria"].get("classification", {}).get("id") != LOCALIZATION_CRITERIA:
-                validate_criteria_max_items_on_post(parent_obj["criteria"], "requirementGroups")
+            criterion = find_item_by_id(parent_obj["criteria"], criterion_id, "criteria")
+            criterion["requirementGroups"].append(data)
+            if criterion.get("classification", {}).get("id") != LOCALIZATION_CRITERIA:
+                validate_criteria_max_items_on_post(criterion, "requirementGroups")
             parent_obj["dateModified"] = get_now().isoformat()
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
             logger.info(
                 f"Created {self.obj_name} criteria requirement group {data['id']}",
@@ -184,14 +187,17 @@ class BaseCriteriaRGItemViewMixin(BaseCriteriaMixin):
         self, obj_id: str, criterion_id: str, rg_id: str, /, body: RGUpdateInput
     ) -> Union[r200[RGResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         self.validations()
-        async with self.read_and_update_criterion(obj_id, criterion_id) as parent_obj:
+        async with self.read_and_update_parent_obj(obj_id) as parent_obj:
+            old_parent_obj = deepcopy(parent_obj)
             validate_access_token(self.request, parent_obj, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
             # update object with valid data
-            rg = find_item_by_id(parent_obj["criteria"]["requirementGroups"], rg_id, "requirementGroups")
+            criterion = find_item_by_id(parent_obj["criteria"], criterion_id, "criteria")
+            rg = find_item_by_id(criterion["requirementGroups"], rg_id, "requirementGroups")
             rg.update(data)
             parent_obj["dateModified"] = get_now().isoformat()
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
             logger.info(
                 f"Updated {self.obj_name} criteria requirement group {rg_id}",
@@ -227,19 +233,21 @@ class BaseCriteriaRGRequirementViewMixin(BaseCriteriaMixin):
         self, obj_id: str, criterion_id: str, rg_id: str, /, body: RequirementCreateInput
     ) -> Union[r201[RequirementResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         self.validations()
-        async with self.read_and_update_parent_obj(obj_id) as obj:
+        async with self.read_and_update_parent_obj(obj_id) as parent_obj:
+            old_parent_obj = deepcopy(parent_obj)
             # import and validate data
-            criterion = find_item_by_id(obj["criteria"], criterion_id, "criteria")
+            criterion = find_item_by_id(parent_obj["criteria"], criterion_id, "criteria")
             rg = find_item_by_id(criterion["requirementGroups"], rg_id, "requirementGroups")
             body = await self.get_body_from_model()
-            validate_access_token(self.request, obj, body.access)
+            validate_access_token(self.request, parent_obj, body.access)
             # export data back to dict
             data = [r.dict_without_none() for r in body.data]
             # update obj with valid data
-            await self.requirement_validations(obj, data)
+            await self.requirement_validations(parent_obj, data)
             rg["requirements"].extend(data)
-            validate_requirement_title_uniq(obj)
-            obj["dateModified"] = get_now().isoformat()
+            validate_requirement_title_uniq(parent_obj)
+            parent_obj["dateModified"] = get_now().isoformat()
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
             for i in data:
 
@@ -270,15 +278,16 @@ class BaseCriteriaRGRequirementItemViewMixin(BaseCriteriaMixin):
         self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /, body: RequirementUpdateInput
     ) -> Union[r200[RequirementResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         self.validations()
-        async with self.read_and_update_parent_obj(obj_id) as obj:
+        async with self.read_and_update_parent_obj(obj_id) as parent_obj:
+            old_parent_obj = deepcopy(parent_obj)
             # import and validate data
-            criterion = find_item_by_id(obj["criteria"], criterion_id, "criteria")
+            criterion = find_item_by_id(parent_obj["criteria"], criterion_id, "criteria")
             rg = find_item_by_id(criterion["requirementGroups"], rg_id, "requirementGroups")
             requirement = find_item_by_id(rg["requirements"], requirement_id, "requirements")
             body = await self.get_body_from_model()
             json = await self.request.json()
 
-            validate_access_token(self.request, obj, body.access)
+            validate_access_token(self.request, parent_obj, body.access)
             # export data back to dict
             data = body.data.dict_without_none()
             # update profile with valid data
@@ -288,9 +297,10 @@ class BaseCriteriaRGRequirementItemViewMixin(BaseCriteriaMixin):
             requirement_model = self.get_main_model_class()
             requirement_model(**requirement)
 
-            await self.requirement_validations(obj, [requirement])
-            validate_requirement_title_uniq(obj)
-            obj["dateModified"] = get_now().isoformat()
+            await self.requirement_validations(parent_obj, [requirement])
+            validate_requirement_title_uniq(parent_obj)
+            parent_obj["dateModified"] = get_now().isoformat()
+            get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
             logger.info(
                 f"Updated {self.obj_name} criteria requirement {requirement_id}",

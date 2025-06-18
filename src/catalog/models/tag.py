@@ -22,7 +22,7 @@ class PostTag(BaseModel):
     def generate_code(cls, values):
         if values.get("code") and not values["code"].replace("-", "").isalnum():
             raise ValueError("`code` must be alphanumeric")
-        values["code"] = values.get("code") or slugify(values["name_en"])
+        values["code"] = values.get("code") or slugify(values.get("name_en", ""))
         return values
 
     @property
