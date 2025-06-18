@@ -63,7 +63,7 @@ class Unit(BaseModel):
         if values.code not in UNIT_CODES:
             raise ValueError("code must be one of unit_codes/recommended.json keys")
         if values.name != UNIT_CODES_DATA[values.code]["name_uk"]:
-            raise ValueError(f'name must be from unit_codes/recommended.json for {values["code"]}')
+            raise ValueError(f'name must be from unit_codes/recommended.json for {values.code}')
         return values
 
 
