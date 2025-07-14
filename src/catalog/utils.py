@@ -24,11 +24,13 @@ def get_now(tz=TIMEZONE):
     return datetime.now(tz=tz)
 
 
-def get_int_from_query(request, key, default=0):
+def get_int_from_query(request, key, default=0, raise_error=True):
     value = request.query.get(key, default)
     try:
         value = int(value)
     except ValueError as e:
+        if not raise_error:
+            return value
         logger.exception(e)
         raise HTTPBadRequest(text=f"Can't parse {key} from value: '{value}'")
     else:
@@ -39,7 +41,7 @@ def pagination_params(request, default_limit=100):
     q = request.query
     offset = q.get("offset", "")
     limit = get_int_from_query(request, "limit", default=default_limit)
-    reverse = bool(q.get('reverse') or get_int_from_query(request, "descending"))
+    reverse = bool(q.get('reverse') or get_int_from_query(request, "descending", raise_error=False))
     return offset, limit, reverse
 
 
