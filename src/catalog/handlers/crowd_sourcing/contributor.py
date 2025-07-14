@@ -20,7 +20,7 @@ class ContributorView(PydanticView):
     state = ContributorState
 
     async def get(
-        self, /, offset: Optional[str] = None, limit: Optional[int] = 100, descending: Optional[int] = 0,
+        self, /, offset: Optional[str] = None, limit: Optional[int] = 100, descending: Optional[Union[int, str]] = 0,
     ) -> r200[PaginatedList]:
         """
         Get a list of contributors

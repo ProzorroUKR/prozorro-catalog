@@ -65,7 +65,7 @@ class ContributorProductRequestView(PydanticView):
 class ProductRequestView(PydanticView):
 
     async def get(
-        self, /, offset: Optional[str] = None,  limit: Optional[int] = 100, descending: Optional[int] = 0, opt_fields: Optional[str] = None,
+        self, /, offset: Optional[str] = None,  limit: Optional[int] = 100, descending: Optional[Union[int, str]] = 0, opt_fields: Optional[str] = None,
     ) -> r200[PaginatedList]:
         """
         Get list of product requests
