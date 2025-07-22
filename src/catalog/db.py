@@ -260,11 +260,13 @@ async def update_object(collection, data):
     # add revisions filter in match dict for object which already has this functionality
     if revision is not None:
         match_dict["_rev"] = revision
-    await collection.find_one_and_replace(
+    result = await collection.find_one_and_replace(
         match_dict,
         document,
         session=session_var.get(),
     )
+    if result is None:
+        raise web.HTTPConflict(text="Conflict while writing document. Please, retry.")
 
 
 # category
