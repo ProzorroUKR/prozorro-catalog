@@ -2,7 +2,6 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from contextvars import ContextVar
-from base64 import urlsafe_b64encode, urlsafe_b64decode
 from datetime import datetime
 
 from aiohttp import web
@@ -11,7 +10,7 @@ from bson.codec_options import CodecOptions
 from bson.decimal128 import Decimal128
 from decimal import Decimal
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
-from pymongo import ASCENDING, DESCENDING, IndexModel
+from pymongo import ASCENDING, DESCENDING, IndexModel, ReadPreference
 from pymongo.collection import ReturnDocument
 from pymongo.errors import PyMongoError, DuplicateKeyError
 from catalog.settings import (
@@ -73,8 +72,11 @@ type_registry = TypeRegistry(fallback_encoder=fallback_encoder)
 codec_options = CodecOptions(type_registry=type_registry)
 
 
-def get_collection(name):
-    return DB.get_collection(name, codec_options=codec_options)
+def get_collection(name, read_preference=None):
+    collection = DB.get_collection(name, codec_options=codec_options)
+    if read_preference:
+        collection = collection.with_options(read_preference=read_preference)
+    return collection
 
 
 async def cleanup_db_client(app):
@@ -270,8 +272,8 @@ async def update_object(collection, data):
 
 
 # category
-def get_category_collection():
-    return get_collection("category")
+def get_category_collection(read_preference=None):
+    return get_collection("category", read_preference=read_preference)
 
 
 async def init_category_indexes():
@@ -311,7 +313,7 @@ async def insert_category(data):
 
 
 async def update_category(category):
-    await update_object(get_category_collection(), category)
+    await update_object(get_category_collection(read_preference=ReadPreference.PRIMARY), category)
 
 
 @asynccontextmanager
@@ -322,8 +324,8 @@ async def read_and_update_category(uid):
 
 
 # profiles
-def get_profiles_collection():
-    return get_collection("profiles")
+def get_profiles_collection(read_preference=None):
+    return get_collection("profiles", read_preference=read_preference)
 
 
 async def init_profile_indexes():
@@ -365,7 +367,7 @@ async def read_profile(profile_id):
 
 
 async def update_profile(profile):
-    await update_object(get_profiles_collection(), profile)
+    await update_object(get_profiles_collection(read_preference=ReadPreference.PRIMARY), profile)
 
 
 @asynccontextmanager
@@ -457,8 +459,8 @@ async def get_access_token(obj_name, obj_id):
 
 
 # products
-def get_products_collection():
-    return get_collection("products")
+def get_products_collection(read_preference=None):
+    return get_collection("products", read_preference=read_preference)
 
 
 async def init_products_indexes():
@@ -504,7 +506,7 @@ async def read_product(uid, filters=None):
 
 
 async def update_product(obj):
-    await update_object(get_products_collection(), obj)
+    await update_object(get_products_collection(read_preference=ReadPreference.PRIMARY), obj)
 
 
 @asynccontextmanager
@@ -515,8 +517,8 @@ async def read_and_update_product(uid, filters=None):
 
 
 # offers
-def get_offers_collection():
-    return get_collection("offers")
+def get_offers_collection(read_preference=None):
+    return get_collection("offers", read_preference=read_preference)
 
 
 async def init_offers_indexes():
@@ -557,7 +559,7 @@ async def read_offer(uid):
 
 
 async def update_offer(obj):
-    await update_object(get_offers_collection(), obj)
+    await update_object(get_offers_collection(read_preference=ReadPreference.PRIMARY), obj)
 
 
 @asynccontextmanager
@@ -568,8 +570,8 @@ async def read_and_update_offer(uid):
 
 
 # vendor
-def get_vendor_collection():
-    return get_collection("vendors")
+def get_vendor_collection(read_preference=None):
+    return get_collection("vendors", read_preference=read_preference)
 
 
 async def init_vendor_indexes():
@@ -609,7 +611,7 @@ async def insert_vendor(data):
 
 
 async def update_vendor(data):
-    await update_object(get_vendor_collection(), data)
+    await update_object(get_vendor_collection(read_preference=ReadPreference.PRIMARY), data)
 
 
 @asynccontextmanager
@@ -620,8 +622,8 @@ async def read_and_update_vendor(uid):
 
 
 # contributor
-def get_contributor_collection():
-    return get_collection("contributors")
+def get_contributor_collection(read_preference=None):
+    return get_collection("contributors", read_preference=read_preference)
 
 
 async def init_contributor_indexes():
@@ -656,7 +658,7 @@ async def insert_contributor(data):
 
 
 async def update_contributor(data):
-    await update_object(get_contributor_collection(), data)
+    await update_object(get_contributor_collection(read_preference=ReadPreference.PRIMARY), data)
 
 
 @asynccontextmanager
@@ -667,8 +669,8 @@ async def read_and_update_contributor(uid):
 
 
 # product requests
-def get_product_request_collection():
-    return get_collection("requests")
+def get_product_request_collection(read_preference=None):
+    return get_collection("requests", read_preference=read_preference)
 
 
 async def init_request_indexes():
@@ -704,7 +706,7 @@ async def insert_product_request(data):
 
 
 async def update_product_request(data):
-    await update_object(get_product_request_collection(), data)
+    await update_object(get_product_request_collection(read_preference=ReadPreference.PRIMARY), data)
 
 
 @asynccontextmanager
@@ -715,8 +717,8 @@ async def read_and_update_product_request(uid):
 
 
 # tags
-def get_tag_collection():
-    return get_collection("tag")
+def get_tag_collection(read_preference=None):
+    return get_collection("tag", read_preference=read_preference)
 
 
 async def init_tag_indexes():
@@ -755,7 +757,7 @@ async def insert_tag(data):
 
 
 async def update_tag(tag):
-    await update_object(get_tag_collection(), tag)
+    await update_object(get_tag_collection(read_preference=ReadPreference.PRIMARY), tag)
 
 
 @asynccontextmanager
