@@ -1,7 +1,6 @@
-import json
-
-from aiohttp import web
-
+from base64 import b64decode
+from bson.json_util import loads
+from catalog.db import wait_until_cluster_time_reached, get_database
 from catalog.serialization import json_response, json_dumps
 from aiohttp.web import (
     HTTPInternalServerError,
@@ -9,13 +8,13 @@ from aiohttp.web import (
 )
 from catalog.logging import request_id_var
 from catalog.auth import login_user
-from catalog.context import set_now, set_request
-from json import JSONDecodeError
+from catalog.context import set_now, set_request, set_db_session
 from aiohttp.web import middleware, HTTPException
 from pydantic import ValidationError
 from uuid import uuid4
 import logging
 
+from catalog.utils import get_session_time
 
 logger = logging.getLogger(__name__)
 
@@ -104,4 +103,43 @@ async def context_middleware(request, handler):
     set_request(request)
     set_now()
     response = await handler(request)
+    return response
+
+
+@middleware
+async def db_session_middleware(request, handler):
+    """
+    Sets db session contextvar
+    :param request:
+    :param handler:
+    :return:
+    """
+    cookie_name = 'SESSION'
+    warning = None
+    db = get_database()
+    async with await db.client.start_session(causal_consistency=True) as session:
+        cookie = request.cookies.get(cookie_name)
+        if cookie:
+            try:
+                values = loads(b64decode(cookie))
+                session.advance_cluster_time(values["cluster_time"])  # global time in cluster level
+                session.advance_operation_time(values["operation_time"])  # last successful operation time in session
+
+                # adds retry if current cluster time less than cluster time from cookie
+                await wait_until_cluster_time_reached(session, values["cluster_time"])
+            except Exception as exc:
+                warning = f"Error on {cookie_name} cookie parsing: {exc}"
+                logger.debug(warning)
+
+        set_db_session(session)
+        try:
+            response = await handler(request)  # processing request
+        finally:
+            set_db_session(None)
+
+    if warning:
+        # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Warning
+        response.headers["X-Warning"] = f'199 - "{warning}"'
+
+    response.set_cookie(cookie_name, get_session_time(session))
     return response

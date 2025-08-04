@@ -5,6 +5,9 @@ from contextvars import ContextVar
 from aiohttp.abc import AbstractAccessLogger
 from pythonjsonlogger import jsonlogger
 
+from catalog.context import get_db_session
+from catalog.utils import get_session_time
+
 request_id_var = ContextVar('request_id')
 
 
@@ -29,6 +32,8 @@ def setup_logging():
     def custom_factory(*args, **kwargs):
         record = base_factory(*args, **kwargs)
         record.request_id = request_id_var.get("")
+        if db_session := get_db_session():
+            record.session = get_session_time(db_session)
         return record
 
     # setting extended factory instead the default

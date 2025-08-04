@@ -28,6 +28,7 @@ from catalog.middleware import (
     request_id_middleware,
     login_middleware,
     context_middleware,
+    db_session_middleware,
 )
 from catalog.db import init_mongo, cleanup_db_client
 from catalog.logging import AccessLogger, setup_logging
@@ -84,6 +85,7 @@ def create_application(on_cleanup=None):
     app = web.Application(
         middlewares=(
             request_id_middleware,
+            db_session_middleware,
             context_middleware,
             error_middleware,
             convert_response_to_json,

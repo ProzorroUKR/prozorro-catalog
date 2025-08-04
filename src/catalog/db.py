@@ -1,7 +1,7 @@
 import asyncio
 import logging
+import time
 from contextlib import asynccontextmanager
-from contextvars import ContextVar
 from datetime import datetime
 
 from aiohttp import web
@@ -19,13 +19,12 @@ from catalog.settings import (
     MAX_LIST_LIMIT,
 )
 from urllib.parse import urlencode
-from catalog.context import get_request, get_request_scheme
+from catalog.context import get_request, get_request_scheme, get_db_session, session_var
 from catalog.utils import get_next_rev
 
 logger = logging.getLogger(__name__)
 
 DB = None
-session_var = ContextVar('session', default=None)
 
 
 def get_database():
@@ -35,7 +34,7 @@ def get_database():
 async def init_mongo(*app) -> AsyncIOMotorDatabase:
     global DB
 
-    logger.info('init mongod instance')
+    logger.info('init mongodb instance')
     loop = asyncio.get_event_loop()
     conn = AsyncIOMotorClient(MONGODB_URI, io_loop=loop)
 
@@ -265,7 +264,7 @@ async def update_object(collection, data):
     result = await collection.find_one_and_replace(
         match_dict,
         document,
-        session=session_var.get(),
+        session=get_db_session(),
     )
     if result is None:
         raise web.HTTPConflict(text="Conflict while writing document. Please, retry.")
@@ -300,7 +299,7 @@ async def read_category(category_id, projection=None):
     category = await get_category_collection().find_one(
         {'_id': category_id},
         projection=projection,
-        session=session_var.get(),
+        session=get_db_session(),
     )
     if not category:
         raise web.HTTPNotFound(text="Category not found")
@@ -359,7 +358,7 @@ async def find_profiles(**kwargs):
 async def read_profile(profile_id):
     profile = await get_profiles_collection().find_one(
         {'_id': profile_id},
-        session=session_var.get(),
+        session=get_db_session(),
     )
     if not profile:
         raise web.HTTPNotFound(text="Profile not found")
@@ -395,7 +394,7 @@ async def read_obj_criteria(obj_name, obj_id):
     profile_criteria = await collection.find_one(
         {"_id": obj_id},
         {"criteria": 1, "access": 1},
-        session=session_var.get()
+        session=get_db_session()
     )
     if not profile_criteria:
         raise web.HTTPNotFound(text=f"{obj_name} not found")
@@ -410,7 +409,7 @@ async def read_obj_criterion(obj_name, obj_id, criterion_id):
             {"$unwind": "$criteria"},
             {"$match": {"criteria.id": criterion_id}},
         ],
-        session=session_var.get()
+        session=get_db_session()
     ):
         if not profile_criterion["criteria"]:
             raise web.HTTPNotFound(text="Criteria not found")
@@ -426,7 +425,7 @@ async def delete_obj_criterion(obj_name, obj_id, criterion_id, dateModified):
             "$pull": {"criteria": {"id": criterion_id}},
             "$set": {"dateModified": dateModified}
         },
-        session=session_var.get(),
+        session=get_db_session(),
     )
     if updated.modified_count == 0:
         raise web.HTTPNotFound(text="Criterion not found")
@@ -440,7 +439,7 @@ async def delete_obj_criterion_rg(obj_name, obj_id, criterion_id, dateModified):
             "$pull": {"criteria": {"id": criterion_id}},
             "$set": {"dateModified": dateModified}
         },
-        session=session_var.get(),
+        session=get_db_session(),
     )
     if updated.modified_count == 0:
         raise web.HTTPNotFound(text="Criterion not found")
@@ -451,7 +450,7 @@ async def get_access_token(obj_name, obj_id):
     profile = await collection.find_one(
         {"_id": obj_id},
         {"access": 1},
-        session=session_var.get()
+        session=get_db_session()
     )
     if not profile:
         raise web.HTTPNotFound(text=f"{obj_name} not found")
@@ -498,7 +497,7 @@ async def read_product(uid, filters=None):
         filters = {}
     data = await get_products_collection().find_one(
         {'_id': uid, **filters},
-        session=session_var.get(),
+        session=get_db_session(),
     )
     if not data:
         raise web.HTTPNotFound(text="Product not found")
@@ -551,7 +550,7 @@ async def find_offers(**kwargs):
 async def read_offer(uid):
     data = await get_offers_collection().find_one(
         {'_id': uid},
-        session=session_var.get(),
+        session=get_db_session(),
     )
     if not data:
         raise web.HTTPNotFound(text="Product not found")
@@ -598,7 +597,7 @@ async def find_vendors(**kwargs):
 async def read_vendor(uid):
     object = await get_vendor_collection().find_one(
         {'_id': uid},
-        session=session_var.get(),
+        session=get_db_session(),
     )
     if not object:
         raise web.HTTPNotFound(text="Vendor not found")
@@ -645,7 +644,7 @@ async def find_contributors(**kwargs):
 async def read_contributor(uid):
     contributor = await get_contributor_collection().find_one(
         {'_id': uid},
-        session=session_var.get(),
+        session=get_db_session(),
     )
     if not contributor:
         raise web.HTTPNotFound(text="Contributor not found")
@@ -693,7 +692,7 @@ async def find_product_requests(**kwargs):
 async def read_product_request(uid):
     contributor = await get_product_request_collection().find_one(
         {'_id': uid},
-        session=session_var.get(),
+        session=get_db_session(),
     )
     if not contributor:
         raise web.HTTPNotFound(text="Request not found")
@@ -744,7 +743,7 @@ async def find_tags(limit, active):
 async def read_tag(tag_id):
     tag = await get_tag_collection().find_one(
         {'code': tag_id},
-        session=session_var.get(),
+        session=get_db_session(),
     )
     if not tag:
         raise web.HTTPNotFound(text="Tag not found")
@@ -780,7 +779,7 @@ async def read_and_update_tag(uid):
 async def delete_tag(tag_id):
     result = await get_tag_collection().delete_one(
         {'code': tag_id},
-        session=session_var.get(),
+        session=get_db_session(),
     )
     if result.deleted_count == 0:
         raise web.HTTPNotFound(text="Tag not found")
@@ -793,13 +792,13 @@ async def find_objects_with_tag(tag_id):
     """
     category_ids = await get_category_collection().find(
         {'tags': tag_id},
-        session=session_var.get(),
+        session=get_db_session(),
     ).limit(10).distinct("_id")
     if category_ids:
         raise web.HTTPBadRequest(text=f"Tag `{tag_id}` is used in categories {category_ids}")
     profile_ids = await get_profiles_collection().find(
         {'tags': tag_id},
-        session=session_var.get(),
+        session=get_db_session(),
     ).limit(10).distinct("_id")
     if profile_ids:
         raise web.HTTPBadRequest(text=f"Tag `{tag_id}` is used in profiles {profile_ids}")
@@ -809,10 +808,28 @@ async def validate_tags_exist(tag_codes: list[str]) -> None:
     cursor = get_tag_collection().find(
         {"code": {"$in": tag_codes}},
         {"code": 1, "_id": 0},
-        session=session_var.get()
+        session=get_db_session()
     )
     existing_tags = [doc["code"] async for doc in cursor]
 
     missing = set(tag_codes) - set(existing_tags)
     if missing:
         raise web.HTTPBadRequest(text=f"Tags not found: {', '.join(missing)}")
+
+
+async def wait_until_cluster_time_reached(session, target_cluster_time, timeout=5.0):
+    """
+    Waits until the session's cluster_time reaches or exceeds the target_cluster_time.
+    """
+    start_time = time.time()
+    while True:
+        await session.client.admin.command("ping", session=session)
+        current_cluster_time = session.cluster_time
+
+        if current_cluster_time and current_cluster_time["clusterTime"] >= target_cluster_time["clusterTime"]:
+            break
+
+        if time.time() - start_time > timeout:
+            raise TimeoutError("Timed out waiting for clusterTime to reach target.")
+
+        await asyncio.sleep(0.1)
