@@ -3,13 +3,12 @@ import csv
 import hashlib
 import io
 import logging
+from base64 import b64encode
 from uuid import uuid4
 
 from jsonpatch import make_patch
 from jsonpointer import resolve_pointer
-from hashlib import sha256
-from json import dumps
-from unittest.mock import ANY
+from bson.json_util import dumps
 from urllib.parse import quote
 from aiocache import cached as aiocache_cached
 from aiohttp.hdrs import CONTENT_DISPOSITION, CONTENT_TYPE
@@ -219,3 +218,11 @@ def get_next_rev(current_rev=None):
         version = 1
     next_rev = f"{version + 1}-{uuid4().hex}"
     return next_rev
+
+
+def get_session_time(session):
+    session_data = {
+        "operation_time": session.operation_time,
+        "cluster_time": session.cluster_time,
+    }
+    return b64encode(dumps(session_data).encode()).decode()
