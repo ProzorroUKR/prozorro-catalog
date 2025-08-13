@@ -7,6 +7,7 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from aiohttp.web import HTTPNotFound
 
 from catalog import db
+from catalog.context import get_final_session_time
 from catalog.models.api import PaginatedList, ErrorResponse
 from catalog.models.product import ProductCreateInput, ProductUpdateInput, LocalizationProductUpdateInput, \
     ProductCreateResponse, ProductResponse
@@ -68,6 +69,7 @@ class ProductView(PydanticView):
             extra={
                 "MESSAGE_ID": "product_create",
                 "product_id": data["id"],
+                "session": get_final_session_time(),
             },
         )
         return {"data": ProductSerializer(data, category=category).data,
@@ -127,7 +129,7 @@ class ProductItemView(PydanticView):
 
             logger.info(
                 f"Updated product {product_id}",
-                extra={"MESSAGE_ID": "product_patch"},
+                extra={"MESSAGE_ID": "product_patch", "session": get_final_session_time()},
             )
 
         return {"data": ProductSerializer(product, category=category).data}

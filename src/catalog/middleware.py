@@ -6,7 +6,7 @@ from aiohttp.web import (
     HTTPInternalServerError,
     HTTPBadRequest
 )
-from catalog.logging import request_id_var
+from catalog.logging import request_id_var, request_cookies_var
 from catalog.auth import login_user
 from catalog.context import set_now, set_request, set_db_session
 from aiohttp.web import middleware, HTTPException
@@ -132,8 +132,11 @@ async def db_session_middleware(request, handler):
                 logger.debug(warning)
 
         set_db_session(session)
+        request_cookies_var.set(dict(request.cookies))
         try:
             response = await handler(request)  # processing request
+            end_time = get_session_time(session)
+            response.set_cookie(cookie_name, end_time)
         finally:
             set_db_session(None)
 
@@ -141,5 +144,4 @@ async def db_session_middleware(request, handler):
         # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Warning
         response.headers["X-Warning"] = f'199 - "{warning}"'
 
-    response.set_cookie(cookie_name, get_session_time(session))
     return response

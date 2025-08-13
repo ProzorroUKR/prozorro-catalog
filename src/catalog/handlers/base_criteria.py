@@ -6,6 +6,7 @@ from typing import Union
 
 from catalog import db
 from catalog.auth import validate_accreditation, validate_access_token
+from catalog.context import get_final_session_time
 from catalog.settings import LOCALIZATION_CRITERIA
 from catalog.utils import get_now, find_item_by_id, delete_sent_none_values, get_revision_changes
 from catalog.models.api import ErrorResponse
@@ -99,7 +100,8 @@ class BaseCriteriaViewMixin(BaseCriteriaMixin):
                     f"Created {self.obj_name} criterion {criterion['id']}",
                     extra={
                         "MESSAGE_ID": f"{self.obj_name}_criterion_create",
-                        f"{self.obj_name}_criterion_id": criterion['id']
+                        f"{self.obj_name}_criterion_id": criterion['id'],
+                        "session": get_final_session_time(),
                     },
                 )
         return {"data": [self.serializer_class(criterion).data for criterion in data]}
@@ -130,7 +132,7 @@ class BaseCriteriaItemViewMixin(BaseCriteriaMixin):
 
             logger.info(
                 f"Updated {self.obj_name} criterion {criterion_id}",
-                extra={"MESSAGE_ID": f"{self.obj_name}_criterion_patch"},
+                extra={"MESSAGE_ID": f"{self.obj_name}_criterion_patch", "session": get_final_session_time()},
             )
 
         return {"data": self.serializer_class(criterion).data}
@@ -170,7 +172,8 @@ class BaseCriteriaRGViewMixin(BaseCriteriaMixin):
                 f"Created {self.obj_name} criteria requirement group {data['id']}",
                 extra={
                     "MESSAGE_ID": f"{self.obj_name}_requirement_group_create",
-                    "requirement_group_id": data["id"]
+                    "requirement_group_id": data["id"],
+                    "session": get_final_session_time(),
                 },
             )
         return {"data": self.serializer_class(data).data}
@@ -201,7 +204,7 @@ class BaseCriteriaRGItemViewMixin(BaseCriteriaMixin):
 
             logger.info(
                 f"Updated {self.obj_name} criteria requirement group {rg_id}",
-                extra={"MESSAGE_ID": f"{self.obj_name}_requirement_group_patch"},
+                extra={"MESSAGE_ID": f"{self.obj_name}_requirement_group_patch", "session": get_final_session_time()},
             )
 
         return {"data": self.serializer_class(rg).data}
@@ -256,6 +259,7 @@ class BaseCriteriaRGRequirementViewMixin(BaseCriteriaMixin):
                     extra={
                         "MESSAGE_ID": f"{self.obj_name}_requirement_create",
                         "requirement_group_id": i["id"],
+                        "session": get_final_session_time(),
                     },
                 )
         return {"data": [self.serializer_class(r).data for r in data]}
@@ -304,7 +308,7 @@ class BaseCriteriaRGRequirementItemViewMixin(BaseCriteriaMixin):
 
             logger.info(
                 f"Updated {self.obj_name} criteria requirement {requirement_id}",
-                extra={"MESSAGE_ID": f"{self.obj_name}_requirement_create"},
+                extra={"MESSAGE_ID": f"{self.obj_name}_requirement_create", "session": get_final_session_time()},
             )
 
         return {"data": self.serializer_class(requirement).data}

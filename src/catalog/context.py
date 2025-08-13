@@ -2,6 +2,8 @@ from contextvars import ContextVar
 from catalog.settings import TIMEZONE
 from datetime import datetime
 
+from catalog.utils import get_session_time
+
 request_var = ContextVar('request_var')
 now_var = ContextVar('now_var')
 session_var = ContextVar('session', default=None)
@@ -34,3 +36,7 @@ def get_db_session():
 
 def set_db_session(db_session):
     session_var.set(db_session)
+
+
+def get_final_session_time():
+    return get_session_time(get_db_session())

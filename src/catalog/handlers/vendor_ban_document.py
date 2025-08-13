@@ -9,6 +9,7 @@ from aiohttp.web_exceptions import HTTPNotFound
 
 from catalog import db
 from catalog.auth import validate_access_token
+from catalog.context import get_final_session_time
 from catalog.models.api import ErrorResponse
 from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput, DocumentList, \
     DocumentResponse
@@ -70,7 +71,8 @@ class VendorBanDocumentView(VendorBanDocumentMixin, BaseDocumentView, PydanticVi
                 f"Created {self.parent_obj_name} document {data['id']}",
                 extra={
                     "MESSAGE_ID": f"{self.parent_obj_name}_document_create",
-                    "document_id": data["id"]
+                    "document_id": data["id"],
+                    "session": get_final_session_time(),
                 },
             )
 
@@ -118,7 +120,7 @@ class VendorBanDocumentItemView(VendorBanDocumentMixin, BaseDocumentItemView, Py
 
             logger.info(
                 f"Updated {self.parent_obj_name} document {doc_id}",
-                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_put"},
+                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_put", "session": get_final_session_time()},
             )
 
         return {"data": DocumentSerializer(data).data}
@@ -152,6 +154,6 @@ class VendorBanDocumentItemView(VendorBanDocumentMixin, BaseDocumentItemView, Py
 
             logger.info(
                 f"Updated {self.parent_obj_name} document {doc_id}",
-                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_patch"},
+                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_patch", "session": get_final_session_time()},
             )
         return {"data": DocumentSerializer(doc).data}

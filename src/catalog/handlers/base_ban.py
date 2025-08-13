@@ -3,7 +3,7 @@ from copy import deepcopy
 
 from aiohttp.web import HTTPNotFound
 
-from catalog.context import get_now
+from catalog.context import get_now, get_final_session_time
 from catalog.models.ban import RequestBanPostInput
 
 from catalog.serializers.ban import BanSerializer
@@ -52,7 +52,8 @@ class BaseBanViewMixin(BaseBanMixin):
                 f"Created {self.parent_obj_name} ban {data['id']}",
                 extra={
                     "MESSAGE_ID": f"{self.parent_obj_name}_ban_create",
-                    "document_id": data["id"]
+                    "document_id": data["id"],
+                    "session": get_final_session_time(),
                 },
             )
 

@@ -7,6 +7,7 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from aiohttp.web import HTTPBadRequest
 
 from catalog import db
+from catalog.context import get_final_session_time
 from catalog.models.api import PaginatedList, ErrorResponse
 from catalog.models.common import SuccessResponse
 from catalog.models.profile import (
@@ -22,7 +23,7 @@ from catalog.models.profile import (
     DeprecatedRequestProfileCreateInput,
     RequestProfileUpdateInput,
 )
-from catalog.utils import pagination_params, get_now, find_item_by_id, get_revision_changes
+from catalog.utils import pagination_params, get_now, find_item_by_id, get_revision_changes, get_session_time
 from catalog.auth import validate_access_token, validate_accreditation, set_access_token
 from catalog.serializers.base import RootSerializer
 from catalog.handlers.base_criteria import (
@@ -133,7 +134,8 @@ class ProfileView(ProfileViewMixin, PydanticView):
             f"Created profile {data['id']}",
             extra={
                 "MESSAGE_ID": "profile_create_post",
-                "profile_id": data['id']
+                "profile_id": data['id'],
+                "session": get_final_session_time(),
             },
         )
 
@@ -188,6 +190,7 @@ class ProfileItemView(ProfileViewMixin, PydanticView):
             extra={
                 "MESSAGE_ID": "profile_create_put",
                 "profile_id": data['id'],
+                "session": get_final_session_time(),
             },
         )
         response = {"data": RootSerializer(data).data,
@@ -216,10 +219,10 @@ class ProfileItemView(ProfileViewMixin, PydanticView):
             await self.get_state_class(data).on_patch(old_profile, profile)
             get_revision_changes(self.request, new_obj=profile, old_obj=old_profile)
 
-            logger.info(
-                f"Updated profile {profile_id}",
-                extra={"MESSAGE_ID": "profile_patch"},
-            )
+        logger.info(
+            f"Updated profile {profile_id}",
+            extra={"MESSAGE_ID": "profile_patch", "session": get_final_session_time()},
+        )
 
         return {"data": RootSerializer(profile).data}
 
