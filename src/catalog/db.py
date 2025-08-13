@@ -294,16 +294,21 @@ async def find_categories(**kwargs):
     return result
 
 
-async def read_category(category_id, projection=None):
+async def read_object(collection, obj_id, projection=None, obj_name="category"):
     projection = projection or {}
-    category = await get_category_collection().find_one(
-        {'_id': category_id},
+    obj = await collection.find_one(
+        {'_id': obj_id},
         projection=projection,
         session=get_db_session(),
     )
-    if not category:
-        raise web.HTTPNotFound(text="Category not found")
-    return rename_id(category)
+    if not obj:
+        raise web.HTTPNotFound(text=f"{obj_name.capitalize()} not found")
+    return rename_id(obj)
+
+
+async def read_category(category_id, projection=None):
+    collection = get_category_collection()
+    return await read_object(collection, category_id, projection, obj_name="category")
 
 
 async def insert_category(data):
@@ -311,15 +316,12 @@ async def insert_category(data):
     return inserted_id
 
 
-async def update_category(category):
-    await update_object(get_category_collection(read_preference=ReadPreference.PRIMARY), category)
-
-
 @asynccontextmanager
 async def read_and_update_category(uid):
-    data = await read_category(uid)
+    collection = get_category_collection(read_preference=ReadPreference.PRIMARY)
+    data = await read_object(collection, uid, obj_name="category")
     yield data
-    await update_category(data)
+    await update_object(collection, data)
 
 
 # profiles
@@ -356,13 +358,8 @@ async def find_profiles(**kwargs):
 
 
 async def read_profile(profile_id):
-    profile = await get_profiles_collection().find_one(
-        {'_id': profile_id},
-        session=get_db_session(),
-    )
-    if not profile:
-        raise web.HTTPNotFound(text="Profile not found")
-    return rename_id(profile)
+    collection = get_profiles_collection()
+    return await read_object(collection, profile_id, obj_name="profile")
 
 
 async def update_profile(profile):
@@ -371,9 +368,10 @@ async def update_profile(profile):
 
 @asynccontextmanager
 async def read_and_update_profile(profile_id):
-    profile = await read_profile(profile_id)
-    yield profile
-    await update_profile(profile)
+    collection = get_profiles_collection(read_preference=ReadPreference.PRIMARY)
+    data = await read_object(collection, profile_id, obj_name="profile")
+    yield data
+    await update_object(collection, data)
 
 
 # criteria
@@ -388,6 +386,7 @@ def get_collection_by_obj_name(obj_name):
     return collection()
 
 
+# used during GET
 async def read_obj_criteria(obj_name, obj_id):
     collection = get_collection_by_obj_name(obj_name)
 
@@ -401,6 +400,7 @@ async def read_obj_criteria(obj_name, obj_id):
     return remove_id(profile_criteria)
 
 
+# used during GET
 async def read_obj_criterion(obj_name, obj_id, criterion_id):
     collection = get_collection_by_obj_name(obj_name)
     async for profile_criterion in collection.aggregate(
@@ -492,10 +492,12 @@ async def find_products(**kwargs):
     return result
 
 
-async def read_product(uid, filters=None):
+async def read_product(uid, filters=None, collection=None):
+    if collection is None:
+        collection = get_products_collection()
     if filters is None:
         filters = {}
-    data = await get_products_collection().find_one(
+    data = await collection.find_one(
         {'_id': uid, **filters},
         session=get_db_session(),
     )
@@ -504,15 +506,12 @@ async def read_product(uid, filters=None):
     return rename_id(data)
 
 
-async def update_product(obj):
-    await update_object(get_products_collection(read_preference=ReadPreference.PRIMARY), obj)
-
-
 @asynccontextmanager
 async def read_and_update_product(uid, filters=None):
-    obj = await read_product(uid, filters)
-    yield obj
-    await update_product(obj)
+    collection = get_products_collection(read_preference=ReadPreference.PRIMARY)
+    data = await read_product(uid, filters=filters, collection=collection)
+    yield data
+    await update_object(collection, data)
 
 
 # offers
@@ -548,24 +547,16 @@ async def find_offers(**kwargs):
 
 
 async def read_offer(uid):
-    data = await get_offers_collection().find_one(
-        {'_id': uid},
-        session=get_db_session(),
-    )
-    if not data:
-        raise web.HTTPNotFound(text="Product not found")
-    return rename_id(data)
-
-
-async def update_offer(obj):
-    await update_object(get_offers_collection(read_preference=ReadPreference.PRIMARY), obj)
+    collection = get_offers_collection()
+    return await read_object(collection, uid, obj_name="offer")
 
 
 @asynccontextmanager
 async def read_and_update_offer(uid):
-    obj = await read_offer(uid)
-    yield obj
-    await update_offer(obj)
+    collection = get_offers_collection(read_preference=ReadPreference.PRIMARY)
+    data = await read_object(collection, uid, obj_name="offer")
+    yield data
+    await update_object(collection, data)
 
 
 # vendor
@@ -595,13 +586,8 @@ async def find_vendors(**kwargs):
 
 
 async def read_vendor(uid):
-    object = await get_vendor_collection().find_one(
-        {'_id': uid},
-        session=get_db_session(),
-    )
-    if not object:
-        raise web.HTTPNotFound(text="Vendor not found")
-    return rename_id(object)
+    collection = get_vendor_collection()
+    return await read_object(collection, uid, obj_name="vendor")
 
 
 async def insert_vendor(data):
@@ -609,15 +595,12 @@ async def insert_vendor(data):
     return inserted_id
 
 
-async def update_vendor(data):
-    await update_object(get_vendor_collection(read_preference=ReadPreference.PRIMARY), data)
-
-
 @asynccontextmanager
 async def read_and_update_vendor(uid):
-    data = await read_vendor(uid)
+    collection = get_vendor_collection(read_preference=ReadPreference.PRIMARY)
+    data = await read_object(collection, uid, obj_name="vendor")
     yield data
-    await update_vendor(data)
+    await update_object(collection, data)
 
 
 # contributor
@@ -642,13 +625,8 @@ async def find_contributors(**kwargs):
 
 
 async def read_contributor(uid):
-    contributor = await get_contributor_collection().find_one(
-        {'_id': uid},
-        session=get_db_session(),
-    )
-    if not contributor:
-        raise web.HTTPNotFound(text="Contributor not found")
-    return rename_id(contributor)
+    collection = get_contributor_collection()
+    return await read_object(collection, uid, obj_name="contributor")
 
 
 async def insert_contributor(data):
@@ -656,15 +634,12 @@ async def insert_contributor(data):
     return inserted_id
 
 
-async def update_contributor(data):
-    await update_object(get_contributor_collection(read_preference=ReadPreference.PRIMARY), data)
-
-
 @asynccontextmanager
 async def read_and_update_contributor(uid):
-    data = await read_contributor(uid)
+    collection = get_contributor_collection(read_preference=ReadPreference.PRIMARY)
+    data = await read_object(collection, uid, obj_name="contributor")
     yield data
-    await update_contributor(data)
+    await update_object(collection, data)
 
 
 # product requests
@@ -690,13 +665,8 @@ async def find_product_requests(**kwargs):
 
 
 async def read_product_request(uid):
-    contributor = await get_product_request_collection().find_one(
-        {'_id': uid},
-        session=get_db_session(),
-    )
-    if not contributor:
-        raise web.HTTPNotFound(text="Request not found")
-    return rename_id(contributor)
+    collection = get_product_request_collection()
+    return await read_object(collection, uid, obj_name="request")
 
 
 async def insert_product_request(data):
@@ -704,15 +674,12 @@ async def insert_product_request(data):
     return inserted_id
 
 
-async def update_product_request(data):
-    await update_object(get_product_request_collection(read_preference=ReadPreference.PRIMARY), data)
-
-
 @asynccontextmanager
 async def read_and_update_product_request(uid):
-    data = await read_product_request(uid)
+    collection = get_product_request_collection(read_preference=ReadPreference.PRIMARY)
+    data = await read_object(collection, uid, obj_name="request")
     yield data
-    await update_product_request(data)
+    await update_object(collection, data)
 
 
 # tags

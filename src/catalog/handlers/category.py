@@ -5,6 +5,7 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from aiohttp.web import HTTPBadRequest
 from catalog import db
+from catalog.context import get_final_session_time
 from catalog.models.api import PaginatedList, ErrorResponse
 from catalog.auth import set_access_token, validate_accreditation, validate_access_token
 from catalog.utils import pagination_params, get_revision_changes
@@ -84,6 +85,7 @@ class CategoryView(PydanticView):
             extra={
                 "MESSAGE_ID": "category_create_post",
                 "category_id": data["id"],
+                "session": get_final_session_time(),
             },
         )
 
@@ -128,7 +130,7 @@ class CategoryItemView(PydanticView):
 
         logger.info(
             f"Created category {data['id']}",
-            extra={"MESSAGE_ID": "category_create_put"},
+            extra={"MESSAGE_ID": "category_create_put", "session": get_final_session_time()},
         )
         response = {"data": RootSerializer(data, show_owner=False).data,
                     "access": access}
@@ -156,7 +158,7 @@ class CategoryItemView(PydanticView):
 
             logger.info(
                 f"Updated category {category_id}",
-                extra={"MESSAGE_ID": "category_patch"},
+                extra={"MESSAGE_ID": "category_patch", "session": get_final_session_time(),},
             )
 
         return {"data": RootSerializer(category, show_owner=False).data}

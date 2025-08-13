@@ -6,6 +6,7 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from catalog.auth import set_access_token, validate_accreditation
 
 from catalog import db
+from catalog.context import get_final_session_time
 from catalog.models.api import ErrorResponse, PaginatedList
 from catalog.models.product_request import (
     ProductRequestPostInput,
@@ -56,6 +57,7 @@ class ContributorProductRequestView(PydanticView):
             extra={
                 "MESSAGE_ID": f"contributor_product_request_create",
                 "contributor_product_request_id": data["id"],
+                "session": get_final_session_time(),
             },
         )
 
@@ -128,7 +130,7 @@ class ProductRequestAcceptionView(PydanticView):
 
             logger.info(
                 f"Updated product request {request_id}",
-                extra={"MESSAGE_ID": f"product_request_acception_update"},
+                extra={"MESSAGE_ID": f"product_request_acception_update", "session": get_final_session_time()},
             )
 
         # add product to the market
@@ -141,6 +143,7 @@ class ProductRequestAcceptionView(PydanticView):
             extra={
                 "MESSAGE_ID": f"product_request_product_create",
                 "product_id": product_request['product']['id'],
+                "session": get_final_session_time(),
             },
         )
 
@@ -176,7 +179,7 @@ class ProductRequestRejectionView(PydanticView):
 
             logger.info(
                 f"Updated product request {request_id}",
-                extra={"MESSAGE_ID": f"product_request_rejection_update"},
+                extra={"MESSAGE_ID": f"product_request_rejection_update", "session": get_final_session_time()},
             )
 
         return {"data": ProductRequestSerializer(product_request, category=category).data}

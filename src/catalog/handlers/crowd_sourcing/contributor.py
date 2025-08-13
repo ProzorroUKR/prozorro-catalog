@@ -6,6 +6,7 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 
 from catalog import db
 from catalog.auth import validate_accreditation
+from catalog.context import get_final_session_time
 from catalog.models.api import ErrorResponse, PaginatedList
 from catalog.models.contributor import ContributorPostInput, ContributorResponse
 from catalog.serializers.contributor import ContributorSerializer
@@ -56,6 +57,7 @@ class ContributorView(PydanticView):
             extra={
                 "MESSAGE_ID": f"contributor_create",
                 "contributor_id": data["id"],
+                "session": get_final_session_time(),
             },
         )
         return {"data": ContributorSerializer(data).data}
