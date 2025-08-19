@@ -36,7 +36,3 @@ def get_db_session():
 
 def set_db_session(db_session):
     session_var.set(db_session)
-
-
-def get_final_session_time():
-    return get_session_time(get_db_session())

@@ -4,7 +4,6 @@ from copy import deepcopy
 
 from aiohttp.web import HTTPFound, HTTPNotFound
 
-from catalog.context import get_final_session_time
 from catalog.utils import get_now, get_revision_changes
 from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput
 from catalog.serializers.document import DocumentSerializer
@@ -54,7 +53,6 @@ class BaseDocumentView(BaseDocumentMixin):
                 extra={
                     "MESSAGE_ID": f"{self.parent_obj_name}_document_create",
                     "document_id": data["id"],
-                    "session": get_final_session_time(),
                 },
             )
 
@@ -101,7 +99,7 @@ class BaseDocumentItemView(BaseDocumentMixin):
 
             logger.info(
                 f"Updated {self.parent_obj_name} document {doc_id}",
-                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_put", "session": get_final_session_time()},
+                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_put"},
             )
         return {"data": DocumentSerializer(data).data}
 
@@ -126,6 +124,6 @@ class BaseDocumentItemView(BaseDocumentMixin):
 
             logger.info(
                 f"Updated {self.parent_obj_name} document {doc_id}",
-                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_patch", "session": get_final_session_time()},
+                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_patch"},
             )
         return {"data": DocumentSerializer(d).data}

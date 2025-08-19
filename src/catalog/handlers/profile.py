@@ -7,7 +7,6 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from aiohttp.web import HTTPBadRequest
 
 from catalog import db
-from catalog.context import get_final_session_time
 from catalog.models.api import PaginatedList, ErrorResponse
 from catalog.models.common import SuccessResponse
 from catalog.models.profile import (
@@ -135,7 +134,6 @@ class ProfileView(ProfileViewMixin, PydanticView):
             extra={
                 "MESSAGE_ID": "profile_create_post",
                 "profile_id": data['id'],
-                "session": get_final_session_time(),
             },
         )
 
@@ -190,7 +188,6 @@ class ProfileItemView(ProfileViewMixin, PydanticView):
             extra={
                 "MESSAGE_ID": "profile_create_put",
                 "profile_id": data['id'],
-                "session": get_final_session_time(),
             },
         )
         response = {"data": RootSerializer(data).data,
@@ -221,7 +218,7 @@ class ProfileItemView(ProfileViewMixin, PydanticView):
 
         logger.info(
             f"Updated profile {profile_id}",
-            extra={"MESSAGE_ID": "profile_patch", "session": get_final_session_time()},
+            extra={"MESSAGE_ID": "profile_patch"},
         )
 
         return {"data": RootSerializer(profile).data}
