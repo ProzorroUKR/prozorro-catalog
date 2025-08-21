@@ -154,10 +154,10 @@ class CategoryItemView(PydanticView):
             await self.state.on_patch(old_category, category)
             get_revision_changes(self.request, new_obj=category, old_obj=old_category)
 
-            logger.info(
-                f"Updated category {category_id}",
-                extra={"MESSAGE_ID": "category_patch"},
-            )
+        logger.info(
+            f"Updated category {category_id}",
+            extra={"MESSAGE_ID": "category_patch"},
+        )
 
         return {"data": RootSerializer(category, show_owner=False).data}
 

@@ -125,9 +125,9 @@ class ProductItemView(PydanticView):
             await self.state_class.on_patch(product_before, product)
             get_revision_changes(self.request, new_obj=product, old_obj=product_before)
 
-            logger.info(
-                f"Updated product {product_id}",
-                extra={"MESSAGE_ID": "product_patch"},
-            )
+        logger.info(
+            f"Updated product {product_id}",
+            extra={"MESSAGE_ID": "product_patch"},
+        )
 
         return {"data": ProductSerializer(product, category=category).data}

@@ -451,5 +451,11 @@ class ProfileCriteriaRGRequirementItemView(ProfileCriteriaMixin, BaseCriteriaRGR
             rg["requirements"].remove(requirement)
             parent_obj["dateModified"] = get_now().isoformat()
             get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
+
+        logger.info(
+            f"Deleted {self.obj_name} criteria requirement {requirement_id}",
+            extra={"MESSAGE_ID": f"{self.obj_name}_requirement_delete"},
+        )
+
         return {"result": "success"}
 

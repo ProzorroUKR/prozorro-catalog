@@ -48,13 +48,13 @@ class BaseDocumentView(BaseDocumentMixin):
             parent_obj["documents"].append(data)
             get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
-            logger.info(
-                f"Created {self.parent_obj_name} document {data['id']}",
-                extra={
-                    "MESSAGE_ID": f"{self.parent_obj_name}_document_create",
-                    "document_id": data["id"],
-                },
-            )
+        logger.info(
+            f"Created {self.parent_obj_name} document {data['id']}",
+            extra={
+                "MESSAGE_ID": f"{self.parent_obj_name}_document_create",
+                "document_id": data["id"],
+            },
+        )
 
         return {"data": DocumentSerializer(data).data}
 
@@ -97,10 +97,11 @@ class BaseDocumentItemView(BaseDocumentMixin):
                 raise HTTPNotFound(text="Document not found")
             get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
-            logger.info(
-                f"Updated {self.parent_obj_name} document {doc_id}",
-                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_put"},
-            )
+        logger.info(
+            f"Updated {self.parent_obj_name} document {doc_id}",
+            extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_put"},
+        )
+
         return {"data": DocumentSerializer(data).data}
 
     async def patch(self, parent_obj_id: str, doc_id: str, body: DocumentPatchInput, child_obj_id: Optional[str] = None):
@@ -122,8 +123,9 @@ class BaseDocumentItemView(BaseDocumentMixin):
                 raise HTTPNotFound(text="Document not found")
             get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
-            logger.info(
-                f"Updated {self.parent_obj_name} document {doc_id}",
-                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_patch"},
-            )
+        logger.info(
+            f"Updated {self.parent_obj_name} document {doc_id}",
+            extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_patch"},
+        )
+
         return {"data": DocumentSerializer(d).data}

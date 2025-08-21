@@ -94,14 +94,16 @@ class BaseCriteriaViewMixin(BaseCriteriaMixin):
             validate_criteria_classification_uniq(parent_obj)
             parent_obj["dateModified"] = get_now().isoformat()
             get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
-            for criterion in data:
-                logger.info(
-                    f"Created {self.obj_name} criterion {criterion['id']}",
-                    extra={
-                        "MESSAGE_ID": f"{self.obj_name}_criterion_create",
-                        f"{self.obj_name}_criterion_id": criterion['id'],
-                    },
-                )
+
+        for criterion in data:
+            logger.info(
+                f"Created {self.obj_name} criterion {criterion['id']}",
+                extra={
+                    "MESSAGE_ID": f"{self.obj_name}_criterion_create",
+                    f"{self.obj_name}_criterion_id": criterion['id'],
+                },
+            )
+
         return {"data": [self.serializer_class(criterion).data for criterion in data]}
 
 
@@ -128,10 +130,10 @@ class BaseCriteriaItemViewMixin(BaseCriteriaMixin):
             parent_obj["dateModified"] = get_now().isoformat()
             get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
-            logger.info(
-                f"Updated {self.obj_name} criterion {criterion_id}",
-                extra={"MESSAGE_ID": f"{self.obj_name}_criterion_patch"},
-            )
+        logger.info(
+            f"Updated {self.obj_name} criterion {criterion_id}",
+            extra={"MESSAGE_ID": f"{self.obj_name}_criterion_patch"},
+        )
 
         return {"data": self.serializer_class(criterion).data}
 
@@ -166,13 +168,14 @@ class BaseCriteriaRGViewMixin(BaseCriteriaMixin):
             parent_obj["dateModified"] = get_now().isoformat()
             get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
-            logger.info(
-                f"Created {self.obj_name} criteria requirement group {data['id']}",
-                extra={
-                    "MESSAGE_ID": f"{self.obj_name}_requirement_group_create",
-                    "requirement_group_id": data["id"],
-                },
-            )
+        logger.info(
+            f"Created {self.obj_name} criteria requirement group {data['id']}",
+            extra={
+                "MESSAGE_ID": f"{self.obj_name}_requirement_group_create",
+                "requirement_group_id": data["id"],
+            },
+        )
+
         return {"data": self.serializer_class(data).data}
 
 
@@ -199,10 +202,10 @@ class BaseCriteriaRGItemViewMixin(BaseCriteriaMixin):
             parent_obj["dateModified"] = get_now().isoformat()
             get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
-            logger.info(
-                f"Updated {self.obj_name} criteria requirement group {rg_id}",
-                extra={"MESSAGE_ID": f"{self.obj_name}_requirement_group_patch"},
-            )
+        logger.info(
+            f"Updated {self.obj_name} criteria requirement group {rg_id}",
+            extra={"MESSAGE_ID": f"{self.obj_name}_requirement_group_patch"},
+        )
 
         return {"data": self.serializer_class(rg).data}
 
@@ -249,15 +252,15 @@ class BaseCriteriaRGRequirementViewMixin(BaseCriteriaMixin):
             parent_obj["dateModified"] = get_now().isoformat()
             get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
-            for i in data:
+        for i in data:
+            logger.info(
+                f"Created {self.obj_name} criteria requirement {i['id']}",
+                extra={
+                    "MESSAGE_ID": f"{self.obj_name}_requirement_create",
+                    "requirement_group_id": i["id"],
+                },
+            )
 
-                logger.info(
-                    f"Created {self.obj_name} criteria requirement {i['id']}",
-                    extra={
-                        "MESSAGE_ID": f"{self.obj_name}_requirement_create",
-                        "requirement_group_id": i["id"],
-                    },
-                )
         return {"data": [self.serializer_class(r).data for r in data]}
 
 
@@ -302,9 +305,9 @@ class BaseCriteriaRGRequirementItemViewMixin(BaseCriteriaMixin):
             parent_obj["dateModified"] = get_now().isoformat()
             get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
-            logger.info(
-                f"Updated {self.obj_name} criteria requirement {requirement_id}",
-                extra={"MESSAGE_ID": f"{self.obj_name}_requirement_create"},
-            )
+        logger.info(
+            f"Updated {self.obj_name} criteria requirement {requirement_id}",
+            extra={"MESSAGE_ID": f"{self.obj_name}_requirement_create"},
+        )
 
         return {"data": self.serializer_class(requirement).data}

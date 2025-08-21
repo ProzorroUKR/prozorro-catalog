@@ -96,10 +96,10 @@ class VendorItemView(PydanticView):
             await self.state.on_patch(initial_data, vendor)
             get_revision_changes(self.request, new_obj=vendor, old_obj=initial_data)
 
-            logger.info(
-                f"Updated vendor {vendor_id}",
-                extra={"MESSAGE_ID": "vendor_patch"},
-            )
+        logger.info(
+            f"Updated vendor {vendor_id}",
+            extra={"MESSAGE_ID": "vendor_patch"},
+        )
 
         return {"data": VendorSerializer(vendor).data}
 

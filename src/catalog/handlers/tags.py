@@ -81,10 +81,10 @@ class TagItemView(PydanticView):
             tag.update(data)
             get_revision_changes(self.request, new_obj=tag, old_obj=old_tag)
 
-            logger.info(
-                f"Updated tag {tag_id}",
-                extra={"MESSAGE_ID": "tag_patch"},
-            )
+        logger.info(
+            f"Updated tag {tag_id}",
+            extra={"MESSAGE_ID": "tag_patch"},
+        )
 
         return {"data": TagSerializer(tag).data}
 

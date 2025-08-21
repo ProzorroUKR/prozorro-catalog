@@ -66,13 +66,13 @@ class VendorBanDocumentView(VendorBanDocumentMixin, BaseDocumentView, PydanticVi
             ban["documents"].append(data)
             get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
-            logger.info(
-                f"Created {self.parent_obj_name} document {data['id']}",
-                extra={
-                    "MESSAGE_ID": f"{self.parent_obj_name}_document_create",
-                    "document_id": data["id"],
-                },
-            )
+        logger.info(
+            f"Created {self.parent_obj_name} document {data['id']}",
+            extra={
+                "MESSAGE_ID": f"{self.parent_obj_name}_document_create",
+                "document_id": data["id"],
+            },
+        )
 
         return {"data": DocumentSerializer(data).data}
 
@@ -116,10 +116,10 @@ class VendorBanDocumentItemView(VendorBanDocumentMixin, BaseDocumentItemView, Py
                 raise HTTPNotFound(text="Document not found")
             get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
-            logger.info(
-                f"Updated {self.parent_obj_name} document {doc_id}",
-                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_put"},
-            )
+        logger.info(
+            f"Updated {self.parent_obj_name} document {doc_id}",
+            extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_put"},
+        )
 
         return {"data": DocumentSerializer(data).data}
 
@@ -150,8 +150,9 @@ class VendorBanDocumentItemView(VendorBanDocumentMixin, BaseDocumentItemView, Py
                 raise HTTPNotFound(text="Document not found")
             get_revision_changes(self.request, new_obj=parent_obj, old_obj=old_parent_obj)
 
-            logger.info(
-                f"Updated {self.parent_obj_name} document {doc_id}",
-                extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_patch"},
-            )
+        logger.info(
+            f"Updated {self.parent_obj_name} document {doc_id}",
+            extra={"MESSAGE_ID": f"{self.parent_obj_name}_document_patch"},
+        )
+
         return {"data": DocumentSerializer(doc).data}
