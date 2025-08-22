@@ -5,7 +5,6 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r201, r400, r401
 
 from catalog import db
-from catalog.context import get_final_session_time
 from catalog.models.api import ErrorResponse
 from catalog.models.product import VendorProductCreateInput, ProductResponse
 from catalog.auth import validate_access_token, validate_accreditation
@@ -47,7 +46,6 @@ class VendorProductView(PydanticView):
             extra={
                 "MESSAGE_ID": f"vendor_product_create",
                 "vendor_product_id": data["id"],
-                "session": get_final_session_time(),
             },
         )
         return {'data': ProductSerializer(data, vendor=vendor, category=category).data}

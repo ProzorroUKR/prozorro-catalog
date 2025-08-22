@@ -2,7 +2,6 @@ import logging
 from typing import Optional, Union
 
 from catalog import db
-from catalog.context import get_final_session_time
 from catalog.models.api import PaginatedList, ErrorResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
@@ -58,7 +57,6 @@ class VendorView(PydanticView):
             extra={
                 "MESSAGE_ID": "vendor_create",
                 "vendor_id": data["id"],
-                "session": get_final_session_time(),
             },
         )
         response = {"data": VendorSerializer(data).data,
@@ -98,10 +96,10 @@ class VendorItemView(PydanticView):
             await self.state.on_patch(initial_data, vendor)
             get_revision_changes(self.request, new_obj=vendor, old_obj=initial_data)
 
-            logger.info(
-                f"Updated vendor {vendor_id}",
-                extra={"MESSAGE_ID": "vendor_patch", "session": get_final_session_time()},
-            )
+        logger.info(
+            f"Updated vendor {vendor_id}",
+            extra={"MESSAGE_ID": "vendor_patch"},
+        )
 
         return {"data": VendorSerializer(vendor).data}
 

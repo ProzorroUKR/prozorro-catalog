@@ -6,6 +6,7 @@ from aiohttp.web import (
     HTTPInternalServerError,
     HTTPBadRequest
 )
+from aiohttp.web_request import Request
 from catalog.logging import request_id_var, request_cookies_var
 from catalog.auth import login_user
 from catalog.context import set_now, set_request, set_db_session
@@ -104,7 +105,6 @@ async def context_middleware(request, handler):
     set_now()
     response = await handler(request)
     return response
-
 
 @middleware
 async def db_session_middleware(request, handler):

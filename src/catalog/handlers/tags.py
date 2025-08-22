@@ -6,7 +6,6 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 
 from catalog import db
-from catalog.context import get_final_session_time
 from catalog.models.api import ErrorResponse
 from catalog.models.common import SuccessResponse
 from catalog.models.tag import TagList, TagResponse, TagCreateInput, TagUpdateInput
@@ -49,7 +48,6 @@ class TagView(PydanticView):
             extra={
                 "MESSAGE_ID": "tag_create_post",
                 "tag_id": data['id'],
-                "session": get_final_session_time(),
             },
         )
         return {"data": TagSerializer(data).data}
@@ -83,10 +81,10 @@ class TagItemView(PydanticView):
             tag.update(data)
             get_revision_changes(self.request, new_obj=tag, old_obj=old_tag)
 
-            logger.info(
-                f"Updated tag {tag_id}",
-                extra={"MESSAGE_ID": "tag_patch", "session": get_final_session_time()},
-            )
+        logger.info(
+            f"Updated tag {tag_id}",
+            extra={"MESSAGE_ID": "tag_patch"},
+        )
 
         return {"data": TagSerializer(tag).data}
 
