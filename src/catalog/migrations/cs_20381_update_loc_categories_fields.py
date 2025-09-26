@@ -74,19 +74,22 @@ async def migrate_categories():
     )
 
     for category_ids, update_data in LOCALIZATION_CATEGORIES_FIELDS_MAPPING.items():
-        update_data["dateModified"] = get_now().isoformat()
-        bulk.append(
-            UpdateOne(
-                filter={"_id": {"$in": category_ids}},
-                update={"$set": update_data},
+        async for category in category_collection.find(
+            {"_id": {"$in": category_ids}},
+        ):
+            update_data["dateModified"] = get_now().isoformat()
+            bulk.append(
+                UpdateOne(
+                    filter={"_id": category["_id"]},
+                    update={"$set": update_data},
+                )
             )
-        )
-        counter += 1
+            counter += 1
 
-        if bulk and len(bulk) % 500 == 0:
-            async with transaction_context_manager() as session:
-                await bulk_update(category_collection, bulk, session, counter, migrated_obj="categories")
-            bulk = []
+            if bulk and len(bulk) % 500 == 0:
+                async with transaction_context_manager() as session:
+                    await bulk_update(category_collection, bulk, session, counter, migrated_obj="categories")
+                bulk = []
 
     if bulk:
         async with transaction_context_manager() as session:
