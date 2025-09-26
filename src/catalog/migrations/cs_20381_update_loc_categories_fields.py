@@ -53,6 +53,10 @@ LOCALIZATION_CATEGORIES_FIELDS_MAPPING = {
     ("b71c656590004bbeade471e527248e3f", "2d7c3b1f4287414e969a6c52a00bfa55", "e7e12f9115fe4266a79041c01a263315"): {
         "title": "Кабелі (крім електроапаратури)",
     },
+    ("95aa601b17ce4d86a5403ae8aa5e47b5", "7e969806129c48a5a91d51418a03ef3e", "c31a9345bc6644db8e2ef5a690478b01"): {
+        "classification.id": "18100000-0",
+        "classification.description": "Формений одяг, спеціальний робочий одяг та аксесуари",
+    }
 }
 
 
