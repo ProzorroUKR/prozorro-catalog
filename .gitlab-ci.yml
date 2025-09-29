@@ -24,7 +24,7 @@ test:
   image: docker-registry.prozorro.gov.ua/docker/images/python:3.9-alpine3.14
   stage: test
   services:
-    - name: bitnami/mongodb:4.4.12-debian-10-r24
+    - name: bitnami/mongodb:6.0.13
       alias: mongo
   variables:
     SWAGGER_DOC_AVAILABLE: ""
