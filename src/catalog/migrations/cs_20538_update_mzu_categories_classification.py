@@ -1,4 +1,5 @@
 import asyncio
+import csv
 
 import logging
 import sentry_sdk
@@ -162,16 +163,15 @@ async def migrate_categories():
     logger.info(f"Finished. Processed {counter} updated categories' fields.")
 
 
-async def migrate_profiles_and_products():
-    nested_obj_mapping = {
-        "profiles": get_profiles_collection(),
-        "products": get_products_collection(),
-    }
-    for obj_name, obj_collection in nested_obj_mapping.items():
-        logger.info(f"Start localized {obj_name} migration")
-        counter = 0
-        bulk = []
+async def migrate_profiles():
+    obj_collection = get_profiles_collection()
+    logger.info("Start localized profiles migration")
+    counter = 0
+    bulk = []
 
+    with open('cs_20538_mzu_profiles.csv', 'w', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=["id", "relatedCategory", "title"], extrasaction="ignore")
+        writer.writeheader()
         for category_ids, update_data in MZU_CATEGORIES_FIELDS_MAPPING.items():
             async for obj in obj_collection.find(
                 {"relatedCategory": {"$in": category_ids}},
@@ -183,24 +183,63 @@ async def migrate_profiles_and_products():
                         update={"$set": update_data},
                     )
                 )
+                profile_data = {
+                    "id": obj["_id"],
+                    "relatedCategory": obj["relatedCategory"],
+                    "title": obj["title"],
+                }
+                writer.writerow(profile_data)
                 counter += 1
 
                 if bulk and len(bulk) % 500 == 0:
                     async with transaction_context_manager() as session:
-                        await bulk_update(obj_collection, bulk, session, counter, migrated_obj=obj_name)
+                        await bulk_update(obj_collection, bulk, session, counter, migrated_obj="profiles")
                     bulk = []
 
         if bulk:
             async with transaction_context_manager() as session:
-                await bulk_update(obj_collection, bulk, session, counter, migrated_obj=obj_name)
+                await bulk_update(obj_collection, bulk, session, counter, migrated_obj="profiles")
 
-        logger.info(f"Finished. Processed {counter} updated {obj_name}")
-        logger.info("Successfully migrated")
+    logger.info(f"Finished. Processed {counter} updated profiles")
+    logger.info("Successfully migrated")
+
+
+async def migrate_products():
+    obj_collection = get_products_collection()
+    logger.info("Start localized products migration")
+    counter = 0
+    bulk = []
+
+    for category_ids, update_data in MZU_CATEGORIES_FIELDS_MAPPING.items():
+        async for obj in obj_collection.find(
+            {"relatedCategory": {"$in": category_ids}},
+        ):
+            update_data["dateModified"] = get_now().isoformat()
+            bulk.append(
+                UpdateOne(
+                    filter={"_id": obj["_id"]},
+                    update={"$set": update_data},
+                )
+            )
+            counter += 1
+
+            if bulk and len(bulk) % 500 == 0:
+                async with transaction_context_manager() as session:
+                    await bulk_update(obj_collection, bulk, session, counter, migrated_obj="products")
+                bulk = []
+
+    if bulk:
+        async with transaction_context_manager() as session:
+            await bulk_update(obj_collection, bulk, session, counter, migrated_obj="products")
+
+    logger.info(f"Finished. Processed {counter} updated products")
+    logger.info("Successfully migrated")
 
 
 async def migrate():
     await migrate_categories()
-    await migrate_profiles_and_products()
+    await migrate_profiles()
+    await migrate_products()
 
 
 def main():
