@@ -169,7 +169,7 @@ async def migrate_profiles():
     counter = 0
     bulk = []
 
-    with open('cs_20538_mzu_profiles.csv', 'w', newline='') as csvfile:
+    with open('/tmp/cs_20538_mzu_profiles.csv', 'w', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=["id", "relatedCategory", "title"], extrasaction="ignore")
         writer.writeheader()
         for category_ids, update_data in MZU_CATEGORIES_FIELDS_MAPPING.items():
