@@ -332,6 +332,23 @@ async def test_product_request_acception_validations(api, product_request):
 
 
 async def test_product_request_acception(api, product_request):
+    # add doc or product request
+
+    doc_hash = "0" * 32
+    doc_data = {
+        "title": "name.doc",
+        "url": generate_test_url(doc_hash),
+        "hash": f"md5:{doc_hash}",
+        "format": "application/msword",
+    }
+    resp = await api.post(
+        f'/api/crowd-sourcing/requests/{product_request["data"]["id"]}/documents',
+        json={"data": doc_data},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+
     resp = await api.post(
         f"api/crowd-sourcing/requests/{product_request['data']['id']}/accept",
         json={"data": request_review_data},
@@ -352,7 +369,7 @@ async def test_product_request_acception(api, product_request):
 
     # check generated data
     additional_fields = {k: v for k, v in data.items() if k not in product_request["data"]}
-    assert set(additional_fields.keys()) == {'acception'}
+    assert set(additional_fields.keys()) == {'acception', 'documents'}
     assert "date" in data["acception"]
     assert data["dateModified"] == data["product"]["dateModified"] == data["acception"]["date"]
 
@@ -367,6 +384,7 @@ async def test_product_request_acception(api, product_request):
     data = result["data"]
     for field_name in ("id", "dateModified", "owner", "dateCreated"):
         assert field_name in data.keys()
+    assert "documents" not in data.keys()
 
     # check access token by patching product
     patch_product = {
