@@ -1,15 +1,17 @@
 from typing import Union
 
+from aiohttp.web import HTTPForbidden
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
+from aiohttp_pydantic.oas.typing import r200, r201, r404, r400, r401
+from secrets import compare_digest
 
 from catalog.auth import validate_accreditation
 from catalog.models.api import ErrorResponse
 from catalog.models.document import (
     DocumentResponse,
-    DocumentPutInput,
-    DocumentPatchInput,
-    DocumentPostInput,
+    DocumentNonAuthorizedInputPut,
+    DocumentNonAuthorizedInputPatch,
+    DocumentNonAuthorizedInputPost,
     DocumentList,
 )
 from catalog import db
@@ -27,11 +29,18 @@ class ProductRequestDocumentMixin:
     def read_and_update_object(cls, request_id, child_obj_id=None):
         return db.read_and_update_product_request(request_id)
 
+    @classmethod
+    async def validate_data(cls, request, body, parent_obj, parent_obj_id):
+        if not compare_digest(request.user.name, parent_obj['owner']):
+            raise HTTPForbidden(text='Owner mismatch')
+        if parent_obj.get("acception") or parent_obj.get("rejection"):
+            raise HTTPForbidden(text='Forbidden to add/update document for product request that has been reviewed')
+
 
 class ProductRequestDocumentView(ProductRequestDocumentMixin, PydanticView):
 
     async def post(
-        self, request_id: str, /, body: DocumentPostInput
+        self, request_id: str, /, body: DocumentNonAuthorizedInputPost
     ) -> Union[r201[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         """
         Product request document create
@@ -62,7 +71,7 @@ class ProductRequestDocumentItemView(ProductRequestDocumentMixin, BaseDocumentIt
         return await BaseDocumentItemView.get(self, request_id, doc_id)
 
     async def put(
-        self, request_id: str, doc_id: str, /, body: DocumentPutInput,
+        self, request_id: str, doc_id: str, /, body: DocumentNonAuthorizedInputPut,
     ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Product request document replace
@@ -74,7 +83,7 @@ class ProductRequestDocumentItemView(ProductRequestDocumentMixin, BaseDocumentIt
         return await BaseDocumentItemView.put(self, request_id, doc_id, body)
 
     async def patch(
-        self, request_id: str, doc_id: str, /, body: DocumentPatchInput,
+        self, request_id: str, doc_id: str, /, body: DocumentNonAuthorizedInputPatch,
     ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Product request document update
