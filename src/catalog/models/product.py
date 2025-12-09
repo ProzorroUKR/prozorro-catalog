@@ -100,6 +100,14 @@ class BaseProductData(BaseProductCreateData):
     identifier: Optional[ProductIdentifier] = Field(None, example=IDENTIFIER_EXAMPLE)
     alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_length=100, example=[IDENTIFIER_EXAMPLE])
     images: List[Image] = Field(None, max_length=20, example=[{"url": "/image/1.jpg"}])
+    expirationDate: Optional[datetime] = Field(None, example=get_now().isoformat())
+
+    @field_validator('expirationDate')
+    def validate_date(cls, v):
+        if v and isinstance(v, datetime):
+            if v < get_now():
+                raise ValueError("should be greater than now")
+            return v.isoformat()
 
 
 class ProductCreateData(BaseProductData):
@@ -108,7 +116,7 @@ class ProductCreateData(BaseProductData):
         return uuid4().hex
 
 
-class ProductUpdateData(ProductRequirementResponses):
+class BaseProductUpdateData(ProductRequirementResponses):
     title: Optional[str] = Field(None, min_length=1, max_length=160, example="title")
     relatedCategory: Optional[str] = Field(None, pattern=r"^[0-9A-Za-z_-]{1,32}$", example=uuid4().hex)
     description: Optional[str] = Field(None, min_length=1, max_length=1000, example="description")
@@ -122,6 +130,17 @@ class ProductUpdateData(ProductRequirementResponses):
     alternativeIdentifiers: Optional[List[ProductIdentifier]] = Field(None, max_length=100, example=[IDENTIFIER_EXAMPLE])
     images: Optional[List[Image]] = Field(None, max_length=20, example=[{"url": "/image/1.jpg"}])
     status: Optional[ProductStatus] = Field(None, example=ProductStatus.inactive)
+
+
+class ProductUpdateData(BaseProductUpdateData):
+    expirationDate: Optional[datetime] = Field(None, example=get_now().isoformat())
+
+    @field_validator('expirationDate')
+    def validate_date(cls, v):
+        if v and isinstance(v, datetime):
+            if v < get_now():
+                raise ValueError("should be greater than now")
+            return v.isoformat()
 
 
 class LocalizationProductUpdateData(BaseModel):
@@ -139,7 +158,6 @@ class Product(BaseProductData):
     vendor: Optional[VendorInfo] = Field(None, example=VENDOR_INFO_EXAMPLE)
     documents: Optional[Document] = Field(None, example=[DOCUMENT_EXAMPLE])
     images: Optional[List[Image]] = Field(None, max_length=100, example=[{"url": "/image/1.jpg"}])
-    expirationDate: Optional[datetime] = Field(None, example=get_now().isoformat())
 
 
 ProductCreateInput = AuthorizedInput[ProductCreateData]
