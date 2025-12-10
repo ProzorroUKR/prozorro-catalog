@@ -1,3 +1,3 @@
 0 0 * * * PYTHONPATH=/app python /app/cron/related_profiles_task.py
 0 22 * * * PYTHONPATH=/app python /app/cron/activate_banned_vendors.py
-0 22 31 12 * PYTHONPATH=/app python /app/cron/inactivate_products_task.py
+0 22 * * * PYTHONPATH=/app python /app/cron/inactivate_products_task.py

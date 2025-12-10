@@ -1,3 +1,4 @@
+from datetime import timedelta
 from random import randint
 from copy import deepcopy
 from unittest.mock import patch, AsyncMock
@@ -7,6 +8,7 @@ from catalog.settings import CPB_USERNAME
 from .base import TEST_AUTH, TEST_AUTH_CPB
 from .conftest import set_requirements_to_responses
 from .utils import create_criteria
+from catalog.utils import get_now
 
 
 async def test_invalid_auth_header(api, product):
@@ -237,6 +239,16 @@ async def test_420_product_patch(api, category, profile, product):
         resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH)
         assert resp.status == 200
 
+        patch_product["data"]["expirationDate"] = (get_now() - timedelta(minutes=1)).isoformat()
+        resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH)
+        assert resp.status == 400
+        response = await resp.json()
+        assert 'Value error, should be greater than now: data.ProductUpdateData.expirationDate' == response["errors"][0]
+
+        patch_product["data"]["expirationDate"] = (get_now() + timedelta(days=1)).isoformat()
+        resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH)
+        assert resp.status == 200
+
     # try to hide product without patching additionalClassifications snd without medicine validation
     # try edit product with master access
 
@@ -280,6 +292,45 @@ async def test_product_patch_after_termination_status(api, product, category):
 
     test_date_modified = resp_json['data']['dateModified']
     assert test_date_modified > product["data"]["dateModified"]
+
+    resp = await api.get(f'/api/products/{product_id}')
+    assert resp.status == 200
+    resp_json = await resp.json()
+    for key, patch_value in patch_product['data'].items():
+        assert resp_json['data'][key] == patch_value
+
+    # forbidden to patch hidden product
+    patch_product['data']['status'] = 'active'
+    resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH)
+    assert resp.status == 403
+
+
+async def test_product_inactivation(api, product, category):
+    product_id = product['data']['id']
+
+    resp = await api.get(f'/api/products/{product_id}')
+    assert resp.status == 200
+    resp_json = await resp.json()
+    assert product_id == resp_json['data']['id']
+
+    patch_product = {
+        "data": {
+            "status": "inactive",
+            "title": "Маски (приховані)"
+        },
+        "access": product['access']
+    }
+
+    resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH)
+    assert resp.status == 200
+    resp_json = await resp.json()
+    for key, patch_value in patch_product['data'].items():
+        assert resp_json['data'][key] == patch_value
+    assert "expirationDate" in resp_json['data']
+
+    test_date_modified = resp_json['data']['dateModified']
+    assert test_date_modified > product["data"]["dateModified"]
+    assert test_date_modified == resp_json["data"]["expirationDate"]
 
     resp = await api.get(f'/api/products/{product_id}')
     assert resp.status == 200
