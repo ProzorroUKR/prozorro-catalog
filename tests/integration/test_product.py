@@ -9,6 +9,7 @@ from .base import TEST_AUTH, TEST_AUTH_CPB
 from .conftest import set_requirements_to_responses
 from .utils import create_criteria
 from catalog.utils import get_now
+from catalog.doc_service import generate_test_url
 
 
 async def test_invalid_auth_header(api, product):
@@ -429,7 +430,6 @@ async def test_create_product_from_cabinet_category(api, mock_agreement):
 async def test_product_without_required_responses(api, category):
     category_id = category['data']['id']
     test_product = {"data": api.get_fixture_json('product')}
-    test_product["data"]["relatedCategory"] = category["data"]["id"]
     req_responses = test_product["data"].pop("requirementResponses")
 
     test_product['data']['relatedCategory'] = category_id
@@ -478,3 +478,124 @@ async def test_product_without_required_responses(api, category):
             "for CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL"
         ]
     }
+
+
+async def test_product_document_for_localization_category(api, category):
+    category_id = category['data']['id']
+    test_product = {"data": api.get_fixture_json('product')}
+    test_product['data']['relatedCategory'] = category_id
+    test_product['access'] = category['access']
+
+    # response for local characteristics
+    test_product["data"]["requirementResponses"] = [
+        {
+            "requirement": "Ступінь локалізації виробництва товару, що є предметом закупівлі, перевищує або дорівнює ступеню локалізації виробництва, встановленому на відповідний рік",
+            "value": 50
+        }
+    ]
+    set_requirements_to_responses(test_product["data"]["requirementResponses"], category)
+    resp = await api.post('/api/products', json=test_product, auth=TEST_AUTH)
+    assert resp.status == 201
+    result = await resp.json()
+    product_id = result["data"]["id"]
+    product_access = result["access"]
+
+    doc_hash = "0" * 32
+    doc_data = {
+        "title": "name.doc",
+        "url": generate_test_url(doc_hash),
+        "hash": f"md5:{doc_hash}",
+        "format": "application/msword",
+    }
+    resp = await api.post(
+        f'api/products/{product_id}/documents',
+        json={
+            "data": doc_data,
+            "access": product_access
+        },
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+
+
+async def test_product_document_for_non_localization_category(api, mock_agreement):
+    # create category
+    data = api.get_fixture_json('category')
+    resp = await api.put(
+        f"/api/categories/{data['id']}",
+        json={"data": data},
+        auth=TEST_AUTH
+    )
+    assert resp.status == 201
+    category_data = await resp.json()
+    criteria = api.get_fixture_json('criteria')
+
+    # add tech criteria
+    criterion = criteria["criteria"][0]
+    rgs = criterion.pop("requirementGroups")
+    resp = await api.post(
+        f"/api/categories/{category_data['data']['id']}/criteria",
+        json={"data": criterion, "access": category_data["access"]},
+        auth=TEST_AUTH,
+    )
+
+    criterion_data = await resp.json()
+    criterion_id = criterion_data["data"][-1]["id"]
+
+    # add requirements
+    for rg in rgs:
+        reqs = rg.pop("requirements")
+        rg_resp = await api.post(
+            f"/api/categories/{category_data['data']['id']}/criteria/{criterion_id}/requirementGroups",
+            json={"data": rg, "access": category_data["access"]},
+            auth=TEST_AUTH,
+        )
+        rg_data = await rg_resp.json()
+        rg_id = rg_data["data"]["id"]
+        await api.post(
+            f"/api/categories/{category_data['data']['id']}/criteria/"
+            f"{criterion_id}/requirementGroups/{rg_id}/requirements",
+            json={"data": reqs, "access": category_data["access"]},
+            auth=TEST_AUTH,
+        )
+        resp = await api.get(
+            f"/api/categories/{category_data['data']['id']}",
+            json={"data": criterion, "access": category_data["access"]},
+            auth=TEST_AUTH,
+        )
+        category = await resp.json()
+
+    category_id = category['data']['id']
+    test_product = {"data": api.get_fixture_json('product')}
+    test_product['data']['relatedCategory'] = category_id
+    test_product['access'] = category_data['access']
+
+    # response for local characteristics
+    req_responses = test_product["data"].pop("requirementResponses")
+    test_product["data"]["requirementResponses"] = [req_responses[0]]
+    set_requirements_to_responses(test_product["data"]["requirementResponses"], category)
+    resp = await api.post('/api/products', json=test_product, auth=TEST_AUTH)
+    assert resp.status == 201
+    result = await resp.json()
+    product_id = result["data"]["id"]
+    product_access = result["access"]
+
+    doc_hash = "0" * 32
+    doc_data = {
+        "title": "name.doc",
+        "url": generate_test_url(doc_hash),
+        "hash": f"md5:{doc_hash}",
+        "format": "application/msword",
+    }
+    resp = await api.post(
+        f'api/products/{product_id}/documents',
+        json={
+            "data": doc_data,
+            "access": product_access
+        },
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 403
+    assert result["errors"] == ['Forbidden to add document for non-localized product']
