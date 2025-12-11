@@ -10,6 +10,7 @@ from catalog.models.document import DocumentPostInput, DocumentPutInput, Documen
     DocumentResponse
 from catalog.handlers.base_document import BaseDocumentView, BaseDocumentItemView
 from catalog.auth import validate_access_token, validate_accreditation
+from catalog.settings import LOCALIZATION_CRITERIA
 
 
 class ProductDocumentMixin:
@@ -23,7 +24,11 @@ class ProductDocumentMixin:
 
     @classmethod
     async def validate_data(cls, request, body, parent_obj, parent_obj_id):
-        if parent_obj.get("vendor") is None:
+        category = await db.read_category(parent_obj["relatedCategory"])
+        localization_criteria = [
+            cr for cr in category['criteria'] if cr.get("classification", {}).get("id") == LOCALIZATION_CRITERIA
+        ]
+        if parent_obj.get("vendor") is None and not localization_criteria:
             raise HTTPForbidden(text='Forbidden to add document for non-localized product')
         validate_access_token(request, parent_obj, body.access)
 
