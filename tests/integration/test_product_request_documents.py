@@ -4,6 +4,42 @@ from .base import TEST_AUTH
 from urllib.parse import urlparse, parse_qsl, urlencode
 from catalog.doc_service import generate_test_url, get_doc_service_uid_from_url
 from .test_product_request import request_review_data
+from .utils import get_fixture_json
+from .conftest import set_requirements_to_responses
+
+
+async def test_create_product_request_with_doc(api, contributor, category):
+    contributor = contributor["data"]
+    test_request = get_fixture_json('product_request')
+    category_id = category['data']['id']
+    set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
+    test_request["product"]['relatedCategory'] = category_id
+    doc_hash = "0" * 32
+    doc_data = {
+        "title": "name.doc",
+        "url": generate_test_url(doc_hash),
+        "hash": f"md5:{doc_hash}",
+        "format": "application/msword",
+    }
+    test_request["documents"] = [doc_data]
+
+    resp = await api.post(
+        f"api/crowd-sourcing/contributors/{contributor['id']}/requests",
+        json={"data": test_request},
+        auth=TEST_AUTH,
+    )
+    result = await resp.json()
+    assert resp.status == 201, result
+    product_request = result["data"]
+    document_data = product_request["documents"][0]
+    ds_uid = get_doc_service_uid_from_url(doc_data["url"])
+    expected = f"{api.server.scheme}://{api.server.host}:{api.server.port}" \
+        f"/api/crowd-sourcing/requests/{product_request['id']}/documents/{document_data['id']}?download={ds_uid}"
+    assert expected == document_data["url"]
+
+    resp = await api.get(f'/api/crowd-sourcing/requests/{product_request["id"]}')
+    assert resp.status == 200, result
+    assert result["data"]["dateModified"] == document_data["dateModified"]
 
 
 async def test_product_request_doc_create(api, product_request):

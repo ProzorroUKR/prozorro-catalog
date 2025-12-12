@@ -3,6 +3,8 @@ from catalog.state.product import ProductState
 from catalog.context import get_now, get_request
 from uuid import uuid4
 
+from catalog.utils import convert_requests_documents_url
+
 
 class ProductRequestState(BaseState):
 
@@ -12,6 +14,8 @@ class ProductRequestState(BaseState):
         data["owner"] = get_request().user.name
         for doc in data.get("documents", []):
             doc["datePublished"] = doc["dateModified"] = get_now().isoformat()
+        for doc in data.get("documents", []):
+            convert_requests_documents_url(doc, data["id"])
 
         super().on_post(data)
 

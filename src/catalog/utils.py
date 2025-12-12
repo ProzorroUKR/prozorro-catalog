@@ -226,3 +226,13 @@ def get_session_time(session):
         "cluster_time": session.cluster_time,
     }
     return b64encode(dumps(session_data).encode()).decode()
+
+
+def convert_requests_documents_url(doc, data_id):
+    """
+    Converting url from contributors/id/requests to requests/id/documents,
+    as documents may be added during request POST
+    """
+    doc_path_1 = doc["url"][:doc["url"].find("/contributors")]
+    doc_path_2 = doc["url"][doc["url"].find("requests/") + len("requests/"):]
+    doc["url"] = f"{doc_path_1}/requests/{data_id}/documents/{doc_path_2}"
