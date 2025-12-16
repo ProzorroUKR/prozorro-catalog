@@ -59,7 +59,7 @@ class ContributorProductRequestView(PydanticView):
             },
         )
 
-        return {"data": ProductRequestSerializer(data, category=category).data}
+        return {"data": ProductRequestSerializer(data, category=category, contributor=contributor).data}
 
 
 class ProductRequestView(PydanticView):
@@ -96,9 +96,10 @@ class ProductRequestItemView(PydanticView):
         obj = await db.read_product_request(request_id)
         category = await db.read_category(
             category_id=obj["product"].get("relatedCategory"),
-            projection={"criteria": 1},
+            projection={"criteria": 1, "marketAdministrator": 1},
         )
-        return {"data": ProductRequestSerializer(obj, category=category).data}
+        contributor = await db.read_contributor(obj.get("contributor_id"))
+        return {"data": ProductRequestSerializer(obj, category=category, contributor=contributor).data}
 
 
 class ProductRequestAcceptionView(PydanticView):
@@ -155,7 +156,7 @@ class ProductRequestRejectionView(PydanticView):
 
     async def post(
         self, request_id: str, /, body: ProductRequestRejectionPostInput,
-    ) -> Union[r201[ProductRequestResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+    ) -> Union[r201[ProductRequestReviewCreateResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         """
         Reject product request
 
