@@ -8,6 +8,7 @@ from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, ListResponse
 from catalog.models.common import MarketAdministrator, MarketAdministratorIdentifier
 from catalog.models.document import DocumentPostData, Document, DOCUMENT_EXAMPLE
+from catalog.settings import TIMEZONE
 from catalog.utils import get_now
 import standards
 
@@ -38,6 +39,8 @@ class ContributorBanPostData(BaseBanPostData):
     @field_validator('dueDate')
     def validate_date(cls, v):
         if v and isinstance(v, datetime):
+            if not v.tzinfo:
+                v = v.replace(tzinfo=TIMEZONE)
             if v < get_now():
                 raise ValueError("should be greater than now")
             return v.isoformat()

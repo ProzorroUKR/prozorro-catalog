@@ -13,6 +13,7 @@ from catalog.models.common import (
     CategoryMarketAdministrator, CLASSIFICATION_EXAMPLE,
 )
 from catalog.models.document import Document, DocumentPostData, DOCUMENT_EXAMPLE
+from catalog.settings import TIMEZONE
 from catalog.utils import get_now
 from enum import Enum
 
@@ -105,6 +106,8 @@ class BaseProductData(BaseProductCreateData):
     @field_validator('expirationDate')
     def validate_date(cls, v):
         if v and isinstance(v, datetime):
+            if not v.tzinfo:
+                v = v.replace(tzinfo=TIMEZONE)
             if v < get_now():
                 raise ValueError("should be greater than now")
             return v.isoformat()
@@ -138,6 +141,8 @@ class ProductUpdateData(BaseProductUpdateData):
     @field_validator('expirationDate')
     def validate_date(cls, v):
         if v and isinstance(v, datetime):
+            if not v.tzinfo:
+                v = v.replace(tzinfo=TIMEZONE)
             if v < get_now():
                 raise ValueError("should be greater than now")
             return v.isoformat()
