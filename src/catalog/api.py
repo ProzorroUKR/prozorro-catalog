@@ -345,15 +345,16 @@ def create_application(on_cleanup=None):
         ProductRequestRejectionView,
     )
 
-    # product request docs
-    app.router.add_view(
-        r"/api/crowd-sourcing/requests/{request_id:[\w]{32}}/documents",
-        ProductRequestDocumentView,
-    )
-    app.router.add_view(
-        r"/api/crowd-sourcing/requests/{request_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
-        ProductRequestDocumentItemView,
-    )
+    # Not allowed to add documents to product request temporary
+    # # product request docs
+    # app.router.add_view(
+    #     r"/api/crowd-sourcing/requests/{request_id:[\w]{32}}/documents",
+    #     ProductRequestDocumentView,
+    # )
+    # app.router.add_view(
+    #     r"/api/crowd-sourcing/requests/{request_id:[\w]{32}}/documents/{doc_id:[\w]{32}}",
+    #     ProductRequestDocumentItemView,
+    # )
 
     # tags
     app.router.add_view(
