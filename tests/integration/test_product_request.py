@@ -369,9 +369,7 @@ async def test_product_request_acception(api, product_request):
 
     # check generated data
     additional_fields = {k: v for k, v in data.items() if k not in product_request["data"]}
-    # in product_request view the whole contributor object is serialized + marketAdministrator
-    # in acception/rejection views only contributor_id is enough
-    assert set(additional_fields.keys()) == {'acception', 'documents', 'contributor_id'}
+    assert set(additional_fields.keys()) == {'acception', 'documents'}
     assert "date" in data["acception"]
     assert data["dateModified"] == data["product"]["dateModified"] == data["acception"]["date"]
 
@@ -563,9 +561,7 @@ async def test_product_request_rejection(api, product_request):
 
     # check generated data
     additional_fields = {k: v for k, v in data.items() if k not in product_request["data"]}
-    # in product_request view the whole contributor object is serialized + marketAdministrator
-    # in acception/rejection views only contributor_id is enough
-    assert set(additional_fields.keys()) == {'rejection', 'contributor_id'}
+    assert set(additional_fields.keys()) == {'rejection'}
     assert "date" in data["rejection"]
     assert data["dateModified"] == data["rejection"]["date"]
 

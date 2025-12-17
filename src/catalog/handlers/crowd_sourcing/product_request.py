@@ -136,6 +136,7 @@ class ProductRequestAcceptionView(PydanticView):
         access = set_access_token(self.request, product_request["product"])
         get_revision_changes(self.request, new_obj=product_request["product"])
         await db.insert_product(product_request["product"])
+        contributor = await db.read_contributor(product_request.get("contributor_id"))
 
         logger.info(
             f"Created product {product_request['product']['id']}",
@@ -146,7 +147,7 @@ class ProductRequestAcceptionView(PydanticView):
         )
 
         return {
-            "data": ProductRequestSerializer(product_request, category=category).data,
+            "data": ProductRequestSerializer(product_request, category=category, contributor=contributor).data,
             "access": access,
         }
 
@@ -174,10 +175,11 @@ class ProductRequestRejectionView(PydanticView):
             modified_date = get_now().isoformat()
             data["date"] = modified_date
             product_request.update({"rejection": data, "dateModified": modified_date})
+            contributor = await db.read_contributor(product_request.get("contributor_id"))
 
             logger.info(
                 f"Updated product request {request_id}",
                 extra={"MESSAGE_ID": f"product_request_rejection_update"},
             )
 
-        return {"data": ProductRequestSerializer(product_request, category=category).data}
+        return {"data": ProductRequestSerializer(product_request, category=category, contributor=contributor).data}

@@ -87,20 +87,16 @@ class ProductRequest(BaseModel):
     rejection: Optional[RequestRejection] = Field(None, example=[REQUEST_REJECTION_EXAMPLE])
     documents: Optional[List[Document]] = Field(None, example=[DOCUMENT_EXAMPLE])
     product: ProductCreateData
-
-
-class ProductRequestSwaggerResponse(ProductRequest):
-    contributor: VendorOrganization
-    marketAdministrator: CategoryMarketAdministrator
+    contributor: VendorOrganization  # serialized from contributor_id
+    marketAdministrator: CategoryMarketAdministrator  # serialized from product.relatedCategory.marketAAdministrator
 
 
 class ProductRequestSuccessful(ProductRequest):
-    contributor_id: str = Field(..., min_length=32, max_length=32)
     product: Product
 
 
 ProductRequestPostInput = Input[ProductRequestPostData]
-ProductRequestResponse = Response[ProductRequestSwaggerResponse]
+ProductRequestResponse = Response[ProductRequest]
 ProductRequestAcceptionPostInput = Input[RequestReviewPostData]
 ProductRequestRejectionPostInput = Input[RequestRejectionPostData]
 ProductRequestReviewCreateResponse = CreateResponse[ProductRequestSuccessful]
