@@ -69,11 +69,11 @@ async def test_product_request_create(api, category, contributor):
     assert "data" in result
     data = result["data"]
     assert "owner" in data
-    assert data["contributor_id"] == contributor["id"]
+    assert data["contributor"]["id"] == contributor["id"]
 
     # check generated data
     additional_fields = {k: v for k, v in data.items() if k not in test_request}
-    assert set(additional_fields.keys()) == {'id', 'dateCreated', 'dateModified', 'owner', 'contributor_id'}
+    assert set(additional_fields.keys()) == {'id', 'dateCreated', 'dateModified', 'owner', 'contributor', 'marketAdministrator'}
 
 
 async def test_product_request_create_invalid_fields(api, category, contributor):
@@ -658,7 +658,7 @@ async def test_product_request_get(api, product_request, contributor):
     assert resp.status == 200
     result = await resp.json()
     assert set(result.keys()) == {'data'}
-    assert set(result["data"].keys()) == {'id', 'contributor_id', 'owner', 'dateCreated', 'dateModified', 'product'}
+    assert set(result["data"].keys()) == {'id', 'contributor', 'owner', 'dateCreated', 'dateModified', 'product', 'marketAdministrator'}
     assert contributor["data"]["owner"] == result["data"]["owner"]
 
     req_resp = result["data"]["product"]["requirementResponses"][1]

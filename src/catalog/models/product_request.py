@@ -6,9 +6,10 @@ from pydantic import Field, field_validator
 
 from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response, CreateResponse
-from catalog.models.common import MarketAdministrator, MarketAdministratorIdentifier
+from catalog.models.common import MarketAdministrator, MarketAdministratorIdentifier, CategoryMarketAdministrator
 from catalog.models.product import ProductCreateData, Product
 from catalog.models.document import DocumentPostData, Document, DOCUMENT_EXAMPLE
+from catalog.models.vendor import VendorOrganization
 import standards
 
 
@@ -79,7 +80,6 @@ class ProductRequestPostData(BaseModel):
 
 class ProductRequest(BaseModel):
     id: str = Field(..., min_length=32, max_length=32)
-    contributor_id: str = Field(..., min_length=32, max_length=32)
     dateModified: datetime
     dateCreated: datetime
     owner: str
@@ -87,6 +87,8 @@ class ProductRequest(BaseModel):
     rejection: Optional[RequestRejection] = Field(None, example=[REQUEST_REJECTION_EXAMPLE])
     documents: Optional[List[Document]] = Field(None, example=[DOCUMENT_EXAMPLE])
     product: ProductCreateData
+    contributor: VendorOrganization  # serialized from contributor_id
+    marketAdministrator: CategoryMarketAdministrator  # serialized from product.relatedCategory.marketAAdministrator
 
 
 class ProductRequestSuccessful(ProductRequest):

@@ -59,7 +59,7 @@ class ContributorProductRequestView(PydanticView):
             },
         )
 
-        return {"data": ProductRequestSerializer(data, category=category).data}
+        return {"data": ProductRequestSerializer(data, category=category, contributor=contributor).data}
 
 
 class ProductRequestView(PydanticView):
@@ -96,9 +96,10 @@ class ProductRequestItemView(PydanticView):
         obj = await db.read_product_request(request_id)
         category = await db.read_category(
             category_id=obj["product"].get("relatedCategory"),
-            projection={"criteria": 1},
+            projection={"criteria": 1, "marketAdministrator": 1},
         )
-        return {"data": ProductRequestSerializer(obj, category=category).data}
+        contributor = await db.read_contributor(obj.get("contributor_id"))
+        return {"data": ProductRequestSerializer(obj, category=category, contributor=contributor).data}
 
 
 class ProductRequestAcceptionView(PydanticView):
@@ -135,6 +136,7 @@ class ProductRequestAcceptionView(PydanticView):
         access = set_access_token(self.request, product_request["product"])
         get_revision_changes(self.request, new_obj=product_request["product"])
         await db.insert_product(product_request["product"])
+        contributor = await db.read_contributor(product_request.get("contributor_id"))
 
         logger.info(
             f"Created product {product_request['product']['id']}",
@@ -145,7 +147,7 @@ class ProductRequestAcceptionView(PydanticView):
         )
 
         return {
-            "data": ProductRequestSerializer(product_request, category=category).data,
+            "data": ProductRequestSerializer(product_request, category=category, contributor=contributor).data,
             "access": access,
         }
 
@@ -155,7 +157,7 @@ class ProductRequestRejectionView(PydanticView):
 
     async def post(
         self, request_id: str, /, body: ProductRequestRejectionPostInput,
-    ) -> Union[r201[ProductRequestResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+    ) -> Union[r201[ProductRequestReviewCreateResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         """
         Reject product request
 
@@ -173,10 +175,11 @@ class ProductRequestRejectionView(PydanticView):
             modified_date = get_now().isoformat()
             data["date"] = modified_date
             product_request.update({"rejection": data, "dateModified": modified_date})
+            contributor = await db.read_contributor(product_request.get("contributor_id"))
 
             logger.info(
                 f"Updated product request {request_id}",
                 extra={"MESSAGE_ID": f"product_request_rejection_update"},
             )
 
-        return {"data": ProductRequestSerializer(product_request, category=category).data}
+        return {"data": ProductRequestSerializer(product_request, category=category, contributor=contributor).data}
