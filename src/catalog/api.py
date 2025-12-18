@@ -345,7 +345,7 @@ def create_application(on_cleanup=None):
         ProductRequestRejectionView,
     )
 
-    # product request docs
+    # # product request docs
     app.router.add_view(
         r"/api/crowd-sourcing/requests/{request_id:[\w]{32}}/documents",
         ProductRequestDocumentView,

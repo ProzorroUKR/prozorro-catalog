@@ -39,17 +39,18 @@ class ProductRequestDocumentMixin:
 
 class ProductRequestDocumentView(ProductRequestDocumentMixin, PydanticView):
 
-    async def post(
-        self, request_id: str, /, body: DocumentNonAuthorizedInputPost
-    ) -> Union[r201[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse]]:
-        """
-        Product request document create
-
-        Security: Basic: []
-        Tags: Contributor/ProductRequest/Documents
-        """
-        validate_accreditation(self.request, "contributors")
-        return await BaseDocumentView.post(self, request_id, body)
+    # Not allowed to add documents to product request temporary
+    # async def post(
+    #     self, request_id: str, /, body: DocumentNonAuthorizedInputPost
+    # ) -> Union[r201[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+    #     """
+    #     Product request document create
+    #
+    #     Security: Basic: []
+    #     Tags: Contributor/ProductRequest/Documents
+    #     """
+    #     validate_accreditation(self.request, "contributors")
+    #     return await BaseDocumentView.post(self, request_id, body)
 
     async def get(self, request_id: str, /) -> r200[DocumentList]:
         """
@@ -70,26 +71,27 @@ class ProductRequestDocumentItemView(ProductRequestDocumentMixin, BaseDocumentIt
         """
         return await BaseDocumentItemView.get(self, request_id, doc_id)
 
-    async def put(
-        self, request_id: str, doc_id: str, /, body: DocumentNonAuthorizedInputPut,
-    ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
-        """
-        Product request document replace
-
-        Security: Basic: []
-        Tags: Contributor/ProductRequest/Documents
-        """
-        validate_accreditation(self.request, "contributors")
-        return await BaseDocumentItemView.put(self, request_id, doc_id, body)
-
-    async def patch(
-        self, request_id: str, doc_id: str, /, body: DocumentNonAuthorizedInputPatch,
-    ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
-        """
-        Product request document update
-
-        Security: Basic: []
-        Tags: Contributor/ProductRequest/Documents
-        """
-        validate_accreditation(self.request, "contributors")
-        return await BaseDocumentItemView.patch(self, request_id, doc_id, body)
+    # Not allowed to add documents to product request temporary
+    # async def put(
+    #     self, request_id: str, doc_id: str, /, body: DocumentNonAuthorizedInputPut,
+    # ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
+    #     """
+    #     Product request document replace
+    #
+    #     Security: Basic: []
+    #     Tags: Contributor/ProductRequest/Documents
+    #     """
+    #     validate_accreditation(self.request, "contributors")
+    #     return await BaseDocumentItemView.put(self, request_id, doc_id, body)
+    #
+    # async def patch(
+    #     self, request_id: str, doc_id: str, /, body: DocumentNonAuthorizedInputPatch,
+    # ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
+    #     """
+    #     Product request document update
+    #
+    #     Security: Basic: []
+    #     Tags: Contributor/ProductRequest/Documents
+    #     """
+    #     validate_accreditation(self.request, "contributors")
+    #     return await BaseDocumentItemView.patch(self, request_id, doc_id, body)
