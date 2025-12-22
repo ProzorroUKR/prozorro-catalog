@@ -1,22 +1,14 @@
-import asyncio
 from copy import deepcopy
 from uuid import uuid4
 from unittest.mock import patch, AsyncMock
 import pytest
 
 from catalog.api import create_application
-from catalog.db import flush_database, init_mongo, get_database, get_offers_collection, insert_object
+from catalog.db import flush_database, get_offers_collection, insert_object
 from catalog.doc_service import generate_test_url
 from .base import TEST_AUTH, TEST_AUTH_CPB
 from .utils import get_fixture_json, create_profile, create_criteria
-
-
-@pytest.fixture
-def event_loop():
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
+from ..conftest import event_loop, db
 
 def set_requirements_to_responses(requirement_responses, category):
     for item, rr in enumerate(requirement_responses):
@@ -30,15 +22,6 @@ async def mock_agreement():
     with patch('catalog.state.category.validate_agreement') as m:
         m.return_value = AsyncMock()
         yield m
-
-
-@pytest.fixture
-async def db(event_loop):
-    try:
-        await init_mongo()
-        yield get_database()
-    except Exception:
-        await flush_database()
 
 
 @pytest.fixture
