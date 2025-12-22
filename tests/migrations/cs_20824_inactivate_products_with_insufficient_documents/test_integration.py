@@ -111,6 +111,7 @@ async def test_migrate(db):
     product_6 = {
         **product,
         "_id": uuid4().hex,
+        "vendor": {},
         "dateCreated": "2025-12-11T23:59:59+02:00",
         "dateModified": "2025-12-11T23:59:59+02:00",
         "expirationDate": "2025-12-11T23:59:59+02:00",

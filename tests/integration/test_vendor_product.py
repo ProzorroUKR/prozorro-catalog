@@ -55,9 +55,10 @@ async def test_vendor_product_create(api, vendor, category, profile):
     assert vendor['id'] == product_data['vendor']['id']
     assert vendor['vendor']['name'] == product_data['vendor']['name']
     assert vendor['vendor']['identifier'] == product_data['vendor']['identifier']
-    assert product_data['expirationDate'] == datetime(
-        year=get_now().year, month=12, day=31, hour=23, minute=59, second=59, tzinfo=get_now().tzinfo,
-    ).isoformat()
+    now = get_now()
+    assert product_data['expirationDate'] == (datetime(
+        year=now.year + 1, month=3, day=31, hour=23, minute=59, second=59, tzinfo=now.tzinfo,
+    )).isoformat()
 
     resp = await api.get('/api/products')
     result = await resp.json()
