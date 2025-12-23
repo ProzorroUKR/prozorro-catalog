@@ -5,6 +5,7 @@ from catalog.state.base import BaseState
 from catalog.context import get_now
 from catalog.db import get_profiles_collection, validate_tags_exist
 from catalog.validations import validate_medicine_additional_classifications, validate_agreement
+from catalog.utils import get_now as get_fresh_now
 
 
 class CategoryState(BaseState):
@@ -51,7 +52,7 @@ class CategoryState(BaseState):
                 UpdateOne(
                     filter={"_id": profile["_id"], "agreementID": before.get("agreementID")},
                     update={"$set": {
-                        "agreementID": agreement_id, "dateModified": get_now().isoformat()}
+                        "agreementID": agreement_id, "dateModified": get_fresh_now().isoformat()}
                     }
                 )
             )
