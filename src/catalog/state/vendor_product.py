@@ -20,5 +20,5 @@ class VendorProductState(ProductState):
         await super().on_post(data, category)
         now = get_now()
         data['expirationDate'] = datetime(
-            year=now.year, month=12, day=31, hour=23, minute=59, second=59, tzinfo=now.tzinfo,
+            year=now.year + 1, month=3, day=31, hour=23, minute=59, second=59, tzinfo=now.tzinfo,
         ).isoformat()
