@@ -72,7 +72,7 @@ MZU_CATEGORIES_FIELDS_MAPPING = {
         "33190000-255387-425746299",
     ): {
         "classification.id": "33141300-3",
-        "classification.description": "Прилади для венепункції та забору крові",
+        "classification.description": "Приладдя для венепункції та забору крові",
     },
     (
         "33190000-357864-42574629",
@@ -99,7 +99,7 @@ async def migrate_categories():
 
     for category_ids, update_data in MZU_CATEGORIES_FIELDS_MAPPING.items():
         async for category in category_collection.find(
-            {"_id": {"$in": list(category_ids)}},
+            {"_id": {"$in": category_ids}},
         ):
             update_fields = {
                 "classification.id": update_data["classification.id"],
@@ -137,7 +137,7 @@ async def migrate_profiles():
         writer.writeheader()
         for category_ids, update_data in MZU_CATEGORIES_FIELDS_MAPPING.items():
             async for obj in obj_collection.find(
-                {"relatedCategory": {"$in": list(category_ids)}},
+                {"relatedCategory": {"$in": category_ids}},
             ):
                 update_fields = {
                     "classification.id": update_data["classification.id"],
@@ -181,7 +181,7 @@ async def migrate_products():
 
     for category_ids, update_data in MZU_CATEGORIES_FIELDS_MAPPING.items():
         async for obj in obj_collection.find(
-            {"relatedCategory": {"$in": list(category_ids)}},
+            {"relatedCategory": {"$in": category_ids}},
         ):
             update_fields = {
                 "classification.id": update_data["classification.id"],
