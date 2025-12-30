@@ -1,0 +1,368 @@
+[project]
+name = "prozorro-catalog"
+version = "1.1.179"
+description = "Prozorro Catalog API"
+readme = "README.md"
+license = { text = "Apache License 2.0" }
+authors = [
+    { name = "Quintagroup, Ltd.", email = "info@quintagroup.com" }
+]
+keywords = ["web services"]
+classifiers = [
+    "Framework :: Pylons",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+]
+requires-python = ">=3.13.0, <3.14"
+dependencies = [
+    "gunicorn==23.0.0",
+    "aiohttp==3.10.5",
+    "aiohttp-client-cache",
+    "motor",
+    "pytz",
+    "aiohttp_pydantic==2.5.2",
+    "pydantic[email]==2.11.5",
+    "aiocache>=0.11.1, <1",
+    "ujson",
+    "msgpack",
+    "aiofiles>=0.7.0",
+    "python-json-logger==2.0.1",
+    "PyNaCl>=1.5.0, <2",
+    "sentry-sdk",
+    "standard-imghdr",
+    "python-slugify",
+    "jsonpointer==3.0",
+    "jsonpatch",
+    "standards",
+]
+
+[dependency-groups]
+dev = [
+    "autoflake==2.2.1",
+    "bandit[toml]==1.7.7",
+    "black==24.3.0",
+    "isort==5.13.2",
+    "mypy==1.11.2",
+    "pylint==3.0.3",
+    "pylint-pytest==1.1.7",
+    "ruff==0.6.9",
+    "docutils<0.19",
+    "sphinx>=7.1.0",
+    "sphinx-intl>=2.1.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "sphinxcontrib-httpdomain>=1.8.0",
+    "coverage==7.8.1",
+    "execnet==2.1.1",
+    "freezegun==1.5.1",
+    "pytest==8.3.5",
+    "pytest-cov==6.1.1",
+    "pytest-xdist==3.6.1",
+    "python-coveralls==2.9.3",
+    "webtest==3.0.4",
+    "pytest-aiohttp~=1.0",
+    "factory-boy~=3.3",
+    "pre-commit",
+]
+
+[tool.uv]
+package = true
+
+[tool.uv.sources]
+jsonpatch = { git = "https://github.com/ProzorroUKR/python-json-patch.git", rev = "1.14+jsondiff.unicode.replacefix.0" }
+standards = { git = "https://github.com/ProzorroUKR/standards.git", rev = "1.0.207" }
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -v"
+log_cli_level = "INFO"
+python_files = [
+    "tests/*.py",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.black]
+line-length = 120
+skip-string-normalization = true
+
+[tool.isort]
+profile = "black"
+
+[tool.autoflake]
+quiet = false
+remove-all-unused-imports = true
+ignore-init-module-imports = true
+in-place = true
+recursive = true
+
+[tool.pylint]
+[tool.pylint.main]
+jobs = 1
+load-plugins = [
+    "pylint_pytest",
+]
+disable = [
+    "anomalous-backslash-in-string",
+    "arguments-differ",
+    "arguments-out-of-order",
+    "arguments-renamed",
+    "assignment-from-no-return",
+    "attribute-defined-outside-init",
+    "bare-except",
+    "broad-exception-caught",
+    "consider-iterating-dictionary",
+    "consider-merging-isinstance",
+    "consider-merging-isinstance",
+    "consider-using-dict-items",
+    "consider-using-enumerate",
+    "consider-using-f-string",
+    "consider-using-in",
+    "dangerous-default-value",
+    "deprecated-method",
+    "duplicate-code",
+    "expression-not-assigned",
+    "fixme",
+    "function-redefined",
+    "global-statement",
+    "implicit-str-concat",
+    "inconsistent-return-statements",
+    "invalid-envvar-default",
+    "invalid-overridden-method",
+    "invalid-name",
+    "line-too-long",
+    "logging-format-interpolation",
+    "logging-fstring-interpolation",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "missing-timeout",
+    "no-else-break",
+    "no-else-continue",
+    "no-else-raise",
+    "no-else-return",
+    "no-member",
+    "no-name-in-module",
+    "no-value-for-parameter",
+    "non-parent-init-called",
+    "not-an-iterable",
+    "not-callable",
+    "protected-access",
+    "raise-missing-from",
+    "raising-bad-type",
+    "redefined-argument-from-local",
+    "redefined-builtin",
+    "redefined-outer-name",
+    "super-init-not-called",
+    "superfluous-parens",
+    "too-few-public-methods",
+    "too-many-ancestors",
+    "too-many-arguments",
+    "too-many-boolean-expressions",
+    "too-many-branches",
+    "too-many-format-args",
+    "too-many-function-args",
+    "too-many-instance-attributes",
+    "too-many-lines",
+    "too-many-locals",
+    "too-many-nested-blocks",
+    "too-many-public-methods",
+    "too-many-return-statements",
+    "too-many-statements",
+    "trailing-newlines",
+    "undefined-loop-variable",
+    "undefined-variable",
+    "ungrouped-imports",
+    "unnecessary-dunder-call",
+    "unnecessary-lambda-assignment",
+    "unnecessary-pass",
+    "unspecified-encoding",
+    "unsubscriptable-object",
+    "unused-argument",
+    "unused-variable",
+    "unused-wildcard-import",
+    "use-a-generator",
+    "use-dict-literal",
+    "used-before-assignment",
+    "useless-else-on-loop",
+    "useless-parent-delegation",
+    "wildcard-import",
+]
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.bandit]
+exclude_dirs = [
+    "**/tests/**",
+    "**/migrations/**",
+]
+skips = [
+
+    #>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+    #   Severity: Low   Confidence: High
+    #   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+    #   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b101_assert_used.html
+    "B101",
+    #>> Issue: [B113:request_without_timeout] Requests call without timeout
+    #   Severity: Medium   Confidence: Low
+    #   CWE: CWE-400 (https://cwe.mitre.org/data/definitions/400.html)
+    #   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b113_request_without_timeout.html
+    "B113",
+    #>> Issue: [B107:hardcoded_password_default] Possible hardcoded password
+    #   Severity: Low   Confidence: Medium
+    #   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+    #   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b107_hardcoded_password_default.html
+    "B107",
+]
+
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "tests",
+]
+
+# Same as Black.
+line-length = 120
+indent-width = 4
+
+# Assume Python 3.11
+target-version = "py311"
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = ["E4", "E7", "E9", "F"]  # add  "I" to replace isort
+ignore = []
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doctests are all supported.
+#
+# This is currently disabled by default, but it is planned for this
+# to be opt-out in the future.
+docstring-code-format = false
+
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+#
+# This only has an effect when the `docstring-code-format` setting is
+# enabled.
+docstring-code-line-length = "dynamic"
+
+[tool.mypy]
+python_version = "3.11"
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+check_untyped_defs = false
+warn_unused_configs = true
+explicit_package_bases = true
+disable_error_code = [
+    "var-annotated",
+    "assignment",
+    "index",
+    "return",
+]
+
+exclude = '/(site-packages|__pycache__|\..*)/$'
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
+
+[[tool.mypy.overrides]]
+module = [
+    "catalog.*",
+    "setuptools.*",
+    "freezegun.*",
+    "jmespath.*",
+    "pythonjsonlogger.*",
+    "pymongo.*",
+    "motor.*",
+    "bson.*",
+    "pytz.*",
+    "pyramid.*",
+    "schematics.*",
+    "paste.*",
+    "cornice.*",
+    "webob.*",
+    "requests.*",
+    "dateorro.*",
+    "jsonpointer.*",
+    "isodate.*",
+    "gevent.*",
+    "jsonschema.*",
+    "standards.*",
+    "jsonpatch.*",
+    "webtest.*",
+    "jsonpath_ng.*",
+    "simplejson.*",
+    "pkg_resources.*",
+    "zope.*",
+    "barbecue.*",
+    "esculator.*",
+    "jinja2.*",
+    "nacl.*",
+    "ciso8601.*",
+    "iso8601.*",
+    "dateutil.*",
+    "sentry_sdk.*",
+    "request_id_middleware.*",
+    "aiohttp.*",
+    "aiohttp_wsgi.*",
+    "aiohttp_pydantic.*",
+]
+ignore_missing_imports = true
