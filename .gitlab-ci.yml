@@ -21,7 +21,7 @@ build:
     - docker push $CI_REGISTRY_IMAGE:$CI_TAG
 
 test:
-  image: docker-registry.prozorro.gov.ua/docker/images/python:3.9-alpine3.14
+  image: python:3.13-alpine3.20
   stage: test
   services:
     - name: bitnamilegacy/mongodb:6.0.13-debian-11-r9
