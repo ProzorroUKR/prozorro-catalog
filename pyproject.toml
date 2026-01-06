@@ -364,5 +364,6 @@ module = [
     "aiohttp.*",
     "aiohttp_wsgi.*",
     "aiohttp_pydantic.*",
+    "aiofiles.*",
 ]
 ignore_missing_imports = true

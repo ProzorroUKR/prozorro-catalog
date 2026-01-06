@@ -16,7 +16,7 @@ from json import loads as json_loads
 logger = logging.getLogger(__name__)
 
 
-async def import_data_job(app):
+async def import_data_job(app=None):
     if CATALOG_DATA:
         args = (
             ("category", get_category_collection()),

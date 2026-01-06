@@ -15,13 +15,13 @@ class VendorContactPoint(ContactPoint):
 
 
 class PostVendorAddress(Address):
-    locality: Optional[str] = Field(None, min_length=1, max_length=80, example="string")
-    postalCode: Optional[str] = Field(None, min_length=1, max_length=20, example="string")
-    streetAddress: Optional[str] = Field(None, min_length=1, max_length=250, example="string")
+    locality: Optional[str] = Field(None, min_length=1, max_length=80, json_schema_extra={"example": "string"})
+    postalCode: Optional[str] = Field(None, min_length=1, max_length=20, json_schema_extra={"example": "string"})
+    streetAddress: Optional[str] = Field(None, min_length=1, max_length=250, json_schema_extra={"example": "string"})
 
 
 class VendorAddress(PostVendorAddress):
-    region: Optional[str] = Field(None, min_length=1, max_length=80, example="string")
+    region: Optional[str] = Field(None, min_length=1, max_length=80, json_schema_extra={"example": "string"})
 
 
 class VendorIdentifier(Identifier):
@@ -47,7 +47,7 @@ class VendorPostData(BaseModel):
 
 
 class VendorPatchData(BaseModel):
-    isActivated: Optional[bool] = Field(None, example=True)
+    isActivated: Optional[bool] = Field(None, json_schema_extra={"example": True})
 
     @field_validator('isActivated')
     def activation_only(cls, v, values, **kwargs):
@@ -70,7 +70,7 @@ class Vendor(VendorPostData):
     owner: str
     status: VendorStatus = VendorStatus.pending
     documents: List[Document]
-    bans: Optional[List[Ban]] = Field(None, example=[BAN_EXAMPLE])
+    bans: Optional[List[Ban]] = Field(None, json_schema_extra={"example": [BAN_EXAMPLE]})
 
 
 class VendorSign(VendorPostData):

@@ -2,5 +2,13 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: local
-    hooks: []
-# todo: enable pre-commit hooks
+    hooks:
+    - id: mypy
+      name: Validate types with MyPy
+      entry: uv run --active mypy
+      language: system
+      types: [ python ]
+      pass_filenames: false
+      args:
+        - "src"
+        - "--explicit-package-bases"

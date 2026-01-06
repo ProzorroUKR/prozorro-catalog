@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 from copy import deepcopy
 
-from aiohttp.web import HTTPFound, HTTPNotFound
+from aiohttp.web import HTTPFound, HTTPNotFound, Request
 
 from catalog.utils import get_now, get_revision_changes
 from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput
@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class BaseDocumentMixin:
     parent_obj_name = None
+    request: Request
 
     @classmethod
     async def get_parent_obj(cls, parent_obj_id, child_obj_id=None):

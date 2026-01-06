@@ -1,4 +1,5 @@
 import asyncio
+from typing import cast
 from uuid import uuid4
 from copy import deepcopy
 
@@ -533,12 +534,11 @@ PRODUCTS_CLASSIFICATION_MAPPING = {
 
 def get_localization_criteria() -> dict:
     localization_criteria = deepcopy(LOCALIZATION_CRITERION_DATA)
-    for c in [localization_criteria]:
-        c["id"] = uuid4().hex
-        for rg in c.get("requirementGroups", ""):
-            rg["id"] = uuid4().hex
-            for req in rg.get("requirements", ""):
-                req["id"] = uuid4().hex
+    localization_criteria["id"] = uuid4().hex
+    for rg in cast(list[dict], localization_criteria.get("requirementGroups", [])):
+        rg["id"] = uuid4().hex
+        for req in cast(list[dict], rg.get("requirements", [])):
+            req["id"] = uuid4().hex
 
     return localization_criteria
 

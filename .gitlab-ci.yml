@@ -11,7 +11,29 @@ variables:
   HELM: "helm3"
   REPO_URL: http://repo-staging.dc.prozorro.gov.ua/repos/helm/
 
-# todo: gradually add lint jobs
+
+.lint_tools:
+  allow_failure: false
+  tags:
+    - kube-dev
+  only:
+    - branches
+  except:
+    - schedules
+  stage: lint
+  needs: []
+  variables:
+    GIT_STRATEGY: clone
+  before_script:
+    - apk --no-cache add gcc build-base git openssl-dev libffi-dev
+    - wget -qO- https://astral.sh/uv/install.sh | UV_VERSION=0.9.17 sh
+    - export PATH="$CI_PROJECT_DIR:$CI_PROJECT_DIR/.venv/bin:$HOME/.local/bin:$PATH"
+    - uv sync --frozen --no-cache $UV_EXTRA_ARGS --compile-bytecode
+
+mypy:
+  extends: .lint_tools
+  script:
+    - uv run --active mypy src/ --explicit-package-bases
 
 build:
   stage: build

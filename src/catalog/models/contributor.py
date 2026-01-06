@@ -13,7 +13,7 @@ from catalog.models.document import Document, DocumentPostData, DOCUMENT_EXAMPLE
 
 
 class PostContributorAddress(PostVendorAddress):
-    region: Optional[str] = Field(None, min_length=1, max_length=80, example="string")
+    region: Optional[str] = Field(None, min_length=1, max_length=80, json_schema_extra={"example": "string"})
 
     @model_validator(mode="before")
     @classmethod
@@ -29,7 +29,7 @@ class PostContributorOrganization(PostVendorOrganization):
 
 class ContributorPostData(BaseModel):
     contributor: PostContributorOrganization
-    documents: Optional[List[DocumentPostData]] = Field(None, example=[DOCUMENT_EXAMPLE])
+    documents: Optional[List[DocumentPostData]] = Field(None, json_schema_extra={"example": [DOCUMENT_EXAMPLE]})
 
     @property
     def id(self):
@@ -42,8 +42,8 @@ class Contributor(BaseModel):
     dateModified: datetime
     dateCreated: datetime
     owner: str
-    bans: Optional[List[Ban]] = Field(None, example=[BAN_EXAMPLE])
-    documents: Optional[List[Document]] = Field(None, example=[DOCUMENT_EXAMPLE])
+    bans: Optional[List[Ban]] = Field(None, json_schema_extra={"example": [BAN_EXAMPLE]})
+    documents: Optional[List[Document]] = Field(None, json_schema_extra={"example": [DOCUMENT_EXAMPLE]})
 
 
 ContributorPostInput = Input[ContributorPostData]

@@ -43,16 +43,16 @@ class BaseProfileCreateData(TagsMixin, BaseModel):
         description='Profile details',
         min_length=1,
         max_length=1000,
-        example="description",
+        json_schema_extra={"example": "description"},
     )
     status: ProfileStatus = ProfileStatus.active
     relatedCategory: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
     additionalClassifications: Optional[List[Classification]] = Field(
         None,
         max_length=100,
-        example=[CLASSIFICATION_EXAMPLE],
+        json_schema_extra={"example": [CLASSIFICATION_EXAMPLE]},
     )
-    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example=uuid4().hex)
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, json_schema_extra={"example": uuid4().hex})
 
     @property
     def criteria(self):
@@ -74,7 +74,7 @@ class DeprecatedProfileCreateData(BaseProfileCreateData):
 
 class BaseLocalizationProfileCreateData(BaseProfileCreateData):
     unit: Unit
-    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example=uuid4().hex)
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, json_schema_extra={"example": uuid4().hex})
     classification: Classification
 
 
@@ -95,20 +95,25 @@ class ProfileUpdateData(TagsMixin, BaseModel):
     """
     The Catalog Profile Update Data
     """
-    title: Optional[str] = Field(None, min_length=1, max_length=250, example="title")
-    description: Optional[str] = Field(None, min_length=1, max_length=1000, example="description")
-    status: Optional[ProfileStatus] = Field(None, example=ProfileStatus.active)
+    title: Optional[str] = Field(None, min_length=1, max_length=250, json_schema_extra={"example": "title"})
+    description: Optional[str] = Field(
+        None,
+        min_length=1,
+        max_length=1000,
+        json_schema_extra={"example": "description"},
+    )
+    status: Optional[ProfileStatus] = Field(None, json_schema_extra={"example": ProfileStatus.active})
     additionalClassifications: Optional[List[Classification]] = Field(
         None,
         max_length=100,
-        example=[CLASSIFICATION_EXAMPLE],
+        json_schema_extra={"example": [CLASSIFICATION_EXAMPLE]},
     )
-    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example=uuid4().hex)
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, json_schema_extra={"example": uuid4().hex})
 
 
 class LocalizationProfileUpdateData(ProfileUpdateData):
-    unit: Optional[Unit] = Field(None, example=UNIT_EXAMPLE)
-    classification: Optional[Classification] = Field(None, example=CLASSIFICATION_EXAMPLE)
+    unit: Optional[Unit] = Field(None, json_schema_extra={"example": UNIT_EXAMPLE})
+    classification: Optional[Classification] = Field(None, json_schema_extra={"example": CLASSIFICATION_EXAMPLE})
 
 
 class Profile(TagsMixin, BaseModel):
@@ -129,19 +134,19 @@ class Profile(TagsMixin, BaseModel):
         description='Profile details',
         min_length=1,
         max_length=1000,
-        example="description",
+        json_schema_extra={"example": "description"},
     )
     status: ProfileStatus = ProfileStatus.active
     marketAdministrator: CategoryMarketAdministrator
-    unit: Optional[Unit] = Field(None, example=UNIT_EXAMPLE)
+    unit: Optional[Unit] = Field(None, json_schema_extra={"example": UNIT_EXAMPLE})
     relatedCategory: str = Field(..., pattern=r"^[0-9A-Za-z_-]{1,32}$")
     classification: Classification
     additionalClassifications: Optional[List[Classification]] = Field(
         None,
         max_length=100,
-        example=CLASSIFICATION_EXAMPLE,
+        json_schema_extra={"example": CLASSIFICATION_EXAMPLE},
     )
-    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example=uuid4().hex)
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, json_schema_extra={"example": uuid4().hex})
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     dateCreated: datetime
     owner: str

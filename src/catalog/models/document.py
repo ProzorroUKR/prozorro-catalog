@@ -8,12 +8,12 @@ from uuid import uuid4
 
 
 class DocumentPostData(BaseModel):
-    id: Optional[str] = Field(None, example=uuid4().hex)
+    id: Optional[str] = Field(None, json_schema_extra={"example": uuid4().hex})
     hash: str = Field(..., pattern=r"^md5:[0-9a-f]{32}$")
     title: str = Field(..., min_length=1)
     format: str
     url: str
-    description: Optional[str] = Field(None, example="description")
+    description: Optional[str] = Field(None, json_schema_extra={"example": "description"})
 
     @model_validator(mode="before")
     def process_url(cls, values):
@@ -33,8 +33,8 @@ class DocumentPutData(DocumentPostData):
 
 
 class DocumentPatchData(BaseModel):
-    title: Optional[str] = Field(None, min_length=1, example="title")
-    description: Optional[str] = Field(None, example="description")
+    title: Optional[str] = Field(None, min_length=1, json_schema_extra={"example": "title"})
+    description: Optional[str] = Field(None, json_schema_extra={"example": "description"})
 
 
 class Document(DocumentPostData):

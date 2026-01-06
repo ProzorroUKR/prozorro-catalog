@@ -1,6 +1,7 @@
 import logging
 from copy import deepcopy
 
+from aiohttp.web import Request
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from typing import Union
 
@@ -31,6 +32,7 @@ logger = logging.getLogger(__name__)
 class BaseCriteriaMixin:
 
     obj_name: str
+    request: Request
     serializer_class = RootSerializer
 
     async def get_body_from_model(self):
@@ -268,6 +270,10 @@ class BaseCriteriaRGRequirementItemViewMixin(BaseCriteriaMixin):
     @classmethod
     async def requirement_validations(cls, parent_obj, data):
         pass
+
+    @classmethod
+    def get_main_model_class(cls):
+        return Requirement
 
     async def get(
         self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /

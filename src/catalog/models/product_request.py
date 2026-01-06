@@ -22,7 +22,12 @@ class RequestReviewPostData(BaseModel):
 
 class RequestRejectionPostData(RequestReviewPostData):
     reason: List[str] = Field(..., min_length=1)
-    description: Optional[str] = Field(None, min_length=1, max_length=2000, example="description")
+    description: Optional[str] = Field(
+        None,
+        min_length=1,
+        max_length=2000,
+        json_schema_extra={"example": "description"},
+    )
 
     @field_validator('reason')
     def reason_standard(cls, v):
@@ -71,7 +76,7 @@ REQUEST_REJECTION_EXAMPLE = RequestRejection(
 
 class ProductRequestPostData(BaseModel):
     product: ProductCreateData
-    documents: Optional[List[DocumentPostData]] = Field(None, example=[DOCUMENT_EXAMPLE])
+    documents: Optional[List[DocumentPostData]] = Field(None, json_schema_extra={"example": [DOCUMENT_EXAMPLE]})
 
     @property
     def id(self):
@@ -83,9 +88,9 @@ class ProductRequest(BaseModel):
     dateModified: datetime
     dateCreated: datetime
     owner: str
-    acception: Optional[RequestReview] = Field(None, example=[REQUEST_REVIEW_EXAMPLE])
-    rejection: Optional[RequestRejection] = Field(None, example=[REQUEST_REJECTION_EXAMPLE])
-    documents: Optional[List[Document]] = Field(None, example=[DOCUMENT_EXAMPLE])
+    acception: Optional[RequestReview] = Field(None, json_schema_extra={"example": [REQUEST_REVIEW_EXAMPLE]})
+    rejection: Optional[RequestRejection] = Field(None, json_schema_extra={"example": [REQUEST_REJECTION_EXAMPLE]})
+    documents: Optional[List[Document]] = Field(None, json_schema_extra={"example": [DOCUMENT_EXAMPLE]})
     product: ProductCreateData
     contributor: VendorOrganization  # serialized from contributor_id
     marketAdministrator: CategoryMarketAdministrator  # serialized from product.relatedCategory.marketAAdministrator

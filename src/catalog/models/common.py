@@ -76,9 +76,13 @@ class Value(BaseModel):
 
 
 class Period(BaseModel):
-    durationInDays: Optional[int] = Field(None, example=1)
-    startDate: Optional[datetime] = Field(None, example=datetime(2020, 1, 1).isoformat())
-    endDate: Optional[datetime] = Field(None, example=datetime(2020, 1, 1).isoformat())
+    durationInDays: Optional[int] = Field(None, json_schema_extra={"example": 1})
+    startDate: Optional[datetime] = Field(None, json_schema_extra={
+        "example": datetime(2020, 1, 1).isoformat(),
+    })
+    endDate: Optional[datetime] = Field(None, json_schema_extra={
+        "example": datetime(2020, 1, 1).isoformat(),
+    })
 
 
 PERIOD_EXAMPLE = Period(startDate="2020-01-01", endDate="2020-12-31").model_dump(exclude_none=True)
@@ -86,8 +90,12 @@ PERIOD_EXAMPLE = Period(startDate="2020-01-01", endDate="2020-12-31").model_dump
 
 class BaseImage(BaseModel):
     url: AnyUrl
-    size: Optional[int] = Field(None, example=100)
-    hash: Optional[str] = Field(None, pattern=r"^md5:[0-9a-z]{32}$", example=f"md5:{uuid4().hex}")
+    size: Optional[int] = Field(None, json_schema_extra={"example": 100})
+    hash: Optional[str] = Field(
+        None,
+        pattern=r"^md5:[0-9a-z]{32}$",
+        json_schema_extra={"example": f"md5:{uuid4().hex}"},
+    )
 
 
 ImageResponse = Response[BaseImage]
@@ -95,10 +103,14 @@ ImageResponse = Response[BaseImage]
 
 class Image(BaseModel):
     url: str = Field(..., min_length=1)
-    sizes: Optional[str] = Field(None, pattern=r"^[0-9]{2,4}x[0-9]{2,4}$", example="string")
-    title: Optional[str] = Field(None, min_length=1, max_length=250, example="string")
-    format: Optional[str] = Field(None, pattern=r"^image/[a-z]{2,10}$", example="image/immage1")
-    hash: Optional[str] = Field(None, pattern=r"^md5:[0-9a-f]{32}$", example=f"md5:{uuid4().hex}")
+    sizes: Optional[str] = Field(None, pattern=r"^[0-9]{2,4}x[0-9]{2,4}$", json_schema_extra={"example": "string"})
+    title: Optional[str] = Field(None, min_length=1, max_length=250, json_schema_extra={"example": "string"})
+    format: Optional[str] = Field(None, pattern=r"^image/[a-z]{2,10}$", json_schema_extra={"example": "image/immage1"})
+    hash: Optional[str] = Field(
+        None,
+        pattern=r"^md5:[0-9a-f]{32}$",
+        json_schema_extra={"example": f"md5:{uuid4().hex}"},
+    )
 
     @field_validator('url')
     def valid_url(cls, v):
@@ -142,14 +154,14 @@ class Address(BaseModel):
 
 
 class OfferSuppliersAddress(Address):
-    locality: Optional[str] = Field(None, max_length=80, example="string")
+    locality: Optional[str] = Field(None, max_length=80, json_schema_extra={"example": "string"})
 
 
 class OfferDeliveryAddress(Address):  # only countryName is required
-    locality: Optional[str] = Field(None, max_length=80, example="string")
-    postalCode: Optional[str] = Field(None, max_length=20, example="string")
-    region: Optional[str] = Field(None, max_length=80, example="string")
-    streetAddress: Optional[str] = Field(None, max_length=250, example="string")
+    locality: Optional[str] = Field(None, max_length=80, json_schema_extra={"example": "string"})
+    postalCode: Optional[str] = Field(None, max_length=20, json_schema_extra={"example": "string"})
+    region: Optional[str] = Field(None, max_length=80, json_schema_extra={"example": "string"})
+    streetAddress: Optional[str] = Field(None, max_length=250, json_schema_extra={"example": "string"})
 
     @field_validator('region')
     def region_for_ukraine_only(cls, v, values):
@@ -162,9 +174,9 @@ class OfferDeliveryAddress(Address):  # only countryName is required
 class ContactPoint(BaseModel):
     name: str = Field(..., min_length=1, max_length=250)
     telephone: str = Field(..., max_length=250)
-    url: Optional[str] = Field(None, max_length=250, example="string")
-    email: Optional[str] = Field(None, max_length=250, example="string")
-    faxNumber: Optional[str] = Field(None, max_length=250, example="string")
+    url: Optional[str] = Field(None, max_length=250, json_schema_extra={"example": "string"})
+    email: Optional[str] = Field(None, max_length=250, json_schema_extra={"example": "string"})
+    faxNumber: Optional[str] = Field(None, max_length=250, json_schema_extra={"example": "string"})
 
     @field_validator('telephone')
     def telephone_format(cls, v):
@@ -231,4 +243,4 @@ class CategoryMarketAdministrator(MarketAdministrator, ProcuringEntity):
 
 
 class SuccessResponse(BaseModel):
-    result: str = Field(..., example="success")
+    result: str = Field(..., json_schema_extra={"example": "success"})

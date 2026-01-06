@@ -18,9 +18,9 @@ BAN_REASONS = standards.load("market/ban_reason.json")
 
 class BaseBanPostData(BaseModel):
     reason: str
-    description: Optional[str] = Field(None, min_length=1, max_length=500, example="description")
+    description: Optional[str] = Field(None, min_length=1, max_length=500, json_schema_extra={"example": "description"})
     administrator: MarketAdministrator
-    documents: Optional[List[DocumentPostData]] = Field(None, example=[DOCUMENT_EXAMPLE])
+    documents: Optional[List[DocumentPostData]] = Field(None, json_schema_extra={"example": [DOCUMENT_EXAMPLE]})
 
     @property
     def id(self):
@@ -34,7 +34,7 @@ class BaseBanPostData(BaseModel):
 
 
 class ContributorBanPostData(BaseBanPostData):
-    dueDate: Optional[datetime] = Field(None, example=get_now().isoformat())
+    dueDate: Optional[datetime] = Field(None, json_schema_extra={"example": get_now().isoformat()})
 
     @field_validator('dueDate')
     def validate_date(cls, v):
@@ -49,13 +49,13 @@ class ContributorBanPostData(BaseBanPostData):
 class Ban(BaseModel):
     id: str = Field(..., min_length=32, max_length=32)
     reason: str
-    description: Optional[str] = Field(None, min_length=1, max_length=500, example="description")
-    dueDate: Optional[datetime] = Field(None, example=get_now().isoformat())
+    description: Optional[str] = Field(None, min_length=1, max_length=500, json_schema_extra={"example": "description"})
+    dueDate: Optional[datetime] = Field(None, json_schema_extra={"example": get_now().isoformat()})
     administrator: MarketAdministrator
     dateCreated: datetime
     dateModified: datetime
     owner: str
-    documents: Optional[List[Document]] = Field(None, example=[DOCUMENT_EXAMPLE])
+    documents: Optional[List[Document]] = Field(None, json_schema_extra={"example": [DOCUMENT_EXAMPLE]})
 
 
 BAN_EXAMPLE = Ban(

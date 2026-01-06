@@ -9,7 +9,7 @@ from catalog.models.base import BaseModel
 
 
 class PostTag(BaseModel):
-    code: Optional[str] = Field(None, min_length=1, example="tag1")
+    code: Optional[str] = Field(None, min_length=1, json_schema_extra={"example": "tag1"})
     name: str = Field(..., min_length=1)
     name_en: str = Field(..., min_length=1)
 
@@ -31,8 +31,8 @@ class PostTag(BaseModel):
 
 
 class PatchTag(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, example="Тег")
-    name_en: Optional[str] = Field(None, min_length=1, example="Tag")
+    name: Optional[str] = Field(None, min_length=1, json_schema_extra={"example": "Тег"})
+    name_en: Optional[str] = Field(None, min_length=1, json_schema_extra={"example": "Tag"})
 
     @field_validator("name", "name_en",  mode="before")
     @classmethod
@@ -48,7 +48,7 @@ class Tag(BaseModel):
 
 
 class TagsMixin:
-    tags: Optional[List[str]] = Field(None, example=["tag1", "tag2"])
+    tags: Optional[List[str]] = Field(None, json_schema_extra={"example": ["tag1", "tag2"]})
 
     @field_validator("tags")
     @classmethod

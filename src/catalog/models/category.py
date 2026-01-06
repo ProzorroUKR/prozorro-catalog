@@ -23,11 +23,19 @@ class BaseCategoryCreateData(TagsMixin, BaseModel):
     marketAdministrator: CategoryMarketAdministrator
     title: str = Field(..., min_length=1, max_length=80)
     unit: Unit
-    description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[CLASSIFICATION_EXAMPLE])
+    description: Optional[str] = Field(None, min_length=1, max_length=1000, json_schema_extra={"example": "string"})
+    additionalClassifications: Optional[List[Classification]] = Field(
+        None,
+        max_length=100,
+        json_schema_extra={"example": [CLASSIFICATION_EXAMPLE]},
+    )
     status: CategoryStatus = CategoryStatus.active
-    images: Optional[List[Image]] = Field(None, max_length=100, example=[{"url": "/image/1.jpg"}])
-    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example="string")
+    images: Optional[List[Image]] = Field(
+        None,
+        max_length=100,
+        json_schema_extra={"example": [{"url": "/image/1.jpg"}]},
+    )
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, json_schema_extra={"example": "string"})
 
     @property
     def criteria(self):
@@ -59,13 +67,21 @@ class DeprecatedCategoryCreateData(BaseCategoryCreateData):
 
 
 class CategoryUpdateData(TagsMixin, BaseModel):
-    title: Optional[str] = Field(None, min_length=1, max_length=80, example="string")
-    unit: Optional[Unit] = Field(None, example=UNIT_EXAMPLE)
-    description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
-    status: Optional[CategoryStatus] = Field(None, example=CategoryStatus.active)
-    images: Optional[List[Image]] = Field(None, max_length=100, example=[{"url": "/image/1.jpg"}])
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[])
-    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example="string")
+    title: Optional[str] = Field(None, min_length=1, max_length=80, json_schema_extra={"example": "string"})
+    unit: Optional[Unit] = Field(None, json_schema_extra={"example": UNIT_EXAMPLE})
+    description: Optional[str] = Field(None, min_length=1, max_length=1000, json_schema_extra={"example": "string"})
+    status: Optional[CategoryStatus] = Field(None, json_schema_extra={"example": CategoryStatus.active})
+    images: Optional[List[Image]] = Field(
+        None,
+        max_length=100,
+        json_schema_extra={"example": [{"url": "/image/1.jpg"}]},
+    )
+    additionalClassifications: Optional[List[Classification]] = Field(
+        None,
+        max_length=100,
+        json_schema_extra={"example": []},
+    )
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, json_schema_extra={"example": "string"})
 
 
 class Category(TagsMixin, BaseModel):
@@ -75,15 +91,15 @@ class Category(TagsMixin, BaseModel):
     classification: Classification
     marketAdministrator: CategoryMarketAdministrator
     id: str = Field(..., pattern=r"^[0-9A-Za-z_-]{20,32}$")
-    title: Optional[str] = Field(..., min_length=1, max_length=80, example="title")
+    title: Optional[str] = Field(..., min_length=1, max_length=80, json_schema_extra={"example": "title"})
     unit: Unit
-    description: Optional[str] = Field(..., min_length=1, max_length=1000, example="description")
+    description: Optional[str] = Field(..., min_length=1, max_length=1000, json_schema_extra={"example": "description"})
     additionalClassifications: Optional[List[Classification]] = Field(..., max_length=100)
     status: CategoryStatus = CategoryStatus.active
     images: Optional[List[Image]] = Field(..., max_length=100)
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     criteria: List[Criterion] = Field(...)
-    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example="string")
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, json_schema_extra={"example": "string"})
     owner: str
 
 
