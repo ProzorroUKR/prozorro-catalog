@@ -1,8 +1,8 @@
+import os
 from json import loads
 from random import randrange
-import os
 
-from .base import TEST_AUTH
+from tests.base import TEST_AUTH
 
 
 def get_fixture_json(name):
@@ -14,11 +14,11 @@ def get_fixture_json(name):
 
 async def create_profile(api, category, custom_data=None):
     category_id = category["data"]["id"]
-    data = get_fixture_json('profile')
+    data = get_fixture_json("profile")
 
-    profile_id = f'{randrange(1000000, 9999999)}-{category_id}'
-    data['id'] = profile_id
-    data['relatedCategory'] = category_id
+    profile_id = f"{randrange(1000000, 9999999)}-{category_id}"
+    data["id"] = profile_id
+    data["relatedCategory"] = category_id
     if custom_data:
         data.update(custom_data)
     resp = await api.put(
@@ -34,7 +34,7 @@ async def create_profile(api, category, custom_data=None):
 
 async def create_criteria(api, obj_path, profile, criteria=None):
     if not criteria:
-        criteria = get_fixture_json('criteria')
+        criteria = get_fixture_json("criteria")
 
     for criterion in criteria["criteria"]:
         rgs = criterion.pop("requirementGroups")

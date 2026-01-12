@@ -1,17 +1,18 @@
 from datetime import datetime
-from typing import Optional, List
+from enum import Enum
+from typing import List, Optional
+
 from pydantic import Field
 
 from catalog.models.api import Response
 from catalog.models.base import BaseModel
-from catalog.models.common import OfferSuppliersAddress, OfferDeliveryAddress, ContactPoint, Identifier
+from catalog.models.common import ContactPoint, Identifier, OfferDeliveryAddress, OfferSuppliersAddress
 from catalog.utils import get_now
-from enum import Enum
 
 
 class OfferStatus(str, Enum):
-    active = 'active'
-    hidden = 'hidden'
+    active = "active"
+    hidden = "hidden"
 
 
 class Supplier(BaseModel):
@@ -38,8 +39,11 @@ class Offer(BaseModel):
     status: OfferStatus
     suppliers: List[Supplier] = Field(..., min_length=1, max_length=1)
     value: OfferValue
-    minOrderValue: Optional[MinOrderValue] = Field(None, example={"amount": 0.0, "currency": "USD"})
-    comment: Optional[str] = Field(None, max_length=250, example="string")
+    minOrderValue: Optional[MinOrderValue] = Field(
+        None,
+        json_schema_extra={"example": {"amount": 0.0, "currency": "USD"}},
+    )
+    comment: Optional[str] = Field(None, max_length=250, json_schema_extra={"example": "string"})
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     owner: str
 

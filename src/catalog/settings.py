@@ -1,14 +1,15 @@
+import configparser
+import logging
+import os
+import sys
+from uuid import uuid4
+from zoneinfo import ZoneInfo
+
 from aiohttp_client_cache.backends.mongodb import MongoDBBackend
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import ReadPreference
-from pymongo.write_concern import WriteConcern
 from pymongo.read_concern import ReadConcern
-from zoneinfo import ZoneInfo
-from uuid import uuid4
-import configparser
-import logging
-import sys
-import os
+from pymongo.write_concern import WriteConcern
 
 logger = logging.getLogger(__name__)
 
@@ -24,30 +25,30 @@ SWAGGER_DOC_AVAILABLE = bool(os.environ.get("SWAGGER_DOC_AVAILABLE", True))
 MAX_LIST_LIMIT = int(os.environ.get("MAX_LIST_LIMIT", 10000))
 
 IS_TEST = "test" in sys.argv[0]
-SENTRY_DSN = os.getenv('SENTRY_DSN')
-TIMEZONE = ZoneInfo('Europe/Kiev')
-CLIENT_MAX_SIZE = int(os.getenv('CLIENT_MAX_SIZE', 1024 ** 2 * 100))
+SENTRY_DSN = os.getenv("SENTRY_DSN")
+TIMEZONE = ZoneInfo("Europe/Kiev")
+CLIENT_MAX_SIZE = int(os.getenv("CLIENT_MAX_SIZE", 1024**2 * 100))
 
 
-AUTH_PATH = os.getenv('AUTH_PATH', '/app/auth.ini')
+AUTH_PATH = os.getenv("AUTH_PATH", "/app/auth.ini")
 config = configparser.ConfigParser(allow_no_value=True)
 config.read(AUTH_PATH)
-AUTH_DATA = {section_name: {name: secret
-                            for name, secret in section.items()}
-             for section_name, section in config.items()}
+AUTH_DATA = {
+    section_name: {name: secret for name, secret in section.items()} for section_name, section in config.items()
+}
 
 # directory to store images
-IMG_DIR = os.getenv('IMG_DIR', '/app/images')
+IMG_DIR = os.getenv("IMG_DIR", "/app/images")
 if not os.path.exists(IMG_DIR):
     logger.warning(f"IMG_DIR '{IMG_DIR}' does not exist. Created")
     os.makedirs(IMG_DIR)
-IMG_PATH = os.getenv('IMG_PATH', '/static/images')
+IMG_PATH = os.getenv("IMG_PATH", "/static/images")
 
-ALLOWED_IMG_TYPES = os.getenv('ALLOWED_IMG_TYPES', 'jpeg,png').split(",")
-IMG_SIZE_LIMIT = os.getenv('IMG_SIZE_LIMIT', 1000000)  # default limit 1 Mb
+ALLOWED_IMG_TYPES = os.getenv("ALLOWED_IMG_TYPES", "jpeg,png").split(",")
+IMG_SIZE_LIMIT = os.getenv("IMG_SIZE_LIMIT", 1000000)  # default limit 1 Mb
 
-IMG_STORE_DIR_NAME_LEN = int(os.getenv('IMG_STORE_DIR_NAME_LEN', 2))
-IMG_STORE_DIR_LEVELS = int(os.getenv('IMG_STORE_DIR_LEVELS', 3))
+IMG_STORE_DIR_NAME_LEN = int(os.getenv("IMG_STORE_DIR_NAME_LEN", 2))
+IMG_STORE_DIR_LEVELS = int(os.getenv("IMG_STORE_DIR_LEVELS", 3))
 assert IMG_STORE_DIR_LEVELS * IMG_STORE_DIR_NAME_LEN < 32, "We only use 32 long uuid4 for both path and name"
 
 CATALOG_DATA = os.getenv("CATALOG_DATA")

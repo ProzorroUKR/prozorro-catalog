@@ -4,25 +4,26 @@ from contextvars import ContextVar
 
 from aiohttp.abc import AbstractAccessLogger
 from pythonjsonlogger import jsonlogger
-from catalog.context import get_session_time, get_db_session
 
-request_id_var = ContextVar('request_id')
-request_cookies_var = ContextVar('request_cookies', default={})
+from catalog.context import get_db_session
+from catalog.utils import get_session_time
+
+request_id_var = ContextVar("request_id")
+request_cookies_var = ContextVar("request_cookies", default={})
 
 
 class CustomJsonFormatter(jsonlogger.JsonFormatter):
     def add_fields(self, log_record, record, message_dict):
         super().add_fields(log_record, record, {})
         if not log_record.get("message") and message_dict:
-            log_record['message'] = message_dict
+            log_record["message"] = message_dict
 
-        log_record['levelname'] = record.levelname
-        log_record['name'] = record.name
-        log_record['funcName'] = record.funcName
+        log_record["levelname"] = record.levelname
+        log_record["name"] = record.name
+        log_record["funcName"] = record.funcName
 
 
 def setup_logging():
-
     # get base log record factory to extend it
     base_factory = logging.getLogRecordFactory()
 
@@ -66,11 +67,11 @@ def setup_logging():
 
     logging.basicConfig(level=logging.DEBUG, handlers=[stdout_handler, stderr_handler])
 
-    logging.getLogger('pymongo').setLevel(logging.WARNING)
+    logging.getLogger("pymongo").setLevel(logging.WARNING)
 
     # serve alternative logging for uncaught exceptions
     def exception_logging(exc_type, exc_value, exc_traceback):
-        logging.exception(f'Exception {exc_type} raised', exc_info=exc_value)
+        logging.exception(f"Exception {exc_type} raised", exc_info=exc_value)
 
     # override writing uncaught exceptions to stderr by using JSON logging
     sys.excepthook = exception_logging
@@ -84,13 +85,14 @@ LOG_EXCLUDED = {
 
 
 class AccessLogger(AbstractAccessLogger):
-
     def log(self, request, response, time):
-        remote = request.headers.get('X-Forwarded-For', request.remote)
-        refer = request.headers.get('Referer', '-')
-        user_agent = request.headers.get('User-Agent', '-')
+        remote = request.headers.get("X-Forwarded-For", request.remote)
+        refer = request.headers.get("Referer", "-")
+        user_agent = request.headers.get("User-Agent", "-")
         if request.path not in LOG_EXCLUDED:
-            self.logger.info(f'{remote} '
-                             f'"{request.method} {request.path} {response.status}'
-                             f'{response.body_length} {refer} {user_agent} '
-                             f'{time:.6f}s"')
+            self.logger.info(
+                f"{remote} "
+                f'"{request.method} {request.path} {response.status}'
+                f"{response.body_length} {refer} {user_agent} "
+                f'{time:.6f}s"'
+            )

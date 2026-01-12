@@ -1,2 +1,1 @@
-
-version = '##VERSION##'
+version = "##VERSION##"

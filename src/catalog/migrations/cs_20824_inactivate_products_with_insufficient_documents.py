@@ -4,6 +4,8 @@ import logging
 from unittest.mock import Mock
 
 import sentry_sdk
+from pymongo import UpdateOne
+
 from catalog.context import set_request
 from catalog.db import get_products_collection, init_mongo, transaction_context_manager
 from catalog.logging import setup_logging
@@ -11,7 +13,6 @@ from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
 from catalog.models.document import DocumentPostData
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
-from pymongo import UpdateOne
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +39,7 @@ async def migrate_products(document):
                                             "$filter": {
                                                 "input": "$documents",
                                                 "as": "file",
-                                                "cond": {
-                                                    "$ne": ["$$file.title", "sign.p7s"]
-                                                },
+                                                "cond": {"$ne": ["$$file.title", "sign.p7s"]},
                                             }
                                         }
                                     },
@@ -81,23 +80,19 @@ async def migrate_products(document):
 
         if bulk and len(bulk) % 500 == 0:
             async with transaction_context_manager() as session:
-                await bulk_update(
-                    products_collection, bulk, session, counter, migrated_obj="products"
-                )
+                await bulk_update(products_collection, bulk, session, counter, migrated_obj="products")
             bulk = []
 
     if bulk:
         async with transaction_context_manager() as session:
-            await bulk_update(
-                products_collection, bulk, session, counter, migrated_obj="products"
-            )
+            await bulk_update(products_collection, bulk, session, counter, migrated_obj="products")
 
     logger.info(f"Finished. Processed {counter} updated products")
     logger.info("Successfully migrated")
 
 
 async def migrate(args):
-    document  = {
+    document = {
         "hash": args.doc_hash,
         "title": args.doc_title,
         "format": args.doc_format,

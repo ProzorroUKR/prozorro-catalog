@@ -1,17 +1,16 @@
 from aiohttp.web import HTTPBadRequest
 
 from catalog import db
-from catalog.state.base import BaseState
 from catalog.context import get_now, get_request
+from catalog.state.base import BaseState
 
 
 class ContributorState(BaseState):
-
     @classmethod
     async def on_post(cls, data):
         await cls.validate_contributor_identifier(identifier_id=data["contributor"]["identifier"]["id"])
-        data['dateCreated'] = data['dateModified'] = get_now().isoformat()
-        data['owner'] = get_request().user.name
+        data["dateCreated"] = data["dateModified"] = get_now().isoformat()
+        data["owner"] = get_request().user.name
         for doc in data.get("documents", []):
             doc["datePublished"] = doc["dateModified"] = get_now().isoformat()
 

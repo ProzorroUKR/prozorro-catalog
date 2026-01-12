@@ -1,20 +1,19 @@
 import asyncio
-
 import logging
-import sentry_sdk
 
+import sentry_sdk
 from pymongo import UpdateOne
 
 from catalog.db import (
-    init_mongo,
-    transaction_context_manager,
     get_category_collection,
     get_products_collection,
+    init_mongo,
+    transaction_context_manager,
 )
-from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
-from catalog.utils import get_now
 from catalog.logging import setup_logging
+from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
 from catalog.settings import SENTRY_DSN
+from catalog.utils import get_now
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +129,8 @@ async def migrate():
                                 "relatedCategory": UNIQUE_LOCALIZATION_PRODUCTS_MAPPING[product["_id"]],
                                 "classification": category["classification"],
                                 "dateModified": get_now().isoformat(),
-                            }}
+                            }
+                        },
                     )
                 )
                 counter += 1
@@ -143,12 +143,15 @@ async def migrate():
                             "$set": {
                                 "relatedCategory": CLASSIFICATION_CATEGORY_MAPPING[product["classification"]["id"]],
                                 "dateModified": get_now().isoformat(),
-                            }}
+                            }
+                        },
                     )
                 )
                 counter += 1
             except Exception as e:
-                logger.error(f"Profile {product['_id']} with classification {product['classification']['id']} not updated, cause error: {e}")
+                logger.error(
+                    f"Profile {product['_id']} with classification {product['classification']['id']} not updated, cause error: {e}"
+                )
                 raise e
 
         if bulk and len(bulk) % 500 == 0:
@@ -173,5 +176,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

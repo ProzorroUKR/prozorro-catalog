@@ -4,11 +4,11 @@ from uuid import uuid4
 from catalog.migrations.cs_18917_migrate_int_number_responses import (
     migrate,
 )
-from tests.integration.conftest import api, db, get_fixture_json
+from tests.utils import get_fixture_json
 
 
 async def test_requirements_number(db, api):
-    category = deepcopy(get_fixture_json('category'))
+    category = deepcopy(get_fixture_json("category"))
     category["criteria"] = [
         {
             "title": "Технічні характеристики предмета закупівлі",
@@ -24,15 +24,16 @@ async def test_requirements_number(db, api):
                             "dataType": "number",
                             "expectedValue": 5.2,
                             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        }, {
+                        },
+                        {
                             "title": "Xарактеристика №2",
                             "dataType": "integer",
                             "minValue": 1,
                             "maxValue": 20,
-                        }
-                    ]
+                        },
+                    ],
                 }
-            ]
+            ],
         }
     ]
     await db.category.insert_one(category)
@@ -41,49 +42,30 @@ async def test_requirements_number(db, api):
     product["relatedCategory"] = category["_id"]
     product["dateModified"] = "2025-02-02T00:00:00+02:00"
     product["requirementResponses"] = [
-        {
-          "requirement": "Xарактеристика №1",
-          "values": [5.2]
-        },
-        {
-          "requirement": "Xарактеристика №2",
-          "values": [10, 5]
-        },
+        {"requirement": "Xарактеристика №1", "values": [5.2]},
+        {"requirement": "Xарактеристика №2", "values": [10, 5]},
     ]
     await db.products.insert_one(product)
 
     product_2 = deepcopy(product)
     product_2["_id"] = uuid4().hex
     product_2["requirementResponses"] = [
-        {
-            "requirement": "Xарактеристика №1",
-            "value": 5.2
-        },
-        {
-            "requirement": "Xарактеристика №2",
-            "value": 2,
-            "values": []
-        },
+        {"requirement": "Xарактеристика №1", "value": 5.2},
+        {"requirement": "Xарактеристика №2", "value": 2, "values": []},
     ]
     await db.products.insert_one(product_2)
 
     product_3 = deepcopy(product)
     product_3["_id"] = uuid4().hex
     product_3["requirementResponses"] = [
-        {
-            "requirement": "Xарактеристика №2",
-            "values": [5]
-        },
+        {"requirement": "Xарактеристика №2", "values": [5]},
     ]
     await db.products.insert_one(product_3)
 
     product_4 = deepcopy(product)
     product_4["_id"] = uuid4().hex
     product_4["requirementResponses"] = [
-        {
-            "requirement": "Xарактеристика №1",
-            "value": 5.2
-        },
+        {"requirement": "Xарактеристика №1", "value": 5.2},
     ]
     await db.products.insert_one(product_4)
 
@@ -91,44 +73,26 @@ async def test_requirements_number(db, api):
 
     product_data = await db.products.find_one({"_id": product["_id"]})
     assert product_data["requirementResponses"] == [
-        {
-            "requirement": "Xарактеристика №1",
-            "value": 5.2
-        },
-        {
-            "requirement": "Xарактеристика №2",
-            "values": [10, 5]
-        },
+        {"requirement": "Xарактеристика №1", "value": 5.2},
+        {"requirement": "Xарактеристика №2", "values": [10, 5]},
     ]
     assert product_data["dateModified"] != product["dateModified"]
 
     product_data_2 = await db.products.find_one({"_id": product_2["_id"]})
     assert product_data_2["requirementResponses"] == [
-        {
-            "requirement": "Xарактеристика №1",
-            "value": 5.2
-        },
-        {
-            "requirement": "Xарактеристика №2",
-            "value": 2
-        },
+        {"requirement": "Xарактеристика №1", "value": 5.2},
+        {"requirement": "Xарактеристика №2", "value": 2},
     ]
     assert product_data_2["dateModified"] != product_2["dateModified"]
 
     product_data_3 = await db.products.find_one({"_id": product_3["_id"]})
     assert product_data_3["requirementResponses"] == [
-        {
-            "requirement": "Xарактеристика №2",
-            "value": 5
-        },
+        {"requirement": "Xарактеристика №2", "value": 5},
     ]
     assert product_data_3["dateModified"] != product_3["dateModified"]
 
     product_data_4 = await db.products.find_one({"_id": product_4["_id"]})
     assert product_data_4["requirementResponses"] == [
-        {
-            "requirement": "Xарактеристика №1",
-            "value": 5.2
-        },
+        {"requirement": "Xарактеристика №1", "value": 5.2},
     ]
     assert product_data_4["dateModified"] == product_4["dateModified"]

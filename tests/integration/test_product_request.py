@@ -4,43 +4,43 @@ from datetime import timedelta
 from aiohttp import BasicAuth
 from freezegun import freeze_time
 
-from catalog.utils import get_now
 from catalog.doc_service import generate_test_url
-from .base import TEST_AUTH
-from .conftest import set_requirements_to_responses
-from .utils import create_criteria
+from catalog.utils import get_now
+from tests.base import TEST_AUTH
+from tests.conftest import set_requirements_to_responses
+from tests.utils import create_criteria
 
 request_review_data = {
     "administrator": {
         "identifier": {
             "id": "42574629",
             "scheme": "UA-EDR",
-            "legalName_en": "STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
-            "legalName_uk": "ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
+            "legalName_en": 'STATE ENTERPRISE "MEDICAL PROCUREMENT OF UKRAINE"',
+            "legalName_uk": 'ДЕРЖАВНЕ ПІДПРИЄМСТВО "МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ"',
         }
     }
 }
 
 
 async def test_create_product_request_no_authorization(api, category, contributor):
-    test_request = api.get_fixture_json('product_request')
-    category_id = category['data']['id']
+    test_request = api.get_fixture_json("product_request")
+    category_id = category["data"]["id"]
     set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
-    test_request["product"]['relatedCategory'] = category_id
+    test_request["product"]["relatedCategory"] = category_id
     resp = await api.post(
         f"/api/crowd-sourcing/contributors/{contributor['data']['id']}/requests",
         json={"data": test_request},
     )
     result = await resp.json()
     assert resp.status == 401, result
-    assert {'errors': ['Authorization header not found']} == result
+    assert {"errors": ["Authorization header not found"]} == result
 
 
 async def test_create_product_request_permission(api, category, contributor):
-    test_request = api.get_fixture_json('product_request')
-    category_id = category['data']['id']
+    test_request = api.get_fixture_json("product_request")
+    category_id = category["data"]["id"]
     set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
-    test_request["product"]['relatedCategory'] = category_id
+    test_request["product"]["relatedCategory"] = category_id
     resp = await api.post(
         f"/api/crowd-sourcing/contributors/{contributor['data']['id']}/requests",
         json={"data": test_request},
@@ -48,15 +48,15 @@ async def test_create_product_request_permission(api, category, contributor):
     )
     result = await resp.json()
     assert resp.status == 403, result
-    assert {'errors': ["Forbidden 'contributors' write operation"]} == result
+    assert {"errors": ["Forbidden 'contributors' write operation"]} == result
 
 
 async def test_product_request_create(api, category, contributor):
     contributor = contributor["data"]
-    test_request = api.get_fixture_json('product_request')
-    category_id = category['data']['id']
+    test_request = api.get_fixture_json("product_request")
+    category_id = category["data"]["id"]
     set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
-    test_request["product"]['relatedCategory'] = category_id
+    test_request["product"]["relatedCategory"] = category_id
 
     resp = await api.post(
         f"api/crowd-sourcing/contributors/{contributor['id']}/requests",
@@ -73,7 +73,14 @@ async def test_product_request_create(api, category, contributor):
 
     # check generated data
     additional_fields = {k: v for k, v in data.items() if k not in test_request}
-    assert set(additional_fields.keys()) == {'id', 'dateCreated', 'dateModified', 'owner', 'contributor', 'marketAdministrator'}
+    assert set(additional_fields.keys()) == {
+        "id",
+        "dateCreated",
+        "dateModified",
+        "owner",
+        "contributor",
+        "marketAdministrator",
+    }
 
 
 async def test_product_request_create_invalid_fields(api, category, contributor):
@@ -85,18 +92,18 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Field required: data.product']} == result
+    assert {"errors": ["Field required: data.product"]} == result
 
-    data = api.get_fixture_json('product_request')
-    category_id = category['data']['id']
+    data = api.get_fixture_json("product_request")
+    category_id = category["data"]["id"]
     set_requirements_to_responses(data["product"]["requirementResponses"], category)
-    data["product"]['relatedCategory'] = category_id
+    data["product"]["relatedCategory"] = category_id
     data["documents"] = [
         {
             "title": "sign.p7s",
             "url": "http://public-docs-sandbox.prozorro.gov.ua/...",
             "hash": "md5:00000000000000000000000000000000",
-            "format": "application/pk7s"
+            "format": "application/pk7s",
         }
     ]
     resp = await api.post(
@@ -106,9 +113,9 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, can add document only from document service: data.documents.0']} == result
+    assert {"errors": ["Value error, can add document only from document service: data.documents.0"]} == result
 
-    data['documents'][0]['url'] = generate_test_url(data["documents"][0]["hash"])
+    data["documents"][0]["url"] = generate_test_url(data["documents"][0]["hash"])
     resp = await api.post(
         f"/api/crowd-sourcing/contributors/{contributor['id']}/requests",
         json={"data": data},
@@ -116,7 +123,7 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, document url signature is invalid: data.documents.0']} == result
+    assert {"errors": ["Value error, document url signature is invalid: data.documents.0"]} == result
 
     del data["documents"]
 
@@ -128,12 +135,12 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': [
-        'product classification should have the same digits at the beginning as in related category.'
-    ]} == result
+    assert {
+        "errors": ["product classification should have the same digits at the beginning as in related category."]
+    } == result
 
     data["product"]["classification"]["id"] = category["data"]["classification"]["id"]
-    data["product"]['relatedCategory'] = "some_id"
+    data["product"]["relatedCategory"] = "some_id"
     resp = await api.post(
         f"/api/crowd-sourcing/contributors/{contributor['id']}/requests",
         json={"data": data},
@@ -141,9 +148,9 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
     )
     result = await resp.json()
     assert resp.status == 404, result
-    assert {'errors': ['Category not found']} == result
+    assert {"errors": ["Category not found"]} == result
 
-    data["product"]['relatedCategory'] = category_id
+    data["product"]["relatedCategory"] = category_id
     del data["product"]["requirementResponses"]
     resp = await api.post(
         f"/api/crowd-sourcing/contributors/{contributor['id']}/requests",
@@ -152,18 +159,18 @@ async def test_product_request_create_invalid_fields(api, category, contributor)
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['should be responded at least on one category requirement']} == result
+    assert {"errors": ["should be responded at least on one category requirement"]} == result
 
 
 async def test_product_request_in_banned_category(api, mock_agreement, contributor):
     contributor = contributor["data"]
 
     # create ban without dueDate
-    ban = api.get_fixture_json('ban')
+    ban = api.get_fixture_json("ban")
     del ban["dueDate"]
     doc_hash = "0" * 32
-    ban['documents'][0]['url'] = generate_test_url(doc_hash)
-    ban['documents'][0]['hash'] = f"md5:{doc_hash}"
+    ban["documents"][0]["url"] = generate_test_url(doc_hash)
+    ban["documents"][0]["hash"] = f"md5:{doc_hash}"
     resp = await api.post(
         f"api/crowd-sourcing/contributors/{contributor['id']}/bans",
         json={"data": ban},
@@ -173,22 +180,18 @@ async def test_product_request_in_banned_category(api, mock_agreement, contribut
     assert resp.status == 201, result
 
     # create category
-    category_data = api.get_fixture_json('category')
+    category_data = api.get_fixture_json("category")
     category_data["marketAdministrator"]["identifier"]["id"] = ban["administrator"]["identifier"]["id"]
     category_data["id"] = f'{category_data["id"][:13]}-{ban["administrator"]["identifier"]["id"]}'
-    resp = await api.put(
-        f"/api/categories/{category_data['id']}",
-        json={"data": category_data},
-        auth=TEST_AUTH
-    )
+    resp = await api.put(f"/api/categories/{category_data['id']}", json={"data": category_data}, auth=TEST_AUTH)
     assert resp.status == 201
     data = await resp.json()
     category = await create_criteria(api, "categories", data)
 
-    test_request = api.get_fixture_json('product_request')
-    category_id = category['data']['id']  # banned category
+    test_request = api.get_fixture_json("product_request")
+    category_id = category["data"]["id"]  # banned category
     set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
-    test_request["product"]['relatedCategory'] = category_id
+    test_request["product"]["relatedCategory"] = category_id
 
     resp = await api.post(
         f"api/crowd-sourcing/contributors/{contributor['id']}/requests",
@@ -197,18 +200,18 @@ async def test_product_request_in_banned_category(api, mock_agreement, contribut
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['request for product with this relatedCategory is forbidden due to ban']} == result
+    assert {"errors": ["request for product with this relatedCategory is forbidden due to ban"]} == result
 
 
 async def test_product_request_in_banned_category_with_due_date(api, mock_agreement, contributor):
     contributor = contributor["data"]
 
     # create ban without dueDate
-    ban = api.get_fixture_json('ban')
+    ban = api.get_fixture_json("ban")
     ban["dueDate"] = (get_now() + timedelta(days=10)).isoformat()
     doc_hash = "0" * 32
-    ban['documents'][0]['url'] = generate_test_url(doc_hash)
-    ban['documents'][0]['hash'] = f"md5:{doc_hash}"
+    ban["documents"][0]["url"] = generate_test_url(doc_hash)
+    ban["documents"][0]["hash"] = f"md5:{doc_hash}"
     resp = await api.post(
         f"api/crowd-sourcing/contributors/{contributor['id']}/bans",
         json={"data": ban},
@@ -218,22 +221,18 @@ async def test_product_request_in_banned_category_with_due_date(api, mock_agreem
     assert resp.status == 201, result
 
     # create category
-    category_data = api.get_fixture_json('category')
+    category_data = api.get_fixture_json("category")
     category_data["marketAdministrator"]["identifier"]["id"] = ban["administrator"]["identifier"]["id"]
     category_data["id"] = f'{category_data["id"][:13]}-{ban["administrator"]["identifier"]["id"]}'
-    resp = await api.put(
-        f"/api/categories/{category_data['id']}",
-        json={"data": category_data},
-        auth=TEST_AUTH
-    )
+    resp = await api.put(f"/api/categories/{category_data['id']}", json={"data": category_data}, auth=TEST_AUTH)
     assert resp.status == 201
     data = await resp.json()
     category = await create_criteria(api, "categories", data)
 
-    test_request = api.get_fixture_json('product_request')
-    category_id = category['data']['id']  # banned category
+    test_request = api.get_fixture_json("product_request")
+    category_id = category["data"]["id"]  # banned category
     set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
-    test_request["product"]['relatedCategory'] = category_id
+    test_request["product"]["relatedCategory"] = category_id
 
     resp = await api.post(
         f"api/crowd-sourcing/contributors/{contributor['id']}/requests",
@@ -242,18 +241,18 @@ async def test_product_request_in_banned_category_with_due_date(api, mock_agreem
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['request for product with this relatedCategory is forbidden due to ban']} == result
+    assert {"errors": ["request for product with this relatedCategory is forbidden due to ban"]} == result
 
 
 async def test_product_request_in_banned_category_with_expired_due_date(api, mock_agreement, contributor):
     contributor = contributor["data"]
 
     # create ban without dueDate
-    ban = api.get_fixture_json('ban')
+    ban = api.get_fixture_json("ban")
     ban["dueDate"] = (get_now() + timedelta(days=1)).isoformat()
     doc_hash = "0" * 32
-    ban['documents'][0]['url'] = generate_test_url(doc_hash)
-    ban['documents'][0]['hash'] = f"md5:{doc_hash}"
+    ban["documents"][0]["url"] = generate_test_url(doc_hash)
+    ban["documents"][0]["hash"] = f"md5:{doc_hash}"
     resp = await api.post(
         f"api/crowd-sourcing/contributors/{contributor['id']}/bans",
         json={"data": ban},
@@ -263,22 +262,18 @@ async def test_product_request_in_banned_category_with_expired_due_date(api, moc
     assert resp.status == 201, result
 
     # create category
-    category_data = api.get_fixture_json('category')
+    category_data = api.get_fixture_json("category")
     category_data["marketAdministrator"]["identifier"]["id"] = ban["administrator"]["identifier"]["id"]
     category_data["id"] = f'{category_data["id"][:13]}-{ban["administrator"]["identifier"]["id"]}'
-    resp = await api.put(
-        f"/api/categories/{category_data['id']}",
-        json={"data": category_data},
-        auth=TEST_AUTH
-    )
+    resp = await api.put(f"/api/categories/{category_data['id']}", json={"data": category_data}, auth=TEST_AUTH)
     assert resp.status == 201
     data = await resp.json()
     category = await create_criteria(api, "categories", data)
 
-    test_request = api.get_fixture_json('product_request')
-    category_id = category['data']['id']  # banned category
+    test_request = api.get_fixture_json("product_request")
+    category_id = category["data"]["id"]  # banned category
     set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
-    test_request["product"]['relatedCategory'] = category_id
+    test_request["product"]["relatedCategory"] = category_id
 
     with freeze_time((get_now() + timedelta(days=2)).isoformat()):
         resp = await api.post(
@@ -297,7 +292,7 @@ async def test_product_request_acception_permission(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 403, result
-    assert {'errors': ["Forbidden 'category' write operation"]} == result
+    assert {"errors": ["Forbidden 'category' write operation"]} == result
 
 
 async def test_product_request_acception_validations(api, product_request):
@@ -308,7 +303,7 @@ async def test_product_request_acception_validations(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 404, result
-    assert {'errors': ['404: Not Found']} == result
+    assert {"errors": ["404: Not Found"]} == result
 
     resp = await api.post(
         f"api/crowd-sourcing/requests/{product_request['data']['id']}/accept",
@@ -317,7 +312,7 @@ async def test_product_request_acception_validations(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Field required: data.administrator']} == result
+    assert {"errors": ["Field required: data.administrator"]} == result
 
     invalid_data = deepcopy(request_review_data)
     invalid_data["administrator"]["identifier"]["id"] = "12121212"
@@ -328,7 +323,7 @@ async def test_product_request_acception_validations(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, must be one of market administrators: data.administrator.identifier']} == result
+    assert {"errors": ["Value error, must be one of market administrators: data.administrator.identifier"]} == result
 
 
 async def test_product_request_acception(api, product_request):
@@ -352,7 +347,7 @@ async def test_product_request_acception(api, product_request):
 
     # check generated data
     additional_fields = {k: v for k, v in data.items() if k not in product_request["data"]}
-    assert set(additional_fields.keys()) == {'acception'}
+    assert set(additional_fields.keys()) == {"acception"}
     assert "date" in data["acception"]
     assert data["dateModified"] == data["product"]["dateModified"] == data["acception"]["date"]
 
@@ -370,38 +365,31 @@ async def test_product_request_acception(api, product_request):
 
     # check access token by patching product
     patch_product = {
-        "data": {
-            "status": "hidden",
-            "title": "Маски (приховані)"
-        },
+        "data": {"status": "hidden", "title": "Маски (приховані)"},
         "access": {"token": product_token},
     }
-    resp = await api.patch(f'/api/products/{product_id}', json=patch_product, auth=TEST_AUTH)
+    resp = await api.patch(f"/api/products/{product_id}", json=patch_product, auth=TEST_AUTH)
     assert resp.status == 200
     resp_json = await resp.json()
-    for key, patch_value in patch_product['data'].items():
-        assert resp_json['data'][key] == patch_value
+    for key, patch_value in patch_product["data"].items():
+        assert resp_json["data"][key] == patch_value
 
 
 async def test_product_request_accept_if_category_id_diff_procuring_entity_identifier(api, contributor, mock_agreement):
     # create category 33190000-0000-425746299 with procuringEntity.identifier.id 42574629
-    data = deepcopy(api.get_fixture_json('category'))
+    data = deepcopy(api.get_fixture_json("category"))
     data["id"] = "33190000-0000-425746299"
-    resp = await api.put(
-        f"/api/categories/{data['id']}",
-        json={"data": data},
-        auth=TEST_AUTH
-    )
+    resp = await api.put(f"/api/categories/{data['id']}", json={"data": data}, auth=TEST_AUTH)
     assert resp.status == 201
     data = await resp.json()
     category = await create_criteria(api, "categories", data)
 
     # create product request with category ending with 425746299
     contributor = contributor["data"]
-    test_request = api.get_fixture_json('product_request')
-    category_id = category['data']['id']
+    test_request = api.get_fixture_json("product_request")
+    category_id = category["data"]["id"]
     set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
-    test_request["product"]['relatedCategory'] = category_id
+    test_request["product"]["relatedCategory"] = category_id
 
     resp = await api.post(
         f"api/crowd-sourcing/contributors/{contributor['id']}/requests",
@@ -435,7 +423,7 @@ async def test_product_request_rejection_permission(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 403, result
-    assert {'errors': ["Forbidden 'category' write operation"]} == result
+    assert {"errors": ["Forbidden 'category' write operation"]} == result
 
 
 async def test_product_request_rejection_validations(api, product_request):
@@ -448,7 +436,7 @@ async def test_product_request_rejection_validations(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 404, result
-    assert {'errors': ['404: Not Found']} == result
+    assert {"errors": ["404: Not Found"]} == result
 
     resp = await api.post(
         f"api/crowd-sourcing/requests/{product_request['data']['id']}/reject",
@@ -458,10 +446,10 @@ async def test_product_request_rejection_validations(api, product_request):
     result = await resp.json()
     assert resp.status == 400, result
     errors = [
-        'Field required: data.administrator',
-        'Field required: data.reason',
+        "Field required: data.administrator",
+        "Field required: data.reason",
     ]
-    assert {'errors': errors} == result
+    assert {"errors": errors} == result
 
     rejection_data["administrator"]["identifier"]["id"] = "12121212"
     resp = await api.post(
@@ -471,13 +459,15 @@ async def test_product_request_rejection_validations(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, must be one of market administrators: data.administrator.identifier']} == result
+    assert {"errors": ["Value error, must be one of market administrators: data.administrator.identifier"]} == result
 
     rejection_data = deepcopy(request_review_data)
-    rejection_data.update({
-        "reason": "invalidTitle",
-        "description": "Невірно зазначена назва товару, необхідно виправити",
-    })
+    rejection_data.update(
+        {
+            "reason": "invalidTitle",
+            "description": "Невірно зазначена назва товару, необхідно виправити",
+        }
+    )
     resp = await api.post(
         f"api/crowd-sourcing/requests/{product_request['data']['id']}/reject",
         json={"data": rejection_data},
@@ -485,7 +475,7 @@ async def test_product_request_rejection_validations(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Input should be a valid list: data.reason']} == result
+    assert {"errors": ["Input should be a valid list: data.reason"]} == result
 
     rejection_data["reason"] = []
     resp = await api.post(
@@ -495,7 +485,7 @@ async def test_product_request_rejection_validations(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['List should have at least 1 item after validation, not 0: data.reason']} == result
+    assert {"errors": ["List should have at least 1 item after validation, not 0: data.reason"]} == result
 
     rejection_data["reason"] = ["invalidTitle", "invalidCharacteristics", "invalidTitle"]
     resp = await api.post(
@@ -505,7 +495,7 @@ async def test_product_request_rejection_validations(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, there are duplicated reasons: data.reason']} == result
+    assert {"errors": ["Value error, there are duplicated reasons: data.reason"]} == result
 
     rejection_data["reason"] = ["invalidTitle", "some other reason"]
     resp = await api.post(
@@ -515,17 +505,21 @@ async def test_product_request_rejection_validations(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': [
-        "Value error, invalid value: 'some other reason'. Must be one of market/product_reject_reason.json keys: data.reason"
-    ]} == result
+    assert {
+        "errors": [
+            "Value error, invalid value: 'some other reason'. Must be one of market/product_reject_reason.json keys: data.reason"
+        ]
+    } == result
 
 
 async def test_product_request_rejection(api, product_request):
     rejection_data = deepcopy(request_review_data)
-    rejection_data.update({
-        "reason": ["invalidTitle", "alreadyAvailable"],
-        "description": "Невірно зазначена назва товару",
-    })
+    rejection_data.update(
+        {
+            "reason": ["invalidTitle", "alreadyAvailable"],
+            "description": "Невірно зазначена назва товару",
+        }
+    )
     resp = await api.post(
         f"api/crowd-sourcing/requests/{product_request['data']['id']}/reject",
         json={"data": rejection_data},
@@ -543,31 +537,27 @@ async def test_product_request_rejection(api, product_request):
 
     # check generated data
     additional_fields = {k: v for k, v in data.items() if k not in product_request["data"]}
-    assert set(additional_fields.keys()) == {'rejection'}
+    assert set(additional_fields.keys()) == {"rejection"}
     assert "date" in data["rejection"]
     assert data["dateModified"] == data["rejection"]["date"]
 
 
 async def test_product_request_moderation_by_non_related_administrator(api, contributor, mock_agreement):
     # create category
-    category_data = deepcopy(api.get_fixture_json('category'))
+    category_data = deepcopy(api.get_fixture_json("category"))
     category_data["id"] = "33190000-0000-40996564"
     category_data["marketAdministrator"]["identifier"]["id"] = "40996564"
-    resp = await api.put(
-        f"/api/categories/{category_data['id']}",
-        json={"data": category_data},
-        auth=TEST_AUTH
-    )
+    resp = await api.put(f"/api/categories/{category_data['id']}", json={"data": category_data}, auth=TEST_AUTH)
     assert resp.status == 201
     data = await resp.json()
     category = await create_criteria(api, "categories", data)
 
     # create product request
     contributor = contributor["data"]
-    test_request = api.get_fixture_json('product_request')
-    category_id = category['data']['id']
+    test_request = api.get_fixture_json("product_request")
+    category_id = category["data"]["id"]
     set_requirements_to_responses(test_request["product"]["requirementResponses"], category)
-    test_request["product"]['relatedCategory'] = category_id
+    test_request["product"]["relatedCategory"] = category_id
 
     resp = await api.post(
         f"api/crowd-sourcing/contributors/{contributor['id']}/requests",
@@ -619,7 +609,7 @@ async def test_product_request_second_review(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['product request is already reviewed']} == result
+    assert {"errors": ["product request is already reviewed"]} == result
 
     # reject already reviewed request
     rejection_data = deepcopy(request_review_data)
@@ -631,7 +621,7 @@ async def test_product_request_second_review(api, product_request):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['product request is already reviewed']} == result
+    assert {"errors": ["product request is already reviewed"]} == result
 
 
 async def test_product_request_get(api, product_request, contributor):
@@ -639,8 +629,16 @@ async def test_product_request_get(api, product_request, contributor):
     resp = await api.get(f'/api/crowd-sourcing/requests/{product_request["id"]}')
     assert resp.status == 200
     result = await resp.json()
-    assert set(result.keys()) == {'data'}
-    assert set(result["data"].keys()) == {'id', 'contributor', 'owner', 'dateCreated', 'dateModified', 'product', 'marketAdministrator'}
+    assert set(result.keys()) == {"data"}
+    assert set(result["data"].keys()) == {
+        "id",
+        "contributor",
+        "owner",
+        "dateCreated",
+        "dateModified",
+        "product",
+        "marketAdministrator",
+    }
     assert contributor["data"]["owner"] == result["data"]["owner"]
 
     req_resp = result["data"]["product"]["requirementResponses"][1]
@@ -650,15 +648,15 @@ async def test_product_request_get(api, product_request, contributor):
 
 async def test_product_request_list(api, product_request):
     product_request = product_request["data"]
-    resp = await api.get('/api/crowd-sourcing/requests')
+    resp = await api.get("/api/crowd-sourcing/requests")
     assert resp.status == 200
     result = await resp.json()
-    assert set(result.keys()) == {'data', 'next_page'}
+    assert set(result.keys()) == {"data", "next_page"}
     assert len(result["data"]) == 1
-    assert set(result["data"][0].keys()) == {'dateModified', 'id'}
+    assert set(result["data"][0].keys()) == {"dateModified", "id"}
     assert result["data"][0]["id"] == product_request["id"]
 
-    resp = await api.get('/api/crowd-sourcing/requests?opt_fields=product.relatedCategory,owner')
+    resp = await api.get("/api/crowd-sourcing/requests?opt_fields=product.relatedCategory,owner")
     assert resp.status == 200
     result = await resp.json()
     assert "relatedCategory" in result["data"][0]["product"]

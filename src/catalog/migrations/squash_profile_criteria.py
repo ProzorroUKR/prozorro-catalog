@@ -1,8 +1,10 @@
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
-from uuid import uuid4
 import logging
-from catalog.settings import MONGODB_URI, DB_NAME, READ_PREFERENCE, WRITE_CONCERN, READ_CONCERN
+from uuid import uuid4
+
+from motor.motor_asyncio import AsyncIOMotorClient
+
+from catalog.settings import DB_NAME, MONGODB_URI, READ_CONCERN, READ_PREFERENCE, WRITE_CONCERN
 from catalog.utils import get_now
 
 CLIENT = AsyncIOMotorClient(MONGODB_URI)
@@ -60,18 +62,18 @@ async def migrate():
         else:
             now = get_now().isoformat()
             await collection.update_one(
-                {"_id": profile["_id"]},
-                {"$set": {"criteria": new_criteria, "dateModified": now}}
+                {"_id": profile["_id"]}, {"$set": {"criteria": new_criteria, "dateModified": now}}
             )
         if counter % 500 == 0:
             logger.info(f"Processed {counter} records")
     logger.info(f"Finished. Processed {counter} records")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    import sentry_sdk
+
     from catalog.logging import setup_logging
     from catalog.settings import SENTRY_DSN
-    import sentry_sdk
 
     setup_logging()
     if SENTRY_DSN:

@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from catalog.migrations.cs_15522_profiles_date_created import migrate
 from catalog.utils import get_now
-from tests.integration.conftest import api, category, db, get_fixture_json, mock_agreement
+from tests.utils import get_fixture_json
 
 
 async def test_migrate_profiles(db, api, category, mock_agreement):

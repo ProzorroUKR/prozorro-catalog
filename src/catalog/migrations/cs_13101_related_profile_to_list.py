@@ -2,14 +2,13 @@ import asyncio
 import logging
 from dataclasses import dataclass
 
-from pymongo import UpdateOne
 import sentry_sdk
+from pymongo import UpdateOne
 
-from catalog.db import get_products_collection, init_mongo, transaction_context_manager
+from catalog.db import get_products_collection, init_mongo
 from catalog.logging import setup_logging
-from catalog.utils import get_now
 from catalog.settings import SENTRY_DSN
-
+from catalog.utils import get_now
 
 logger = logging.getLogger(__name__)
 
@@ -62,5 +61,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

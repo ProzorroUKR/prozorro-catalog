@@ -1,18 +1,15 @@
-from dataclasses import dataclass
-from datetime import timedelta
 import asyncio
 import logging
-
-from pymongo.errors import PyMongoError
-from pymongo import UpdateOne
+from dataclasses import dataclass
 
 import sentry_sdk
+from pymongo import UpdateOne
+from pymongo.errors import PyMongoError
 
 from catalog.db import get_category_collection, get_profiles_collection, init_mongo, transaction_context_manager
 from catalog.logging import setup_logging
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
-
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +22,7 @@ class Counters:
     skipped_profiles: int = 0
 
     def __post_init__(self):
-        self.total_profiles = self.total_profiles or (
-            self.updated_profiles +
-            self.skipped_profiles
-        )
+        self.total_profiles = self.total_profiles or (self.updated_profiles + self.skipped_profiles)
 
     def __add__(self, other):
         return Counters(
@@ -72,9 +66,7 @@ async def migrate_profiles(category: dict):
             bulk.append(
                 UpdateOne(
                     filter={"_id": p["_id"]},
-                    update={"$set": {
-                        "agreementID": category["agreementID"], "dateModified": get_now().isoformat()}
-                    }
+                    update={"$set": {"agreementID": category["agreementID"], "dateModified": get_now().isoformat()}},
                 )
             )
             counters.updated_profiles += 1
@@ -97,5 +89,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

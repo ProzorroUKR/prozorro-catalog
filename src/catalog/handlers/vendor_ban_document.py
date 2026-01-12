@@ -1,27 +1,29 @@
 import logging
 from copy import deepcopy
-
 from typing import Union
 
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from aiohttp.web_exceptions import HTTPNotFound
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r401, r404
 
 from catalog import db
 from catalog.auth import validate_access_token
+from catalog.handlers.base_document import BaseDocumentItemView, BaseDocumentView
 from catalog.models.api import ErrorResponse
-from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput, DocumentList, \
-    DocumentResponse
+from catalog.models.document import (
+    DocumentList,
+    DocumentPatchInput,
+    DocumentPostInput,
+    DocumentPutInput,
+    DocumentResponse,
+)
 from catalog.serializers.document import DocumentSerializer
-from catalog.handlers.base_document import BaseDocumentView, BaseDocumentItemView
-from catalog.utils import get_now, find_item_by_id, get_revision_changes
-
+from catalog.utils import find_item_by_id, get_now, get_revision_changes
 
 logger = logging.getLogger(__name__)
 
 
 class VendorBanDocumentMixin:
-
     parent_obj_name = "vendor_ban"
 
     @classmethod
@@ -35,7 +37,6 @@ class VendorBanDocumentMixin:
 
 
 class VendorBanDocumentView(VendorBanDocumentMixin, BaseDocumentView, PydanticView):
-
     async def get(self, vendor_id: str, ban_id: str, /) -> r200[DocumentList]:
         """
         Get list of vendor ban documents
@@ -60,7 +61,7 @@ class VendorBanDocumentView(VendorBanDocumentMixin, BaseDocumentView, PydanticVi
             await self.validate_data(self.request, body, parent_obj, vendor_id)
             ban = find_item_by_id(parent_obj.get("bans", []), ban_id, "ban")
             now = get_now().isoformat()
-            parent_obj["dateModified"] = ban['dateModified'] = data['datePublished'] = data['dateModified'] = now
+            parent_obj["dateModified"] = ban["dateModified"] = data["datePublished"] = data["dateModified"] = now
             if "documents" not in ban:
                 ban["documents"] = []
             ban["documents"].append(data)
@@ -78,8 +79,9 @@ class VendorBanDocumentView(VendorBanDocumentMixin, BaseDocumentView, PydanticVi
 
 
 class VendorBanDocumentItemView(VendorBanDocumentMixin, BaseDocumentItemView, PydanticView):
-
-    async def get(self, vendor_id: str, ban_id: str, doc_id: str, /) -> Union[r200[DocumentResponse], r404[ErrorResponse]]:
+    async def get(
+        self, vendor_id: str, ban_id: str, doc_id: str, /
+    ) -> Union[r200[DocumentResponse], r404[ErrorResponse]]:
         """
         Get vendor ban document
 
@@ -88,7 +90,12 @@ class VendorBanDocumentItemView(VendorBanDocumentMixin, BaseDocumentItemView, Py
         return await BaseDocumentItemView.get(self, vendor_id, doc_id, ban_id)
 
     async def put(
-        self, vendor_id: str, ban_id: str, doc_id: str, /, body: DocumentPutInput,
+        self,
+        vendor_id: str,
+        ban_id: str,
+        doc_id: str,
+        /,
+        body: DocumentPutInput,
     ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Vendor ban document replace
@@ -109,7 +116,9 @@ class VendorBanDocumentItemView(VendorBanDocumentMixin, BaseDocumentItemView, Py
                 if doc["id"] == doc_id:
                     data = body.data.dict_without_none()
                     data["id"] = doc_id
-                    parent_obj["dateModified"] = ban["dateModified"] = data["datePublished"] = data["dateModified"] = get_now().isoformat()
+                    parent_obj["dateModified"] = ban["dateModified"] = data["datePublished"] = data["dateModified"] = (
+                        get_now().isoformat()
+                    )
                     ban["documents"].append(data)
                     break
             else:
@@ -124,7 +133,12 @@ class VendorBanDocumentItemView(VendorBanDocumentMixin, BaseDocumentItemView, Py
         return {"data": DocumentSerializer(data).data}
 
     async def patch(
-        self, vendor_id: str, ban_id: str, doc_id: str, /, body: DocumentPatchInput,
+        self,
+        vendor_id: str,
+        ban_id: str,
+        doc_id: str,
+        /,
+        body: DocumentPatchInput,
     ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Product vendor ban update
@@ -144,7 +158,7 @@ class VendorBanDocumentItemView(VendorBanDocumentMixin, BaseDocumentItemView, Py
                     initial = dict(doc)
                     doc.update(data)
                     if initial != doc:
-                        parent_obj["dateModified"] = ban['dateModified'] = doc['dateModified'] = get_now().isoformat()
+                        parent_obj["dateModified"] = ban["dateModified"] = doc["dateModified"] = get_now().isoformat()
                     break
             else:
                 raise HTTPNotFound(text="Document not found")

@@ -1,9 +1,9 @@
 from aiohttp.web import HTTPBadRequest
 
+from catalog.context import get_now
 from catalog.db import validate_tags_exist
 from catalog.state.base import BaseState
-from catalog.context import get_now
-from catalog.validations import validate_medicine_additional_classifications, validate_agreement
+from catalog.validations import validate_agreement, validate_medicine_additional_classifications
 
 
 class LocalizationProfileState(BaseState):
@@ -11,7 +11,7 @@ class LocalizationProfileState(BaseState):
     async def on_put(cls, data, category):
         await validate_medicine_additional_classifications(data)
         await validate_tags_exist(data.get("tags", []))
-        data['dateCreated'] = data['dateModified'] = get_now().isoformat()
+        data["dateCreated"] = data["dateModified"] = get_now().isoformat()
         super().on_post(data)
 
     @classmethod
@@ -22,13 +22,12 @@ class LocalizationProfileState(BaseState):
             if before.get("agreementID", "") != after.get("agreementID", ""):
                 await validate_agreement(after)
             await validate_tags_exist(after.get("tags", []))
-            after['dateModified'] = get_now().isoformat()
+            after["dateModified"] = get_now().isoformat()
 
         super().on_patch(before, after)
 
 
 class ProfileState(LocalizationProfileState):
-
     @classmethod
     async def on_put(cls, data, category):
         fields_from_category = ["unit", "classification", "marketAdministrator"]

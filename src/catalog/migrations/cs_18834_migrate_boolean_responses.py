@@ -2,14 +2,13 @@ import asyncio
 import logging
 
 import sentry_sdk
-
 from pymongo import UpdateOne
 
 from catalog.db import (
     get_category_collection,
+    get_products_collection,
     init_mongo,
     transaction_context_manager,
-    get_products_collection,
 )
 from catalog.logging import setup_logging
 from catalog.settings import SENTRY_DSN
@@ -19,9 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 async def update_responses_in_product(product):
-    category = await get_category_collection().find_one(
-        {"_id": product["relatedCategory"]}, {"criteria": 1}
-    )
+    category = await get_category_collection().find_one({"_id": product["relatedCategory"]}, {"criteria": 1})
     if not category:
         return None
     category_requirements = {
@@ -68,10 +65,12 @@ async def migrate():
             bulk.append(
                 UpdateOne(
                     filter={"_id": obj["_id"]},
-                    update={"$set": {
-                        "requirementResponses": updated_responses,
-                        "dateModified": get_now().isoformat(),
-                    }},
+                    update={
+                        "$set": {
+                            "requirementResponses": updated_responses,
+                            "dateModified": get_now().isoformat(),
+                        }
+                    },
                 )
             )
         if bulk and len(bulk) % 500 == 0:

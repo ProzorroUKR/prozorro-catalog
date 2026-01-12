@@ -1,64 +1,62 @@
-from copy import deepcopy
 import logging
+from copy import deepcopy
 from typing import Optional, Union
 
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from aiohttp.web import HTTPBadRequest
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r401, r404
 
 from catalog import db
-from catalog.models.api import PaginatedList, ErrorResponse
+from catalog.auth import set_access_token, validate_access_token, validate_accreditation
+from catalog.handlers.base_criteria import (
+    BaseCriteriaItemViewMixin,
+    BaseCriteriaRGItemViewMixin,
+    BaseCriteriaRGRequirementItemViewMixin,
+    BaseCriteriaRGRequirementViewMixin,
+    BaseCriteriaRGViewMixin,
+    BaseCriteriaViewMixin,
+)
+from catalog.models.api import ErrorResponse, PaginatedList
 from catalog.models.common import SuccessResponse
+from catalog.models.criteria import (
+    CriterionCreateInput,
+    CriterionListResponse,
+    CriterionResponse,
+    CriterionUpdateInput,
+    ProfileBulkRequirementCreateInput,
+    ProfileRequirement,
+    ProfileRequirementCreateInput,
+    ProfileRequirementUpdateInput,
+    RequestProfileRequirementCreateInput,
+    RequirementListResponse,
+    RequirementResponse,
+    RGCreateInput,
+    RGListResponse,
+    RGResponse,
+    RGUpdateInput,
+)
 from catalog.models.profile import (
+    DeprecatedLocProfileInput,
+    DeprecatedProfileCreateInput,
+    DeprecatedRequestProfileCreateInput,
     LocalizationProfileInput,
     LocalizationProfileUpdateInput,
     ProfileCreateInput,
-    ProfileUpdateInput,
-    DeprecatedProfileCreateInput,
-    DeprecatedLocProfileInput,
     ProfileCreateResponse,
     ProfileResponse,
+    ProfileUpdateInput,
     RequestProfileCreateInput,
-    DeprecatedRequestProfileCreateInput,
     RequestProfileUpdateInput,
 )
-from catalog.utils import pagination_params, get_now, find_item_by_id, get_revision_changes, get_session_time
-from catalog.auth import validate_access_token, validate_accreditation, set_access_token
 from catalog.serializers.base import RootSerializer
-from catalog.handlers.base_criteria import (
-    BaseCriteriaViewMixin,
-    BaseCriteriaItemViewMixin,
-    BaseCriteriaRGViewMixin,
-    BaseCriteriaRGItemViewMixin,
-    BaseCriteriaRGRequirementViewMixin,
-    BaseCriteriaRGRequirementItemViewMixin,
-)
-from catalog.models.criteria import (
-    ProfileRequirementCreateInput,
-    ProfileBulkRequirementCreateInput,
-    ProfileRequirementUpdateInput,
-    ProfileRequirement,
-    CriterionListResponse,
-    CriterionCreateInput,
-    CriterionResponse,
-    CriterionUpdateInput,
-    RGListResponse,
-    RGCreateInput,
-    RGResponse,
-    RGUpdateInput,
-    RequirementListResponse,
-    RequirementResponse,
-    RequestProfileRequirementCreateInput,
-)
+from catalog.state.profile import LocalizationProfileState, ProfileState
+from catalog.utils import find_item_by_id, get_now, get_revision_changes, pagination_params
 from catalog.validations import validate_profile_requirements
-from catalog.state.profile import ProfileState, LocalizationProfileState
-
 
 logger = logging.getLogger(__name__)
 
 
 class ProfileViewMixin:
-
     @classmethod
     def is_localized(cls, data):
         return data.get("relatedCategory", "").startswith("99999999")
@@ -74,9 +72,9 @@ class ProfileViewMixin:
         json = await request.json()
         if not profile:
             if cls.is_localized(json.get("data", {})):
-                input_class = DeprecatedLocProfileInput if request.method == 'PUT' else LocalizationProfileInput
+                input_class = DeprecatedLocProfileInput if request.method == "PUT" else LocalizationProfileInput
             else:
-                input_class = DeprecatedProfileCreateInput if request.method == 'PUT' else ProfileCreateInput
+                input_class = DeprecatedProfileCreateInput if request.method == "PUT" else ProfileCreateInput
         else:
             if cls.is_localized(profile):
                 input_class = LocalizationProfileUpdateInput
@@ -88,7 +86,11 @@ class ProfileViewMixin:
 
 class ProfileView(ProfileViewMixin, PydanticView):
     async def get(
-        self, /, offset: Optional[str] = None, limit: Optional[int] = 100, descending: Optional[Union[int, str]] = 0,
+        self,
+        /,
+        offset: Optional[str] = None,
+        limit: Optional[int] = 100,
+        descending: Optional[Union[int, str]] = 0,
     ) -> r200[PaginatedList]:
         """
         Get a list of profiles
@@ -104,7 +106,7 @@ class ProfileView(ProfileViewMixin, PydanticView):
         return response
 
     async def post(
-            self, /, body: RequestProfileCreateInput
+        self, /, body: RequestProfileCreateInput
     ) -> Union[r201[ProfileCreateResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         """
         Create profile
@@ -119,7 +121,7 @@ class ProfileView(ProfileViewMixin, PydanticView):
         # export data back to dict
         data = body.data.dict_without_none()
 
-        category_id = data['relatedCategory']
+        category_id = data["relatedCategory"]
         category = await db.read_category(category_id)  # ensure exists
         validate_access_token(self.request, category, body.access)
 
@@ -133,7 +135,7 @@ class ProfileView(ProfileViewMixin, PydanticView):
             f"Created profile {data['id']}",
             extra={
                 "MESSAGE_ID": "profile_create_post",
-                "profile_id": data['id'],
+                "profile_id": data["id"],
             },
         )
 
@@ -145,7 +147,6 @@ class ProfileView(ProfileViewMixin, PydanticView):
 
 
 class ProfileItemView(ProfileViewMixin, PydanticView):
-
     async def get(self, profile_id: str, /) -> Union[r200[ProfileResponse], r400[ErrorResponse], r404[ErrorResponse]]:
         """
         Get profile
@@ -170,10 +171,10 @@ class ProfileItemView(ProfileViewMixin, PydanticView):
         body = await self.get_input(self.request)
         # export data back to dict
         data = body.data.dict_without_none()
-        if profile_id != data['id']:
-            raise HTTPBadRequest(text='id mismatch')
+        if profile_id != data["id"]:
+            raise HTTPBadRequest(text="id mismatch")
 
-        category_id = data['relatedCategory']
+        category_id = data["relatedCategory"]
         category = await db.read_category(category_id)  # ensure exists
         validate_access_token(self.request, category, body.access)
 
@@ -187,15 +188,14 @@ class ProfileItemView(ProfileViewMixin, PydanticView):
             f"Created profile {data['id']}",
             extra={
                 "MESSAGE_ID": "profile_create_put",
-                "profile_id": data['id'],
+                "profile_id": data["id"],
             },
         )
-        response = {"data": RootSerializer(data).data,
-                    "access": access}
+        response = {"data": RootSerializer(data).data, "access": access}
         return response
 
     async def patch(
-            self, profile_id: str, /, body: RequestProfileUpdateInput
+        self, profile_id: str, /, body: RequestProfileUpdateInput
     ) -> Union[r200[ProfileResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Profile update
@@ -225,7 +225,6 @@ class ProfileItemView(ProfileViewMixin, PydanticView):
 
 
 class ProfileCriteriaMixin:
-
     obj_name = "profile"
 
     @classmethod
@@ -275,7 +274,11 @@ class ProfileCriteriaItemView(ProfileCriteriaMixin, BaseCriteriaItemViewMixin, P
         return await BaseCriteriaItemViewMixin.patch(self, obj_id, criterion_id, body)
 
     async def delete(
-        self, obj_id: str, criterion_id: str, /, access_token: Optional[str] = None,
+        self,
+        obj_id: str,
+        criterion_id: str,
+        /,
+        access_token: Optional[str] = None,
     ) -> Union[r200[SuccessResponse], r404[ErrorResponse]]:
         """
         Object criterion delete
@@ -322,10 +325,10 @@ class ProfileCriteriaRGItemView(ProfileCriteriaMixin, BaseCriteriaRGItemViewMixi
 
         Tags: Profile/Criteria/RequirementGroups
         """
-        return await BaseCriteriaRGItemViewMixin.get(self, obj_id,criterion_id,  rg_id)
+        return await BaseCriteriaRGItemViewMixin.get(self, obj_id, criterion_id, rg_id)
 
     async def patch(
-            self, obj_id: str, criterion_id: str, rg_id: str, /, body: RGUpdateInput
+        self, obj_id: str, criterion_id: str, rg_id: str, /, body: RGUpdateInput
     ) -> Union[r200[RGResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         RequirementGroup update
@@ -336,7 +339,12 @@ class ProfileCriteriaRGItemView(ProfileCriteriaMixin, BaseCriteriaRGItemViewMixi
         return await BaseCriteriaRGItemViewMixin.patch(self, obj_id, criterion_id, rg_id, body)
 
     async def delete(
-        self, obj_id: str, criterion_id: str, rg_id: str, /, access_token: Optional[str] = None,
+        self,
+        obj_id: str,
+        criterion_id: str,
+        rg_id: str,
+        /,
+        access_token: Optional[str] = None,
     ) -> Union[r200[SuccessResponse], r404[ErrorResponse]]:
         """
         Object criterion requirement group delete
@@ -357,7 +365,6 @@ class ProfileCriteriaRGItemView(ProfileCriteriaMixin, BaseCriteriaRGItemViewMixi
 
 
 class ProfileCriteriaRGRequirementView(ProfileCriteriaMixin, BaseCriteriaRGRequirementViewMixin, PydanticView):
-
     async def get_body_from_model(self):
         json = await self.request.json()
         body = None
@@ -386,7 +393,7 @@ class ProfileCriteriaRGRequirementView(ProfileCriteriaMixin, BaseCriteriaRGRequi
         return await BaseCriteriaRGRequirementViewMixin.get(self, obj_id, criterion_id, rg_id)
 
     async def post(
-            self, obj_id: str, criterion_id: str, rg_id: str, /, body: RequestProfileRequirementCreateInput
+        self, obj_id: str, criterion_id: str, rg_id: str, /, body: RequestProfileRequirementCreateInput
     ) -> Union[r201[RequirementResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         """
         Requirement create
@@ -412,7 +419,7 @@ class ProfileCriteriaRGRequirementItemView(ProfileCriteriaMixin, BaseCriteriaRGR
         validate_profile_requirements(data, category)
 
     async def get(
-            self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /
+        self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /
     ) -> Union[r200[RequirementResponse], r404[ErrorResponse]]:
         """
         Get a requirement
@@ -422,7 +429,7 @@ class ProfileCriteriaRGRequirementItemView(ProfileCriteriaMixin, BaseCriteriaRGR
         return await BaseCriteriaRGRequirementItemViewMixin.get(self, obj_id, criterion_id, rg_id, requirement_id)
 
     async def patch(
-            self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /, body: ProfileRequirementUpdateInput
+        self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /, body: ProfileRequirementUpdateInput
     ) -> Union[r200[RequirementResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Requirement update
@@ -430,10 +437,18 @@ class ProfileCriteriaRGRequirementItemView(ProfileCriteriaMixin, BaseCriteriaRGR
         Security: Basic: []
         Tags: Profile/Criteria/RequirementGroups/Requirements
         """
-        return await BaseCriteriaRGRequirementItemViewMixin.patch(self, obj_id, criterion_id, rg_id, requirement_id, body)
+        return await BaseCriteriaRGRequirementItemViewMixin.patch(
+            self, obj_id, criterion_id, rg_id, requirement_id, body
+        )
 
     async def delete(
-        self, obj_id: str, criterion_id: str, rg_id: str, requirement_id: str, /, access_token: Optional[str] = None,
+        self,
+        obj_id: str,
+        criterion_id: str,
+        rg_id: str,
+        requirement_id: str,
+        /,
+        access_token: Optional[str] = None,
     ) -> Union[r200[SuccessResponse], r404[ErrorResponse]]:
         """
         Object criterion requirement delete
@@ -458,4 +473,3 @@ class ProfileCriteriaRGRequirementItemView(ProfileCriteriaMixin, BaseCriteriaRGR
         )
 
         return {"result": "success"}
-

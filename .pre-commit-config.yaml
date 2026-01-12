@@ -1,0 +1,24 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: local
+    hooks:
+    - id: mypy
+      name: Validate types with MyPy
+      entry: uv run --active mypy
+      language: system
+      types: [ python ]
+      pass_filenames: false
+      args:
+        - "src"
+        - "--explicit-package-bases"
+    - id: ruff
+      name: Run Ruff Linter
+      entry: uv run --active ruff check --force-exclude --fix
+      language: python
+      types_or: [ python, pyi, jupyter ]
+    - id: ruff-format
+      name: Run Ruff Formatter
+      language: python
+      types_or: [ python, pyi, jupyter ]
+      entry: uv run --active ruff format --force-exclude

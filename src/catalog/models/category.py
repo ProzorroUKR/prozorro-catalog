@@ -1,16 +1,24 @@
 from datetime import datetime
-from typing import Optional, List
+from enum import Enum
+from typing import List, Optional
 from uuid import uuid4
 
 from pydantic import Field, field_validator
+
+from catalog.models.api import AuthorizedInput, CreateResponse, Input, Response
 from catalog.models.base import BaseModel
-from catalog.models.api import Input, AuthorizedInput, Response, CreateResponse
-from catalog.models.common import Classification, Image, CategoryMarketAdministrator, Unit, AGREEMENT_ID_REGEX, \
-    CLASSIFICATION_EXAMPLE, UNIT_EXAMPLE
+from catalog.models.common import (
+    AGREEMENT_ID_REGEX,
+    CLASSIFICATION_EXAMPLE,
+    UNIT_EXAMPLE,
+    CategoryMarketAdministrator,
+    Classification,
+    Image,
+    Unit,
+)
 from catalog.models.criteria import Criterion
 from catalog.models.tag import TagsMixin
 from catalog.utils import get_now
-from enum import Enum
 
 
 class CategoryStatus(str, Enum):
@@ -23,11 +31,19 @@ class BaseCategoryCreateData(TagsMixin, BaseModel):
     marketAdministrator: CategoryMarketAdministrator
     title: str = Field(..., min_length=1, max_length=80)
     unit: Unit
-    description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[CLASSIFICATION_EXAMPLE])
+    description: Optional[str] = Field(None, min_length=1, max_length=1000, json_schema_extra={"example": "string"})
+    additionalClassifications: Optional[List[Classification]] = Field(
+        None,
+        max_length=100,
+        json_schema_extra={"example": [CLASSIFICATION_EXAMPLE]},
+    )
     status: CategoryStatus = CategoryStatus.active
-    images: Optional[List[Image]] = Field(None, max_length=100, example=[{"url": "/image/1.jpg"}])
-    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example="string")
+    images: Optional[List[Image]] = Field(
+        None,
+        max_length=100,
+        json_schema_extra={"example": [{"url": "/image/1.jpg"}]},
+    )
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, json_schema_extra={"example": "string"})
 
     @property
     def criteria(self):
@@ -44,46 +60,56 @@ class DeprecatedCategoryCreateData(BaseCategoryCreateData):
     """
     Deprecated soon the Catalog Category Create Data with required id and creation via PUT method
     """
+
     id: str = Field(..., pattern=r"^[0-9A-Za-z_-]{20,32}$")
 
-    @field_validator('id')
+    @field_validator("id")
     def id_format(cls, v, values, **kwargs):
         """
         instead of generating id, we ask user to pass through all these validations
         """
         if "classification" in values.data and values.data["classification"].id[:8] not in v:
-            raise ValueError('id must include cpv')
+            raise ValueError("id must include cpv")
         if "marketAdministrator" in values.data and values.data["marketAdministrator"].identifier.id not in v:
-            raise ValueError('id must include edr')
+            raise ValueError("id must include edr")
         return v
 
 
 class CategoryUpdateData(TagsMixin, BaseModel):
-    title: Optional[str] = Field(None, min_length=1, max_length=80, example="string")
-    unit: Optional[Unit] = Field(None, example=UNIT_EXAMPLE)
-    description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
-    status: Optional[CategoryStatus] = Field(None, example=CategoryStatus.active)
-    images: Optional[List[Image]] = Field(None, max_length=100, example=[{"url": "/image/1.jpg"}])
-    additionalClassifications: Optional[List[Classification]] = Field(None, max_length=100, example=[])
-    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example="string")
+    title: Optional[str] = Field(None, min_length=1, max_length=80, json_schema_extra={"example": "string"})
+    unit: Optional[Unit] = Field(None, json_schema_extra={"example": UNIT_EXAMPLE})
+    description: Optional[str] = Field(None, min_length=1, max_length=1000, json_schema_extra={"example": "string"})
+    status: Optional[CategoryStatus] = Field(None, json_schema_extra={"example": CategoryStatus.active})
+    images: Optional[List[Image]] = Field(
+        None,
+        max_length=100,
+        json_schema_extra={"example": [{"url": "/image/1.jpg"}]},
+    )
+    additionalClassifications: Optional[List[Classification]] = Field(
+        None,
+        max_length=100,
+        json_schema_extra={"example": []},
+    )
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, json_schema_extra={"example": "string"})
 
 
 class Category(TagsMixin, BaseModel):
     """
     The Catalog Profile
     """
+
     classification: Classification
     marketAdministrator: CategoryMarketAdministrator
     id: str = Field(..., pattern=r"^[0-9A-Za-z_-]{20,32}$")
-    title: Optional[str] = Field(..., min_length=1, max_length=80, example="title")
+    title: Optional[str] = Field(..., min_length=1, max_length=80, json_schema_extra={"example": "title"})
     unit: Unit
-    description: Optional[str] = Field(..., min_length=1, max_length=1000, example="description")
+    description: Optional[str] = Field(..., min_length=1, max_length=1000, json_schema_extra={"example": "description"})
     additionalClassifications: Optional[List[Classification]] = Field(..., max_length=100)
     status: CategoryStatus = CategoryStatus.active
     images: Optional[List[Image]] = Field(..., max_length=100)
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     criteria: List[Criterion] = Field(...)
-    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, example="string")
+    agreementID: Optional[str] = Field(None, pattern=AGREEMENT_ID_REGEX, json_schema_extra={"example": "string"})
     owner: str
 
 

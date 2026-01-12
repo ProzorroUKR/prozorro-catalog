@@ -1,20 +1,20 @@
 import logging
-from typing import Optional
 from copy import deepcopy
+from typing import Optional
 
-from aiohttp.web import HTTPFound, HTTPNotFound
+from aiohttp.web import HTTPFound, HTTPNotFound, Request
 
-from catalog.utils import get_now, get_revision_changes
-from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput
-from catalog.serializers.document import DocumentSerializer
 from catalog.doc_service import get_doc_download_url, get_ds_id_from_api_url
-
+from catalog.models.document import DocumentPatchInput, DocumentPostInput, DocumentPutInput
+from catalog.serializers.document import DocumentSerializer
+from catalog.utils import get_now, get_revision_changes
 
 logger = logging.getLogger(__name__)
 
 
 class BaseDocumentMixin:
     parent_obj_name = None
+    request: Request
 
     @classmethod
     async def get_parent_obj(cls, parent_obj_id, child_obj_id=None):
@@ -30,19 +30,17 @@ class BaseDocumentMixin:
 
 
 class BaseDocumentView(BaseDocumentMixin):
-
     async def get(self, parent_obj_id: str, child_obj_id: Optional[str] = None):
         obj = await self.get_parent_obj(parent_obj_id, child_obj_id)
         return {"data": [DocumentSerializer(d).data for d in obj.get("documents", "")]}
 
     async def post(self, parent_obj_id: str, body: DocumentPostInput, child_obj_id: Optional[str] = None):
-
         data = body.data.dict_without_none()
 
         async with self.read_and_update_object(parent_obj_id, child_obj_id) as parent_obj:
             old_parent_obj = deepcopy(parent_obj)
             await self.validate_data(self.request, body, parent_obj, parent_obj_id)
-            parent_obj['dateModified'] = data['datePublished'] = data['dateModified'] = get_now().isoformat()
+            parent_obj["dateModified"] = data["datePublished"] = data["dateModified"] = get_now().isoformat()
             if "documents" not in parent_obj:
                 parent_obj["documents"] = []
             parent_obj["documents"].append(data)
@@ -60,7 +58,6 @@ class BaseDocumentView(BaseDocumentMixin):
 
 
 class BaseDocumentItemView(BaseDocumentMixin):
-
     async def get(self, parent_obj_id: str, doc_id: str, child_obj_id: Optional[str] = None):
         obj = await self.get_parent_obj(parent_obj_id, child_obj_id)
         request_ds_id = self.request.query.get("download")
@@ -104,7 +101,9 @@ class BaseDocumentItemView(BaseDocumentMixin):
 
         return {"data": DocumentSerializer(data).data}
 
-    async def patch(self, parent_obj_id: str, doc_id: str, body: DocumentPatchInput, child_obj_id: Optional[str] = None):
+    async def patch(
+        self, parent_obj_id: str, doc_id: str, body: DocumentPatchInput, child_obj_id: Optional[str] = None
+    ):
         # validate_accreditation(request, "category")
         async with self.read_and_update_object(parent_obj_id, child_obj_id) as parent_obj:
             await self.validate_data(self.request, body, parent_obj, parent_obj_id)
@@ -117,7 +116,7 @@ class BaseDocumentItemView(BaseDocumentMixin):
                     initial = dict(d)
                     d.update(data)
                     if initial != d:
-                        parent_obj['dateModified'] = d['dateModified'] = get_now().isoformat()
+                        parent_obj["dateModified"] = d["dateModified"] = get_now().isoformat()
                     break
             else:
                 raise HTTPNotFound(text="Document not found")

@@ -1,19 +1,18 @@
 import asyncio
-
 import logging
-import sentry_sdk
 
+import sentry_sdk
 from pymongo import UpdateOne
 
 from catalog.db import (
+    get_products_collection,
     init_mongo,
     transaction_context_manager,
-    get_products_collection,
 )
-from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
-from catalog.utils import get_now
 from catalog.logging import setup_logging
+from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
 from catalog.settings import SENTRY_DSN
+from catalog.utils import get_now
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ LOCALIZATION_CATEGORIES_FIELDS_MAPPING = {
     ("95aa601b17ce4d86a5403ae8aa5e47b5", "7e969806129c48a5a91d51418a03ef3e", "c31a9345bc6644db8e2ef5a690478b01"): {
         "classification.id": "18100000-0",
         "classification.description": "Формений одяг, спеціальний робочий одяг та аксесуари",
-    }
+    },
 }
 
 
@@ -95,5 +94,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

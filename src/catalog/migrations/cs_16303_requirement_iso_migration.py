@@ -1,15 +1,15 @@
 import asyncio
 import logging
-import sentry_sdk
-
 from copy import deepcopy
+
+import sentry_sdk
 from pymongo import UpdateOne
 
 from catalog.db import (
     get_category_collection,
+    get_products_collection,
     init_mongo,
     transaction_context_manager,
-    get_products_collection,
 )
 from catalog.logging import setup_logging
 from catalog.settings import SENTRY_DSN
@@ -99,8 +99,7 @@ async def migrate_categories(session):
             now = get_now().isoformat()
             bulk.append(
                 UpdateOne(
-                    filter={"_id": obj["_id"]},
-                    update={"$set": {"criteria": updated_criteria, "dateModified": now}}
+                    filter={"_id": obj["_id"]}, update={"$set": {"criteria": updated_criteria, "dateModified": now}}
                 )
             )
 
@@ -135,8 +134,7 @@ async def migrate_products(session):
     bulk = []
     counter = 0
     async for product in collection.find(
-            {"relatedCategory": {"$in": CATEGORY_IDS}},
-            projection={"_id": 1, "requirementResponses": 1}
+        {"relatedCategory": {"$in": CATEGORY_IDS}}, projection={"_id": 1, "requirementResponses": 1}
     ):
         if updated_rr := update_requirement_responses(product["requirementResponses"]):
             counter += 1
@@ -144,7 +142,7 @@ async def migrate_products(session):
             bulk.append(
                 UpdateOne(
                     filter={"_id": product["_id"]},
-                    update={"$set": {"requirementResponses": updated_rr, "dateModified": now}}
+                    update={"$set": {"requirementResponses": updated_rr, "dateModified": now}},
                 )
             )
 
@@ -183,5 +181,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

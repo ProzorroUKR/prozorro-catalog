@@ -1,12 +1,13 @@
 from datetime import datetime
-from typing import Optional, List
-from pydantic import EmailStr, Field, field_validator
 from enum import Enum
+from typing import List, Optional
 
-from catalog.models.ban import Ban, BAN_EXAMPLE
+from pydantic import EmailStr, Field, field_validator
+
+from catalog.models.api import AuthorizedInput, CreateResponse, Input, Response
+from catalog.models.ban import BAN_EXAMPLE, Ban
 from catalog.models.base import BaseModel
-from catalog.models.api import Input, Response, CreateResponse, AuthorizedInput
-from catalog.models.common import Identifier, Organization, ContactPoint, Address, ORA_CODES
+from catalog.models.common import ORA_CODES, Address, ContactPoint, Identifier, Organization
 from catalog.models.document import Document, DocumentSign
 
 
@@ -15,13 +16,13 @@ class VendorContactPoint(ContactPoint):
 
 
 class PostVendorAddress(Address):
-    locality: Optional[str] = Field(None, min_length=1, max_length=80, example="string")
-    postalCode: Optional[str] = Field(None, min_length=1, max_length=20, example="string")
-    streetAddress: Optional[str] = Field(None, min_length=1, max_length=250, example="string")
+    locality: Optional[str] = Field(None, min_length=1, max_length=80, json_schema_extra={"example": "string"})
+    postalCode: Optional[str] = Field(None, min_length=1, max_length=20, json_schema_extra={"example": "string"})
+    streetAddress: Optional[str] = Field(None, min_length=1, max_length=250, json_schema_extra={"example": "string"})
 
 
 class VendorAddress(PostVendorAddress):
-    region: Optional[str] = Field(None, min_length=1, max_length=80, example="string")
+    region: Optional[str] = Field(None, min_length=1, max_length=80, json_schema_extra={"example": "string"})
 
 
 class VendorIdentifier(Identifier):
@@ -47,9 +48,9 @@ class VendorPostData(BaseModel):
 
 
 class VendorPatchData(BaseModel):
-    isActivated: Optional[bool] = Field(None, example=True)
+    isActivated: Optional[bool] = Field(None, json_schema_extra={"example": True})
 
-    @field_validator('isActivated')
+    @field_validator("isActivated")
     def activation_only(cls, v, values, **kwargs):
         assert v is True, "activation is only allowed action"
         return v
@@ -70,7 +71,7 @@ class Vendor(VendorPostData):
     owner: str
     status: VendorStatus = VendorStatus.pending
     documents: List[Document]
-    bans: Optional[List[Ban]] = Field(None, example=[BAN_EXAMPLE])
+    bans: Optional[List[Ban]] = Field(None, json_schema_extra={"example": [BAN_EXAMPLE]})
 
 
 class VendorSign(VendorPostData):

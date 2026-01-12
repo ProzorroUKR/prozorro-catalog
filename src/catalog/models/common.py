@@ -1,15 +1,15 @@
+import re
 from datetime import datetime
-from typing import Optional, Union, Annotated
+from enum import Enum
+from typing import Optional, Union
 from uuid import uuid4
 
-from pydantic import Field, field_validator, AnyUrl, model_validator
-from catalog.models.base import BaseModel
-from catalog.models.api import Response
-from catalog.settings import IMG_PATH
-from enum import Enum
 import standards
-import re
+from pydantic import AnyUrl, Field, field_validator, model_validator
 
+from catalog.models.api import Response
+from catalog.models.base import BaseModel
+from catalog.settings import IMG_PATH
 
 UNIT_CODES_DATA = standards.load("unit_codes/recommended.json")
 UA_REGIONS = standards.load("classifiers/ua_regions.json")
@@ -63,11 +63,12 @@ class Unit(BaseModel):
         if values.code not in UNIT_CODES:
             raise ValueError("code must be one of unit_codes/recommended.json keys")
         if values.name != UNIT_CODES_DATA[values.code]["name_uk"]:
-            raise ValueError(f'name must be from unit_codes/recommended.json for {values.code}')
+            raise ValueError(f"name must be from unit_codes/recommended.json for {values.code}")
         return values
 
 
 UNIT_EXAMPLE = Unit(code="H87", name="штука").model_dump()
+
 
 class Value(BaseModel):
     amount: Union[float, int]
@@ -76,9 +77,19 @@ class Value(BaseModel):
 
 
 class Period(BaseModel):
-    durationInDays: Optional[int] = Field(None, example=1)
-    startDate: Optional[datetime] = Field(None, example=datetime(2020, 1, 1).isoformat())
-    endDate: Optional[datetime] = Field(None, example=datetime(2020, 1, 1).isoformat())
+    durationInDays: Optional[int] = Field(None, json_schema_extra={"example": 1})
+    startDate: Optional[datetime] = Field(
+        None,
+        json_schema_extra={
+            "example": datetime(2020, 1, 1).isoformat(),
+        },
+    )
+    endDate: Optional[datetime] = Field(
+        None,
+        json_schema_extra={
+            "example": datetime(2020, 1, 1).isoformat(),
+        },
+    )
 
 
 PERIOD_EXAMPLE = Period(startDate="2020-01-01", endDate="2020-12-31").model_dump(exclude_none=True)
@@ -86,8 +97,12 @@ PERIOD_EXAMPLE = Period(startDate="2020-01-01", endDate="2020-12-31").model_dump
 
 class BaseImage(BaseModel):
     url: AnyUrl
-    size: Optional[int] = Field(None, example=100)
-    hash: Optional[str] = Field(None, pattern=r"^md5:[0-9a-z]{32}$", example=f"md5:{uuid4().hex}")
+    size: Optional[int] = Field(None, json_schema_extra={"example": 100})
+    hash: Optional[str] = Field(
+        None,
+        pattern=r"^md5:[0-9a-z]{32}$",
+        json_schema_extra={"example": f"md5:{uuid4().hex}"},
+    )
 
 
 ImageResponse = Response[BaseImage]
@@ -95,12 +110,16 @@ ImageResponse = Response[BaseImage]
 
 class Image(BaseModel):
     url: str = Field(..., min_length=1)
-    sizes: Optional[str] = Field(None, pattern=r"^[0-9]{2,4}x[0-9]{2,4}$", example="string")
-    title: Optional[str] = Field(None, min_length=1, max_length=250, example="string")
-    format: Optional[str] = Field(None, pattern=r"^image/[a-z]{2,10}$", example="image/immage1")
-    hash: Optional[str] = Field(None, pattern=r"^md5:[0-9a-f]{32}$", example=f"md5:{uuid4().hex}")
+    sizes: Optional[str] = Field(None, pattern=r"^[0-9]{2,4}x[0-9]{2,4}$", json_schema_extra={"example": "string"})
+    title: Optional[str] = Field(None, min_length=1, max_length=250, json_schema_extra={"example": "string"})
+    format: Optional[str] = Field(None, pattern=r"^image/[a-z]{2,10}$", json_schema_extra={"example": "image/immage1"})
+    hash: Optional[str] = Field(
+        None,
+        pattern=r"^md5:[0-9a-f]{32}$",
+        json_schema_extra={"example": f"md5:{uuid4().hex}"},
+    )
 
-    @field_validator('url')
+    @field_validator("url")
     def valid_url(cls, v):
         if not v.startswith(IMG_PATH):
             raise ValueError(f"Invalid url, should start with {IMG_PATH}")
@@ -113,11 +132,7 @@ class Classification(BaseModel):
     scheme: str = Field(..., min_length=1, max_length=10)
 
 
-CLASSIFICATION_EXAMPLE = Classification(
-    description="description",
-    id="33190000-8",
-    scheme="ДК021"
-).model_dump()
+CLASSIFICATION_EXAMPLE = Classification(description="description", id="33190000-8", scheme="ДК021").model_dump()
 
 
 class Address(BaseModel):
@@ -127,14 +142,14 @@ class Address(BaseModel):
     region: str = Field(..., min_length=1, max_length=80)
     streetAddress: str = Field(..., min_length=1, max_length=250)
 
-    @field_validator('region')
+    @field_validator("region")
     def region_standard(cls, v, values):
         country_name = values.data.get("countryName")
         if country_name == UKRAINE_COUNTRY_NAME_UK and v not in UA_REGIONS:
             raise ValueError("must be one of classifiers/ua_regions.json")
         return v
 
-    @field_validator('countryName')
+    @field_validator("countryName")
     def country_standard(cls, v):
         if v not in COUNTRY_NAMES_UK:
             raise ValueError("must be one of classifiers/countries.json")
@@ -142,16 +157,16 @@ class Address(BaseModel):
 
 
 class OfferSuppliersAddress(Address):
-    locality: Optional[str] = Field(None, max_length=80, example="string")
+    locality: Optional[str] = Field(None, max_length=80, json_schema_extra={"example": "string"})
 
 
 class OfferDeliveryAddress(Address):  # only countryName is required
-    locality: Optional[str] = Field(None, max_length=80, example="string")
-    postalCode: Optional[str] = Field(None, max_length=20, example="string")
-    region: Optional[str] = Field(None, max_length=80, example="string")
-    streetAddress: Optional[str] = Field(None, max_length=250, example="string")
+    locality: Optional[str] = Field(None, max_length=80, json_schema_extra={"example": "string"})
+    postalCode: Optional[str] = Field(None, max_length=20, json_schema_extra={"example": "string"})
+    region: Optional[str] = Field(None, max_length=80, json_schema_extra={"example": "string"})
+    streetAddress: Optional[str] = Field(None, max_length=250, json_schema_extra={"example": "string"})
 
-    @field_validator('region')
+    @field_validator("region")
     def region_for_ukraine_only(cls, v, values):
         country_name = values.data.get("countryName")
         if country_name != UKRAINE_COUNTRY_NAME_UK and v:
@@ -162,11 +177,11 @@ class OfferDeliveryAddress(Address):  # only countryName is required
 class ContactPoint(BaseModel):
     name: str = Field(..., min_length=1, max_length=250)
     telephone: str = Field(..., max_length=250)
-    url: Optional[str] = Field(None, max_length=250, example="string")
-    email: Optional[str] = Field(None, max_length=250, example="string")
-    faxNumber: Optional[str] = Field(None, max_length=250, example="string")
+    url: Optional[str] = Field(None, max_length=250, json_schema_extra={"example": "string"})
+    email: Optional[str] = Field(None, max_length=250, json_schema_extra={"example": "string"})
+    faxNumber: Optional[str] = Field(None, max_length=250, json_schema_extra={"example": "string"})
 
-    @field_validator('telephone')
+    @field_validator("telephone")
     def telephone_format(cls, v):
         if not re.match(r"^(\+)?[0-9]{2,}(,( )?(\+)?[0-9]{2,})*$", v):
             raise ValueError("Invalid phone format")
@@ -218,7 +233,7 @@ class CategoryAdministratorIdentifier(BaseAdministratorIdentifier):
 class MarketAdministrator(BaseModel):
     identifier: MarketAdministratorIdentifier
 
-    @field_validator('identifier')
+    @field_validator("identifier")
     def entity_is_market_administrator(cls, value):
         identifier = value.id
         if identifier not in ADMINISTRATOR_IDENTIFIERS:
@@ -231,4 +246,4 @@ class CategoryMarketAdministrator(MarketAdministrator, ProcuringEntity):
 
 
 class SuccessResponse(BaseModel):
-    result: str = Field(..., example="success")
+    result: str = Field(..., json_schema_extra={"example": "success"})

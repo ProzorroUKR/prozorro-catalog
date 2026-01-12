@@ -1,32 +1,31 @@
 from datetime import datetime
-from typing import Optional, List, Union
+from typing import List, Optional, Union
 from uuid import uuid4
 
+import standards
 from pydantic import Field, field_validator
 
+from catalog.models.api import Input, ListResponse, Response
 from catalog.models.base import BaseModel
-from catalog.models.api import Input, Response, ListResponse
 from catalog.models.common import MarketAdministrator, MarketAdministratorIdentifier
-from catalog.models.document import DocumentPostData, Document, DOCUMENT_EXAMPLE
+from catalog.models.document import DOCUMENT_EXAMPLE, Document, DocumentPostData
 from catalog.settings import TIMEZONE
 from catalog.utils import get_now
-import standards
-
 
 BAN_REASONS = standards.load("market/ban_reason.json")
 
 
 class BaseBanPostData(BaseModel):
     reason: str
-    description: Optional[str] = Field(None, min_length=1, max_length=500, example="description")
+    description: Optional[str] = Field(None, min_length=1, max_length=500, json_schema_extra={"example": "description"})
     administrator: MarketAdministrator
-    documents: Optional[List[DocumentPostData]] = Field(None, example=[DOCUMENT_EXAMPLE])
+    documents: Optional[List[DocumentPostData]] = Field(None, json_schema_extra={"example": [DOCUMENT_EXAMPLE]})
 
     @property
     def id(self):
         return uuid4().hex
 
-    @field_validator('reason')
+    @field_validator("reason")
     def reason_standard(cls, v):
         if v not in BAN_REASONS:
             raise ValueError("must be one of market/ban_reason.json keys")
@@ -34,9 +33,9 @@ class BaseBanPostData(BaseModel):
 
 
 class ContributorBanPostData(BaseBanPostData):
-    dueDate: Optional[datetime] = Field(None, example=get_now().isoformat())
+    dueDate: Optional[datetime] = Field(None, json_schema_extra={"example": get_now().isoformat()})
 
-    @field_validator('dueDate')
+    @field_validator("dueDate")
     def validate_date(cls, v):
         if v and isinstance(v, datetime):
             if not v.tzinfo:
@@ -49,13 +48,13 @@ class ContributorBanPostData(BaseBanPostData):
 class Ban(BaseModel):
     id: str = Field(..., min_length=32, max_length=32)
     reason: str
-    description: Optional[str] = Field(None, min_length=1, max_length=500, example="description")
-    dueDate: Optional[datetime] = Field(None, example=get_now().isoformat())
+    description: Optional[str] = Field(None, min_length=1, max_length=500, json_schema_extra={"example": "description"})
+    dueDate: Optional[datetime] = Field(None, json_schema_extra={"example": get_now().isoformat()})
     administrator: MarketAdministrator
     dateCreated: datetime
     dateModified: datetime
     owner: str
-    documents: Optional[List[Document]] = Field(None, example=[DOCUMENT_EXAMPLE])
+    documents: Optional[List[Document]] = Field(None, json_schema_extra={"example": [DOCUMENT_EXAMPLE]})
 
 
 BAN_EXAMPLE = Ban(
@@ -65,8 +64,8 @@ BAN_EXAMPLE = Ban(
         identifier=MarketAdministratorIdentifier(
             id="42574629",
             scheme="UA-EDR",
-            legalName_en="STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
-            legalName_uk="ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
+            legalName_en='STATE ENTERPRISE "MEDICAL PROCUREMENT OF UKRAINE"',
+            legalName_uk='ДЕРЖАВНЕ ПІДПРИЄМСТВО "МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ"',
         )
     ),
     dateCreated=datetime.now().isoformat(),

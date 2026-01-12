@@ -1,19 +1,16 @@
-from dataclasses import dataclass
-from uuid import UUID
 import asyncio
 import logging
 import re
-
-from pymongo.errors import PyMongoError
-from pymongo import UpdateOne
+from dataclasses import dataclass
 
 import sentry_sdk
+from pymongo import UpdateOne
+from pymongo.errors import PyMongoError
 
-from catalog.db import get_profiles_collection, get_products_collection, init_mongo, transaction_context_manager
+from catalog.db import get_products_collection, get_profiles_collection, init_mongo, transaction_context_manager
 from catalog.logging import setup_logging
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
-
 
 logger = logging.getLogger(__name__)
 
@@ -29,15 +26,9 @@ class Counters:
     deleted_responses: int = 0
 
     def __post_init__(self):
-        self.total_products = self.total_products or (
-            self.updated_products +
-            self.skipped_products
-        )
+        self.total_products = self.total_products or (self.updated_products + self.skipped_products)
 
-        self.total_responses = self.total_responses or (
-            self.updated_responses +
-            self.deleted_responses
-        )
+        self.total_responses = self.total_responses or (self.updated_responses + self.deleted_responses)
 
     def __add__(self, other):
         return Counters(
@@ -76,9 +67,7 @@ async def migrate_products(profile_id: str):
     products_collection = get_products_collection()
     async with transaction_context_manager() as session:
         profile = await get_profiles_collection().find_one(
-            {"_id": profile_id},
-            projection={"criteria": 1},
-            session=session
+            {"_id": profile_id}, projection={"criteria": 1}, session=session
         )
         titles_map = {
             r["id"]: r["title"]
@@ -91,15 +80,13 @@ async def migrate_products(profile_id: str):
             now = get_now().isoformat()
             # then update products
             bulk = []
-            async for p in products_collection.find(query,
-                                                    projection={"requirementResponses": 1},
-                                                    session=session):
+            async for p in products_collection.find(query, projection={"requirementResponses": 1}, session=session):
                 new_responses = get_new_responses(counters, titles_map, p)
                 if new_responses is not None:
                     bulk.append(
                         UpdateOne(
                             filter={"_id": p["_id"]},
-                            update={"$set": {"requirementResponses": new_responses, "dateModified": now}}
+                            update={"$set": {"requirementResponses": new_responses, "dateModified": now}},
                         )
                     )
                     counters.updated_products += 1
@@ -152,5 +139,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

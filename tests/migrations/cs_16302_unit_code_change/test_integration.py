@@ -2,27 +2,27 @@ from copy import deepcopy
 from uuid import uuid4
 
 from catalog.migrations.cs_16302_update_unit_code_for_specific_owner import (
+    NEW_UNIT_DATA,
     OWNER,
     PREVIOUS_UNIT_CODE,
     migrate,
-    NEW_UNIT_DATA,
 )
-from tests.integration.conftest import db, get_fixture_json
+from tests.utils import get_fixture_json
 
 
 async def test_migrate_unit_for_specific_owner(db):
-    category = deepcopy(get_fixture_json('category'))
+    category = deepcopy(get_fixture_json("category"))
     category["unit"]["code"] = PREVIOUS_UNIT_CODE
     category["access"] = {"owner": OWNER}
     category["_id"] = uuid4().hex
     await db.category.insert_one(category)
 
-    category_another_unit = deepcopy(get_fixture_json('category'))
+    category_another_unit = deepcopy(get_fixture_json("category"))
     category_another_unit["access"] = {"owner": OWNER}
     category_another_unit["_id"] = uuid4().hex
     await db.category.insert_one(category_another_unit)
 
-    category_another_owner = deepcopy(get_fixture_json('category'))
+    category_another_owner = deepcopy(get_fixture_json("category"))
     category_another_owner["unit"]["code"] = PREVIOUS_UNIT_CODE
     category_another_owner["_id"] = uuid4().hex
     await db.category.insert_one(category_another_owner)
@@ -33,13 +33,13 @@ async def test_migrate_unit_for_specific_owner(db):
     profile["access"] = {"owner": OWNER}
     await db.profiles.insert_one(profile)
 
-    profile_another_unit = deepcopy(get_fixture_json('profile'))
+    profile_another_unit = deepcopy(get_fixture_json("profile"))
     profile_another_unit["access"] = {"owner": OWNER}
     profile_another_unit["unit"] = {"code": "PK"}
     profile_another_unit["_id"] = uuid4().hex
     await db.profiles.insert_one(profile_another_unit)
 
-    profile_another_owner = deepcopy(get_fixture_json('profile'))
+    profile_another_owner = deepcopy(get_fixture_json("profile"))
     profile_another_owner["unit"] = {"code": PREVIOUS_UNIT_CODE}
     profile_another_owner["_id"] = uuid4().hex
     await db.profiles.insert_one(profile_another_owner)

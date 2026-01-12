@@ -4,11 +4,7 @@ from uuid import uuid4
 
 from catalog.utils import get_now
 from cron.activate_banned_vendors import run_task
-from tests.integration.conftest import (
-    get_fixture_json,
-    api,
-    db,
-)
+from tests.utils import get_fixture_json
 
 
 async def test_migrate_vendors(db, api):
@@ -25,18 +21,13 @@ async def test_migrate_vendors(db, api):
     vendor_with_one_ban = deepcopy(vendor_without_bans)
     vendor_with_one_ban["_id"] = vendor_with_one_ban["vendor"]["identifier"]["id"] = uuid4().hex
     vendor_with_one_ban["status"] = "banned"
-    vendor_with_one_ban["bans"] = [
-        active_ban
-    ]
+    vendor_with_one_ban["bans"] = [active_ban]
 
     await db.vendors.insert_one(vendor_with_one_ban)
 
     vendor_with_two_ban = deepcopy(vendor_with_one_ban)
     vendor_with_two_ban["_id"] = vendor_with_two_ban["vendor"]["identifier"]["id"] = uuid4().hex
-    vendor_with_two_ban["bans"] = [
-        terminated_ban,
-        active_ban
-    ]
+    vendor_with_two_ban["bans"] = [terminated_ban, active_ban]
 
     await db.vendors.insert_one(vendor_with_two_ban)
 

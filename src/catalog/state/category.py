@@ -1,35 +1,30 @@
 from aiohttp.web import HTTPBadRequest
 from pymongo import UpdateOne
 
-from catalog.state.base import BaseState
 from catalog.context import get_now
 from catalog.db import get_profiles_collection, validate_tags_exist
-from catalog.validations import validate_medicine_additional_classifications, validate_agreement
+from catalog.state.base import BaseState
 from catalog.utils import get_now as get_fresh_now
+from catalog.validations import validate_agreement, validate_medicine_additional_classifications
 
 
 class CategoryState(BaseState):
-
     @classmethod
     async def on_put(cls, data):
         if "agreementID" in data:
             await validate_agreement(data)
         await validate_medicine_additional_classifications(data)
         await validate_tags_exist(data.get("tags", []))
-        data['dateModified'] = get_now().isoformat()
+        data["dateModified"] = get_now().isoformat()
         super().on_post(data)
 
     @classmethod
     async def on_patch(cls, before, after):
         if before != after:
-            if (
-                before.get("unit")
-                and after.get("unit")
-                and before["unit"] != after["unit"]
-            ):
+            if before.get("unit") and after.get("unit") and before["unit"] != after["unit"]:
                 raise HTTPBadRequest(text="Forbidden to update an existing unit")
 
-            after['dateModified'] = get_now().isoformat()
+            after["dateModified"] = get_now().isoformat()
 
             if before.get("agreementID", "") != after.get("agreementID", ""):
                 await validate_agreement(after)
@@ -51,11 +46,9 @@ class CategoryState(BaseState):
             bulk.append(
                 UpdateOne(
                     filter={"_id": profile["_id"], "agreementID": before.get("agreementID")},
-                    update={"$set": {
-                        "agreementID": agreement_id, "dateModified": get_fresh_now().isoformat()}
-                    }
+                    update={"$set": {"agreementID": agreement_id, "dateModified": get_fresh_now().isoformat()}},
                 )
             )
 
         if bulk:
-            result = await profiles_collection.bulk_write(bulk)
+            await profiles_collection.bulk_write(bulk)

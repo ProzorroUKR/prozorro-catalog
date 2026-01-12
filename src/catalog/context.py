@@ -1,12 +1,11 @@
 from contextvars import ContextVar
-from catalog.settings import TIMEZONE
 from datetime import datetime
 
-from catalog.utils import get_session_time
+from catalog.settings import TIMEZONE
 
-request_var = ContextVar('request_var')
-now_var = ContextVar('now_var')
-session_var = ContextVar('session', default=None)
+request_var = ContextVar("request_var")
+now_var = ContextVar("now_var")
+session_var = ContextVar("session", default=None)
 
 
 def get_request():
@@ -15,7 +14,7 @@ def get_request():
 
 def get_request_scheme():
     request = get_request()
-    return request.headers.get('X-Forwarded-Proto', request.scheme)
+    return request.headers.get("X-Forwarded-Proto", request.scheme)
 
 
 def set_request(request):

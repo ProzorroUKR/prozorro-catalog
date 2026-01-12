@@ -1,72 +1,74 @@
+import logging
+
+import sentry_sdk
 from aiohttp import web
 from aiohttp_pydantic import oas
+from sentry_sdk.integrations.aiohttp import AioHttpIntegration
+
 from catalog import version
-from catalog.handlers.crowd_sourcing.contributor import ContributorView, ContributorItemView
-from catalog.handlers.crowd_sourcing.contributor_ban import ContributorBanView, ContributorBanItemView
-from catalog.handlers.crowd_sourcing.contributor_ban_document import (
-    ContributorBanDocumentView,
-    ContributorBanDocumentItemView,
-)
-from catalog.handlers.crowd_sourcing.contributor_document import ContributorDocumentView, ContributorDocumentItemView
-from catalog.handlers.crowd_sourcing.product_request import (
-    ProductRequestView,
-    ContributorProductRequestView,
-    ProductRequestAcceptionView,
-    ProductRequestRejectionView,
-    ProductRequestItemView,
-)
-from catalog.handlers.crowd_sourcing.product_request_document import (
-    ProductRequestDocumentView,
-    ProductRequestDocumentItemView,
-)
-from catalog.handlers.tags import TagView, TagItemView
-from catalog.handlers.vendor_ban import VendorBanView, VendorBanItemView
-from catalog.handlers.vendor_ban_document import VendorBanDocumentView, VendorBanDocumentItemView
-from catalog.middleware import (
-    convert_response_to_json,
-    error_middleware,
-    request_id_middleware,
-    login_middleware,
-    context_middleware,
-    db_session_middleware,
-)
-from catalog.db import init_mongo, cleanup_db_client
-from catalog.logging import AccessLogger, setup_logging
-from catalog.handlers.general import get_version, ping_handler
-from catalog.handlers.profile import (
-    ProfileView,
-    ProfileItemView,
-    ProfileCriteriaView,
-    ProfileCriteriaItemView,
-    ProfileCriteriaRGView,
-    ProfileCriteriaRGItemView,
-    ProfileCriteriaRGRequirementView,
-    ProfileCriteriaRGRequirementItemView,
-)
+from catalog.db import cleanup_db_client, init_mongo
 from catalog.handlers.category import (
-    CategoryView,
-    CategoryItemView,
-    CategoryCriteriaView,
-    CategoryCriteriaRGView,
-    CategoryCriteriaRGRequirementView,
     CategoryCriteriaItemView,
     CategoryCriteriaRGItemView,
     CategoryCriteriaRGRequirementItemView,
+    CategoryCriteriaRGRequirementView,
+    CategoryCriteriaRGView,
+    CategoryCriteriaView,
+    CategoryItemView,
+    CategoryView,
 )
-from catalog.handlers.product import ProductView, ProductItemView
-from catalog.handlers.product_document import ProductDocumentView, ProductDocumentItemView
-from catalog.handlers.offer import OfferView, OfferItemView
+from catalog.handlers.crowd_sourcing.contributor import ContributorItemView, ContributorView
+from catalog.handlers.crowd_sourcing.contributor_ban import ContributorBanItemView, ContributorBanView
+from catalog.handlers.crowd_sourcing.contributor_ban_document import (
+    ContributorBanDocumentItemView,
+    ContributorBanDocumentView,
+)
+from catalog.handlers.crowd_sourcing.contributor_document import ContributorDocumentItemView, ContributorDocumentView
+from catalog.handlers.crowd_sourcing.product_request import (
+    ContributorProductRequestView,
+    ProductRequestAcceptionView,
+    ProductRequestItemView,
+    ProductRequestRejectionView,
+    ProductRequestView,
+)
+from catalog.handlers.crowd_sourcing.product_request_document import (
+    ProductRequestDocumentItemView,
+    ProductRequestDocumentView,
+)
+from catalog.handlers.general import get_version, ping_handler
 from catalog.handlers.image import ImageView
+from catalog.handlers.offer import OfferItemView, OfferView
+from catalog.handlers.product import ProductItemView, ProductView
+from catalog.handlers.product_document import ProductDocumentItemView, ProductDocumentView
+from catalog.handlers.profile import (
+    ProfileCriteriaItemView,
+    ProfileCriteriaRGItemView,
+    ProfileCriteriaRGRequirementItemView,
+    ProfileCriteriaRGRequirementView,
+    ProfileCriteriaRGView,
+    ProfileCriteriaView,
+    ProfileItemView,
+    ProfileView,
+)
 from catalog.handlers.search import SearchView
-from catalog.handlers.vendor import VendorView, VendorItemView, VendorSignItemView
-from catalog.handlers.vendor_document import VendorDocumentView, VendorDocumentItemView
+from catalog.handlers.tags import TagItemView, TagView
+from catalog.handlers.vendor import VendorItemView, VendorSignItemView, VendorView
+from catalog.handlers.vendor_ban import VendorBanItemView, VendorBanView
+from catalog.handlers.vendor_ban_document import VendorBanDocumentItemView, VendorBanDocumentView
+from catalog.handlers.vendor_document import VendorDocumentItemView, VendorDocumentView
 from catalog.handlers.vendor_product import VendorProductView
-from catalog.handlers.vendor_product_document import VendorProductDocumentView, VendorProductDocumentItemView
-from catalog.settings import SENTRY_DSN, IMG_PATH, IMG_DIR, CLIENT_MAX_SIZE
+from catalog.handlers.vendor_product_document import VendorProductDocumentItemView, VendorProductDocumentView
+from catalog.logging import AccessLogger, setup_logging
+from catalog.middleware import (
+    context_middleware,
+    convert_response_to_json,
+    db_session_middleware,
+    error_middleware,
+    login_middleware,
+    request_id_middleware,
+)
 from catalog.migration import import_data_job
-from sentry_sdk.integrations.aiohttp import AioHttpIntegration
-import sentry_sdk
-import logging
+from catalog.settings import CLIENT_MAX_SIZE, IMG_DIR, IMG_PATH, SENTRY_DSN
 
 logger = logging.getLogger(__name__)
 
@@ -91,19 +93,15 @@ def create_application(on_cleanup=None):
             convert_response_to_json,
             login_middleware,
         ),
-        client_max_size=CLIENT_MAX_SIZE
+        client_max_size=CLIENT_MAX_SIZE,
     )
     oas.setup(
         app,
         title_spec="Prozorro Catalog API",
         version_spec=version,
-        url_prefix='/api/doc',
-        security={"Basic": {
-            "type": "http",
-            "scheme": "basic",
-            "in": "header",
-            "name": "Authorization"
-        }})
+        url_prefix="/api/doc",
+        security={"Basic": {"type": "http", "scheme": "basic", "in": "header", "name": "Authorization"}},
+    )
 
     apply_custom_validation_error_handler()
 
@@ -192,14 +190,8 @@ def create_application(on_cleanup=None):
     )
 
     # products
-    app.router.add_view(
-        "/api/products",
-        ProductView
-    )
-    app.router.add_view(
-        r"/api/products/{product_id:[\w-]+}",
-        ProductItemView
-    )
+    app.router.add_view("/api/products", ProductView)
+    app.router.add_view(r"/api/products/{product_id:[\w-]+}", ProductItemView)
 
     # product docs
     app.router.add_view(
@@ -277,8 +269,7 @@ def create_application(on_cleanup=None):
         VendorBanDocumentView,
     )
     app.router.add_view(
-        r"/api/vendors/{vendor_id:[\w]{32}}/bans/{ban_id:[\w]{32}}"
-        r"/documents/{doc_id:[\w]{32}}",
+        r"/api/vendors/{vendor_id:[\w]{32}}/bans/{ban_id:[\w]{32}}" r"/documents/{doc_id:[\w]{32}}",
         VendorBanDocumentItemView,
     )
 
@@ -371,11 +362,7 @@ def create_application(on_cleanup=None):
         SearchView,
     )
     # images
-    app.router.add_post(
-        r"/api/images",
-        ImageView.post,
-        name="upload_image"
-    )
+    app.router.add_post(r"/api/images", ImageView.post, name="upload_image")
     # server images for dev env
     app.router.add_static(IMG_PATH, IMG_DIR)
 
@@ -389,10 +376,7 @@ def create_application(on_cleanup=None):
 
 def setup_sentry():
     if SENTRY_DSN:
-        sentry_sdk.init(
-            dsn=SENTRY_DSN,
-            integrations=[AioHttpIntegration()]
-        )
+        sentry_sdk.init(dsn=SENTRY_DSN, integrations=[AioHttpIntegration()])
 
 
 async def application():
@@ -404,10 +388,4 @@ async def application():
 
 if __name__ == "__main__":
     logger.info("Starting app on 0.0.0.0:8000")
-    web.run_app(
-        application(),
-        host="0.0.0.0",
-        port=8000,
-        access_log_class=AccessLogger,
-        print=None
-    )
+    web.run_app(application(), host="0.0.0.0", port=8000, access_log_class=AccessLogger, print=None)

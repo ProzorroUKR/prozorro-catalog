@@ -5,7 +5,7 @@ from bson import ObjectId
 
 from catalog.migrations.cs_20828_hide_category import migrate as migrate_hide_categories
 from catalog.migrations.cs_20828_patch_compressor_category import migrate as migrate_compressor_category
-from tests.integration.conftest import get_fixture_json
+from tests.utils import get_fixture_json
 
 
 async def test_migrate_patch_compressor_category(db):
@@ -48,32 +48,16 @@ async def test_migrate_patch_compressor_category(db):
 
     category_data = await db.category.find_one({"_id": new_category_id})
     assert category_data.get("dateModified") != new_category.get("dateModified")
-    assert (
-        category_data.get("description")
-        == "Насоси та компресори"
-        != new_category.get("description")
-    )
-    assert (
-        category_data.get("title")
-        == "Насоси та компресори"
-        != new_category.get("title")
-    )
+    assert category_data.get("description") == "Насоси та компресори" != new_category.get("description")
+    assert category_data.get("title") == "Насоси та компресори" != new_category.get("title")
 
     product_data = await db.products.find_one({"_id": product_1["_id"]})
     assert product_data.get("dateModified") != product_1.get("dateModified")
-    assert (
-        product_data.get("relatedCategory")
-        == new_category_id
-        != product_1.get("relatedCategory")
-    )
+    assert product_data.get("relatedCategory") == new_category_id != product_1.get("relatedCategory")
 
     product_data = await db.products.find_one({"_id": product_2["_id"]})
     assert product_data.get("dateModified") == product_2.get("dateModified")
-    assert (
-        product_data.get("relatedCategory")
-        == product_2.get("relatedCategory")
-        != new_category_id
-    )
+    assert product_data.get("relatedCategory") == product_2.get("relatedCategory") != new_category_id
 
 
 async def test_migrate_hide_category(db):

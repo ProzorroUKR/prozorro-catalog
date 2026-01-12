@@ -1,6 +1,7 @@
-from .base import TEST_AUTH
-from urllib.parse import urlparse, parse_qsl, urlencode
+from urllib.parse import parse_qsl, urlencode, urlparse
+
 from catalog.doc_service import generate_test_url, get_doc_service_uid_from_url
+from tests.base import TEST_AUTH
 
 
 async def test_vendor_doc_create(api, vendor):
@@ -24,8 +25,10 @@ async def test_vendor_doc_create(api, vendor):
     assert resp.status == 201, result
     data = result["data"]
     ds_uid = get_doc_service_uid_from_url(doc_data["url"])
-    expected = f"{api.server.scheme}://{api.server.host}:{api.server.port}" \
+    expected = (
+        f"{api.server.scheme}://{api.server.host}:{api.server.port}"
         f"/api/vendors/{vendor['id']}/documents/{data['id']}?download={ds_uid}"
+    )
     assert expected == data["url"]
 
 
@@ -97,8 +100,9 @@ async def test_vendor_doc_invalid_signature(api, vendor):
     valid_url = generate_test_url(doc_hash)
     parsed_url = urlparse(valid_url)
     parsed_query = dict(parse_qsl(parsed_url.query))
-    parsed_query["Signature"] = "9WSTGSxvtKn%2FsNoKl5%2BpL%2By7z2Rh4%2FtJtHgWw4hqGHxgVK727KLuGUlytoammkWc3j9e" \
-                                "RtOopaF1rgrUsaExDw%3D%3D"
+    parsed_query["Signature"] = (
+        "9WSTGSxvtKn%2FsNoKl5%2BpL%2By7z2Rh4%2FtJtHgWw4hqGHxgVK727KLuGUlytoammkWc3j9e" "RtOopaF1rgrUsaExDw%3D%3D"
+    )
     invalid_url = "{}?{}".format(valid_url.split("?")[0], urlencode(parsed_query))
     doc_data = {
         "title": "name.doc",
@@ -116,4 +120,4 @@ async def test_vendor_doc_invalid_signature(api, vendor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, document url signature is invalid: data']} == result
+    assert {"errors": ["Value error, document url signature is invalid: data"]} == result

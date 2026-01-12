@@ -1,17 +1,16 @@
 from datetime import datetime
-from typing import Optional, List, Union
+from typing import List, Optional
 from uuid import uuid4
 
+import standards
 from pydantic import Field, field_validator
 
+from catalog.models.api import CreateResponse, Input, Response
 from catalog.models.base import BaseModel
-from catalog.models.api import Input, Response, CreateResponse
-from catalog.models.common import MarketAdministrator, MarketAdministratorIdentifier, CategoryMarketAdministrator
-from catalog.models.product import ProductCreateData, Product
-from catalog.models.document import DocumentPostData, Document, DOCUMENT_EXAMPLE
+from catalog.models.common import CategoryMarketAdministrator, MarketAdministrator, MarketAdministratorIdentifier
+from catalog.models.document import DOCUMENT_EXAMPLE, Document, DocumentPostData
+from catalog.models.product import Product, ProductCreateData
 from catalog.models.vendor import VendorOrganization
-import standards
-
 
 REJECT_REASONS = standards.load("market/product_reject_reason.json")
 
@@ -22,9 +21,14 @@ class RequestReviewPostData(BaseModel):
 
 class RequestRejectionPostData(RequestReviewPostData):
     reason: List[str] = Field(..., min_length=1)
-    description: Optional[str] = Field(None, min_length=1, max_length=2000, example="description")
+    description: Optional[str] = Field(
+        None,
+        min_length=1,
+        max_length=2000,
+        json_schema_extra={"example": "description"},
+    )
 
-    @field_validator('reason')
+    @field_validator("reason")
     def reason_standard(cls, v):
         for reason in v:
             if reason not in REJECT_REASONS:
@@ -44,10 +48,10 @@ REQUEST_REVIEW_EXAMPLE = RequestReview(
         identifier=MarketAdministratorIdentifier(
             id="42574629",
             scheme="UA-EDR",
-            legalName_en="STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
-            legalName_uk="ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
+            legalName_en='STATE ENTERPRISE "MEDICAL PROCUREMENT OF UKRAINE"',
+            legalName_uk='ДЕРЖАВНЕ ПІДПРИЄМСТВО "МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ"',
         )
-    )
+    ),
 ).model_dump(exclude_none=True)
 
 
@@ -61,17 +65,19 @@ REQUEST_REJECTION_EXAMPLE = RequestRejection(
         identifier=MarketAdministratorIdentifier(
             id="42574629",
             scheme="UA-EDR",
-            legalName_en="STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
-            legalName_uk="ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
+            legalName_en='STATE ENTERPRISE "MEDICAL PROCUREMENT OF UKRAINE"',
+            legalName_uk='ДЕРЖАВНЕ ПІДПРИЄМСТВО "МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ"',
         )
     ),
-    reason=["invalidTitle",],
+    reason=[
+        "invalidTitle",
+    ],
 ).model_dump(exclude_none=True)
 
 
 class ProductRequestPostData(BaseModel):
     product: ProductCreateData
-    documents: Optional[List[DocumentPostData]] = Field(None, example=[DOCUMENT_EXAMPLE])
+    documents: Optional[List[DocumentPostData]] = Field(None, json_schema_extra={"example": [DOCUMENT_EXAMPLE]})
 
     @property
     def id(self):
@@ -83,9 +89,9 @@ class ProductRequest(BaseModel):
     dateModified: datetime
     dateCreated: datetime
     owner: str
-    acception: Optional[RequestReview] = Field(None, example=[REQUEST_REVIEW_EXAMPLE])
-    rejection: Optional[RequestRejection] = Field(None, example=[REQUEST_REJECTION_EXAMPLE])
-    documents: Optional[List[Document]] = Field(None, example=[DOCUMENT_EXAMPLE])
+    acception: Optional[RequestReview] = Field(None, json_schema_extra={"example": [REQUEST_REVIEW_EXAMPLE]})
+    rejection: Optional[RequestRejection] = Field(None, json_schema_extra={"example": [REQUEST_REJECTION_EXAMPLE]})
+    documents: Optional[List[Document]] = Field(None, json_schema_extra={"example": [DOCUMENT_EXAMPLE]})
     product: ProductCreateData
     contributor: VendorOrganization  # serialized from contributor_id
     marketAdministrator: CategoryMarketAdministrator  # serialized from product.relatedCategory.marketAAdministrator

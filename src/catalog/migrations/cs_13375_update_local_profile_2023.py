@@ -1,19 +1,14 @@
-from dataclasses import dataclass
-from uuid import UUID
 import asyncio
 import logging
-import re
-
-from pymongo.errors import PyMongoError
-from pymongo import UpdateOne
+from dataclasses import dataclass
 
 import sentry_sdk
+from pymongo import UpdateOne
 
 from catalog.db import get_profiles_collection, init_mongo, transaction_context_manager
 from catalog.logging import setup_logging
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
-
 
 logger = logging.getLogger(__name__)
 
@@ -28,15 +23,9 @@ class Counters:
     skipped_requirements: int = 0
 
     def __post_init__(self):
-        self.total_profiles = self.total_profiles or (
-            self.updated_profiles +
-            self.skipped_profiles
-        )
+        self.total_profiles = self.total_profiles or (self.updated_profiles + self.skipped_profiles)
 
-        self.total_requirements = self.total_requirements or (
-            self.updated_requirements +
-            self.skipped_requirements
-        )
+        self.total_requirements = self.total_requirements or (self.updated_requirements + self.skipped_requirements)
 
     def __add__(self, other):
         return Counters(
@@ -56,17 +45,16 @@ async def migrate():
     async with transaction_context_manager() as session:
         profiles_collection = get_profiles_collection()
         async for profile in profiles_collection.find(
-                {"access.owner": "local.prozorro.ua", "status": "active"},
-                projection={"_id": 1, "criteria": 1},
-                session=session
+            {"access.owner": "local.prozorro.ua", "status": "active"},
+            projection={"_id": 1, "criteria": 1},
+            session=session,
         ):
             now = get_now().isoformat()
             new_criteria = get_new_criteria(counters, profile)
             if new_criteria is not None:
                 bulk.append(
                     UpdateOne(
-                        filter={"_id": profile["_id"]},
-                        update={"$set": {"criteria": new_criteria, "dateModified": now}}
+                        filter={"_id": profile["_id"]}, update={"$set": {"criteria": new_criteria, "dateModified": now}}
                     )
                 )
                 counters.updated_profiles += 1
@@ -113,5 +101,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -3,14 +3,13 @@ import logging
 from collections import defaultdict
 from datetime import timedelta
 
-from pymongo import UpdateOne
 import sentry_sdk
+from pymongo import UpdateOne
 
-from catalog.db import get_profiles_collection, get_products_collection, init_mongo, transaction_context_manager
+from catalog.db import get_products_collection, get_profiles_collection, init_mongo
 from catalog.logging import setup_logging
-from catalog.utils import get_now
 from catalog.settings import SENTRY_DSN
-
+from catalog.utils import get_now
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +18,6 @@ async def update_many_with_different_dateModified(collection, update_req, sessio
     bulk = []
     now = get_now()
     async for doc in collection.find(projection="_id"):
-
         bulk.append(
             UpdateOne(
                 filter={"_id": doc["_id"]},
@@ -55,10 +53,12 @@ async def migrate():
         {"$unset": {"requirementResponses.$[].id": ""}},
     )
 
-    counters.update({
-        "updated_profiles": updated_profiles,
-        "updated_products": updated_products,
-    })
+    counters.update(
+        {
+            "updated_profiles": updated_profiles,
+            "updated_products": updated_products,
+        }
+    )
     logger.info(f"Finished. Stats: {dict(counters)}")
 
 
@@ -71,5 +71,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

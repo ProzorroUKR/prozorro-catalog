@@ -1,23 +1,22 @@
 import asyncio
 import logging
-import sentry_sdk
-from uuid import uuid4
 from copy import deepcopy
+from uuid import uuid4
 
+import sentry_sdk
 from pymongo import UpdateOne
 
 from catalog.db import (
-    init_mongo,
-    transaction_context_manager,
-    get_profiles_collection,
     get_category_collection,
     get_products_collection,
+    get_profiles_collection,
+    init_mongo,
+    transaction_context_manager,
 )
 from catalog.logging import setup_logging
 from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
-
 
 logger = logging.getLogger(__name__)
 
@@ -29,16 +28,13 @@ NEW_CRITERIA_DATA = [
     {
         "title": "Створення передумов для сталого розвитку та модернізації вітчизняної промисловості",
         "description": "Товар включений до додаткового переліку, що затверджений "
-                       "Кабінетом Міністрів України, і має ступінь локалізації виробництва, "
-                       "який перевищує або дорівнює ступеню локалізації виробництва, встановленому "
-                       "на відповідний рік. Ці вимоги не застосовуються до закупівель, які підпадають під дію "
-                       "положень Закону України \"Про приєднання України до Угоди про державні закупівлі\", а "
-                       "також положень про державні закупівлі інших міжнародних договорів України, згода на "
-                       "обов’язковість яких надана Верховною Радою України.",
-        "classification": {
-            "scheme": "ESPD211",
-            "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL"
-        },
+        "Кабінетом Міністрів України, і має ступінь локалізації виробництва, "
+        "який перевищує або дорівнює ступеню локалізації виробництва, встановленому "
+        "на відповідний рік. Ці вимоги не застосовуються до закупівель, які підпадають під дію "
+        'положень Закону України "Про приєднання України до Угоди про державні закупівлі", а '
+        "також положень про державні закупівлі інших міжнародних договорів України, згода на "
+        "обов’язковість яких надана Верховною Радою України.",
+        "classification": {"scheme": "ESPD211", "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL"},
         "legislation": [
             {
                 "version": "2021-12-16",
@@ -48,9 +44,9 @@ NEW_CRITERIA_DATA = [
                     "uri": "https://zakon.rada.gov.ua/laws/show/1977-20",
                     "id": "1977-IX",
                     "legalName": "Про внесення змін до Закону України "
-                                 "\"Про публічні закупівлі\" щодо створення передумов "
-                                 "для сталого розвитку та модернізації вітчизняної промисловості"
-                }
+                    '"Про публічні закупівлі" щодо створення передумов '
+                    "для сталого розвитку та модернізації вітчизняної промисловості",
+                },
             },
             {
                 "version": "2023-04-11",
@@ -60,42 +56,39 @@ NEW_CRITERIA_DATA = [
                     "uri": "https://zakon.rada.gov.ua/laws/show/861-2022-%D0%BF",
                     "id": "861-2022-п",
                     "legalName": "Про затвердження порядків підтвердження "
-                                 "ступеня локалізації виробництва товарів та "
-                                 "проведення моніторингу дотримання вимог щодо "
-                                 "ступеня локалізації виробництва предметів закупівлі, "
-                                 "внесених до переліку товарів, що є предметом закупівлі, "
-                                 "з підтвердженим ступенем локалізації виробництва"
-                }
-            }
+                    "ступеня локалізації виробництва товарів та "
+                    "проведення моніторингу дотримання вимог щодо "
+                    "ступеня локалізації виробництва предметів закупівлі, "
+                    "внесених до переліку товарів, що є предметом закупівлі, "
+                    "з підтвердженим ступенем локалізації виробництва",
+                },
+            },
         ],
         "source": "tenderer",
         "requirementGroups": [
             {
                 "description": "За наявності складових вітчизняного виробництва "
-                               "у собівартості товару, підтверджується, що",
+                "у собівартості товару, підтверджується, що",
                 "requirements": [
                     {
                         "title": "Ступінь локалізації виробництва товару, що є предметом закупівлі, "
-                                 "перевищує або дорівнює ступеню локалізації виробництва, "
-                                 "встановленому на відповідний рік",
+                        "перевищує або дорівнює ступеню локалізації виробництва, "
+                        "встановленому на відповідний рік",
                         "dataType": "number",
                         "minValue": 20,
-                        "unit": {
-                            "name": "Відсоток",
-                            "code": "P1"
-                        }
+                        "unit": {"name": "Відсоток", "code": "P1"},
                     }
-                ]
+                ],
             },
             {
                 "description": "За відсутності складових вітчизняного виробництва "
-                               "у собівартості товару, підтверджується, що",
+                "у собівартості товару, підтверджується, що",
                 "requirements": [
                     {
                         "title": "Товар походить з однієї з країн, що підписала "
-                                 "Угоду про державні закупівлі Світової Організації "
-                                 "торгівлі (GPA) або іншої країни з якою Україна "
-                                 "має міжнародні договори про державні закупівлі",
+                        "Угоду про державні закупівлі Світової Організації "
+                        "торгівлі (GPA) або іншої країни з якою Україна "
+                        "має міжнародні договори про державні закупівлі",
                         "dataType": "string",
                         "expectedValues": [
                             "AM",
@@ -144,12 +137,12 @@ NEW_CRITERIA_DATA = [
                             "CH",
                             "TW",
                             "GB",
-                            "US"
-                        ]
+                            "US",
+                        ],
                     }
-                ]
-            }
-        ]
+                ],
+            },
+        ],
     }
 ]
 
@@ -181,16 +174,12 @@ async def migrate_categories(session):
     counter = 0
     get_new_criteria_data()
     collection = get_category_collection()
-    async for obj in collection.find(
-        {"_id": CATEGORY_ID},
-        projection={"_id": 1, "criteria": 1}
-    ):
+    async for obj in collection.find({"_id": CATEGORY_ID}, projection={"_id": 1, "criteria": 1}):
         counter += 1
         now = get_now().isoformat()
         bulk.append(
             UpdateOne(
-                filter={"_id": obj["_id"]},
-                update={"$set": {"criteria": get_new_criteria_data(), "dateModified": now}}
+                filter={"_id": obj["_id"]}, update={"$set": {"criteria": get_new_criteria_data(), "dateModified": now}}
             )
         )
 
@@ -208,16 +197,12 @@ async def migrate_profiles(session):
     bulk = []
     counter = 0
     collection = get_profiles_collection()
-    async for obj in collection.find(
-        {"relatedCategory": CATEGORY_ID},
-        projection={"_id": 1, "criteria": 1}
-    ):
+    async for obj in collection.find({"relatedCategory": CATEGORY_ID}, projection={"_id": 1, "criteria": 1}):
         counter += 1
         now = get_now().isoformat()
         bulk.append(
             UpdateOne(
-                filter={"_id": obj["_id"]},
-                update={"$set": {"criteria": get_new_criteria_data(), "dateModified": now}}
+                filter={"_id": obj["_id"]}, update={"$set": {"criteria": get_new_criteria_data(), "dateModified": now}}
             )
         )
 
@@ -236,8 +221,7 @@ async def migrate_products(session):
     counter = 0
     collection = get_products_collection()
     async for obj in collection.find(
-        {"relatedCategory": CATEGORY_ID},
-        projection={"_id": 1, "requirementResponses": 1}
+        {"relatedCategory": CATEGORY_ID}, projection={"_id": 1, "requirementResponses": 1}
     ):
         counter += 1
         obj["requirementResponses"][0]["requirement"] = LOCALIZATION_REQ_TITLE
@@ -245,7 +229,7 @@ async def migrate_products(session):
         bulk.append(
             UpdateOne(
                 filter={"_id": obj["_id"]},
-                update={"$set": {"requirementResponses": obj["requirementResponses"], "dateModified": now}}
+                update={"$set": {"requirementResponses": obj["requirementResponses"], "dateModified": now}},
             )
         )
 
@@ -277,5 +261,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

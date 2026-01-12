@@ -1,10 +1,9 @@
 import asyncio
 import logging
 import traceback
+from copy import deepcopy
 
 import sentry_sdk
-
-from copy import deepcopy
 from pymongo import UpdateOne
 
 from catalog.db import (
@@ -22,9 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 async def get_unit_from_category(obj, requirement=None):
-    category = await get_category_collection().find_one(
-        {"_id": obj["relatedCategory"]}, {"criteria": 1, "unit": 1}
-    )
+    category = await get_category_collection().find_one({"_id": obj["relatedCategory"]}, {"criteria": 1, "unit": 1})
     if category:
         if requirement:  # get unit from requirement
             for criterion in category.get("criteria", []):
@@ -137,9 +134,7 @@ async def migrate_categories_and_profiles():
                         await bulk_update(collection, bulk, session, counter, criteria_obj)
                     bulk = []
             except Exception as e:
-                logger.info(
-                    f"ERROR: {criteria_obj} with id {obj['_id']}. Caught {type(e).__name__}."
-                )
+                logger.info(f"ERROR: {criteria_obj} with id {obj['_id']}. Caught {type(e).__name__}.")
                 traceback.print_exc()
                 break
 

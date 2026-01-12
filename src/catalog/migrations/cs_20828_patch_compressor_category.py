@@ -60,16 +60,12 @@ async def migrate_products(category_id, old_category_id):
 
         if bulk and len(bulk) % 500 == 0:
             async with transaction_context_manager() as session:
-                await bulk_update(
-                    product_collection, bulk, session, counter, migrated_obj="products"
-                )
+                await bulk_update(product_collection, bulk, session, counter, migrated_obj="products")
             bulk = []
 
     if bulk:
         async with transaction_context_manager() as session:
-            await bulk_update(
-                product_collection, bulk, session, counter, migrated_obj="products"
-            )
+            await bulk_update(product_collection, bulk, session, counter, migrated_obj="products")
 
     logger.info(f"Finished. Processed {counter} updated products")
 

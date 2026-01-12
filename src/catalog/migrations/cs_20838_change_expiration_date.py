@@ -43,16 +43,12 @@ async def migrate_products(old_expiration_date, new_expiration_date):
 
         if bulk and len(bulk) % 500 == 0:
             async with transaction_context_manager() as session:
-                await bulk_update(
-                    products_collection, bulk, session, counter, migrated_obj="products"
-                )
+                await bulk_update(products_collection, bulk, session, counter, migrated_obj="products")
             bulk = []
 
     if bulk:
         async with transaction_context_manager() as session:
-            await bulk_update(
-                products_collection, bulk, session, counter, migrated_obj="products"
-            )
+            await bulk_update(products_collection, bulk, session, counter, migrated_obj="products")
 
     logger.info(f"Finished. Processed {counter} updated products")
     logger.info("Successfully migrated")

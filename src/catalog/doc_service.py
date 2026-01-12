@@ -1,19 +1,21 @@
-from nacl.encoding import HexEncoder
-from nacl.signing import SigningKey, VerifyKey
-from nacl.exceptions import BadSignatureError
-from urllib.parse import urlparse, parse_qsl, unquote, urlencode
-from uuid import uuid4
+from base64 import b64decode, b64encode
 from time import time
-from base64 import b64encode, b64decode
-from catalog.context import get_request
-from .settings import (
-    DOC_SERVICE_SIGNING_SEED,
-    DOC_SERVICE_SEEDS,
-    DOC_SERVICE_KEY_LENGTH,
-    DOC_SERVICE_URL,
-    DOC_SERVICE_DEP_URL,
-)
+from urllib.parse import parse_qsl, unquote, urlencode, urlparse
+from uuid import uuid4
 
+from nacl.encoding import HexEncoder
+from nacl.exceptions import BadSignatureError
+from nacl.signing import SigningKey, VerifyKey
+
+from catalog.context import get_request
+
+from .settings import (
+    DOC_SERVICE_DEP_URL,
+    DOC_SERVICE_KEY_LENGTH,
+    DOC_SERVICE_SEEDS,
+    DOC_SERVICE_SIGNING_SEED,
+    DOC_SERVICE_URL,
+)
 
 URL_DOC_KEY = "documents"
 
@@ -21,8 +23,7 @@ signer = SigningKey(DOC_SERVICE_SIGNING_SEED, encoder=HexEncoder)
 signer_keyid = signer.verify_key.encode(encoder=HexEncoder)[:8].decode()
 
 verifiers_keyring = {
-    key[:DOC_SERVICE_KEY_LENGTH].decode(): VerifyKey(key, encoder=HexEncoder)
-    for key in DOC_SERVICE_SEEDS
+    key[:DOC_SERVICE_KEY_LENGTH].decode(): VerifyKey(key, encoder=HexEncoder) for key in DOC_SERVICE_SEEDS
 }
 
 
@@ -89,7 +90,7 @@ def build_api_document_url(api_uid, doc_service_url):
     doc_service_uid = get_doc_service_uid_from_url(doc_service_url)
     doc_path = r.path
     if URL_DOC_KEY in doc_path:
-        doc_path = doc_path[:doc_path.find(URL_DOC_KEY)+len(URL_DOC_KEY)]
+        doc_path = doc_path[: doc_path.find(URL_DOC_KEY) + len(URL_DOC_KEY)]
     return f"{doc_path}/{api_uid}?download={doc_service_uid}"
 
 
@@ -115,6 +116,3 @@ def get_doc_download_url(ds_id, temporary=True):
         mess = ds_id
     query["Signature"] = b64encode(signer.sign(mess.encode()).signature)
     return f"{DOC_SERVICE_URL}/get/{ds_id}?{urlencode(query)}"
-
-
-

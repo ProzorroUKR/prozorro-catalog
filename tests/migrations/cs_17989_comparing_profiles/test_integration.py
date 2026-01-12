@@ -4,11 +4,11 @@ from uuid import uuid4
 from catalog.migrations.cs_17989_comparing_profiles_with_categories import (
     migrate_profiles,
 )
-from tests.integration.conftest import api, db, get_fixture_json
+from tests.utils import get_fixture_json
 
 
 async def test_requirements_number(db, api):
-    category = deepcopy(get_fixture_json('category'))
+    category = deepcopy(get_fixture_json("category"))
     category["criteria"] = [
         {
             "title": "Технічні характеристики предмета закупівлі",
@@ -18,100 +18,111 @@ async def test_requirements_number(db, api):
                 {
                     "description": "Технічні характеристики",
                     "id": "f3d2b5995da042ff858a6ea7b5a1a8dd",
-                    "requirements": [{
-                        "title": "Xарактеристика №1",
-                        "dataType": "number",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": 10.0,
-                        "unit": {
-                            "code": "CMT",
-                            "name": "см"
-                        }
-                    }, {
-                        "title": "Xарактеристика №2",
-                        "dataType": "number",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "minValue": 1.0
-                    }, {
-                        "title": "Xарактеристика №3",
-                        "dataType": "integer",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": 20
-                    }, {
-                        "title": "Xарактеристика №4",
-                        "dataType": "integer",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "minValue": 10
-                    }, {
-                        "title": "Xарактеристика №5",
-                        "dataType": "number",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "maxValue": 15,
-                        "minValue": 0
-                    }, {
-                        "title": "Xарактеристика №7",
-                        "dataType": "integer",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": 10
-                    }, {
-                        "title": "Xарактеристика №8",
-                        "dataType": "boolean",
-                    }, {
-                        "title": "Xарактеристика №9",
-                        "dataType": "string",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": ["foo"],
-                        "expectedMinItems": 1
-                    }, {
-                        "title": "Xарактеристика №10",
-                        "dataType": "string",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": ["foo"],
-                        "expectedMinItems": 1
-                    }, {
-                        "title": "Xарактеристика №11",
-                        "dataType": "string",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": ["foo"],
-                        "expectedMinItems": 1
-                    }, {
-                        "title": "Xарактеристика №12",
-                        "dataType": "integer",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": 10,
-                    }, {
-                        "title": "Xарактеристика №13",
-                        "dataType": "integer",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "minValue": 1,
-                    }, {
-                        "title": "Xарактеристика №14",
-                        "dataType": "number",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": 10.5,
-                    }, {
-                        "title": "Xарактеристика №15",
-                        "dataType": "number",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "minValue": 10,
-                        "maxValue": 20,
-                        "unit": {
-                            "code": "CMT",
-                            "name": "см"
+                    "requirements": [
+                        {
+                            "title": "Xарактеристика №1",
+                            "dataType": "number",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValue": 10.0,
+                            "unit": {"code": "CMT", "name": "см"},
                         },
-                    }, {
-                        "title": "Xарактеристика №16",
-                        "dataType": "boolean",
-                        "expectedValue": True,
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                    }, {
-                        "title": "Xарактеристика №17",
-                        "dataType": "boolean",
-                        "expectedValue": False,
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                    }]
+                        {
+                            "title": "Xарактеристика №2",
+                            "dataType": "number",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "minValue": 1.0,
+                        },
+                        {
+                            "title": "Xарактеристика №3",
+                            "dataType": "integer",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValue": 20,
+                        },
+                        {
+                            "title": "Xарактеристика №4",
+                            "dataType": "integer",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "minValue": 10,
+                        },
+                        {
+                            "title": "Xарактеристика №5",
+                            "dataType": "number",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "maxValue": 15,
+                            "minValue": 0,
+                        },
+                        {
+                            "title": "Xарактеристика №7",
+                            "dataType": "integer",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValue": 10,
+                        },
+                        {
+                            "title": "Xарактеристика №8",
+                            "dataType": "boolean",
+                        },
+                        {
+                            "title": "Xарактеристика №9",
+                            "dataType": "string",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValues": ["foo"],
+                            "expectedMinItems": 1,
+                        },
+                        {
+                            "title": "Xарактеристика №10",
+                            "dataType": "string",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValues": ["foo"],
+                            "expectedMinItems": 1,
+                        },
+                        {
+                            "title": "Xарактеристика №11",
+                            "dataType": "string",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValues": ["foo"],
+                            "expectedMinItems": 1,
+                        },
+                        {
+                            "title": "Xарактеристика №12",
+                            "dataType": "integer",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValue": 10,
+                        },
+                        {
+                            "title": "Xарактеристика №13",
+                            "dataType": "integer",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "minValue": 1,
+                        },
+                        {
+                            "title": "Xарактеристика №14",
+                            "dataType": "number",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValue": 10.5,
+                        },
+                        {
+                            "title": "Xарактеристика №15",
+                            "dataType": "number",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "minValue": 10,
+                            "maxValue": 20,
+                            "unit": {"code": "CMT", "name": "см"},
+                        },
+                        {
+                            "title": "Xарактеристика №16",
+                            "dataType": "boolean",
+                            "expectedValue": True,
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                        },
+                        {
+                            "title": "Xарактеристика №17",
+                            "dataType": "boolean",
+                            "expectedValue": False,
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                        },
+                    ],
                 }
-            ]
+            ],
         }
     ]
     await db.category.insert_one(category)
@@ -128,107 +139,115 @@ async def test_requirements_number(db, api):
                 {
                     "description": "Технічні характеристики",
                     "id": "f3d2b5995da042ff858a6ea7b5a1a8dd",
-                    "requirements": [{
-                        "title": "Xарактеристика №1",
-                        "dataType": "string",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": ["10"]
-                    }, {
-                        "title": "Xарактеристика №2",
-                        "dataType": "string",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": ["10", "20"],
-                    }, {
-                        "title": "Xарактеристика №3",
-                        "dataType": "string",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": ["10"],
-                        "unit": {
-                            "code": "CMT",
-                            "name": "см"
+                    "requirements": [
+                        {
+                            "title": "Xарактеристика №1",
+                            "dataType": "string",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValues": ["10"],
                         },
-                    }, {
-                        "title": "Xарактеристика №4",
-                        "dataType": "string",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": ["dsd"],
-                        "unit": {
-                            "code": "CMT",
-                            "name": "см"
+                        {
+                            "title": "Xарактеристика №2",
+                            "dataType": "string",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValues": ["10", "20"],
                         },
-                    }, {
-                        "title": "Xарактеристика нема такої",
-                        "dataType": "string",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": ["10"]
-                    }, {
-                        "title": "Xарактеристика №8",
-                        "dataType": "string",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": ["dsd"],
-                        "expectedMinItems": 1
-                    }, {
-                        "title": "Xарактеристика №9",
-                        "dataType": "boolean",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": True,
-                    }, {
-                        "title": "Xарактеристика №10",
-                        "dataType": "integer",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "minValue": 0,
-                        "maxValue": 10
-                    }, {
-                        "title": "Xарактеристика №11",
-                        "dataType": "number",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": 5
-                    }, {
-                        "title": "Xарактеристика №12",
-                        "dataType": "number",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": 10,
-                    }, {
-                        "title": "Xарактеристика №13",
-                        "dataType": "number",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "minValue": 0,
-                    }, {
-                        "title": "Xарактеристика №14",
-                        "dataType": "integer",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": 10.5,
-                    }, {
-                        "title": "Xарактеристика №15",
-                        "dataType": "integer",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "minValue": 10.0,
-                        "maxValue": 20.0,
-                        "unit": {
-                            "code": "%",
-                            "name": "%"
+                        {
+                            "title": "Xарактеристика №3",
+                            "dataType": "string",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValues": ["10"],
+                            "unit": {"code": "CMT", "name": "см"},
                         },
-                    }, {
-                        "title": "Xарактеристика №16",
-                        "dataType": "string",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": ["10.5"],
-                        "expectedMinItems": 1
-                    }, {
-                        "title": "Xарактеристика №17",
-                        "dataType": "string",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": ["foo", "bar", "baz"],
-                        "expectedMinItems": 1,
-                        "expectedMaxItems": 2
-                    }, {
-                        "title": "Xарактеристика №18",
-                        "dataType": "number",
-                        "expectedValue": 1,
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                    }]
+                        {
+                            "title": "Xарактеристика №4",
+                            "dataType": "string",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValues": ["dsd"],
+                            "unit": {"code": "CMT", "name": "см"},
+                        },
+                        {
+                            "title": "Xарактеристика нема такої",
+                            "dataType": "string",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValues": ["10"],
+                        },
+                        {
+                            "title": "Xарактеристика №8",
+                            "dataType": "string",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValues": ["dsd"],
+                            "expectedMinItems": 1,
+                        },
+                        {
+                            "title": "Xарактеристика №9",
+                            "dataType": "boolean",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValue": True,
+                        },
+                        {
+                            "title": "Xарактеристика №10",
+                            "dataType": "integer",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "minValue": 0,
+                            "maxValue": 10,
+                        },
+                        {
+                            "title": "Xарактеристика №11",
+                            "dataType": "number",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValue": 5,
+                        },
+                        {
+                            "title": "Xарактеристика №12",
+                            "dataType": "number",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValue": 10,
+                        },
+                        {
+                            "title": "Xарактеристика №13",
+                            "dataType": "number",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "minValue": 0,
+                        },
+                        {
+                            "title": "Xарактеристика №14",
+                            "dataType": "integer",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValue": 10.5,
+                        },
+                        {
+                            "title": "Xарактеристика №15",
+                            "dataType": "integer",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "minValue": 10.0,
+                            "maxValue": 20.0,
+                            "unit": {"code": "%", "name": "%"},
+                        },
+                        {
+                            "title": "Xарактеристика №16",
+                            "dataType": "string",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValues": ["10.5"],
+                            "expectedMinItems": 1,
+                        },
+                        {
+                            "title": "Xарактеристика №17",
+                            "dataType": "string",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValues": ["foo", "bar", "baz"],
+                            "expectedMinItems": 1,
+                            "expectedMaxItems": 2,
+                        },
+                        {
+                            "title": "Xарактеристика №18",
+                            "dataType": "number",
+                            "expectedValue": 1,
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                        },
+                    ],
                 }
-            ]
+            ],
         }
     ]
     await db.profiles.insert_one(profile)
@@ -242,95 +261,101 @@ async def test_requirements_number(db, api):
             "dataType": "number",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
             "expectedValue": 10.0,
-            "unit": {
-                "code": "CMT",
-                "name": "см"
-            },
-        }, {
+            "unit": {"code": "CMT", "name": "см"},
+        },
+        {
             "title": "Xарактеристика №2",
             "dataType": "string",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-            "expectedValues": ["10", "20"]
-        }, {
+            "expectedValues": ["10", "20"],
+        },
+        {
             "title": "Xарактеристика №3",
             "dataType": "integer",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
             "expectedValue": 10,
-            "unit": {
-                "code": "CMT",
-                "name": "см"
-            },
-        }, {
+            "unit": {"code": "CMT", "name": "см"},
+        },
+        {
             "title": "Xарактеристика №4",
             "dataType": "string",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-            "expectedValues": ["dsd"]
-        }, {
+            "expectedValues": ["dsd"],
+        },
+        {
             "title": "Xарактеристика нема такої",
             "dataType": "string",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-            "expectedValues": ["10"]
-        }, {
+            "expectedValues": ["10"],
+        },
+        {
             "title": "Xарактеристика №8",
             "dataType": "boolean",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-        }, {
+        },
+        {
             "title": "Xарактеристика №9",
             "dataType": "string",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
             "expectedValues": ["True"],
-            "expectedMinItems": 1
-        }, {
+            "expectedMinItems": 1,
+        },
+        {
             "title": "Xарактеристика №10",
             "dataType": "string",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
             "expectedValues": ["0", "10"],
-            "expectedMinItems": 1
-        }, {
+            "expectedMinItems": 1,
+        },
+        {
             "title": "Xарактеристика №11",
             "dataType": "string",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
             "expectedValues": ["5"],
-            "expectedMinItems": 1
-        }, {
+            "expectedMinItems": 1,
+        },
+        {
             "title": "Xарактеристика №12",
             "dataType": "integer",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
             "expectedValue": 10,
-        }, {
+        },
+        {
             "title": "Xарактеристика №13",
             "dataType": "integer",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
             "minValue": 0,
-        }, {
+        },
+        {
             "title": "Xарактеристика №14",
             "dataType": "number",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
             "expectedValue": 10.5,
-        }, {
+        },
+        {
             "title": "Xарактеристика №15",
             "dataType": "number",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
             "minValue": 10.0,
             "maxValue": 20.0,
-            "unit": {
-                "code": "%",
-                "name": "%"
-            },
-        }, {
+            "unit": {"code": "%", "name": "%"},
+        },
+        {
             "title": "Xарактеристика №16",
             "dataType": "boolean",
             "expectedValue": True,
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-        }, {
+        },
+        {
             "title": "Xарактеристика №17",
             "dataType": "boolean",
             "expectedValue": False,
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-        }, {
+        },
+        {
             "title": "Xарактеристика №18",
             "dataType": "number",
             "expectedValue": 1,
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-        }
+        },
     ]

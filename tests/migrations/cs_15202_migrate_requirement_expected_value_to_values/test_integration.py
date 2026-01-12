@@ -2,11 +2,11 @@ from copy import deepcopy
 from uuid import uuid4
 
 from catalog.migrations.cs_15202_migrate_requirement_expected_value_to_values import migrate
-from tests.integration.conftest import db, get_fixture_json
+from tests.utils import get_fixture_json
 
 
 async def test_migrate_value_to_values(db):
-    category = deepcopy(get_fixture_json('category'))
+    category = deepcopy(get_fixture_json("category"))
     category["criteria"] = [
         {
             "title": "test",
@@ -22,21 +22,21 @@ async def test_migrate_value_to_values(db):
                             "dataType": "integer",
                             "isArchived": False,
                             "id": "51d9181bfbee4fd588cffd71899558f1",
-                            "expectedValue": 4
+                            "expectedValue": 4,
                         },
                         {
                             "title": "Метод аналізу 1",
                             "dataType": "integer",
                             "expectedValues": [1, 4],
                             "isArchived": False,
-                            "id": "f44329f22a7f41b39350e5994018784d"
+                            "id": "f44329f22a7f41b39350e5994018784d",
                         },
                         {
                             "title": "Метод аналізу 2",
                             "dataType": "integer",
                             "isArchived": False,
                             "id": "dde916da0d6445a09b6cf0a4fe6bf9c8",
-                            "expectedValue": 1
+                            "expectedValue": 1,
                         },
                         {
                             "title": "Метод аналізу 3",
@@ -50,24 +50,24 @@ async def test_migrate_value_to_values(db):
                             "dataType": "string",
                             "expectedValue": "IXA",
                             "isArchived": False,
-                            "id": "7b10baf2d77047f0ad954d109080b7b5"
+                            "id": "7b10baf2d77047f0ad954d109080b7b5",
                         },
                         {
                             "title": "Метод аналізу 6",
                             "dataType": "string",
                             "minValue": "IXA",
                             "isArchived": False,
-                            "id": "bac2c0f3aed340a796817c6eba13d708"
-                        }
-                    ]
+                            "id": "bac2c0f3aed340a796817c6eba13d708",
+                        },
+                    ],
                 }
-            ]
+            ],
         }
     ]
     category["_id"] = uuid4().hex
     await db.category.insert_one(category)
 
-    category_without_criteria = deepcopy(get_fixture_json('category'))
+    category_without_criteria = deepcopy(get_fixture_json("category"))
     category_without_criteria["criteria"] = []
     category_without_criteria["_id"] = uuid4().hex
     await db.category.insert_one(category_without_criteria)
@@ -90,21 +90,21 @@ async def test_migrate_value_to_values(db):
                             "dataType": "integer",
                             "isArchived": False,
                             "id": "51d9181bfbee4fd588cffd71899558f1",
-                            "expectedValues": [4]
+                            "expectedValues": [4],
                         },
                         {
                             "title": "Метод аналізу 1",
                             "dataType": "integer",
                             "expectedValues": [1, 4],
                             "isArchived": False,
-                            "id": "f44329f22a7f41b39350e5994018784d"
+                            "id": "f44329f22a7f41b39350e5994018784d",
                         },
                         {
                             "title": "Метод аналізу 2",
                             "dataType": "integer",
                             "isArchived": False,
                             "id": "dde916da0d6445a09b6cf0a4fe6bf9c8",
-                            "expectedValue": 1
+                            "expectedValue": 1,
                         },
                         {
                             "title": "Метод аналізу 3",
@@ -118,18 +118,18 @@ async def test_migrate_value_to_values(db):
                             "dataType": "string",
                             "expectedValues": ["IXA"],
                             "isArchived": False,
-                            "id": "7b10baf2d77047f0ad954d109080b7b5"
+                            "id": "7b10baf2d77047f0ad954d109080b7b5",
                         },
                         {
                             "title": "Метод аналізу 6",
                             "dataType": "string",
                             "minValue": "IXA",
                             "isArchived": False,
-                            "id": "bac2c0f3aed340a796817c6eba13d708"
-                        }
-                    ]
+                            "id": "bac2c0f3aed340a796817c6eba13d708",
+                        },
+                    ],
                 }
-            ]
+            ],
         }
     ]
     await db.profiles.insert_one(profile)
@@ -145,22 +145,10 @@ async def test_migrate_value_to_values(db):
     product["relatedCategory"] = category["_id"]
     product["relatedProfiles"] = [profile["_id"]]
     product["requirementResponses"] = [
-        {
-            "requirement": "Метод аналізу 1",
-            "value": 1
-        },
-        {
-            "requirement": "Метод аналізу 2",
-            "values": [1, 1]
-        },
-        {
-            "requirement": "Метод аналізу 3",
-            "value": "IXA"
-        },
-        {
-            "requirement": "Метод аналізу 4",
-            "values": ["IXA"]
-        }
+        {"requirement": "Метод аналізу 1", "value": 1},
+        {"requirement": "Метод аналізу 2", "values": [1, 1]},
+        {"requirement": "Метод аналізу 3", "value": "IXA"},
+        {"requirement": "Метод аналізу 4", "values": ["IXA"]},
     ]
     await db.products.insert_one(product)
 
@@ -182,7 +170,6 @@ async def test_migrate_value_to_values(db):
 
     profile_2 = await db.profiles.find_one({"_id": profile_without_criteria["_id"]})
     assert profile_2["criteria"] == []
-
 
     product_1 = await db.products.find_one({"_id": product["_id"]})
     assert product_1["requirementResponses"][0]["values"] == [1]

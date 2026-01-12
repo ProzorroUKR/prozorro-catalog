@@ -1,21 +1,22 @@
-from typing import Optional, Set, Union, List, Literal, Annotated
-from uuid import uuid4
+import logging
 from enum import Enum
+from typing import List, Literal, Optional, Set, Union
+from uuid import uuid4
+
 from pydantic import (
     Field,
-    model_validator,
-    StrictInt,
-    StrictFloat,
-    StrictBool,
-    StrictStr,
     PositiveInt,
+    StrictBool,
+    StrictFloat,
+    StrictInt,
+    StrictStr,
     field_validator,
+    model_validator,
 )
-from catalog.models.base import BaseModel
-from catalog.models.api import Response, BulkInput, ListResponse, AuthorizedInput
-from catalog.models.common import Unit, DataTypeEnum, Period, DataSchemaEnum, ISO_MAPPING, UNIT_EXAMPLE, PERIOD_EXAMPLE
-import logging
 
+from catalog.models.api import AuthorizedInput, BulkInput, ListResponse, Response
+from catalog.models.base import BaseModel
+from catalog.models.common import ISO_MAPPING, PERIOD_EXAMPLE, UNIT_EXAMPLE, DataSchemaEnum, DataTypeEnum, Period, Unit
 from catalog.settings import CRITERIA_LIST
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,6 @@ TYPEMAP = {
 
 
 class RequirementBaseValidators(BaseModel):
-
     @classmethod
     def _check_value_type(cls, value, data_type_name):
         data_type = TYPEMAP.get(data_type_name)
@@ -54,17 +54,13 @@ class RequirementBaseValidators(BaseModel):
 
     @model_validator(mode="after")
     def validate_available_values(cls, values):
-
         error_map = {
             "expectedValue": ["minValue", "maxValue", "expectedValues"],
             "expectedValues": ["minValue", "maxValue", "expectedValue"],
         }
 
         for k, v in error_map.items():
-            if (
-                    getattr(values, k) is not None
-                    and any(getattr(values, i) is not None for i in v)
-            ):
+            if getattr(values, k) is not None and any(getattr(values, i) is not None for i in v):
                 raise ValueError(f"{k} couldn't exists together with one of {v}")
         return values
 
@@ -125,19 +121,13 @@ class ProfileRequirementValidators(RequirementBaseValidators):
                 raise ValueError("expectedMinItems couldn't be greater then expectedMaxItems")
 
             if expected_min_items and expected_min_items > len(expected_values):
-                raise ValueError(
-                    "expectedMinItems couldn't be greater then count of items in expectedValues"
-                )
+                raise ValueError("expectedMinItems couldn't be greater then count of items in expectedValues")
 
             if expected_max_items and expected_max_items > len(expected_values):
-                raise ValueError(
-                    "expectedMaxItems couldn't be greater then count of items in expectedValues"
-                )
+                raise ValueError("expectedMaxItems couldn't be greater then count of items in expectedValues")
 
         elif expected_min_items or expected_max_items:
-            raise ValueError(
-                "expectedMinItems and expectedMaxItems couldn't exist without expectedValues"
-            )
+            raise ValueError("expectedMinItems and expectedMaxItems couldn't exist without expectedValues")
 
         return values
 
@@ -156,16 +146,16 @@ class CategoryRequirementValidators(RequirementBaseValidators):
             if expected_max_items and expected_max_items != 1:
                 raise ValueError("expectedMaxItems should be equal 1 or not exist at all")
 
-            if expected_min_items > len(expected_values) or (expected_max_items and expected_max_items > len(expected_values)):
+            if expected_min_items > len(expected_values) or (
+                expected_max_items and expected_max_items > len(expected_values)
+            ):
                 raise ValueError(
                     "count of items in expectedValues should be equal or greater "
                     "than expectedMinItems/expectedMaxItems values"
                 )
 
         elif expected_min_items or expected_max_items:
-            raise ValueError(
-                "expectedMinItems and expectedMaxItems couldn't exist without expectedValues"
-            )
+            raise ValueError("expectedMinItems and expectedMaxItems couldn't exist without expectedValues")
         elif values.dataType == DataTypeEnum.string.value:
             raise ValueError("expectedValues is required when dataType string")
 
@@ -190,8 +180,8 @@ class EligibleEvidenceType(str, Enum):
 class EligibleEvidence(BaseModel):
     id: str = Field(pattern=r"^[0-9A-Za-z_-]{1,32}$", default_factory=lambda: uuid4().hex)
     title: str = Field(..., min_length=1, max_length=250)
-    description: Optional[str] = Field(None, max_length=1000, example="string")
-    type: Optional[EligibleEvidenceType] = Field(None, example=EligibleEvidenceType.statement)
+    description: Optional[str] = Field(None, max_length=1000, json_schema_extra={"example": "string"})
+    type: Optional[EligibleEvidenceType] = Field(None, json_schema_extra={"example": EligibleEvidenceType.statement})
 
     @field_validator("title")
     @classmethod
@@ -203,33 +193,40 @@ class BaseRequirementCreateData(BaseModel):
     title: str = Field(..., min_length=1, max_length=250)
     dataType: DataTypeEnum
 
-    unit: Optional[Unit] = Field(None, example=UNIT_EXAMPLE)
-    description: Optional[str] = Field(None, max_length=1000, example="description")
-    period: Optional[Period] = Field(None, example=PERIOD_EXAMPLE)
+    unit: Optional[Unit] = Field(None, json_schema_extra={"example": UNIT_EXAMPLE})
+    description: Optional[str] = Field(None, max_length=1000, json_schema_extra={"example": "description"})
+    period: Optional[Period] = Field(None, json_schema_extra={"example": PERIOD_EXAMPLE})
 
-    pattern: Optional[str] = Field(None, max_length=250, example="string")
-    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(None, example="string")
-    maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(None, example=1)
-    minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(None, example=1)
+    pattern: Optional[str] = Field(None, max_length=250, json_schema_extra={"example": "string"})
+    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(
+        None,
+        json_schema_extra={"example": "string"},
+    )
+    maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(
+        None,
+        json_schema_extra={"example": 1},
+    )
+    minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(
+        None,
+        json_schema_extra={"example": 1},
+    )
 
     expectedValues: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(
         None,
-        example=["string1", "string2"],
+        json_schema_extra={"example": ["string1", "string2"]},
     )
-    expectedMinItems: Optional[PositiveInt] = Field(None, example=1)
-    expectedMaxItems: Optional[PositiveInt] = Field(None, example=1)
-    dataSchema: Optional[DataSchemaEnum] = Field(None, example=DataSchemaEnum.ISO_639)
+    expectedMinItems: Optional[PositiveInt] = Field(None, json_schema_extra={"example": 1})
+    expectedMaxItems: Optional[PositiveInt] = Field(None, json_schema_extra={"example": 1})
+    dataSchema: Optional[DataSchemaEnum] = Field(None, json_schema_extra={"example": DataSchemaEnum.ISO_639})
 
     eligibleEvidences: Optional[List[EligibleEvidence]] = Field(
-        None,
-        max_length=100,
-        example=[{"id": uuid4().hex, "title": "string"}]
+        None, max_length=100, json_schema_extra={"example": [{"id": uuid4().hex, "title": "string"}]}
     )
 
     @property
     def id(self):
         new_id = uuid4().hex
-        self.__dict__['id'] = new_id
+        self.__dict__["id"] = new_id
         return new_id
 
     @field_validator("title")
@@ -240,13 +237,16 @@ class BaseRequirementCreateData(BaseModel):
 
 class CategoryRequirementCreateData(BaseRequirementCreateData, CategoryRequirementValidators):
     isArchived: bool = False
-    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat]] = Field(None, example="string")
-    maxValue: Optional[Union[StrictInt, StrictFloat]] = Field(None, example=1)
-    minValue: Optional[Union[StrictInt, StrictFloat]] = Field(None, example=1)
+    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat]] = Field(
+        None,
+        json_schema_extra={"example": "string"},
+    )
+    maxValue: Optional[Union[StrictInt, StrictFloat]] = Field(None, json_schema_extra={"example": 1})
+    minValue: Optional[Union[StrictInt, StrictFloat]] = Field(None, json_schema_extra={"example": 1})
     expectedValues: Optional[Set[StrictStr]] = Field(
         None,
         min_length=1,
-        example=["string1", "string2"],
+        json_schema_extra={"example": ["string1", "string2"]},
     )
 
 
@@ -255,30 +255,37 @@ class ProfileRequirementCreateData(BaseRequirementCreateData, ProfileRequirement
 
 
 class BaseRequirementUpdateData(BaseModel):
-    title: Optional[str] = Field(None, min_length=1, max_length=250, example="title")
-    dataType: Optional[DataTypeEnum] = Field(None, example=DataTypeEnum.string)
+    title: Optional[str] = Field(None, min_length=1, max_length=250, json_schema_extra={"example": "title"})
+    dataType: Optional[DataTypeEnum] = Field(None, json_schema_extra={"example": DataTypeEnum.string})
 
-    unit: Optional[Unit] = Field(None, example=UNIT_EXAMPLE)
-    description: Optional[str] = Field(None, max_length=1000, example="description")
-    period: Optional[Period] = Field(None, example=PERIOD_EXAMPLE)
+    unit: Optional[Unit] = Field(None, json_schema_extra={"example": UNIT_EXAMPLE})
+    description: Optional[str] = Field(None, max_length=1000, json_schema_extra={"example": "description"})
+    period: Optional[Period] = Field(None, json_schema_extra={"example": PERIOD_EXAMPLE})
 
-    pattern: Optional[str] = Field(None, max_length=250, example="string")
-    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(None, example="string")
-    maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(None, example=1)
-    minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(None, example=1)
+    pattern: Optional[str] = Field(None, max_length=250, json_schema_extra={"example": "string"})
+    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(
+        None,
+        json_schema_extra={"example": "string"},
+    )
+    maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(
+        None,
+        json_schema_extra={"example": 1},
+    )
+    minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(
+        None,
+        json_schema_extra={"example": 1},
+    )
 
     expectedValues: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(
         None,
-        example=["string1", "string2"],
+        json_schema_extra={"example": ["string1", "string2"]},
     )
-    expectedMinItems: Optional[PositiveInt] = Field(None, example=1)
-    expectedMaxItems: Optional[PositiveInt] = Field(None, example=1)
-    dataSchema: Optional[DataSchemaEnum] = Field(None, example=DataSchemaEnum.ISO_639)
+    expectedMinItems: Optional[PositiveInt] = Field(None, json_schema_extra={"example": 1})
+    expectedMaxItems: Optional[PositiveInt] = Field(None, json_schema_extra={"example": 1})
+    dataSchema: Optional[DataSchemaEnum] = Field(None, json_schema_extra={"example": DataSchemaEnum.ISO_639})
 
     eligibleEvidences: Optional[List[EligibleEvidence]] = Field(
-        None,
-        max_length=100,
-        example=[{"id": uuid4().hex, "title": "string"}]
+        None, max_length=100, json_schema_extra={"example": [{"id": uuid4().hex, "title": "string"}]}
     )
 
     @field_validator("title")
@@ -288,13 +295,16 @@ class BaseRequirementUpdateData(BaseModel):
 
 
 class CategoryRequirementUpdateData(BaseRequirementUpdateData):
-    isArchived: Optional[bool] = Field(None, example=True)
-    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat]] = Field(None, example="string")
-    maxValue: Optional[Union[StrictInt, StrictFloat]] = Field(None, example=1)
-    minValue: Optional[Union[StrictInt, StrictFloat]] = Field(None, example=1)
+    isArchived: Optional[bool] = Field(None, json_schema_extra={"example": True})
+    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat]] = Field(
+        None,
+        json_schema_extra={"example": "string"},
+    )
+    maxValue: Optional[Union[StrictInt, StrictFloat]] = Field(None, json_schema_extra={"example": 1})
+    minValue: Optional[Union[StrictInt, StrictFloat]] = Field(None, json_schema_extra={"example": 1})
     expectedValues: Optional[Set[StrictStr]] = Field(
         None,
-        example=["string1", "string2"],
+        json_schema_extra={"example": ["string1", "string2"]},
     )
 
 
@@ -307,25 +317,38 @@ class Requirement(BaseModel):
     title: str = Field(..., min_length=1, max_length=250)
     dataType: DataTypeEnum
 
-    unit: Optional[Unit] = Field(None, example=UNIT_EXAMPLE)
-    description: Optional[str] = Field(None, max_length=1000, example="description")
-    period: Optional[Period] = Field(None, example=PERIOD_EXAMPLE)
-    isArchived: Optional[bool] = Field(None, example=True)
+    unit: Optional[Unit] = Field(None, json_schema_extra={"example": UNIT_EXAMPLE})
+    description: Optional[str] = Field(None, max_length=1000, json_schema_extra={"example": "description"})
+    period: Optional[Period] = Field(None, json_schema_extra={"example": PERIOD_EXAMPLE})
+    isArchived: Optional[bool] = Field(None, json_schema_extra={"example": True})
 
-    pattern: Optional[str] = Field(None, max_length=250, example="string")
-    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(None, example="string")
-    maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(None, example=1)
-    minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(None, example=1)
+    pattern: Optional[str] = Field(None, max_length=250, json_schema_extra={"example": "string"})
+    expectedValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(
+        None,
+        json_schema_extra={"example": "string"},
+    )
+    maxValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(
+        None,
+        json_schema_extra={"example": 1},
+    )
+    minValue: Optional[Union[StrictBool, StrictInt, StrictFloat, StrictStr]] = Field(
+        None,
+        json_schema_extra={"example": 1},
+    )
 
     expectedValues: Optional[Set[Union[StrictBool, StrictInt, StrictFloat, StrictStr]]] = Field(
         None,
-        example=["string1", "string2"],
+        json_schema_extra={"example": ["string1", "string2"]},
     )
-    expectedMinItems: Optional[PositiveInt] = Field(None, example=1)
-    expectedMaxItems: Optional[PositiveInt] = Field(None, example=1)
-    dataSchema: Optional[DataSchemaEnum] = Field(None, example=DataSchemaEnum.ISO_639)
+    expectedMinItems: Optional[PositiveInt] = Field(None, json_schema_extra={"example": 1})
+    expectedMaxItems: Optional[PositiveInt] = Field(None, json_schema_extra={"example": 1})
+    dataSchema: Optional[DataSchemaEnum] = Field(None, json_schema_extra={"example": DataSchemaEnum.ISO_639})
 
-    eligibleEvidences: Optional[List[EligibleEvidence]] = Field(None, max_length=100, example=[{"id": uuid4().hex, "title": "string"}])
+    eligibleEvidences: Optional[List[EligibleEvidence]] = Field(
+        None,
+        max_length=100,
+        json_schema_extra={"example": [{"id": uuid4().hex, "title": "string"}]},
+    )
 
 
 class CategoryRequirement(Requirement, CategoryRequirementValidators):
@@ -349,7 +372,7 @@ class RequirementGroupsCreateData(BaseModel):
 
 
 class RequirementGroupsUpdateData(BaseModel):
-    description: str = Field(None, min_length=1, max_length=1000, example="description")
+    description: str = Field(None, min_length=1, max_length=1000, json_schema_extra={"example": "description"})
 
 
 class RequirementGroup(BaseModel):
@@ -361,10 +384,10 @@ class RequirementGroup(BaseModel):
 class LegislationIdentifier(BaseModel):
     id: str
     uri: str = Field(..., min_length=1)
-    scheme: Optional[str] = Field(None, min_length=1, max_length=250, example="string")
-    legalName: Optional[str] = Field(None, min_length=1, max_length=500, example="string")
-    legalName_en: Optional[str] = Field(None, min_length=1, max_length=500, example="string")
-    legalName_ru: Optional[str] = Field(None, min_length=1, max_length=500, example="string")
+    scheme: Optional[str] = Field(None, min_length=1, max_length=250, json_schema_extra={"example": "string"})
+    legalName: Optional[str] = Field(None, min_length=1, max_length=500, json_schema_extra={"example": "string"})
+    legalName_en: Optional[str] = Field(None, min_length=1, max_length=500, json_schema_extra={"example": "string"})
+    legalName_ru: Optional[str] = Field(None, min_length=1, max_length=500, json_schema_extra={"example": "string"})
 
 
 class LegislationItem(BaseModel):
@@ -380,9 +403,9 @@ LEGISLATION_ITEM_EXAMPLE = LegislationItem(
     identifier=LegislationIdentifier(
         uri="https://zakon.rada.gov.ua/laws/show/922-19#Text",
         id="922-VIII",
-        legalName="Закон України \"Про публічні закупівлі\""
+        legalName='Закон України "Про публічні закупівлі"',
     ),
-    article="22.2.3"
+    article="22.2.3",
 ).model_dump(exclude_none=True)
 
 
@@ -390,7 +413,7 @@ class CriterionClassification(BaseModel):
     scheme: Literal["ESPD211"]
     id: str = Field(..., min_length=1, max_length=250)
 
-    @field_validator('id')
+    @field_validator("id")
     def validate_id(cls, value):
         if value not in CRITERIA_LIST:
             raise ValueError(f"must be one of {CRITERIA_LIST}")
@@ -401,6 +424,7 @@ CRITERION_CLASSIFICATION_EXAMPLE = CriterionClassification(
     scheme="ESPD211",
     id="CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
 ).model_dump()
+
 
 class CriterionCreateData(BaseModel):
     classification: CriterionClassification
@@ -419,16 +443,19 @@ class CriterionCreateData(BaseModel):
 
 
 class CriterionUpdateData(BaseModel):
-    title: Optional[str] = Field(None, min_length=1, max_length=250, example="string")
-    code: Optional[str] = Field(None, pattern=r"^[0-9A-Za-z_-]{1,32}$", example="string")
-    description: Optional[str] = Field(None, min_length=1, max_length=1000, example="string")
+    title: Optional[str] = Field(None, min_length=1, max_length=250, json_schema_extra={"example": "string"})
+    code: Optional[str] = Field(None, pattern=r"^[0-9A-Za-z_-]{1,32}$", json_schema_extra={"example": "string"})
+    description: Optional[str] = Field(None, min_length=1, max_length=1000, json_schema_extra={"example": "string"})
     legislation: Optional[List[LegislationItem]] = Field(
         None,
         min_length=1,
         max_length=100,
-        example=[LEGISLATION_ITEM_EXAMPLE],
+        json_schema_extra={"example": [LEGISLATION_ITEM_EXAMPLE]},
     )
-    classification: Optional[CriterionClassification] = Field(None, example=CRITERION_CLASSIFICATION_EXAMPLE)
+    classification: Optional[CriterionClassification] = Field(
+        None,
+        json_schema_extra={"example": CRITERION_CLASSIFICATION_EXAMPLE},
+    )
 
 
 class Criterion(BaseModel):
@@ -440,9 +467,12 @@ class Criterion(BaseModel):
         None,
         min_length=1,
         max_length=100,
-        example=[LEGISLATION_ITEM_EXAMPLE],
+        json_schema_extra={"example": [LEGISLATION_ITEM_EXAMPLE]},
     )
-    classification: Optional[CriterionClassification] = Field(None, example=CRITERION_CLASSIFICATION_EXAMPLE)
+    classification: Optional[CriterionClassification] = Field(
+        None,
+        json_schema_extra={"example": CRITERION_CLASSIFICATION_EXAMPLE},
+    )
     source: str = "tenderer"
 
 

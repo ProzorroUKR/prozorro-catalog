@@ -1,30 +1,37 @@
-from copy import deepcopy
 import logging
+from copy import deepcopy
 from typing import Optional, Union
 
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from aiohttp.web import HTTPNotFound
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r401, r404
 
 from catalog import db
-from catalog.models.api import PaginatedList, ErrorResponse
-from catalog.models.product import ProductCreateInput, ProductUpdateInput, LocalizationProductUpdateInput, \
-    ProductCreateResponse, ProductResponse
-from catalog.utils import pagination_params, get_now, get_revision_changes
-from catalog.auth import validate_access_token, validate_accreditation, set_access_token
+from catalog.auth import set_access_token, validate_access_token, validate_accreditation
+from catalog.models.api import ErrorResponse, PaginatedList
+from catalog.models.product import (
+    LocalizationProductUpdateInput,
+    ProductCreateInput,
+    ProductCreateResponse,
+    ProductResponse,
+    ProductUpdateInput,
+)
 from catalog.serializers.product import ProductSerializer
 from catalog.state.product import ProductState
-
+from catalog.utils import get_now, get_revision_changes, pagination_params
 
 logger = logging.getLogger(__name__)
 
 
 class ProductView(PydanticView):
-
     state_class = ProductState
 
     async def get(
-            self, /, offset: Optional[str] = None, limit: Optional[int] = 100, descending: Optional[Union[int, str]] = 0,
+        self,
+        /,
+        offset: Optional[str] = None,
+        limit: Optional[int] = 100,
+        descending: Optional[Union[int, str]] = 0,
     ) -> r200[PaginatedList]:
         """
         Get a list of products
@@ -70,12 +77,10 @@ class ProductView(PydanticView):
                 "product_id": data["id"],
             },
         )
-        return {"data": ProductSerializer(data, category=category).data,
-                "access": access}
+        return {"data": ProductSerializer(data, category=category).data, "access": access}
 
 
 class ProductItemView(PydanticView):
-
     state_class = ProductState
 
     async def get(self, product_id: str, /) -> Union[r201[ProductResponse], r400[ErrorResponse], r404[ErrorResponse]]:

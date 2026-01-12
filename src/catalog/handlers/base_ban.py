@@ -1,11 +1,10 @@
 import logging
 from copy import deepcopy
 
-from aiohttp.web import HTTPNotFound
+from aiohttp.web import HTTPNotFound, Request
 
 from catalog.context import get_now
 from catalog.models.ban import RequestBanPostInput
-
 from catalog.serializers.ban import BanSerializer
 from catalog.state.ban import BanState
 from catalog.utils import get_revision_changes
@@ -14,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class BaseBanMixin:
+    request: Request
     state = BanState
 
     parent_obj_name = None

@@ -1,16 +1,16 @@
 import asyncio
 import logging
-import sentry_sdk
 from dataclasses import dataclass
 
+import sentry_sdk
 from pymongo import UpdateOne
 
 from catalog.db import (
-    init_mongo,
-    transaction_context_manager,
-    get_profiles_collection,
     get_category_collection,
     get_products_collection,
+    get_profiles_collection,
+    init_mongo,
+    transaction_context_manager,
 )
 from catalog.logging import setup_logging
 from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
@@ -33,8 +33,7 @@ async def migrate_categories():
     collection = get_category_collection()
 
     async for category in collection.find(
-        {"procuringEntity": {"$exists": True}},
-        projection={"_id": 1, "procuringEntity": 1}
+        {"procuringEntity": {"$exists": True}}, projection={"_id": 1, "procuringEntity": 1}
     ):
         counter += 1
         now = get_now().isoformat()
@@ -45,7 +44,7 @@ async def migrate_categories():
                 update={
                     "$set": {"marketAdministrator": category["procuringEntity"], "dateModified": now},
                     "$unset": {"procuringEntity": ""},
-                }
+                },
             )
         )
 
@@ -67,22 +66,17 @@ async def migrate_profiles():
     collection = get_profiles_collection()
 
     pipeline = [
-        {"$match": {
-            "relatedCategory": {"$exists": True},
-            "marketAdministrator": {"$exists": False}}
+        {"$match": {"relatedCategory": {"$exists": True}, "marketAdministrator": {"$exists": False}}},
+        {
+            "$lookup": {
+                "from": get_category_collection().name,
+                "localField": "relatedCategory",
+                "foreignField": "_id",
+                "as": "category",
+            }
         },
-        {"$lookup": {
-            "from": get_category_collection().name,
-            "localField": "relatedCategory",
-            "foreignField": "_id",
-            "as": "category"
-        }},
         {"$unwind": "$category"},
-        {"$project": {
-            "_id": 1,
-            "relatedCategory": 1,
-            "marketAdministrator": "$category.marketAdministrator"
-        }}
+        {"$project": {"_id": 1, "relatedCategory": 1, "marketAdministrator": "$category.marketAdministrator"}},
     ]
 
     async for obj in collection.aggregate(pipeline):
@@ -93,7 +87,7 @@ async def migrate_profiles():
         bulk.append(
             UpdateOne(
                 filter={"_id": obj["_id"]},
-                update={"$set": {"marketAdministrator": obj["marketAdministrator"], "dateModified": now}}
+                update={"$set": {"marketAdministrator": obj["marketAdministrator"], "dateModified": now}},
             )
         )
 
@@ -115,22 +109,17 @@ async def migrate_products():
     collection = get_products_collection()
 
     pipeline = [
-        {"$match": {
-            "relatedCategory": {"$exists": True},
-            "marketAdministrator": {"$exists": False}}
+        {"$match": {"relatedCategory": {"$exists": True}, "marketAdministrator": {"$exists": False}}},
+        {
+            "$lookup": {
+                "from": get_category_collection().name,
+                "localField": "relatedCategory",
+                "foreignField": "_id",
+                "as": "category",
+            }
         },
-        {"$lookup": {
-            "from": get_category_collection().name,
-            "localField": "relatedCategory",
-            "foreignField": "_id",
-            "as": "category"
-        }},
         {"$unwind": "$category"},
-        {"$project": {
-            "_id": 1,
-            "relatedCategory": 1,
-            "marketAdministrator": "$category.marketAdministrator"
-        }}
+        {"$project": {"_id": 1, "relatedCategory": 1, "marketAdministrator": "$category.marketAdministrator"}},
     ]
 
     async for obj in collection.aggregate(pipeline):
@@ -141,7 +130,7 @@ async def migrate_products():
         bulk.append(
             UpdateOne(
                 filter={"_id": obj["_id"]},
-                update={"$set": {"marketAdministrator": obj["marketAdministrator"], "dateModified": now}}
+                update={"$set": {"marketAdministrator": obj["marketAdministrator"], "dateModified": now}},
             )
         )
 
@@ -174,5 +163,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

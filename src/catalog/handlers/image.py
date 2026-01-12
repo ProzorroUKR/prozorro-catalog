@@ -1,19 +1,19 @@
-from aiohttp.web_urldispatcher import View
-from aiohttp.web import HTTPBadRequest
-from catalog.settings import IMG_PATH, IMG_DIR, ALLOWED_IMG_TYPES, IMG_SIZE_LIMIT
-from catalog.image import monkey_patch_jpeg_tests, generate_filename
-import aiofiles
-import aiofiles.os
-import imghdr
 import hashlib
+import imghdr
 import logging
 
+import aiofiles
+import aiofiles.os
+from aiohttp.web import HTTPBadRequest
+from aiohttp.web_urldispatcher import View
+
+from catalog.image import generate_filename, monkey_patch_jpeg_tests
+from catalog.settings import ALLOWED_IMG_TYPES, IMG_DIR, IMG_PATH, IMG_SIZE_LIMIT
 
 monkey_patch_jpeg_tests()
 
 
 class ImageView(View):
-
     @classmethod
     async def post(cls, request):
         try:
@@ -31,7 +31,7 @@ class ImageView(View):
             # You cannot rely on Content-Length if transfer is chunked.
             size = 0
             hash_md5 = hashlib.md5()
-            async with aiofiles.open(tmp_file, 'wb') as f:
+            async with aiofiles.open(tmp_file, "wb") as f:
                 while True:
                     chunk = await field.read_chunk()  # 8192 bytes by default.
                     if not chunk:
@@ -53,10 +53,6 @@ class ImageView(View):
             # adding .png or .jpeg to the file
             filename = f"{tmp_file}.{img_type}"
             await aiofiles.os.rename(tmp_file, filename)
-            data = {
-                "url": filename.replace(IMG_DIR, IMG_PATH),
-                "size": size,
-                "hash": f"md5:{hash_md5.hexdigest()}"
-            }
+            data = {"url": filename.replace(IMG_DIR, IMG_PATH), "size": size, "hash": f"md5:{hash_md5.hexdigest()}"}
             return {"data": data}
-        raise HTTPBadRequest(text='There are no images')
+        raise HTTPBadRequest(text="There are no images")

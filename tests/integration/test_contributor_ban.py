@@ -6,15 +6,15 @@ from freezegun import freeze_time
 
 from catalog.doc_service import generate_test_url
 from catalog.utils import get_now
-from .base import TEST_AUTH
+from tests.base import TEST_AUTH
 
 
 async def test_create_ban_by_not_market_administrator(api, contributor):
-    data = api.get_fixture_json('ban')
+    data = api.get_fixture_json("ban")
     doc_hash = "0" * 32
-    data['documents'][0]['url'] = generate_test_url(doc_hash)
-    data['documents'][0]['hash'] = f"md5:{doc_hash}"
-    data['administrator']['identifier']['id'] = '12121212'
+    data["documents"][0]["url"] = generate_test_url(doc_hash)
+    data["documents"][0]["hash"] = f"md5:{doc_hash}"
+    data["administrator"]["identifier"]["id"] = "12121212"
     resp = await api.post(
         f"/api/crowd-sourcing/contributors/{contributor['data']['id']}/bans",
         json={"data": data},
@@ -22,11 +22,11 @@ async def test_create_ban_by_not_market_administrator(api, contributor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, must be one of market administrators: data.administrator.identifier']} == result
+    assert {"errors": ["Value error, must be one of market administrators: data.administrator.identifier"]} == result
 
 
 async def test_create_ban_permission(api, contributor):
-    data = api.get_fixture_json('ban')
+    data = api.get_fixture_json("ban")
     data.pop("documents", None)
     resp = await api.post(
         f"/api/crowd-sourcing/contributors/{contributor['data']['id']}/bans",
@@ -35,7 +35,7 @@ async def test_create_ban_permission(api, contributor):
     )
     result = await resp.json()
     assert resp.status == 403, result
-    assert {'errors': ["Forbidden 'category' write operation"]} == result
+    assert {"errors": ["Forbidden 'category' write operation"]} == result
 
 
 async def test_ban_create_invalid_fields(api, contributor):
@@ -47,12 +47,12 @@ async def test_ban_create_invalid_fields(api, contributor):
     result = await resp.json()
     assert resp.status == 400, result
     errors = [
-        'Field required: data.reason',
-        'Field required: data.administrator',
+        "Field required: data.reason",
+        "Field required: data.administrator",
     ]
-    assert {'errors': errors} == result
+    assert {"errors": errors} == result
 
-    data = deepcopy(api.get_fixture_json('ban'))
+    data = deepcopy(api.get_fixture_json("ban"))
     resp = await api.post(
         f"/api/crowd-sourcing/contributors/{contributor['data']['id']}/bans",
         json={"data": data},
@@ -60,9 +60,9 @@ async def test_ban_create_invalid_fields(api, contributor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, can add document only from document service: data.documents.0']} == result
+    assert {"errors": ["Value error, can add document only from document service: data.documents.0"]} == result
 
-    data['documents'][0]['url'] = generate_test_url(data["documents"][0]["hash"])
+    data["documents"][0]["url"] = generate_test_url(data["documents"][0]["hash"])
     resp = await api.post(
         f"/api/crowd-sourcing/contributors/{contributor['data']['id']}/bans",
         json={"data": data},
@@ -70,7 +70,7 @@ async def test_ban_create_invalid_fields(api, contributor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, document url signature is invalid: data.documents.0']} == result
+    assert {"errors": ["Value error, document url signature is invalid: data.documents.0"]} == result
 
     del data["documents"]
     data["reason"] = "some other reason"
@@ -81,9 +81,9 @@ async def test_ban_create_invalid_fields(api, contributor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, must be one of market/ban_reason.json keys: data.reason']} == result
+    assert {"errors": ["Value error, must be one of market/ban_reason.json keys: data.reason"]} == result
 
-    data = deepcopy(api.get_fixture_json('ban'))
+    data = deepcopy(api.get_fixture_json("ban"))
     data["dueDate"] = (get_now() - timedelta(days=1)).isoformat()
     del data["documents"]
     resp = await api.post(
@@ -93,15 +93,15 @@ async def test_ban_create_invalid_fields(api, contributor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, should be greater than now: data.dueDate']} == result
+    assert {"errors": ["Value error, should be greater than now: data.dueDate"]} == result
 
 
 async def test_ban_create(api, contributor):
     contributor = contributor["data"]
-    test_ban = api.get_fixture_json('ban')
+    test_ban = api.get_fixture_json("ban")
     doc_hash = "0" * 32
-    test_ban['documents'][0]['url'] = generate_test_url(doc_hash)
-    test_ban['documents'][0]['hash'] = f"md5:{doc_hash}"
+    test_ban["documents"][0]["url"] = generate_test_url(doc_hash)
+    test_ban["documents"][0]["hash"] = f"md5:{doc_hash}"
     resp = await api.post(
         f"api/crowd-sourcing/contributors/{contributor['id']}/bans",
         json={"data": test_ban},
@@ -116,7 +116,7 @@ async def test_ban_create(api, contributor):
 
     # check generated data
     additional_fields = {k: v for k, v in data.items() if k not in test_ban}
-    assert set(additional_fields.keys()) == {'id', 'dateCreated', 'owner'}
+    assert set(additional_fields.keys()) == {"id", "dateCreated", "owner"}
 
     # create ban without dueDate
     del test_ban["dueDate"]
@@ -143,9 +143,16 @@ async def test_ban_get(api, contributor, ban):
     resp = await api.get(f'/api/crowd-sourcing/contributors/{contributor["id"]}/bans/{ban["id"]}')
     assert resp.status == 200
     result = await resp.json()
-    assert set(result.keys()) == {'data'}
+    assert set(result.keys()) == {"data"}
     assert set(result["data"].keys()) == {
-        'id', 'reason', 'owner', 'dateCreated', 'description', 'administrator', 'documents', 'dueDate'
+        "id",
+        "reason",
+        "owner",
+        "dateCreated",
+        "description",
+        "administrator",
+        "documents",
+        "dueDate",
     }
 
 
@@ -156,7 +163,14 @@ async def test_bans_list(api, contributor, ban):
     result = await resp.json()
     assert len(result["data"]) == 1
     assert set(result["data"][0].keys()) == {
-        'id', 'reason', 'owner', 'dateCreated', 'description', 'administrator', 'documents', 'dueDate'
+        "id",
+        "reason",
+        "owner",
+        "dateCreated",
+        "description",
+        "administrator",
+        "documents",
+        "dueDate",
     }
     assert result["data"][0]["id"] == ban["data"]["id"]
 
@@ -164,10 +178,10 @@ async def test_bans_list(api, contributor, ban):
 async def test_ban_already_exists(api, contributor):
     # create ban from administrator 42574629 with dueDate
     contributor = contributor["data"]
-    test_ban = api.get_fixture_json('ban')
+    test_ban = api.get_fixture_json("ban")
     doc_hash = "0" * 32
-    test_ban['documents'][0]['url'] = generate_test_url(doc_hash)
-    test_ban['documents'][0]['hash'] = f"md5:{doc_hash}"
+    test_ban["documents"][0]["url"] = generate_test_url(doc_hash)
+    test_ban["documents"][0]["hash"] = f"md5:{doc_hash}"
     test_ban["dueDate"] = (get_now() + timedelta(days=1)).isoformat()
     resp = await api.post(
         f"api/crowd-sourcing/contributors/{contributor['id']}/bans",
@@ -186,7 +200,7 @@ async def test_ban_already_exists(api, contributor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['ban from this market administrator already exists']} == result
+    assert {"errors": ["ban from this market administrator already exists"]} == result
 
     # add new ban from administrator 42574629 after dueDate
     del test_ban["dueDate"]
@@ -200,10 +214,10 @@ async def test_ban_already_exists(api, contributor):
         assert resp.status == 201, result
 
     # create ban from administrator 40996564 without dueDate
-    test_ban = api.get_fixture_json('ban')
+    test_ban = api.get_fixture_json("ban")
     doc_hash = "0" * 32
-    test_ban['documents'][0]['url'] = generate_test_url(doc_hash)
-    test_ban['documents'][0]['hash'] = f"md5:{doc_hash}"
+    test_ban["documents"][0]["url"] = generate_test_url(doc_hash)
+    test_ban["documents"][0]["hash"] = f"md5:{doc_hash}"
     del test_ban["dueDate"]
     test_ban["administrator"]["identifier"]["id"] = "40996564"
     resp = await api.post(
@@ -223,4 +237,4 @@ async def test_ban_already_exists(api, contributor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['ban from this market administrator already exists']} == result
+    assert {"errors": ["ban from this market administrator already exists"]} == result

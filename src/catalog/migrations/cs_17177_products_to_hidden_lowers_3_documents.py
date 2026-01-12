@@ -1,17 +1,17 @@
 import asyncio
 import logging
-import sentry_sdk
 
+import sentry_sdk
 from pymongo import UpdateOne
 
 from catalog.db import (
+    get_products_collection,
     init_mongo,
     transaction_context_manager,
-    get_products_collection,
 )
-from catalog.models.product import ProductStatus
 from catalog.logging import setup_logging
-from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update, update_criteria, CATEGORY_IDS
+from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
+from catalog.models.product import ProductStatus
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
 
@@ -29,16 +29,15 @@ async def migrate():
             {
                 "vendor": {"$exists": True},
                 "status": {"$ne": ProductStatus.hidden},
-                "$or": [{"$expr": {"$lt": [{"$size": "$documents"}, 3]}}, {"documents": {"$exists": False}}]
+                "$or": [{"$expr": {"$lt": [{"$size": "$documents"}, 3]}}, {"documents": {"$exists": False}}],
             },
-            projection={"_id": 1}
+            projection={"_id": 1},
         ):
             counter += 1
             now = get_now().isoformat()
             bulk.append(
                 UpdateOne(
-                    filter={"_id": obj["_id"]},
-                    update={"$set": {"status": ProductStatus.hidden, "dateModified": now}}
+                    filter={"_id": obj["_id"]}, update={"$set": {"status": ProductStatus.hidden, "dateModified": now}}
                 )
             )
 
@@ -61,5 +60,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

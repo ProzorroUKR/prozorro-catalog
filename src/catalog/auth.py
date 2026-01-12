@@ -1,9 +1,11 @@
-from catalog.models.user import User
-from catalog.settings import AUTH_DATA, CPB_USERNAME
-from aiohttp.helpers import BasicAuth
-from aiohttp.web import HTTPUnauthorized, HTTPForbidden
 from hashlib import sha256
 from secrets import compare_digest, token_hex
+
+from aiohttp.helpers import BasicAuth
+from aiohttp.web import HTTPForbidden, HTTPUnauthorized
+
+from catalog.models.user import User
+from catalog.settings import AUTH_DATA, CPB_USERNAME
 
 
 def login_user(request, allow_anonymous=True):
@@ -33,28 +35,25 @@ def validate_access_token(request, obj, access):
     if not compare_digest(request.user.name, CPB_USERNAME):
         token = get_access_token(request, access)
         if not token:
-            raise HTTPUnauthorized(text='Require access token')
+            raise HTTPUnauthorized(text="Require access token")
 
         hash_token = hash_access_token(token)
-        if not obj['access'].get('token') or not compare_digest(hash_token, obj['access']['token']):
-            raise HTTPForbidden(text='Access token mismatch')
+        if not obj["access"].get("token") or not compare_digest(hash_token, obj["access"]["token"]):
+            raise HTTPForbidden(text="Access token mismatch")
 
     admin_id = obj.get("marketAdministrator", {}).get("identifier", {}).get("id", "")
 
     if (
-        obj['access']['owner'] != CPB_USERNAME  # if object was created via the Cabinet, we don't check owner
-        and not compare_digest(request.user.name, obj['access']['owner'])
+        obj["access"]["owner"] != CPB_USERNAME  # if object was created via the Cabinet, we don't check owner
+        and not compare_digest(request.user.name, obj["access"]["owner"])
         and not compare_digest(request.user.name, admin_id)
         and not compare_digest(request.user.name, CPB_USERNAME)
     ):
-        raise HTTPForbidden(text='Owner mismatch')
+        raise HTTPForbidden(text="Owner mismatch")
 
 
 def validate_accreditation(request, item_name):
-    if (
-        request.user.name not in AUTH_DATA.get(item_name, "")
-        and request.user.name != CPB_USERNAME
-    ):
+    if request.user.name not in AUTH_DATA.get(item_name, "") and request.user.name != CPB_USERNAME:
         raise HTTPForbidden(text=f"Forbidden '{item_name}' write operation")
 
 
@@ -63,19 +62,19 @@ def get_access_token(request, access):
         return access["token"]
     if hasattr(access, "token"):  # pydantic instance
         return access.token
-    if 'X-Access-Token' in request.headers:
-        return request.headers['X-Access-Token']
-    if 'access_token' in request.query:
-        return request.query['access_token']
+    if "X-Access-Token" in request.headers:
+        return request.headers["X-Access-Token"]
+    if "access_token" in request.query:
+        return request.query["access_token"]
 
 
 def set_access_token(request, obj):
     access = {
-        'owner': request.user.name,
-        'token': token_hex(16),  # send back to user
+        "owner": request.user.name,
+        "token": token_hex(16),  # send back to user
     }
     obj["access"] = {
-        'owner': request.user.name,
-        'token': hash_access_token(access["token"]),  # save to the db
+        "owner": request.user.name,
+        "token": hash_access_token(access["token"]),  # save to the db
     }
     return access

@@ -1,9 +1,9 @@
-from typing import Generic, TypeVar, Optional, List, Any
+from typing import Any, Generic, List, Optional, TypeVar
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-DataT = TypeVar('DataT')
+DataT = TypeVar("DataT")
 
 
 class Access(BaseModel):
@@ -20,12 +20,14 @@ class Input(BaseModel, Generic[DataT]):
 
 class AuthorizedInput(BaseModel, Generic[DataT]):
     data: DataT
-    access: Optional[Access] = Field(None, example={"token": uuid4().hex})  # will be checked later cos we want 401 not 400
+    access: Optional[Access] = Field(
+        None, json_schema_extra={"example": {"token": uuid4().hex}}
+    )  # will be checked later cos we want 401 not 400
 
 
 class BulkInput(BaseModel, Generic[DataT]):
     data: List[DataT]
-    access: Optional[Access] = Field(None, example={"token": uuid4().hex})
+    access: Optional[Access] = Field(None, json_schema_extra={"example": {"token": uuid4().hex}})
 
 
 class CreateResponse(BaseModel, Generic[DataT]):

@@ -1,17 +1,22 @@
 import logging
 from typing import Optional, Union
 
-from catalog import db
-from catalog.models.api import PaginatedList, ErrorResponse
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
-from catalog.state.vendor import VendorState
-from catalog.auth import set_access_token, validate_accreditation, validate_access_token
-from catalog.utils import pagination_params, get_revision_changes
-from catalog.models.vendor import VendorPostInput, VendorPatchInput, VendorCreateResponse, VendorResponse, \
-    VendorSignResponse
-from catalog.serializers.vendor import VendorSignSerializer, VendorSerializer
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r401, r404
 
+from catalog import db
+from catalog.auth import set_access_token, validate_access_token, validate_accreditation
+from catalog.models.api import ErrorResponse, PaginatedList
+from catalog.models.vendor import (
+    VendorCreateResponse,
+    VendorPatchInput,
+    VendorPostInput,
+    VendorResponse,
+    VendorSignResponse,
+)
+from catalog.serializers.vendor import VendorSerializer, VendorSignSerializer
+from catalog.state.vendor import VendorState
+from catalog.utils import get_revision_changes, pagination_params
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +25,11 @@ class VendorView(PydanticView):
     state = VendorState
 
     async def get(
-        self, /, offset: Optional[str] = None, limit: Optional[int] = 100, descending: Optional[Union[int, str]] = 0,
+        self,
+        /,
+        offset: Optional[str] = None,
+        limit: Optional[int] = 100,
+        descending: Optional[Union[int, str]] = 0,
     ) -> r200[PaginatedList]:
         """
         Get a list of vendors
@@ -28,12 +37,7 @@ class VendorView(PydanticView):
         Tags: Vendors
         """
         offset, limit, reverse = pagination_params(self.request)
-        response = await db.find_vendors(
-            offset=offset,
-            limit=limit,
-            reverse=reverse,
-            filters={"isActivated": True}
-        )
+        response = await db.find_vendors(offset=offset, limit=limit, reverse=reverse, filters={"isActivated": True})
         return response
 
     async def post(
@@ -59,8 +63,7 @@ class VendorView(PydanticView):
                 "vendor_id": data["id"],
             },
         )
-        response = {"data": VendorSerializer(data).data,
-                    "access": access}
+        response = {"data": VendorSerializer(data).data, "access": access}
         return response
 
 

@@ -1,27 +1,76 @@
 stages:
-  - test
   - build
-  - publish
+  - lint
+  - test
   - deploy
   - cleanup
 
 variables:
-  CI_TAG: "ci-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
   HELM: "helm3"
   REPO_URL: http://repo-staging.dc.prozorro.gov.ua/repos/helm/
 
 build:
   stage: build
-  before_script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   tags:
     - shell
+  rules:
+    # exclude schedules
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    # if it is a tag
+    - if: $CI_COMMIT_TAG
+      variables:
+        CI_TAG: $CI_COMMIT_TAG
+    # if it is a default branch (for example master)
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      variables:
+        CI_TAG: "latest"
+    # if it is push event or manual pipeline trigger (merge request is excluded)
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+      variables:
+        CI_TAG: "ci-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   script:
-    - docker build  --build-arg version=$(git describe --tags) -t $CI_REGISTRY_IMAGE:$CI_TAG .
+    - docker build --build-arg version=$(git describe --tags) -t $CI_REGISTRY_IMAGE:$CI_TAG .
     - docker push $CI_REGISTRY_IMAGE:$CI_TAG
+  after_script:
+    - echo "CI_TAG=$CI_TAG" >> build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+
+.image_defaults:
+  image:
+    name: $CI_REGISTRY_IMAGE:$CI_TAG
+  before_script:
+    - uv sync --frozen --no-cache $UV_EXTRA_ARGS --compile-bytecode
+
+.lint_tools:
+  extends: .image_defaults
+  allow_failure: false
+  tags:
+    - kube-dev
+  only:
+    - branches
+  except:
+    - schedules
+  stage: lint
+  variables:
+    GIT_STRATEGY: clone
+
+mypy:
+  extends: .lint_tools
+  script:
+    - uv run --active mypy src/ --explicit-package-bases
+
+ruff:
+  extends: .lint_tools
+  script:
+    - uv run --active ruff check --force-exclude
 
 test:
-  image: python:3.13-alpine3.20
+  extends: .image_defaults
   stage: test
   services:
     - name: bitnamilegacy/mongodb:6.0.13-debian-11-r9
@@ -37,14 +86,9 @@ test:
     MONGODB_REPLICA_SET_KEY: replicaSetKey
   tags:
     - kube-dev
-  before_script:
-    - apk --no-cache add gcc build-base git openssl-dev libffi-dev
-    - pip install -r requirements.txt
-    - pip install -r tests/requirements.txt
-    - pip install -e .
   script:
-    - pytest -x -s tests/integration/
-      --cov=src/catalog
+    - uv run pytest -x -s tests
+      --cov=catalog
       --cov-report xml
       --cov-report term
   artifacts:
@@ -54,31 +98,6 @@ test:
         coverage_format: cobertura
   coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
 
-
-publish_latest:
-  stage: publish
-  tags:
-    - shell
-  variables:
-    TAG: "latest"
-  before_script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-  script:
-    - docker tag $CI_REGISTRY_IMAGE:$CI_TAG $CI_REGISTRY_IMAGE:$TAG
-    - docker push $CI_REGISTRY_IMAGE:$TAG
-  only:
-    - master
-  except:
-    - schedules
-
-publish_tag:
-  extends: publish_latest
-  variables:
-    TAG: $CI_COMMIT_TAG
-  only:
-    - tags
-
-
 review:
   stage: deploy
   tags:
@@ -86,16 +105,15 @@ review:
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
     action: start
-    url: http://api.${CI_COMMIT_REF_SLUG}.${K8S_DOMAIN}/api/ping
+    url: http://catalog.catalog-${CI_COMMIT_REF_SLUG}.${K8S_DOMAIN}/api/ping
     on_stop: stop_review
     auto_stop_in: 1 month
   variables:
-    TAG: ci-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
     VERSION: $CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
     RELEASE: catalog-${CI_COMMIT_REF_SLUG}
   script:
     - helm3 upgrade -i ${RELEASE} helm/prozorro-catalog --namespace dev-prozorro
-        --set image.tag=${TAG}
+        --set image.tag=${CI_TAG}
         --set environment.VERSION=${VERSION}
         --set ingress.hosts[0].host=catalog.${RELEASE}.k8s.prozorro.gov.ua,ingress.hosts[0].paths[0].path=/
         --set ingress.hosts[0].paths[0].pathType=ImplementationSpecific
@@ -106,35 +124,19 @@ review:
     - schedules
   when: manual
 
-review_cron:
-  stage: deploy
-  tags:
-    - shell
-  environment:
-    name: review/${CI_COMMIT_REF_SLUG}
-    action: start
-    on_stop: stop_review
-    auto_stop_in: 1 month
-  variables:
-    TAG: ci-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
-    VERSION: $CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
-    RELEASE: catalog-${CI_COMMIT_REF_SLUG}-cron
-  script:
-    - helm3 upgrade -i ${RELEASE}-cron helm/prozorro-catalog --namespace dev-prozorro
-        --set image.tag=${TAG}
-        --set environment.VERSION=${VERSION}
+review_master:
+  extends: review
+  after_script:
+    - kubectl --namespace dev-prozorro rollout restart deployment catalog-master-prozorro-catalog
   only:
-    - branches
-  except:
     - master
+  except:
     - schedules
-  when: manual
-
 
 stop_review:
   stage: deploy
   script:
-    - helm3 delete catalog-$CI_COMMIT_REF_SLUG catalog-${CI_COMMIT_REF_SLUG}-cron --namespace dev-prozorro
+    - helm3 delete catalog-$CI_COMMIT_REF_SLUG --namespace dev-prozorro || true
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
     action: stop
@@ -143,37 +145,8 @@ stop_review:
   only:
     - branches
   except:
-    - master
     - schedules
   when: manual
-
-review_master:
-  extends: review
-  stage: deploy
-  environment:
-    name: review/${CI_COMMIT_REF_SLUG}
-    action: start
-    url: http://api.${CI_COMMIT_REF_SLUG}.${K8S_DOMAIN}/api/ping
-    on_stop: stop_review
-    auto_stop_in: 1 month
-  variables:
-    TAG: latest
-    RELEASE: catalog-master
-  after_script:
-    - kubectl --namespace dev-prozorro rollout restart deployment catalog-master-prozorro-catalog
-  only:
-    - master
-  except:
-    - schedules
-
-stop_review_review:
-  extends: stop_review
-  only:
-    - master
-  except:
-    - schedules
-  when: manual
-
 
 clenup-ci-image:
   stage: cleanup

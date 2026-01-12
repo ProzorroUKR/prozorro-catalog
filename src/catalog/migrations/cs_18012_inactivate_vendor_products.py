@@ -3,17 +3,16 @@ import logging
 from datetime import datetime
 
 import sentry_sdk
-
 from pymongo import UpdateOne
 
 from catalog.db import (
+    get_products_collection,
     init_mongo,
     transaction_context_manager,
-    get_products_collection,
 )
-from catalog.models.product import ProductStatus
 from catalog.logging import setup_logging
 from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
+from catalog.models.product import ProductStatus
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
 
@@ -36,7 +35,13 @@ async def migrate():
             product_year = datetime.fromisoformat(obj["dateCreated"]).year
             update_data = {
                 "expirationDate": datetime(
-                    year=product_year, month=12, day=31, hour=23, minute=59, second=59, tzinfo=now.tzinfo,
+                    year=product_year,
+                    month=12,
+                    day=31,
+                    hour=23,
+                    minute=59,
+                    second=59,
+                    tzinfo=now.tzinfo,
                 ).isoformat(),
                 "dateModified": now.isoformat(),
             }
@@ -68,5 +73,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

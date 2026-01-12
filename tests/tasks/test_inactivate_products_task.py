@@ -4,11 +4,7 @@ from uuid import uuid4
 
 from catalog.utils import get_now
 from cron.inactivate_products_task import run_task
-from tests.integration.conftest import (
-    get_fixture_json,
-    api,
-    db,
-)
+from tests.utils import get_fixture_json
 
 
 async def test_migrate_products(db, api):

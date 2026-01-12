@@ -1,10 +1,12 @@
-from catalog.models.api import Input, Response
-from catalog.models.category import Category
-from catalog.models.profile import Profile
-from catalog.models.product import Product
-from pydantic import BaseModel, Field
-from typing import Set, Union
 from enum import Enum
+from typing import Set, Union
+
+from pydantic import BaseModel, Field
+
+from catalog.models.api import Input
+from catalog.models.category import Category
+from catalog.models.product import Product
+from catalog.models.profile import Profile
 
 
 class ResourceType(str, Enum):

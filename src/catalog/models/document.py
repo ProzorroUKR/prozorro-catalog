@@ -1,25 +1,27 @@
 from datetime import datetime
-from typing import Optional, List
-from pydantic import Field, field_validator, model_validator
-from catalog.models.base import BaseModel
-from catalog.models.api import Input, Response, CreateResponse, AuthorizedInput, ListResponse
-from catalog.doc_service import validate_url_from_doc_service, validate_url_signature, build_api_document_url
+from typing import Optional
 from uuid import uuid4
+
+from pydantic import Field, field_validator, model_validator
+
+from catalog.doc_service import build_api_document_url, validate_url_from_doc_service, validate_url_signature
+from catalog.models.api import AuthorizedInput, Input, ListResponse, Response
+from catalog.models.base import BaseModel
 
 
 class DocumentPostData(BaseModel):
-    id: Optional[str] = Field(None, example=uuid4().hex)
+    id: Optional[str] = Field(None, json_schema_extra={"example": uuid4().hex})
     hash: str = Field(..., pattern=r"^md5:[0-9a-f]{32}$")
     title: str = Field(..., min_length=1)
     format: str
     url: str
-    description: Optional[str] = Field(None, example="description")
+    description: Optional[str] = Field(None, json_schema_extra={"example": "description"})
 
     @model_validator(mode="before")
     def process_url(cls, values):
         if "id" not in values:
             values["id"] = uuid4().hex
-        if 'url' in values and 'hash' in values:
+        if "url" in values and "hash" in values:
             validate_url_from_doc_service(values["url"])
             validate_url_signature(values["url"], values["hash"])
             values["url"] = build_api_document_url(values["id"], values["url"])
@@ -33,8 +35,8 @@ class DocumentPutData(DocumentPostData):
 
 
 class DocumentPatchData(BaseModel):
-    title: Optional[str] = Field(None, min_length=1, example="title")
-    description: Optional[str] = Field(None, example="description")
+    title: Optional[str] = Field(None, min_length=1, json_schema_extra={"example": "title"})
+    description: Optional[str] = Field(None, json_schema_extra={"example": "description"})
 
 
 class Document(DocumentPostData):

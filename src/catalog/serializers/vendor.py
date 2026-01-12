@@ -1,9 +1,6 @@
-from datetime import datetime
-
-from catalog.context import get_now
 from catalog.serializers.ban import BanSerializer
-from catalog.serializers.base import RootSerializer, ListSerializer
-from catalog.serializers.document import DocumentSignSerializer, DocumentSerializer
+from catalog.serializers.base import ListSerializer, RootSerializer
+from catalog.serializers.document import DocumentSerializer, DocumentSignSerializer
 
 
 class VendorSerializer(RootSerializer):
@@ -15,6 +12,4 @@ class VendorSerializer(RootSerializer):
 
 class VendorSignSerializer(RootSerializer):
     whitelist = {"vendor", "documents"}
-    serializers = {
-        "documents": ListSerializer(DocumentSignSerializer)
-    }
+    serializers = {"documents": ListSerializer(DocumentSignSerializer)}

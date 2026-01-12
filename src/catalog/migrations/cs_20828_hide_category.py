@@ -47,9 +47,7 @@ async def migrate_categories(category_ids):
 
     if bulk:
         async with transaction_context_manager() as session:
-            await bulk_update(
-                category_collection, bulk, session, counter, migrated_obj="categories"
-            )
+            await bulk_update(category_collection, bulk, session, counter, migrated_obj="categories")
 
     logger.info(f"Finished. Processed {counter} updated categories")
     logger.info("Successfully migrated")

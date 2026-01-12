@@ -1,19 +1,19 @@
 import asyncio
-import standards
+import logging
 from copy import deepcopy
 from uuid import uuid4
 
-import logging
 import sentry_sdk
+import standards
 
 from catalog.db import (
+    get_category_collection,
     init_mongo,
     transaction_context_manager,
-    get_category_collection,
 )
-from catalog.utils import get_now
 from catalog.logging import setup_logging
 from catalog.settings import SENTRY_DSN
+from catalog.utils import get_now
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ CATEGORY_MAPPING = {
     "Військова форма одягу": "35811300-5",
     "Водонепроникний одяг": "18221000-4",
     "Головні убори": "18443300-9",
-    "Деталі трубопроводів безшовні, приварні, умовним діаметром від 50 до 300":  "44167000-8",
+    "Деталі трубопроводів безшовні, приварні, умовним діаметром від 50 до 300": "44167000-8",
     "Конструкції та їх частини: металоконструкції опор ліній електропередач": "44210000-5",
     "Літній одяг": "18132000-3",
     "Ліфти": "42410000-3",
@@ -65,16 +65,14 @@ async def migrate():
 
         for title, class_id in CATEGORY_MAPPING.items():
             category_data = deepcopy(localization_category)
-            category_data.update({
-                "_id": uuid4().hex,
-                "title": title,
-                "classification": {
-                    "id": class_id,
-                    "scheme": "ДК021",
-                    "description": DK_CODES[class_id]
-                },
-                "dateModified": get_now().isoformat(),
-            })
+            category_data.update(
+                {
+                    "_id": uuid4().hex,
+                    "title": title,
+                    "classification": {"id": class_id, "scheme": "ДК021", "description": DK_CODES[class_id]},
+                    "dateModified": get_now().isoformat(),
+                }
+            )
 
             try:
                 await category_collection.insert_one(category_data, session=session)
@@ -100,5 +98,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

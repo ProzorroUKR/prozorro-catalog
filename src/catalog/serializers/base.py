@@ -1,4 +1,3 @@
-
 def evaluate_serializer(serializer, value, obj=None):
     kwargs = {}
     if obj:
@@ -44,18 +43,11 @@ class BaseSerializer:
     def data(self) -> dict:
         items = ((k, v) for k, v in self._data.items())
         if self.private_fields:
-            items = ((k, v)
-                     for k, v in items
-                     if k not in self.private_fields)
+            items = ((k, v) for k, v in items if k not in self.private_fields)
         if self.whitelist:
-            items = ((k, v)
-                     for k, v in items
-                     if k in self.whitelist)
+            items = ((k, v) for k, v in items if k in self.whitelist)
 
-        data = {
-            k: self.serialize_value(k, v)
-            for k, v in items
-        }
+        data = {k: self.serialize_value(k, v) for k, v in items}
         for k, v in self.calculated.items():
             value = v(data)
             if value is not None:
@@ -74,6 +66,7 @@ class RootSerializer(BaseSerializer):
         "rev",
         "revisions",
     }
+
     def __init__(self, data: dict, **kwargs):
         access = data.pop("access", None)
         show_owner = kwargs.get("show_owner", True)

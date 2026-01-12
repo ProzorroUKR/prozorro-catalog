@@ -3,15 +3,14 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 
-from pymongo import UpdateOne
 import sentry_sdk
+from pymongo import UpdateOne
 
 from catalog.db import get_vendor_collection, init_mongo
 from catalog.logging import setup_logging
 from catalog.models.vendor import VendorStatus
-from catalog.utils import get_now
 from catalog.settings import SENTRY_DSN
-
+from catalog.utils import get_now
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +28,9 @@ async def run_task():
     bulk = []
 
     async for vendor in vendor_collection.find(
-            {"status": VendorStatus.banned, "bans": {"$exists": True}},
-            projection={"bans": 1},
-            no_cursor_timeout=True,
+        {"status": VendorStatus.banned, "bans": {"$exists": True}},
+        projection={"bans": 1},
+        no_cursor_timeout=True,
     ):
         for ban in vendor["bans"]:
             if datetime.fromisoformat(ban["dueDate"]) > get_now():
@@ -68,5 +67,5 @@ def main():
     loop.run_until_complete(run_task())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

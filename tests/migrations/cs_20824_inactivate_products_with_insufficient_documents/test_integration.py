@@ -1,10 +1,10 @@
 from copy import deepcopy
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 from catalog.migrations.cs_20824_inactivate_products_with_insufficient_documents import migrate
 from catalog.settings import DOC_SERVICE_URL
-from tests.integration.conftest import get_fixture_json
+from tests.utils import get_fixture_json
 
 
 async def test_migrate(db):
@@ -40,24 +40,12 @@ async def test_migrate(db):
         "expirationDate": "2025-12-11T23:59:59+02:00",
         "status": "active",
         "documents": [
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "sign.p7s"
-            }
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "sign.p7s"},
         ],
     }
     await db.products.insert_one(product_3)
@@ -83,27 +71,13 @@ async def test_migrate(db):
         "expirationDate": "2025-12-11T23:59:59+02:00",
         "status": "active",
         "documents": [
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "sign.p7s"
-            }
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "sign.p7s"},
         ],
     }
     await db.products.insert_one(product_5)
@@ -119,14 +93,15 @@ async def test_migrate(db):
     }
     await db.products.insert_one(product_6)
 
-    await migrate(
-        Mock(
-            doc_url=f"{DOC_SERVICE_URL}/get/ed2d519757304fa9a89a319661cc693e?KeyID=a8968c46&Signature=3lI2VcU48qmxUZ%252BoGFu7bDA8VVamiDjEZz7%252BpZutaUrV%252BFCqNztGzTsL5kNVXm%2FdgRlGAPk%252B1HbreX7NhvnOBw%253D%253D",
-            doc_hash="md5:ea398604479040a989a7808402edc874",
-            doc_format="application/pdf",
-            doc_title="Протокол для -022 -с.pdf",
+    with patch("catalog.models.document.validate_url_signature"):
+        await migrate(
+            Mock(
+                doc_url=f"{DOC_SERVICE_URL}/get/ed2d519757304fa9a89a319661cc693e?KeyID=a8968c46&Signature=3lI2VcU48qmxUZ%252BoGFu7bDA8VVamiDjEZz7%252BpZutaUrV%252BFCqNztGzTsL5kNVXm%2FdgRlGAPk%252B1HbreX7NhvnOBw%253D%253D",
+                doc_hash="md5:ea398604479040a989a7808402edc874",
+                doc_format="application/pdf",
+                doc_title="Протокол для -022 -с.pdf",
+            )
         )
-    )
 
     product_data = await db.products.find_one({"_id": product_1["_id"]})
     assert product_data["status"] == "active"
