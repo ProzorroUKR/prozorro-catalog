@@ -64,6 +64,11 @@ mypy:
   script:
     - uv run --active mypy src/ --explicit-package-bases
 
+ruff:
+  extends: .lint_tools
+  script:
+    - uv run --active ruff check --force-exclude
+
 test:
   extends: .image_defaults
   stage: test
