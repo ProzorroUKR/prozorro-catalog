@@ -1,27 +1,28 @@
 from datetime import datetime
-from typing import Optional, List, Union, Literal
+from enum import Enum
+from typing import List, Literal, Optional, Union
 from uuid import uuid4
 
-from pydantic import Field, field_validator, StrictInt, StrictFloat, StrictBool, StrictStr
+from pydantic import Field, StrictBool, StrictFloat, StrictInt, StrictStr, field_validator
 
+from catalog.models.api import AuthorizedInput, CreateResponse, Response
 from catalog.models.base import BaseModel
-from catalog.models.api import Response, CreateResponse, AuthorizedInput
 from catalog.models.common import (
-    Image,
+    CLASSIFICATION_EXAMPLE,
+    CategoryMarketAdministrator,
     Classification,
     Identifier,
-    CategoryMarketAdministrator, CLASSIFICATION_EXAMPLE,
+    Image,
 )
-from catalog.models.document import Document, DocumentPostData, DOCUMENT_EXAMPLE
+from catalog.models.document import DOCUMENT_EXAMPLE, Document, DocumentPostData
 from catalog.settings import TIMEZONE
 from catalog.utils import get_now
-from enum import Enum
 
 
 class ProductStatus(str, Enum):
-    active = 'active'
-    inactive = 'inactive'
-    hidden = 'hidden'
+    active = "active"
+    inactive = "inactive"
+    hidden = "hidden"
 
 
 class VendorProductIdentifierScheme(str, Enum):
@@ -50,9 +51,7 @@ class VendorInfo(BaseModel):
 
 
 VENDOR_INFO_EXAMPLE = VendorInfo(
-    id="string",
-    name="string",
-    identifier=Identifier(id="463234567819", scheme="UPC", legalName="string")
+    id="string", name="string", identifier=Identifier(id="463234567819", scheme="UPC", legalName="string")
 ).model_dump(exclude_none=True)
 
 
@@ -76,7 +75,7 @@ class ProductRequirementResponses(BaseModel):
         json_schema_extra={"example": [{"requirement": "string", "value": 2}]},
     )
 
-    @field_validator('requirementResponses')
+    @field_validator("requirementResponses")
     def unique_responses_ids(cls, v):
         if v:
             requirements = [e.requirement for e in v]
@@ -104,7 +103,11 @@ class VendorProductCreateData(BaseProductCreateData):
         None,
         min_length=1,
         max_length=1,
-        json_schema_extra={"example": [uuid4().hex,]},
+        json_schema_extra={
+            "example": [
+                uuid4().hex,
+            ]
+        },
     )
 
     @property
@@ -122,7 +125,7 @@ class BaseProductData(BaseProductCreateData):
     images: Optional[List[Image]] = Field(None, max_length=20, json_schema_extra={"example": [{"url": "/image/1.jpg"}]})
     expirationDate: Optional[datetime] = Field(None, json_schema_extra={"example": get_now().isoformat()})
 
-    @field_validator('expirationDate')
+    @field_validator("expirationDate")
     def validate_date(cls, v):
         if v and isinstance(v, datetime):
             if not v.tzinfo:
@@ -170,7 +173,7 @@ class BaseProductUpdateData(ProductRequirementResponses):
 class ProductUpdateData(BaseProductUpdateData):
     expirationDate: Optional[datetime] = Field(None, json_schema_extra={"example": get_now().isoformat()})
 
-    @field_validator('expirationDate')
+    @field_validator("expirationDate")
     def validate_date(cls, v):
         if v and isinstance(v, datetime):
             if not v.tzinfo:
@@ -190,7 +193,14 @@ class Product(BaseProductData):
     marketAdministrator: CategoryMarketAdministrator
     dateModified: datetime = Field(default_factory=lambda: get_now().isoformat())
     dateCreated: Optional[datetime] = Field(None, json_schema_extra={"example": get_now().isoformat()})
-    relatedProfiles: Optional[List[str]] = Field(None, json_schema_extra={"example": ["string", ]})
+    relatedProfiles: Optional[List[str]] = Field(
+        None,
+        json_schema_extra={
+            "example": [
+                "string",
+            ]
+        },
+    )
     owner: str
     vendor: Optional[VendorInfo] = Field(None, json_schema_extra={"example": VENDOR_INFO_EXAMPLE})
     documents: Optional[Document] = Field(None, json_schema_extra={"example": [DOCUMENT_EXAMPLE]})

@@ -1,16 +1,16 @@
 import asyncio
 import logging
-import sentry_sdk
 
+import sentry_sdk
 from pymongo import UpdateOne
 
 from catalog.db import (
+    get_profiles_collection,
     init_mongo,
     transaction_context_manager,
-    get_profiles_collection,
 )
 from catalog.logging import setup_logging
-from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update, update_criteria, CATEGORY_IDS
+from catalog.migrations.cs_16303_requirement_iso_migration import CATEGORY_IDS, bulk_update, update_criteria
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
 
@@ -24,16 +24,14 @@ async def migrate():
     async with transaction_context_manager() as session:
         collection = get_profiles_collection()
         async for obj in collection.find(
-                {"relatedCategory": {"$in": CATEGORY_IDS}},
-                projection={"_id": 1, "criteria": 1}
+            {"relatedCategory": {"$in": CATEGORY_IDS}}, projection={"_id": 1, "criteria": 1}
         ):
             if updated_criteria := update_criteria(obj["criteria"]):
                 counter += 1
                 now = get_now().isoformat()
                 bulk.append(
                     UpdateOne(
-                        filter={"_id": obj["_id"]},
-                        update={"$set": {"criteria": updated_criteria, "dateModified": now}}
+                        filter={"_id": obj["_id"]}, update={"$set": {"criteria": updated_criteria, "dateModified": now}}
                     )
                 )
 
@@ -46,6 +44,7 @@ async def migrate():
 
     logger.info(f"Finished. Processed {counter} records of migrated profiles")
 
+
 def main():
     setup_logging()
     if SENTRY_DSN:
@@ -55,5 +54,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

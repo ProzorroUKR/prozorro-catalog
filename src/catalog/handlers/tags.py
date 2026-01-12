@@ -3,13 +3,13 @@ from copy import deepcopy
 from typing import Optional, Union
 
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r401, r404
 
 from catalog import db
+from catalog.auth import validate_accreditation
 from catalog.models.api import ErrorResponse
 from catalog.models.common import SuccessResponse
-from catalog.models.tag import TagList, TagResponse, TagCreateInput, TagUpdateInput
-from catalog.auth import validate_accreditation
+from catalog.models.tag import TagCreateInput, TagList, TagResponse, TagUpdateInput
 from catalog.serializers.tag import TagSerializer
 from catalog.utils import get_revision_changes
 
@@ -26,9 +26,7 @@ class TagView(PydanticView):
         tags = await db.find_tags(limit=limit, active=active)
         return {"data": [TagSerializer(tag).data for tag in tags]}
 
-    async def post(
-        self, /, body: TagCreateInput
-    ) -> Union[r201[TagResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+    async def post(self, /, body: TagCreateInput) -> Union[r201[TagResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         """
         Create tag
 
@@ -47,14 +45,13 @@ class TagView(PydanticView):
             f"Created tag {data['id']}",
             extra={
                 "MESSAGE_ID": "tag_create_post",
-                "tag_id": data['id'],
+                "tag_id": data["id"],
             },
         )
         return {"data": TagSerializer(data).data}
 
 
 class TagItemView(PydanticView):
-
     async def get(self, tag_id: str, /) -> Union[r200[TagResponse], r400[ErrorResponse], r404[ErrorResponse]]:
         """
         Get tag

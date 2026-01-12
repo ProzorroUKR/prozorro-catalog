@@ -2,18 +2,17 @@ from aiohttp.web import HTTPBadRequest
 from aiohttp.web_exceptions import HTTPForbidden
 
 from catalog import db
-from catalog.state.base import BaseState
 from catalog.context import get_now
+from catalog.models.product import ProductStatus
+from catalog.state.base import BaseState
 from catalog.validations import (
+    validate_medicine_additional_classifications,
     validate_product_to_category,
     validate_product_to_profile,
-    validate_medicine_additional_classifications
 )
-from catalog.models.product import ProductStatus
 
 
 class ProductState(BaseState):
-
     category_fields_to_copy = ["marketAdministrator"]
     check_classification = True
     required_criteria = []

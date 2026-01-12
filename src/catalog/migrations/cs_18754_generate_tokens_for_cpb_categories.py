@@ -1,19 +1,18 @@
 import asyncio
-
 import logging
-import sentry_sdk
-
-from pymongo import UpdateOne
 from secrets import token_hex
+
+import sentry_sdk
+from pymongo import UpdateOne
 
 from catalog.auth import hash_access_token
 from catalog.db import (
+    get_category_collection,
     init_mongo,
     transaction_context_manager,
-    get_category_collection,
 )
 from catalog.logging import setup_logging
-from catalog.settings import SENTRY_DSN, CPB_USERNAME
+from catalog.settings import CPB_USERNAME, SENTRY_DSN
 
 logger = logging.getLogger(__name__)
 
@@ -60,5 +59,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

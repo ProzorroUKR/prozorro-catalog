@@ -1,22 +1,21 @@
 import asyncio
 import csv
-
 import logging
-import sentry_sdk
 
+import sentry_sdk
 from pymongo import UpdateOne
 
 from catalog.db import (
-    init_mongo,
-    transaction_context_manager,
     get_category_collection,
     get_products_collection,
     get_profiles_collection,
+    init_mongo,
+    transaction_context_manager,
 )
-from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
-from catalog.utils import get_now
 from catalog.logging import setup_logging
+from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
 from catalog.settings import SENTRY_DSN
+from catalog.utils import get_now
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +103,7 @@ async def migrate_categories():
             update_fields = {
                 "classification.id": update_data["classification.id"],
                 "classification.description": update_data["classification.description"],
-                "dateModified": get_now().isoformat()
+                "dateModified": get_now().isoformat(),
             }
             bulk.append(
                 UpdateOne(
@@ -132,8 +131,12 @@ async def migrate_profiles():
     counter = 0
     bulk = []
 
-    with open('/tmp/cs_20827_mzu_profiles.csv', 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=["id", "relatedCategory", "title", "classification.id", "classification.description"], extrasaction="ignore")
+    with open("/tmp/cs_20827_mzu_profiles.csv", "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(
+            csvfile,
+            fieldnames=["id", "relatedCategory", "title", "classification.id", "classification.description"],
+            extrasaction="ignore",
+        )
         writer.writeheader()
         for category_ids, update_data in MZU_CATEGORIES_FIELDS_MAPPING.items():
             async for obj in obj_collection.find(
@@ -142,7 +145,7 @@ async def migrate_profiles():
                 update_fields = {
                     "classification.id": update_data["classification.id"],
                     "classification.description": update_data["classification.description"],
-                    "dateModified": get_now().isoformat()
+                    "dateModified": get_now().isoformat(),
                 }
                 bulk.append(
                     UpdateOne(
@@ -186,7 +189,7 @@ async def migrate_products():
             update_fields = {
                 "classification.id": update_data["classification.id"],
                 "classification.description": update_data["classification.description"],
-                "dateModified": get_now().isoformat()
+                "dateModified": get_now().isoformat(),
             }
             bulk.append(
                 UpdateOne(
@@ -224,5 +227,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

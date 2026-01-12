@@ -1,21 +1,17 @@
+from secrets import compare_digest
 from typing import Union
 
 from aiohttp.web import HTTPForbidden
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r404, r400, r401
-from secrets import compare_digest
+from aiohttp_pydantic.oas.typing import r200, r404
 
-from catalog.auth import validate_accreditation
+from catalog import db
+from catalog.handlers.base_document import BaseDocumentItemView, BaseDocumentView
 from catalog.models.api import ErrorResponse
 from catalog.models.document import (
-    DocumentResponse,
-    DocumentNonAuthorizedInputPut,
-    DocumentNonAuthorizedInputPatch,
-    DocumentNonAuthorizedInputPost,
     DocumentList,
+    DocumentResponse,
 )
-from catalog import db
-from catalog.handlers.base_document import BaseDocumentView, BaseDocumentItemView
 
 
 class ProductRequestDocumentMixin:
@@ -31,14 +27,13 @@ class ProductRequestDocumentMixin:
 
     @classmethod
     async def validate_data(cls, request, body, parent_obj, parent_obj_id):
-        if not compare_digest(request.user.name, parent_obj['owner']):
-            raise HTTPForbidden(text='Owner mismatch')
+        if not compare_digest(request.user.name, parent_obj["owner"]):
+            raise HTTPForbidden(text="Owner mismatch")
         if parent_obj.get("acception") or parent_obj.get("rejection"):
-            raise HTTPForbidden(text='Forbidden to add/update document for product request that has been reviewed')
+            raise HTTPForbidden(text="Forbidden to add/update document for product request that has been reviewed")
 
 
 class ProductRequestDocumentView(ProductRequestDocumentMixin, PydanticView):
-
     # Not allowed to add documents to product request temporary
     # async def post(
     #     self, request_id: str, /, body: DocumentNonAuthorizedInputPost
@@ -62,7 +57,6 @@ class ProductRequestDocumentView(ProductRequestDocumentMixin, PydanticView):
 
 
 class ProductRequestDocumentItemView(ProductRequestDocumentMixin, BaseDocumentItemView, PydanticView):
-
     async def get(self, request_id: str, doc_id: str, /) -> Union[r200[DocumentResponse], r404[ErrorResponse]]:
         """
         Get product request document

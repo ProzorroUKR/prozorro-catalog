@@ -1,21 +1,22 @@
-from typing import Optional, Set, Union, List, Literal, Annotated
-from uuid import uuid4
+import logging
 from enum import Enum
+from typing import List, Literal, Optional, Set, Union
+from uuid import uuid4
+
 from pydantic import (
     Field,
-    model_validator,
-    StrictInt,
-    StrictFloat,
-    StrictBool,
-    StrictStr,
     PositiveInt,
+    StrictBool,
+    StrictFloat,
+    StrictInt,
+    StrictStr,
     field_validator,
+    model_validator,
 )
-from catalog.models.base import BaseModel
-from catalog.models.api import Response, BulkInput, ListResponse, AuthorizedInput
-from catalog.models.common import Unit, DataTypeEnum, Period, DataSchemaEnum, ISO_MAPPING, UNIT_EXAMPLE, PERIOD_EXAMPLE
-import logging
 
+from catalog.models.api import AuthorizedInput, BulkInput, ListResponse, Response
+from catalog.models.base import BaseModel
+from catalog.models.common import ISO_MAPPING, PERIOD_EXAMPLE, UNIT_EXAMPLE, DataSchemaEnum, DataTypeEnum, Period, Unit
 from catalog.settings import CRITERIA_LIST
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,6 @@ TYPEMAP = {
 
 
 class RequirementBaseValidators(BaseModel):
-
     @classmethod
     def _check_value_type(cls, value, data_type_name):
         data_type = TYPEMAP.get(data_type_name)
@@ -54,17 +54,13 @@ class RequirementBaseValidators(BaseModel):
 
     @model_validator(mode="after")
     def validate_available_values(cls, values):
-
         error_map = {
             "expectedValue": ["minValue", "maxValue", "expectedValues"],
             "expectedValues": ["minValue", "maxValue", "expectedValue"],
         }
 
         for k, v in error_map.items():
-            if (
-                    getattr(values, k) is not None
-                    and any(getattr(values, i) is not None for i in v)
-            ):
+            if getattr(values, k) is not None and any(getattr(values, i) is not None for i in v):
                 raise ValueError(f"{k} couldn't exists together with one of {v}")
         return values
 
@@ -125,19 +121,13 @@ class ProfileRequirementValidators(RequirementBaseValidators):
                 raise ValueError("expectedMinItems couldn't be greater then expectedMaxItems")
 
             if expected_min_items and expected_min_items > len(expected_values):
-                raise ValueError(
-                    "expectedMinItems couldn't be greater then count of items in expectedValues"
-                )
+                raise ValueError("expectedMinItems couldn't be greater then count of items in expectedValues")
 
             if expected_max_items and expected_max_items > len(expected_values):
-                raise ValueError(
-                    "expectedMaxItems couldn't be greater then count of items in expectedValues"
-                )
+                raise ValueError("expectedMaxItems couldn't be greater then count of items in expectedValues")
 
         elif expected_min_items or expected_max_items:
-            raise ValueError(
-                "expectedMinItems and expectedMaxItems couldn't exist without expectedValues"
-            )
+            raise ValueError("expectedMinItems and expectedMaxItems couldn't exist without expectedValues")
 
         return values
 
@@ -156,16 +146,16 @@ class CategoryRequirementValidators(RequirementBaseValidators):
             if expected_max_items and expected_max_items != 1:
                 raise ValueError("expectedMaxItems should be equal 1 or not exist at all")
 
-            if expected_min_items > len(expected_values) or (expected_max_items and expected_max_items > len(expected_values)):
+            if expected_min_items > len(expected_values) or (
+                expected_max_items and expected_max_items > len(expected_values)
+            ):
                 raise ValueError(
                     "count of items in expectedValues should be equal or greater "
                     "than expectedMinItems/expectedMaxItems values"
                 )
 
         elif expected_min_items or expected_max_items:
-            raise ValueError(
-                "expectedMinItems and expectedMaxItems couldn't exist without expectedValues"
-            )
+            raise ValueError("expectedMinItems and expectedMaxItems couldn't exist without expectedValues")
         elif values.dataType == DataTypeEnum.string.value:
             raise ValueError("expectedValues is required when dataType string")
 
@@ -230,15 +220,13 @@ class BaseRequirementCreateData(BaseModel):
     dataSchema: Optional[DataSchemaEnum] = Field(None, json_schema_extra={"example": DataSchemaEnum.ISO_639})
 
     eligibleEvidences: Optional[List[EligibleEvidence]] = Field(
-        None,
-        max_length=100,
-        json_schema_extra={"example": [{"id": uuid4().hex, "title": "string"}]}
+        None, max_length=100, json_schema_extra={"example": [{"id": uuid4().hex, "title": "string"}]}
     )
 
     @property
     def id(self):
         new_id = uuid4().hex
-        self.__dict__['id'] = new_id
+        self.__dict__["id"] = new_id
         return new_id
 
     @field_validator("title")
@@ -297,9 +285,7 @@ class BaseRequirementUpdateData(BaseModel):
     dataSchema: Optional[DataSchemaEnum] = Field(None, json_schema_extra={"example": DataSchemaEnum.ISO_639})
 
     eligibleEvidences: Optional[List[EligibleEvidence]] = Field(
-        None,
-        max_length=100,
-        json_schema_extra={"example": [{"id": uuid4().hex, "title": "string"}]}
+        None, max_length=100, json_schema_extra={"example": [{"id": uuid4().hex, "title": "string"}]}
     )
 
     @field_validator("title")
@@ -417,9 +403,9 @@ LEGISLATION_ITEM_EXAMPLE = LegislationItem(
     identifier=LegislationIdentifier(
         uri="https://zakon.rada.gov.ua/laws/show/922-19#Text",
         id="922-VIII",
-        legalName="Закон України \"Про публічні закупівлі\""
+        legalName='Закон України "Про публічні закупівлі"',
     ),
-    article="22.2.3"
+    article="22.2.3",
 ).model_dump(exclude_none=True)
 
 
@@ -427,7 +413,7 @@ class CriterionClassification(BaseModel):
     scheme: Literal["ESPD211"]
     id: str = Field(..., min_length=1, max_length=250)
 
-    @field_validator('id')
+    @field_validator("id")
     def validate_id(cls, value):
         if value not in CRITERIA_LIST:
             raise ValueError(f"must be one of {CRITERIA_LIST}")
@@ -438,6 +424,7 @@ CRITERION_CLASSIFICATION_EXAMPLE = CriterionClassification(
     scheme="ESPD211",
     id="CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
 ).model_dump()
+
 
 class CriterionCreateData(BaseModel):
     classification: CriterionClassification

@@ -3,15 +3,14 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 
-from pymongo import UpdateOne
 import sentry_sdk
+from pymongo import UpdateOne
 
 from catalog.db import get_products_collection, init_mongo
-from catalog.models.product import ProductStatus
 from catalog.logging import setup_logging
-from catalog.utils import get_now
+from catalog.models.product import ProductStatus
 from catalog.settings import SENTRY_DSN
-
+from catalog.utils import get_now
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +28,9 @@ async def run_task():
     bulk = []
 
     async for product in products_collection.find(
-            {"status": ProductStatus.active, "expirationDate": {"$exists": True}},
-            projection={"expirationDate": 1},
-            no_cursor_timeout=True,
+        {"status": ProductStatus.active, "expirationDate": {"$exists": True}},
+        projection={"expirationDate": 1},
+        no_cursor_timeout=True,
     ):
         if datetime.fromisoformat(product["expirationDate"]) < get_now():
             bulk.append(
@@ -65,5 +64,5 @@ def main():
     loop.run_until_complete(run_task())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

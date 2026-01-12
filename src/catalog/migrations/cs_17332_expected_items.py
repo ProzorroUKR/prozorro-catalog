@@ -1,21 +1,18 @@
 import asyncio
 import logging
-import sentry_sdk
-from uuid import uuid4
-from copy import deepcopy
 
+import sentry_sdk
 from pymongo import UpdateOne
 
 from catalog.db import (
+    get_category_collection,
     init_mongo,
     transaction_context_manager,
-    get_category_collection,
 )
 from catalog.logging import setup_logging
 from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
-
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +42,7 @@ async def migrate():
     collection = get_category_collection()
     async with transaction_context_manager() as session:
         async for obj in collection.find(
-            {"_id": {"$ne": CATEGORY_ID}, "criteria": {"$exists": True}},
-            projection={"_id": 1, "criteria": 1}
+            {"_id": {"$ne": CATEGORY_ID}, "criteria": {"$exists": True}}, projection={"_id": 1, "criteria": 1}
         ):
             if update_criteria(obj["criteria"]):
                 counter += 1
@@ -54,11 +50,7 @@ async def migrate():
                 now = get_now().isoformat()
                 bulk.append(
                     UpdateOne(
-                        filter={"_id": obj["_id"]},
-                        update={"$set": {
-                            "criteria": obj["criteria"],
-                            "dateModified": now}
-                        }
+                        filter={"_id": obj["_id"]}, update={"$set": {"criteria": obj["criteria"], "dateModified": now}}
                     )
                 )
 
@@ -82,5 +74,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,8 +1,8 @@
 import asyncio
 import logging
-from pymongo import UpdateOne
 
 import sentry_sdk
+from pymongo import UpdateOne
 
 from catalog.db import get_profiles_collection, init_mongo, transaction_context_manager
 from catalog.logging import setup_logging
@@ -20,15 +20,13 @@ async def migrate():
     async with transaction_context_manager() as session:
         profiles_collection = get_profiles_collection()
         async for profile in profiles_collection.find(
-            {"dateCreated": {"$exists": False}},
-            projection={"_id": 1, "dateModified": 1},
-            session=session
+            {"dateCreated": {"$exists": False}}, projection={"_id": 1, "dateModified": 1}, session=session
         ):
             now = get_now().isoformat()
             bulk.append(
                 UpdateOne(
                     filter={"_id": profile["_id"]},
-                    update={"$set": {"dateCreated": profile.get("dateModified") or now, "dateModified": now}}
+                    update={"$set": {"dateCreated": profile.get("dateModified") or now, "dateModified": now}},
                 )
             )
             counter += 1
@@ -51,5 +49,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

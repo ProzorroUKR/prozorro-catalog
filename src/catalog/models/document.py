@@ -1,10 +1,12 @@
 from datetime import datetime
-from typing import Optional, List
-from pydantic import Field, field_validator, model_validator
-from catalog.models.base import BaseModel
-from catalog.models.api import Input, Response, CreateResponse, AuthorizedInput, ListResponse
-from catalog.doc_service import validate_url_from_doc_service, validate_url_signature, build_api_document_url
+from typing import Optional
 from uuid import uuid4
+
+from pydantic import Field, field_validator, model_validator
+
+from catalog.doc_service import build_api_document_url, validate_url_from_doc_service, validate_url_signature
+from catalog.models.api import AuthorizedInput, Input, ListResponse, Response
+from catalog.models.base import BaseModel
 
 
 class DocumentPostData(BaseModel):
@@ -19,7 +21,7 @@ class DocumentPostData(BaseModel):
     def process_url(cls, values):
         if "id" not in values:
             values["id"] = uuid4().hex
-        if 'url' in values and 'hash' in values:
+        if "url" in values and "hash" in values:
             validate_url_from_doc_service(values["url"])
             validate_url_signature(values["url"], values["hash"])
             values["url"] = build_api_document_url(values["id"], values["url"])

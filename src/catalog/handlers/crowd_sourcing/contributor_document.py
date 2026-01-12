@@ -1,23 +1,22 @@
 from typing import Union
 
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r401, r404
 
+from catalog import db
 from catalog.auth import validate_accreditation
+from catalog.handlers.base_document import BaseDocumentItemView, BaseDocumentView
 from catalog.models.api import ErrorResponse
 from catalog.models.document import (
-    DocumentResponse,
-    DocumentPutInput,
-    DocumentPatchInput,
     DocumentList,
+    DocumentPatchInput,
     DocumentPostInput,
+    DocumentPutInput,
+    DocumentResponse,
 )
-from catalog import db
-from catalog.handlers.base_document import BaseDocumentView, BaseDocumentItemView
 
 
 class ContributorDocumentMixin:
-
     parent_obj_name = "contributor"
 
     @classmethod
@@ -30,7 +29,6 @@ class ContributorDocumentMixin:
 
 
 class ContributorDocumentView(ContributorDocumentMixin, BaseDocumentView, PydanticView):
-
     async def post(
         self, contributor_id: str, /, body: DocumentPostInput
     ) -> Union[r201[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse]]:
@@ -53,7 +51,6 @@ class ContributorDocumentView(ContributorDocumentMixin, BaseDocumentView, Pydant
 
 
 class ContributorDocumentItemView(ContributorDocumentMixin, BaseDocumentItemView, PydanticView):
-
     async def get(self, contributor_id: str, doc_id: str, /) -> Union[r200[DocumentResponse], r404[ErrorResponse]]:
         """
         Get contributor document
@@ -63,7 +60,11 @@ class ContributorDocumentItemView(ContributorDocumentMixin, BaseDocumentItemView
         return await BaseDocumentItemView.get(self, contributor_id, doc_id)
 
     async def put(
-        self, contributor_id: str, doc_id: str, /, body: DocumentPutInput,
+        self,
+        contributor_id: str,
+        doc_id: str,
+        /,
+        body: DocumentPutInput,
     ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Contributor document replace
@@ -75,7 +76,11 @@ class ContributorDocumentItemView(ContributorDocumentMixin, BaseDocumentItemView
         return await BaseDocumentItemView.put(self, contributor_id, doc_id, body)
 
     async def patch(
-            self, contributor_id: str, doc_id: str, /, body: DocumentPatchInput,
+        self,
+        contributor_id: str,
+        doc_id: str,
+        /,
+        body: DocumentPatchInput,
     ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Contributor document update

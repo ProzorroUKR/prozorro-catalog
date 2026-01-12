@@ -1,25 +1,32 @@
 import logging
 from copy import deepcopy
-
-from aiohttp.web import Request
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from typing import Union
 
+from aiohttp.web import Request
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r401, r404
+
 from catalog import db
-from catalog.auth import validate_accreditation, validate_access_token
-from catalog.settings import LOCALIZATION_CRITERIA
-from catalog.utils import get_now, find_item_by_id, delete_sent_none_values, get_revision_changes
+from catalog.auth import validate_access_token, validate_accreditation
 from catalog.models.api import ErrorResponse
 from catalog.models.criteria import (
     CriterionBulkCreateInput,
     CriterionCreateInput,
+    CriterionListResponse,
+    CriterionResponse,
     CriterionUpdateInput,
+    Requirement,
+    RequirementCreateInput,
+    RequirementListResponse,
+    RequirementResponse,
+    RequirementUpdateInput,
     RGCreateInput,
+    RGListResponse,
+    RGResponse,
     RGUpdateInput,
-    Requirement, CriterionListResponse, CriterionResponse, RGResponse, RGListResponse, RequirementListResponse,
-    RequirementResponse, RequirementCreateInput, RequirementUpdateInput,
 )
 from catalog.serializers.base import RootSerializer
+from catalog.settings import LOCALIZATION_CRITERIA
+from catalog.utils import delete_sent_none_values, find_item_by_id, get_now, get_revision_changes
 from catalog.validations import (
     validate_criteria_classification_uniq,
     validate_criteria_max_items_on_post,
@@ -30,7 +37,6 @@ logger = logging.getLogger(__name__)
 
 
 class BaseCriteriaMixin:
-
     obj_name: str
     request: Request
     serializer_class = RootSerializer
@@ -77,8 +83,9 @@ class BaseCriteriaViewMixin(BaseCriteriaMixin):
         data = self.serializer_class(obj_criteria, show_owner=False).data
         return {"data": data["criteria"]}
 
-
-    async def post(self, obj_id: str, /, body: CriterionCreateInput) -> Union[r201[CriterionListResponse], r400[ErrorResponse], r401[ErrorResponse]]:
+    async def post(
+        self, obj_id: str, /, body: CriterionCreateInput
+    ) -> Union[r201[CriterionListResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         self.validations()
         async with self.read_and_update_parent_obj(obj_id) as parent_obj:
             old_parent_obj = deepcopy(parent_obj)
@@ -102,7 +109,7 @@ class BaseCriteriaViewMixin(BaseCriteriaMixin):
                 f"Created {self.obj_name} criterion {criterion['id']}",
                 extra={
                     "MESSAGE_ID": f"{self.obj_name}_criterion_create",
-                    f"{self.obj_name}_criterion_id": criterion['id'],
+                    f"{self.obj_name}_criterion_id": criterion["id"],
                 },
             )
 
@@ -110,7 +117,6 @@ class BaseCriteriaViewMixin(BaseCriteriaMixin):
 
 
 class BaseCriteriaItemViewMixin(BaseCriteriaMixin):
-
     async def get(self, obj_id: str, criterion_id: str, /) -> Union[r200[CriterionResponse], r404[ErrorResponse]]:
         criterion = await self.get_criterion(obj_id, criterion_id)
         data = self.serializer_class(criterion, show_owner=False).data
@@ -148,10 +154,9 @@ class BaseCriteriaRGViewMixin(BaseCriteriaMixin):
     async def get(self, obj_id: str, criterion_id: str, /) -> r200[RGListResponse]:
         parent_criteria = await self.get_criterion(obj_id, criterion_id)
         data = RootSerializer(parent_criteria, show_owner=False).data
-        return {"data": [
-            self.serializer_class(rg, show_owner=False).data
-            for rg in data["criteria"]["requirementGroups"]
-        ]}
+        return {
+            "data": [self.serializer_class(rg, show_owner=False).data for rg in data["criteria"]["requirementGroups"]]
+        }
 
     async def post(
         self, obj_id: str, criterion_id: str, /, body: RGCreateInput
@@ -182,7 +187,6 @@ class BaseCriteriaRGViewMixin(BaseCriteriaMixin):
 
 
 class BaseCriteriaRGItemViewMixin(BaseCriteriaMixin):
-
     async def get(self, obj_id: str, criterion_id: str, rg_id: str, /) -> Union[r200[RGResponse], r404[ErrorResponse]]:
         parent_criterion = await self.get_criterion(obj_id, criterion_id)
         rg = find_item_by_id(parent_criterion["criteria"]["requirementGroups"], rg_id, "requirementGroups")
@@ -232,7 +236,6 @@ class BaseCriteriaRGRequirementViewMixin(BaseCriteriaMixin):
         criteria = await self.get_criterion(obj_id, criterion_id)
         rg = find_item_by_id(criteria["criteria"]["requirementGroups"], rg_id, "requirementGroups")
         return {"data": [self.serializer_class(i, show_owner=False).data for i in rg.get("requirements", [])]}
-
 
     async def post(
         self, obj_id: str, criterion_id: str, rg_id: str, /, body: RequirementCreateInput

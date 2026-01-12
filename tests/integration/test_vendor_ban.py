@@ -1,23 +1,23 @@
 from copy import deepcopy
+from urllib.parse import parse_qsl, urlencode, urlparse
 
 from aiohttp import BasicAuth
 from freezegun import freeze_time
 
-from urllib.parse import urlparse, parse_qsl, urlencode
 from catalog.doc_service import generate_test_url, get_doc_service_uid_from_url
 from catalog.models.vendor import VendorStatus
 from catalog.utils import get_now
 from cron.activate_banned_vendors import run_task as activate_banned_vendors
-from .base import TEST_AUTH, TEST_AUTH_CPB
-from .conftest import set_requirements_to_responses
+from tests.base import TEST_AUTH, TEST_AUTH_CPB
+from tests.conftest import set_requirements_to_responses
 
 
 async def test_create_ban_by_not_market_administrator(api, vendor):
-    data = api.get_fixture_json('ban')
+    data = api.get_fixture_json("ban")
     doc_hash = "0" * 32
-    data['documents'][0]['url'] = generate_test_url(doc_hash)
-    data['documents'][0]['hash'] = f"md5:{doc_hash}"
-    data['administrator']['identifier']['id'] = '12121212'
+    data["documents"][0]["url"] = generate_test_url(doc_hash)
+    data["documents"][0]["hash"] = f"md5:{doc_hash}"
+    data["administrator"]["identifier"]["id"] = "12121212"
     del data["dueDate"]
     resp = await api.post(
         f"/api/vendors/{vendor['data']['id']}/bans",
@@ -26,15 +26,15 @@ async def test_create_ban_by_not_market_administrator(api, vendor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, must be one of market administrators: data.administrator.identifier']} == result
+    assert {"errors": ["Value error, must be one of market administrators: data.administrator.identifier"]} == result
 
 
 async def test_create_ban_permission(api, vendor):
-    data = api.get_fixture_json('ban')
+    data = api.get_fixture_json("ban")
     del data["dueDate"]
     doc_hash = "0" * 32
-    data['documents'][0]['url'] = generate_test_url(doc_hash)
-    data['documents'][0]['hash'] = f"md5:{doc_hash}"
+    data["documents"][0]["url"] = generate_test_url(doc_hash)
+    data["documents"][0]["hash"] = f"md5:{doc_hash}"
     resp = await api.post(
         f"/api/vendors/{vendor['data']['id']}/bans",
         json={"data": data},
@@ -42,7 +42,7 @@ async def test_create_ban_permission(api, vendor):
     )
     result = await resp.json()
     assert resp.status == 403, result
-    assert {'errors': ['Access token mismatch']} == result
+    assert {"errors": ["Access token mismatch"]} == result
 
 
 async def test_ban_create_invalid_fields(api, vendor):
@@ -54,12 +54,12 @@ async def test_ban_create_invalid_fields(api, vendor):
     result = await resp.json()
     assert resp.status == 400, result
     errors = [
-        'Field required: data.reason',
-        'Field required: data.administrator',
+        "Field required: data.reason",
+        "Field required: data.administrator",
     ]
-    assert {'errors': errors} == result
+    assert {"errors": errors} == result
 
-    data = deepcopy(api.get_fixture_json('ban'))
+    data = deepcopy(api.get_fixture_json("ban"))
     del data["dueDate"]
     resp = await api.post(
         f"/api/vendors/{vendor['data']['id']}/bans",
@@ -68,9 +68,9 @@ async def test_ban_create_invalid_fields(api, vendor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, can add document only from document service: data.documents.0']} == result
+    assert {"errors": ["Value error, can add document only from document service: data.documents.0"]} == result
 
-    data['documents'][0]['url'] = generate_test_url(data["documents"][0]["hash"])
+    data["documents"][0]["url"] = generate_test_url(data["documents"][0]["hash"])
     resp = await api.post(
         f"/api/vendors/{vendor['data']['id']}/bans",
         json={"data": data},
@@ -78,7 +78,7 @@ async def test_ban_create_invalid_fields(api, vendor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, document url signature is invalid: data.documents.0']} == result
+    assert {"errors": ["Value error, document url signature is invalid: data.documents.0"]} == result
 
     del data["documents"]
     data["reason"] = "some other reason"
@@ -89,14 +89,14 @@ async def test_ban_create_invalid_fields(api, vendor):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, must be one of market/ban_reason.json keys: data.reason']} == result
+    assert {"errors": ["Value error, must be one of market/ban_reason.json keys: data.reason"]} == result
 
 
 async def test_ban_create(api, vendor):
-    test_ban = api.get_fixture_json('ban')
+    test_ban = api.get_fixture_json("ban")
     doc_hash = "0" * 32
-    test_ban['documents'][0]['url'] = generate_test_url(doc_hash)
-    test_ban['documents'][0]['hash'] = f"md5:{doc_hash}"
+    test_ban["documents"][0]["url"] = generate_test_url(doc_hash)
+    test_ban["documents"][0]["hash"] = f"md5:{doc_hash}"
     del test_ban["dueDate"]
     resp = await api.post(
         f"api/vendors/{vendor['data']['id']}/bans",
@@ -112,7 +112,7 @@ async def test_ban_create(api, vendor):
 
     # check generated data
     additional_fields = {k: v for k, v in data.items() if k not in test_ban}
-    assert set(additional_fields.keys()) == {'id', 'dateCreated', 'owner', 'dueDate'}
+    assert set(additional_fields.keys()) == {"id", "dateCreated", "owner", "dueDate"}
 
     # check quantity of bans in vendor object
     resp = await api.get(f"/api/vendors/{vendor['data']['id']}")
@@ -133,9 +133,16 @@ async def test_ban_get(api, vendor, vendor_ban):
     resp = await api.get(f'/api/vendors/{vendor["data"]["id"]}/bans/{vendor_ban["data"]["id"]}')
     assert resp.status == 200
     result = await resp.json()
-    assert set(result.keys()) == {'data'}
+    assert set(result.keys()) == {"data"}
     assert set(result["data"].keys()) == {
-        'id', 'reason', 'owner', 'dateCreated', 'description', 'administrator', 'documents', 'dueDate'
+        "id",
+        "reason",
+        "owner",
+        "dateCreated",
+        "description",
+        "administrator",
+        "documents",
+        "dueDate",
     }
 
 
@@ -145,16 +152,23 @@ async def test_bans_list(api, vendor, vendor_ban):
     result = await resp.json()
     assert len(result["data"]) == 1
     assert set(result["data"][0].keys()) == {
-        'id', 'reason', 'owner', 'dateCreated', 'description', 'administrator', 'documents', 'dueDate'
+        "id",
+        "reason",
+        "owner",
+        "dateCreated",
+        "description",
+        "administrator",
+        "documents",
+        "dueDate",
     }
     assert result["data"][0]["id"] == vendor_ban["data"]["id"]
 
 
 async def test_ban_already_exists(api, vendor):
-    test_ban = api.get_fixture_json('ban')
+    test_ban = api.get_fixture_json("ban")
     doc_hash = "0" * 32
-    test_ban['documents'][0]['url'] = generate_test_url(doc_hash)
-    test_ban['documents'][0]['hash'] = f"md5:{doc_hash}"
+    test_ban["documents"][0]["url"] = generate_test_url(doc_hash)
+    test_ban["documents"][0]["hash"] = f"md5:{doc_hash}"
     del test_ban["dueDate"]
     resp = await api.post(
         f"api/vendors/{vendor['data']['id']}/bans",
@@ -173,18 +187,18 @@ async def test_ban_already_exists(api, vendor):
     )
     result = await resp.json()
     assert resp.status == 403, result
-    assert {'errors': ['Vendor is banned']} == result
+    assert {"errors": ["Vendor is banned"]} == result
 
 
 async def test_vendor_banned(api, vendor, vendor_ban, category):
-    category_id = category['data']['id']
+    category_id = category["data"]["id"]
 
-    vendor_token = vendor['access']['token']
-    vendor = vendor['data']
+    vendor_token = vendor["access"]["token"]
+    vendor = vendor["data"]
 
-    test_product = api.get_fixture_json('vendor_product')
-    test_product['relatedCategory'] = category_id
-    set_requirements_to_responses(test_product['requirementResponses'], category)
+    test_product = api.get_fixture_json("vendor_product")
+    test_product["relatedCategory"] = category_id
+    set_requirements_to_responses(test_product["requirementResponses"], category)
 
     # check vendor is banned
     resp = await api.get(f"/api/vendors/{vendor['id']}")
@@ -195,13 +209,13 @@ async def test_vendor_banned(api, vendor, vendor_ban, category):
     # try to add product from banned vendor
     resp = await api.post(
         f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',
-        json={'data': test_product},
+        json={"data": test_product},
         auth=TEST_AUTH,
     )
 
     assert resp.status == 403
     result = await resp.json()
-    assert result == {'errors': ['Vendor is banned']}
+    assert result == {"errors": ["Vendor is banned"]}
 
     # a year is passed
     now = get_now()
@@ -213,7 +227,7 @@ async def test_vendor_banned(api, vendor, vendor_ban, category):
 
         resp = await api.post(
             f'/api/vendors/{vendor["id"]}/products?access_token={vendor_token}',
-            json={'data': test_product},
+            json={"data": test_product},
             auth=TEST_AUTH,
         )
 
@@ -221,7 +235,7 @@ async def test_vendor_banned(api, vendor, vendor_ban, category):
 
 
 async def test_ban_inactive_vendor(api):
-    data = api.get_fixture_json('vendor')
+    data = api.get_fixture_json("vendor")
     resp = await api.post(
         "/api/vendors",
         json={"data": data},
@@ -231,7 +245,7 @@ async def test_ban_inactive_vendor(api):
     assert resp.status == 201, result
     vendor = result["data"]
 
-    test_ban = api.get_fixture_json('ban')
+    test_ban = api.get_fixture_json("ban")
     del test_ban["documents"]
     del test_ban["dueDate"]
     resp = await api.post(
@@ -242,7 +256,7 @@ async def test_ban_inactive_vendor(api):
 
     assert resp.status == 400
     result = await resp.json()
-    assert result == {'errors': ['Vendor should be activated.']}
+    assert result == {"errors": ["Vendor should be activated."]}
 
 
 # documents
@@ -263,8 +277,10 @@ async def test_vendor_ban_doc_create(api, vendor, vendor_ban):
     assert resp.status == 201, result
     data = result["data"]
     ds_uid = get_doc_service_uid_from_url(doc_data["url"])
-    expected = f"{api.server.scheme}://{api.server.host}:{api.server.port}" \
+    expected = (
+        f"{api.server.scheme}://{api.server.host}:{api.server.port}"
         f"/api/vendors/{vendor['data']['id']}/bans/{vendor_ban['data']['id']}/documents/{data['id']}?download={ds_uid}"
+    )
     assert expected == data["url"]
 
     resp = await api.get(f'/api/vendors/{vendor["data"]["id"]}')
@@ -363,8 +379,9 @@ async def test_vendor_ban_doc_invalid_signature(api, vendor, vendor_ban):
     valid_url = generate_test_url(doc_hash)
     parsed_url = urlparse(valid_url)
     parsed_query = dict(parse_qsl(parsed_url.query))
-    parsed_query["Signature"] = "9WSTGSxvtKn%2FsNoKl5%2BpL%2By7z2Rh4%2FtJtHgWw4hqGHxgVK727KLuGUlytoammkWc3j9e" \
-                                "RtOopaF1rgrUsaExDw%3D%3D"
+    parsed_query["Signature"] = (
+        "9WSTGSxvtKn%2FsNoKl5%2BpL%2By7z2Rh4%2FtJtHgWw4hqGHxgVK727KLuGUlytoammkWc3j9e" "RtOopaF1rgrUsaExDw%3D%3D"
+    )
     invalid_url = "{}?{}".format(valid_url.split("?")[0], urlencode(parsed_query))
     doc_data = {
         "title": "name.doc",
@@ -379,4 +396,4 @@ async def test_vendor_ban_doc_invalid_signature(api, vendor, vendor_ban):
     )
     result = await resp.json()
     assert resp.status == 400, result
-    assert {'errors': ['Value error, document url signature is invalid: data']} == result
+    assert {"errors": ["Value error, document url signature is invalid: data"]} == result

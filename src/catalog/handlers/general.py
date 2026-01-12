@@ -1,10 +1,12 @@
 import logging
-from aiohttp_pydantic.oas.typing import r200
+
 from aiohttp_pydantic.decorator import inject_params
+from aiohttp_pydantic.oas.typing import r200
 from pydantic import BaseModel
 
 from catalog import version as api_version
 from catalog.serialization import json_response
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,5 +36,4 @@ async def get_version(request) -> r200[VersionResponse]:
 
     Tags: Helpers
     """
-    return json_response({'api_version': api_version})
-
+    return json_response({"api_version": api_version})

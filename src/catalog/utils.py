@@ -4,17 +4,18 @@ import hashlib
 import io
 import logging
 from base64 import b64encode
+from datetime import datetime
+from urllib.parse import quote
 from uuid import uuid4
 
-from jsonpatch import make_patch
-from jsonpointer import resolve_pointer
-from bson.json_util import dumps
-from urllib.parse import quote
 from aiocache import cached as aiocache_cached
 from aiohttp.hdrs import CONTENT_DISPOSITION, CONTENT_TYPE
-from aiohttp.web import Response, HTTPBadRequest, HTTPNotFound
+from aiohttp.web import HTTPBadRequest, HTTPNotFound, Response
+from bson.json_util import dumps
+from jsonpatch import make_patch
+from jsonpointer import resolve_pointer
+
 from catalog.settings import IS_TEST, TIMEZONE
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ def pagination_params(request, default_limit=100):
     q = request.query
     offset = q.get("offset", "")
     limit = get_int_from_query(request, "limit", default=default_limit)
-    reverse = bool(q.get('reverse') or get_int_from_query(request, "descending", raise_error=False))
+    reverse = bool(q.get("reverse") or get_int_from_query(request, "descending", raise_error=False))
     return offset, limit, reverse
 
 
@@ -66,11 +67,11 @@ def remove_keys(obj, keys):
 
 def build_content_disposition_name(file_name):
     try:
-        file_name.encode('ascii')
+        file_name.encode("ascii")
         file_expr = 'filename="{}"'.format(file_name)
     except UnicodeEncodeError:
         file_expr = "filename*=utf-8''{}".format(quote(file_name))
-    return f'attachment; {file_expr}'
+    return f"attachment; {file_expr}"
 
 
 def csv_response(name, fieldnames, rows):
@@ -99,8 +100,7 @@ def cached(*args, **kwargs):
     return aiocache_cached(*args, **kwargs)
 
 
-def async_retry(tries=-1, exceptions=Exception,
-                delay=0, max_delay=None, backoff=1, fail_exception=None):
+def async_retry(tries=-1, exceptions=Exception, delay=0, max_delay=None, backoff=1, fail_exception=None):
     def func_wrapper(f):
         async def wrapper(*args, **kwargs):
             _tries, _delay = tries, delay
@@ -115,8 +115,7 @@ def async_retry(tries=-1, exceptions=Exception,
                         logger.exception(exc)
                         raise fail_exception or exc
                     else:
-                        logger.warning(
-                            f"Retry {f} in {_delay}s because of {exc}")
+                        logger.warning(f"Retry {f} in {_delay}s because of {exc}")
                         await asyncio.sleep(_delay)
 
                         _delay *= backoff
@@ -124,7 +123,9 @@ def async_retry(tries=-1, exceptions=Exception,
                             _delay = min(_delay, max_delay)
                 else:
                     return result
+
         return wrapper
+
     return func_wrapper
 
 
@@ -233,6 +234,6 @@ def convert_requests_documents_url(doc, data_id):
     Converting url from contributors/id/requests to requests/id/documents,
     as documents may be added during request POST
     """
-    doc_path_1 = doc["url"][:doc["url"].find("/contributors")]
-    doc_path_2 = doc["url"][doc["url"].find("requests/") + len("requests/"):]
+    doc_path_1 = doc["url"][: doc["url"].find("/contributors")]
+    doc_path_2 = doc["url"][doc["url"].find("requests/") + len("requests/") :]
     doc["url"] = f"{doc_path_1}/requests/{data_id}/documents/{doc_path_2}"

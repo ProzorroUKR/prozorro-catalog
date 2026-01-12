@@ -1,27 +1,29 @@
 import logging
-from typing import Union, Optional
+from typing import Optional, Union
 
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
-from catalog.auth import set_access_token, validate_accreditation
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r401, r404
 
 from catalog import db
+from catalog.auth import set_access_token, validate_accreditation
 from catalog.models.api import ErrorResponse, PaginatedList
 from catalog.models.product_request import (
+    ProductRequestAcceptionPostInput,
     ProductRequestPostInput,
     ProductRequestRejectionPostInput,
-    ProductRequestAcceptionPostInput, ProductRequestResponse, ProductRequestReviewCreateResponse,
+    ProductRequestResponse,
+    ProductRequestReviewCreateResponse,
 )
 from catalog.serializers.product_request import ProductRequestSerializer
 from catalog.settings import CRITERIA_LIST
 from catalog.state.product_request import ProductRequestState
+from catalog.utils import get_now, get_revision_changes, pagination_params
 from catalog.validations import (
-    validate_product_to_category,
+    validate_category_administrator,
     validate_contributor_banned_categories,
     validate_previous_product_reviews,
-    validate_category_administrator,
+    validate_product_to_category,
 )
-from catalog.utils import pagination_params, get_now, get_revision_changes
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +32,10 @@ class ContributorProductRequestView(PydanticView):
     state = ProductRequestState
 
     async def post(
-        self, contributor_id: str, /, body: ProductRequestPostInput,
+        self,
+        contributor_id: str,
+        /,
+        body: ProductRequestPostInput,
     ) -> Union[r201[ProductRequestResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         """
         Create a contributor product request
@@ -54,7 +59,7 @@ class ContributorProductRequestView(PydanticView):
         logger.info(
             f"Created contributor product request {data['id']}",
             extra={
-                "MESSAGE_ID": f"contributor_product_request_create",
+                "MESSAGE_ID": "contributor_product_request_create",
                 "contributor_product_request_id": data["id"],
             },
         )
@@ -63,9 +68,13 @@ class ContributorProductRequestView(PydanticView):
 
 
 class ProductRequestView(PydanticView):
-
     async def get(
-        self, /, offset: Optional[str] = None,  limit: Optional[int] = 100, descending: Optional[Union[int, str]] = 0, opt_fields: Optional[str] = None,
+        self,
+        /,
+        offset: Optional[str] = None,
+        limit: Optional[int] = 100,
+        descending: Optional[Union[int, str]] = 0,
+        opt_fields: Optional[str] = None,
     ) -> r200[PaginatedList]:
         """
         Get list of product requests
@@ -86,7 +95,9 @@ class ProductRequestView(PydanticView):
 
 class ProductRequestItemView(PydanticView):
     async def get(
-        self, request_id: str, /,
+        self,
+        request_id: str,
+        /,
     ) -> Union[r200[ProductRequestResponse], r400[ErrorResponse], r404[ErrorResponse]]:
         """
         Get product request
@@ -106,7 +117,10 @@ class ProductRequestAcceptionView(PydanticView):
     state = ProductRequestState
 
     async def post(
-        self, request_id: str, /, body: ProductRequestAcceptionPostInput,
+        self,
+        request_id: str,
+        /,
+        body: ProductRequestAcceptionPostInput,
     ) -> Union[r201[ProductRequestReviewCreateResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         """
         Accept product request
@@ -129,7 +143,7 @@ class ProductRequestAcceptionView(PydanticView):
 
             logger.info(
                 f"Updated product request {request_id}",
-                extra={"MESSAGE_ID": f"product_request_acception_update"},
+                extra={"MESSAGE_ID": "product_request_acception_update"},
             )
 
         # add product to the market
@@ -141,8 +155,8 @@ class ProductRequestAcceptionView(PydanticView):
         logger.info(
             f"Created product {product_request['product']['id']}",
             extra={
-                "MESSAGE_ID": f"product_request_product_create",
-                "product_id": product_request['product']['id'],
+                "MESSAGE_ID": "product_request_product_create",
+                "product_id": product_request["product"]["id"],
             },
         )
 
@@ -156,7 +170,10 @@ class ProductRequestRejectionView(PydanticView):
     state = ProductRequestState
 
     async def post(
-        self, request_id: str, /, body: ProductRequestRejectionPostInput,
+        self,
+        request_id: str,
+        /,
+        body: ProductRequestRejectionPostInput,
     ) -> Union[r201[ProductRequestReviewCreateResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         """
         Reject product request
@@ -179,7 +196,7 @@ class ProductRequestRejectionView(PydanticView):
 
             logger.info(
                 f"Updated product request {request_id}",
-                extra={"MESSAGE_ID": f"product_request_rejection_update"},
+                extra={"MESSAGE_ID": "product_request_rejection_update"},
             )
 
         return {"data": ProductRequestSerializer(product_request, category=category, contributor=contributor).data}

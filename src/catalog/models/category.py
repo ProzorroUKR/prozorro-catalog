@@ -1,16 +1,24 @@
 from datetime import datetime
-from typing import Optional, List
+from enum import Enum
+from typing import List, Optional
 from uuid import uuid4
 
 from pydantic import Field, field_validator
+
+from catalog.models.api import AuthorizedInput, CreateResponse, Input, Response
 from catalog.models.base import BaseModel
-from catalog.models.api import Input, AuthorizedInput, Response, CreateResponse
-from catalog.models.common import Classification, Image, CategoryMarketAdministrator, Unit, AGREEMENT_ID_REGEX, \
-    CLASSIFICATION_EXAMPLE, UNIT_EXAMPLE
+from catalog.models.common import (
+    AGREEMENT_ID_REGEX,
+    CLASSIFICATION_EXAMPLE,
+    UNIT_EXAMPLE,
+    CategoryMarketAdministrator,
+    Classification,
+    Image,
+    Unit,
+)
 from catalog.models.criteria import Criterion
 from catalog.models.tag import TagsMixin
 from catalog.utils import get_now
-from enum import Enum
 
 
 class CategoryStatus(str, Enum):
@@ -52,17 +60,18 @@ class DeprecatedCategoryCreateData(BaseCategoryCreateData):
     """
     Deprecated soon the Catalog Category Create Data with required id and creation via PUT method
     """
+
     id: str = Field(..., pattern=r"^[0-9A-Za-z_-]{20,32}$")
 
-    @field_validator('id')
+    @field_validator("id")
     def id_format(cls, v, values, **kwargs):
         """
         instead of generating id, we ask user to pass through all these validations
         """
         if "classification" in values.data and values.data["classification"].id[:8] not in v:
-            raise ValueError('id must include cpv')
+            raise ValueError("id must include cpv")
         if "marketAdministrator" in values.data and values.data["marketAdministrator"].identifier.id not in v:
-            raise ValueError('id must include edr')
+            raise ValueError("id must include edr")
         return v
 
 
@@ -88,6 +97,7 @@ class Category(TagsMixin, BaseModel):
     """
     The Catalog Profile
     """
+
     classification: Classification
     marketAdministrator: CategoryMarketAdministrator
     id: str = Field(..., pattern=r"^[0-9A-Za-z_-]{20,32}$")

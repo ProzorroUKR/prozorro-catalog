@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from catalog.migrations.cs_20824_inactivate_products_with_insufficient_documents import migrate
 from catalog.settings import DOC_SERVICE_URL
-from tests.integration.conftest import get_fixture_json
+from tests.utils import get_fixture_json
 
 
 async def test_migrate(db):
@@ -40,24 +40,12 @@ async def test_migrate(db):
         "expirationDate": "2025-12-11T23:59:59+02:00",
         "status": "active",
         "documents": [
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "sign.p7s"
-            }
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "sign.p7s"},
         ],
     }
     await db.products.insert_one(product_3)
@@ -83,27 +71,13 @@ async def test_migrate(db):
         "expirationDate": "2025-12-11T23:59:59+02:00",
         "status": "active",
         "documents": [
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "test"
-            },
-            {
-                "title": "sign.p7s"
-            }
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "test"},
+            {"title": "sign.p7s"},
         ],
     }
     await db.products.insert_one(product_5)

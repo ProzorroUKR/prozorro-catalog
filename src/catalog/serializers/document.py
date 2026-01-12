@@ -1,5 +1,5 @@
-from catalog.serializers.base import BaseSerializer
 from catalog.context import get_request, get_request_scheme
+from catalog.serializers.base import BaseSerializer
 
 
 def absolute_url_serializer(_, url, **kwargs):

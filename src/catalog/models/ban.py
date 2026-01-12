@@ -1,17 +1,16 @@
 from datetime import datetime
-from typing import Optional, List, Union
+from typing import List, Optional, Union
 from uuid import uuid4
 
+import standards
 from pydantic import Field, field_validator
 
+from catalog.models.api import Input, ListResponse, Response
 from catalog.models.base import BaseModel
-from catalog.models.api import Input, Response, ListResponse
 from catalog.models.common import MarketAdministrator, MarketAdministratorIdentifier
-from catalog.models.document import DocumentPostData, Document, DOCUMENT_EXAMPLE
+from catalog.models.document import DOCUMENT_EXAMPLE, Document, DocumentPostData
 from catalog.settings import TIMEZONE
 from catalog.utils import get_now
-import standards
-
 
 BAN_REASONS = standards.load("market/ban_reason.json")
 
@@ -26,7 +25,7 @@ class BaseBanPostData(BaseModel):
     def id(self):
         return uuid4().hex
 
-    @field_validator('reason')
+    @field_validator("reason")
     def reason_standard(cls, v):
         if v not in BAN_REASONS:
             raise ValueError("must be one of market/ban_reason.json keys")
@@ -36,7 +35,7 @@ class BaseBanPostData(BaseModel):
 class ContributorBanPostData(BaseBanPostData):
     dueDate: Optional[datetime] = Field(None, json_schema_extra={"example": get_now().isoformat()})
 
-    @field_validator('dueDate')
+    @field_validator("dueDate")
     def validate_date(cls, v):
         if v and isinstance(v, datetime):
             if not v.tzinfo:
@@ -65,8 +64,8 @@ BAN_EXAMPLE = Ban(
         identifier=MarketAdministratorIdentifier(
             id="42574629",
             scheme="UA-EDR",
-            legalName_en="STATE ENTERPRISE \"MEDICAL PROCUREMENT OF UKRAINE\"",
-            legalName_uk="ДЕРЖАВНЕ ПІДПРИЄМСТВО \"МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ\""
+            legalName_en='STATE ENTERPRISE "MEDICAL PROCUREMENT OF UKRAINE"',
+            legalName_uk='ДЕРЖАВНЕ ПІДПРИЄМСТВО "МЕДИЧНІ ЗАКУПІВЛІ УКРАЇНИ"',
         )
     ),
     dateCreated=datetime.now().isoformat(),

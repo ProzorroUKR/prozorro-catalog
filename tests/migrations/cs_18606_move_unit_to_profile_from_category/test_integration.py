@@ -4,11 +4,11 @@ from uuid import uuid4
 from catalog.migrations.cs_18606_move_unit_to_profile_from_category import (
     migrate_profiles,
 )
-from tests.integration.conftest import api, db, get_fixture_json
+from tests.utils import get_fixture_json
 
 
 async def test_requirements_number(db, api):
-    category = deepcopy(get_fixture_json('category'))
+    category = deepcopy(get_fixture_json("category"))
     category["criteria"] = [
         {
             "title": "Технічні характеристики предмета закупівлі",
@@ -18,46 +18,43 @@ async def test_requirements_number(db, api):
                 {
                     "description": "Технічні характеристики",
                     "id": "f3d2b5995da042ff858a6ea7b5a1a8dd",
-                    "requirements": [{
-                        "title": "Xарактеристика №1",
-                        "dataType": "number",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": 10.0,
-                        "unit": {
-                            "code": "CMT",
-                            "name": "см"
-                        }
-                    }, {
-                        "title": "Xарактеристика №2",
-                        "dataType": "number",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "minValue": 1.0
-                    }, {
-                        "title": "Xарактеристика №3",
-                        "dataType": "integer",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": 20,
-                        "unit": {
-                            "code": "CMT",
-                            "name": "см"
-                        }
-                    }, {
-                        "title": "Xарактеристика №3",
-                        "dataType": "integer",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": 10,
-                    }, {
-                        "title": "Xарактеристика №5",
-                        "dataType": "integer",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "minValue": 0,
-                        "unit": {
-                            "code": "CMT",
-                            "name": "см"
-                        }
-                    }]
+                    "requirements": [
+                        {
+                            "title": "Xарактеристика №1",
+                            "dataType": "number",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValue": 10.0,
+                            "unit": {"code": "CMT", "name": "см"},
+                        },
+                        {
+                            "title": "Xарактеристика №2",
+                            "dataType": "number",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "minValue": 1.0,
+                        },
+                        {
+                            "title": "Xарактеристика №3",
+                            "dataType": "integer",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValue": 20,
+                            "unit": {"code": "CMT", "name": "см"},
+                        },
+                        {
+                            "title": "Xарактеристика №3",
+                            "dataType": "integer",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValue": 10,
+                        },
+                        {
+                            "title": "Xарактеристика №5",
+                            "dataType": "integer",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "minValue": 0,
+                            "unit": {"code": "CMT", "name": "см"},
+                        },
+                    ],
                 }
-            ]
+            ],
         }
     ]
     await db.category.insert_one(category)
@@ -74,42 +71,42 @@ async def test_requirements_number(db, api):
                 {
                     "description": "Технічні характеристики",
                     "id": "f3d2b5995da042ff858a6ea7b5a1a8dd",
-                    "requirements": [{
-                        "title": "Xарактеристика №1",
-                        "dataType": "number",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": 10.0
-                    }, {
-                        "title": "Xарактеристика №2",
-                        "dataType": "number",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "minValue": 20.0,
-                    }, {
-                        "title": "Xарактеристика №3",
-                        "dataType": "integer",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": 20,
-                        "unit": {
-                            "code": "INH",
-                            "name": "дюйм"
-                        }
-                    }, {
-                        "title": "Xарактеристика №4",
-                        "dataType": "integer",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValue": 10,
-                        "unit": {
-                            "code": "CMT",
-                            "name": "см"
+                    "requirements": [
+                        {
+                            "title": "Xарактеристика №1",
+                            "dataType": "number",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValue": 10.0,
                         },
-                    }, {
-                        "title": "Xарактеристика №5",
-                        "dataType": "string",
-                        "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-                        "expectedValues": ["0"]
-                    }]
+                        {
+                            "title": "Xарактеристика №2",
+                            "dataType": "number",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "minValue": 20.0,
+                        },
+                        {
+                            "title": "Xарактеристика №3",
+                            "dataType": "integer",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValue": 20,
+                            "unit": {"code": "INH", "name": "дюйм"},
+                        },
+                        {
+                            "title": "Xарактеристика №4",
+                            "dataType": "integer",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValue": 10,
+                            "unit": {"code": "CMT", "name": "см"},
+                        },
+                        {
+                            "title": "Xарактеристика №5",
+                            "dataType": "string",
+                            "id": "8726f95aeb1d4b289d6c1a5a07271c93",
+                            "expectedValues": ["0"],
+                        },
+                    ],
                 }
-            ]
+            ],
         }
     ]
     await db.profiles.insert_one(profile)
@@ -123,37 +120,32 @@ async def test_requirements_number(db, api):
             "dataType": "number",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
             "expectedValue": 10.0,
-            "unit": {
-                "code": "CMT",
-                "name": "см"
-            },
-        }, {
+            "unit": {"code": "CMT", "name": "см"},
+        },
+        {
             "title": "Xарактеристика №2",
             "dataType": "number",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
             "minValue": 20.0,
-        }, {
+        },
+        {
             "title": "Xарактеристика №3",
             "dataType": "integer",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
             "expectedValue": 20,
-            "unit": {
-                "code": "INH",
-                "name": "дюйм"
-            },
-        }, {
+            "unit": {"code": "INH", "name": "дюйм"},
+        },
+        {
             "title": "Xарактеристика №4",
             "dataType": "integer",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
             "expectedValue": 10,
-            "unit": {
-                "code": "CMT",
-                "name": "см"
-            },
-        }, {
+            "unit": {"code": "CMT", "name": "см"},
+        },
+        {
             "title": "Xарактеристика №5",
             "dataType": "string",
             "id": "8726f95aeb1d4b289d6c1a5a07271c93",
-            "expectedValues": ["0"]
-        }
+            "expectedValues": ["0"],
+        },
     ]

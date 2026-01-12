@@ -1,16 +1,14 @@
-from dataclasses import dataclass
 import asyncio
 import logging
-
-from pymongo import UpdateOne
+from dataclasses import dataclass
 
 import sentry_sdk
+from pymongo import UpdateOne
 
 from catalog.db import get_category_collection, get_profiles_collection, init_mongo, transaction_context_manager
 from catalog.logging import setup_logging
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
-
 
 logger = logging.getLogger(__name__)
 
@@ -30,15 +28,9 @@ class Counters:
     skipped_requirements: int = 0
 
     def __post_init__(self):
-        self.total_profiles = self.total_profiles or (
-            self.updated_profiles +
-            self.skipped_profiles
-        )
+        self.total_profiles = self.total_profiles or (self.updated_profiles + self.skipped_profiles)
 
-        self.total_requirements = self.total_requirements or (
-            self.updated_requirements +
-            self.skipped_requirements
-        )
+        self.total_requirements = self.total_requirements or (self.updated_requirements + self.skipped_requirements)
 
     def __add__(self, other):
         return Counters(
@@ -58,31 +50,26 @@ async def migrate():
     profiles_collection = get_profiles_collection()
     category_collection = get_category_collection()
     async with transaction_context_manager() as session:
-
         category = await category_collection.find_one(
-            {"_id": LOCALIZED_CATEGORY_ID},
-            projection={"_id": 1, "criteria": 1},
-            session=session
+            {"_id": LOCALIZED_CATEGORY_ID}, projection={"_id": 1, "criteria": 1}, session=session
         )
         new_criteria = get_new_criteria(counters, category)
         result = await category_collection.update_one(
-            {"_id": LOCALIZED_CATEGORY_ID},
-            {"$set": {"criteria": new_criteria, "dateModified": get_now().isoformat()}}
+            {"_id": LOCALIZED_CATEGORY_ID}, {"$set": {"criteria": new_criteria, "dateModified": get_now().isoformat()}}
         )
         counters.updated_category = result.modified_count
 
         async for profile in profiles_collection.find(
-                {"relatedCategory": LOCALIZED_CATEGORY_ID, "status": "active"},
-                projection={"_id": 1, "criteria": 1},
-                session=session
+            {"relatedCategory": LOCALIZED_CATEGORY_ID, "status": "active"},
+            projection={"_id": 1, "criteria": 1},
+            session=session,
         ):
             now = get_now().isoformat()
             new_criteria = get_new_criteria(counters, profile)
             if new_criteria is not None:
                 bulk.append(
                     UpdateOne(
-                        filter={"_id": profile["_id"]},
-                        update={"$set": {"criteria": new_criteria, "dateModified": now}}
+                        filter={"_id": profile["_id"]}, update={"$set": {"criteria": new_criteria, "dateModified": now}}
                     )
                 )
 
@@ -129,5 +116,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

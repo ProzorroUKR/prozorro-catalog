@@ -1,4 +1,4 @@
-from catalog.serializers.base import RootSerializer, ListSerializer
+from catalog.serializers.base import ListSerializer, RootSerializer
 from catalog.serializers.document import DocumentSerializer
 
 
@@ -28,22 +28,20 @@ class ProductSerializer(RootSerializer):
     }
 
     def __init__(
-            self,
-            data: dict,
-            **kwargs,
-
+        self,
+        data: dict,
+        **kwargs,
     ):
         super().__init__(data, **kwargs)
         vendor = self.kwargs.get("vendor")
         category = self.kwargs.get("category")
-        if vendor and 'vendor' in data:
-            data['vendor'].update({
-                'name': vendor['vendor']['name'],
-                'identifier': vendor['vendor']['identifier'],
-            })
+        if vendor and "vendor" in data:
+            data["vendor"].update(
+                {
+                    "name": vendor["vendor"]["name"],
+                    "identifier": vendor["vendor"]["identifier"],
+                }
+            )
 
         if category:
-            set_field_from_requirements(
-                category.get("criteria", ""),
-                data.get("requirementResponses", "")
-            )
+            set_field_from_requirements(category.get("criteria", ""), data.get("requirementResponses", ""))

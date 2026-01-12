@@ -1,11 +1,11 @@
 # from copy import deepcopy
 #
-# from .base import TEST_AUTH
+# from tests.base import TEST_AUTH
 # from urllib.parse import urlparse, parse_qsl, urlencode
 # from catalog.doc_service import generate_test_url, get_doc_service_uid_from_url
-# from .test_product_request import request_review_data
-# from .utils import get_fixture_json
-# from .conftest import set_requirements_to_responses
+# from tests.integration.test_product_request import request_review_data
+# from tests.utils import get_fixture_json
+# from tests.conftest import set_requirements_to_responses
 #
 #
 # async def test_create_product_request_with_doc(api, contributor, category):

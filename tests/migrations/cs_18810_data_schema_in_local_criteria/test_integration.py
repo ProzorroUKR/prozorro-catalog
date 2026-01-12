@@ -5,13 +5,13 @@ from catalog.migrations.cs_18810_data_schema_in_local_criteria import (
     migrate,
 )
 from catalog.settings import TECHNICAL_FEATURES_CRITERIA
-from tests.integration.conftest import api, db, get_fixture_json
+from tests.utils import get_fixture_json
 
 
 async def test_data_schema_for_localization_criteria(db, api):
-    category = deepcopy(get_fixture_json('category'))
+    category = deepcopy(get_fixture_json("category"))
     category["_id"] = uuid4().hex
-    category["criteria"] = deepcopy(get_fixture_json('criteria')["criteria"])
+    category["criteria"] = deepcopy(get_fixture_json("criteria")["criteria"])
     del category["criteria"][1]["requirementGroups"][1]["requirements"][0]["dataSchema"]
     await db.category.insert_one(category)
 
@@ -29,7 +29,7 @@ async def test_data_schema_for_localization_criteria(db, api):
     profile["_id"] = uuid4().hex
     profile["relatedCategory"] = category["_id"]
     profile["dateModified"] = "2024-10-01T11:54:57.860085+03:00"
-    profile["criteria"] = deepcopy(get_fixture_json('criteria')["criteria"])
+    profile["criteria"] = deepcopy(get_fixture_json("criteria")["criteria"])
     del profile["criteria"][1]["requirementGroups"][1]["requirements"][0]["dataSchema"]
     await db.profiles.insert_one(profile)
 
@@ -47,7 +47,9 @@ async def test_data_schema_for_localization_criteria(db, api):
     assert "dataSchema" not in category_data_2["criteria"][1]["requirementGroups"][1]["requirements"][0]
 
     category_data_3 = await db.category.find_one({"_id": category_3["_id"]})
-    assert category_data_3["criteria"][1]["requirementGroups"][1]["requirements"][0]["dataSchema"] == "ISO 3166-1 alpha-2"
+    assert (
+        category_data_3["criteria"][1]["requirementGroups"][1]["requirements"][0]["dataSchema"] == "ISO 3166-1 alpha-2"
+    )
 
     profile_data = await db.profiles.find_one({"_id": profile["_id"]})
     assert profile_data["criteria"][1]["requirementGroups"][1]["requirements"][0]["dataSchema"] == "ISO 3166-1 alpha-2"

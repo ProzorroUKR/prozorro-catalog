@@ -1,15 +1,15 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
 from uuid import uuid4
 
 from pydantic import Field, model_validator
 
-from catalog.models.ban import Ban, BAN_EXAMPLE
-from catalog.models.base import BaseModel
 from catalog.models.api import Input, Response
+from catalog.models.ban import BAN_EXAMPLE, Ban
+from catalog.models.base import BaseModel
 from catalog.models.common import UKRAINE_COUNTRY_NAME_UK
-from catalog.models.vendor import PostVendorOrganization, VendorOrganization, PostVendorAddress
-from catalog.models.document import Document, DocumentPostData, DOCUMENT_EXAMPLE
+from catalog.models.document import DOCUMENT_EXAMPLE, Document, DocumentPostData
+from catalog.models.vendor import PostVendorAddress, PostVendorOrganization, VendorOrganization
 
 
 class PostContributorAddress(PostVendorAddress):

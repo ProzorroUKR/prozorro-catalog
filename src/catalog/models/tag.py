@@ -1,10 +1,10 @@
-from typing import Optional, List
+from typing import List, Optional
 from uuid import uuid4
 
-from pydantic import Field, model_validator, field_validator
+from pydantic import Field, field_validator, model_validator
 from slugify import slugify
 
-from catalog.models.api import Input, Response, ListResponse
+from catalog.models.api import Input, ListResponse, Response
 from catalog.models.base import BaseModel
 
 
@@ -34,7 +34,7 @@ class PatchTag(BaseModel):
     name: Optional[str] = Field(None, min_length=1, json_schema_extra={"example": "Тег"})
     name_en: Optional[str] = Field(None, min_length=1, json_schema_extra={"example": "Tag"})
 
-    @field_validator("name", "name_en",  mode="before")
+    @field_validator("name", "name_en", mode="before")
     @classmethod
     def not_empty_or_whitespace(cls, v: str) -> str:
         return v.strip() if v is not None else v

@@ -1,7 +1,4 @@
-
-
 class BaseState:
-
     @classmethod
     def on_post(cls, data):
         cls.always(data)

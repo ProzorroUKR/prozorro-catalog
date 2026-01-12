@@ -1,18 +1,23 @@
 from copy import deepcopy
 from typing import Union
 
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
 from aiohttp.web_exceptions import HTTPNotFound
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r401, r404
 
 from catalog import db
 from catalog.auth import validate_accreditation
+from catalog.handlers.base_document import BaseDocumentItemView, BaseDocumentView
 from catalog.models.api import ErrorResponse
-from catalog.models.document import DocumentPostInput, DocumentPutInput, DocumentPatchInput, DocumentResponse, \
-    DocumentList
+from catalog.models.document import (
+    DocumentList,
+    DocumentPatchInput,
+    DocumentPostInput,
+    DocumentPutInput,
+    DocumentResponse,
+)
 from catalog.serializers.document import DocumentSerializer
-from catalog.handlers.base_document import BaseDocumentView, BaseDocumentItemView
-from catalog.utils import get_now, find_item_by_id, get_revision_changes
+from catalog.utils import find_item_by_id, get_now, get_revision_changes
 
 
 class ContributorBanDocumentMixin:
@@ -25,7 +30,6 @@ class ContributorBanDocumentMixin:
 
 
 class ContributorBanDocumentView(ContributorBanDocumentMixin, BaseDocumentView, PydanticView):
-
     async def get(self, contributor_id: str, ban_id: str, /) -> r200[DocumentList]:
         """
         Get list of contributor ban documents
@@ -35,7 +39,7 @@ class ContributorBanDocumentView(ContributorBanDocumentMixin, BaseDocumentView, 
         return await BaseDocumentView.get(self, contributor_id, ban_id)
 
     async def post(
-            self, contributor_id: str, ban_id: str, /, body: DocumentPostInput
+        self, contributor_id: str, ban_id: str, /, body: DocumentPostInput
     ) -> Union[r201[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse]]:
         """
         Contributor ban document create
@@ -50,7 +54,7 @@ class ContributorBanDocumentView(ContributorBanDocumentMixin, BaseDocumentView, 
             old_parent_obj = deepcopy(parent_obj)
             ban = find_item_by_id(parent_obj.get("bans", []), ban_id, "ban")
             now = get_now().isoformat()
-            parent_obj["dateModified"] = ban['dateModified'] = data['datePublished'] = data['dateModified'] = now
+            parent_obj["dateModified"] = ban["dateModified"] = data["datePublished"] = data["dateModified"] = now
             if "documents" not in ban:
                 ban["documents"] = []
             ban["documents"].append(data)
@@ -60,9 +64,12 @@ class ContributorBanDocumentView(ContributorBanDocumentMixin, BaseDocumentView, 
 
 
 class ContributorBanDocumentItemView(ContributorBanDocumentMixin, BaseDocumentItemView, PydanticView):
-
     async def get(
-        self, contributor_id: str, ban_id: str, doc_id: str, /,
+        self,
+        contributor_id: str,
+        ban_id: str,
+        doc_id: str,
+        /,
     ) -> Union[r200[DocumentResponse], r404[ErrorResponse]]:
         """
         Get contributor ban document
@@ -72,7 +79,12 @@ class ContributorBanDocumentItemView(ContributorBanDocumentMixin, BaseDocumentIt
         return await BaseDocumentItemView.get(self, contributor_id, doc_id, ban_id)
 
     async def put(
-        self, contributor_id: str, ban_id: str, doc_id: str, /, body: DocumentPutInput,
+        self,
+        contributor_id: str,
+        ban_id: str,
+        doc_id: str,
+        /,
+        body: DocumentPutInput,
     ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Contributor ban document replace
@@ -93,7 +105,9 @@ class ContributorBanDocumentItemView(ContributorBanDocumentMixin, BaseDocumentIt
                 if doc["id"] == doc_id:
                     data = body.data.dict_without_none()
                     data["id"] = doc_id
-                    parent_obj["dateModified"] = ban["dateModified"] = data["datePublished"] = data["dateModified"] = get_now().isoformat()
+                    parent_obj["dateModified"] = ban["dateModified"] = data["datePublished"] = data["dateModified"] = (
+                        get_now().isoformat()
+                    )
                     ban["documents"].append(data)
                     break
             else:
@@ -102,7 +116,12 @@ class ContributorBanDocumentItemView(ContributorBanDocumentMixin, BaseDocumentIt
         return {"data": DocumentSerializer(data).data}
 
     async def patch(
-        self, contributor_id: str, ban_id: str, doc_id: str, /, body: DocumentPatchInput,
+        self,
+        contributor_id: str,
+        ban_id: str,
+        doc_id: str,
+        /,
+        body: DocumentPatchInput,
     ) -> Union[r200[DocumentResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Product contributor ban update
@@ -122,7 +141,7 @@ class ContributorBanDocumentItemView(ContributorBanDocumentMixin, BaseDocumentIt
                     initial = dict(doc)
                     doc.update(data)
                     if initial != doc:
-                        parent_obj["dateModified"] = ban['dateModified'] = doc['dateModified'] = get_now().isoformat()
+                        parent_obj["dateModified"] = ban["dateModified"] = doc["dateModified"] = get_now().isoformat()
                     break
             else:
                 raise HTTPNotFound(text="Document not found")

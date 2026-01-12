@@ -4,7 +4,6 @@ from catalog.state.ban import BanState
 
 
 class VendorBanState(BanState):
-
     @classmethod
     async def on_post(cls, data, parent_obj):
         now = get_now()

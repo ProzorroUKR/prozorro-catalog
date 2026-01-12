@@ -1,19 +1,19 @@
 import asyncio
-import standards
+import logging
 from copy import deepcopy
 from uuid import uuid4
 
-import logging
 import sentry_sdk
+import standards
 
 from catalog.db import (
+    get_category_collection,
     init_mongo,
     transaction_context_manager,
-    get_category_collection,
 )
-from catalog.utils import get_now
 from catalog.logging import setup_logging
 from catalog.settings import SENTRY_DSN
+from catalog.utils import get_now
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ CATEGORY_MAPPING = {
     "Турбогенераторні установки": "31120000-3",
     "Дизель-генераторні установки": "31120000-3",
     "Трансформатори": "31170000-8",
-    "Електронне обладнання (конденсатори)":  "31710000-6",
+    "Електронне обладнання (конденсатори)": "31710000-6",
     "Транспортні засоби для перевезення пацієнтів": "34114122-0",
     "Міські та туристичні автобуси": "34121000-1",
     "Мототранспортні вантажні засоби (автоцистерни, самоскиди та фургони)": "34130000-7",
@@ -62,19 +62,15 @@ async def migrate():
             "locality": "Київ",
             "postalCode": "01601",
             "region": "м. Київ",
-            "streetAddress": "Бульварно-Кудрявська, 22"
+            "streetAddress": "Бульварно-Кудрявська, 22",
         },
         "contactPoint": {
             "email": "a.illiustrova@prozorro.ua",
             "telephone": "+380675554355",
-            "name_uk": "Анастасія Іллюстрова"
+            "name_uk": "Анастасія Іллюстрова",
         },
-        "identifier": {
-            "id": "02426097",
-            "scheme": "UA-EDR",
-            "legalName": "ДЕРЖАВНА УСТАНОВА \"Прозорро\""
-        },
-        "name": "ДЕРЖАВНА УСТАНОВА \"Прозорро\"",
+        "identifier": {"id": "02426097", "scheme": "UA-EDR", "legalName": 'ДЕРЖАВНА УСТАНОВА "Прозорро"'},
+        "name": 'ДЕРЖАВНА УСТАНОВА "Прозорро"',
     }
 
     async with transaction_context_manager() as session:
@@ -87,21 +83,16 @@ async def migrate():
 
         for title, class_id in CATEGORY_MAPPING.items():
             category_data = deepcopy(localization_category)
-            category_data.update({
-                "_id": uuid4().hex,
-                "unit": {
-                    "code": "H87",
-                    "name": "штуки"
-                },
-                "title": title,
-                "classification": {
-                    "id": class_id,
-                    "scheme": "ДК021",
-                    "description": DK_CODES[class_id]
-                },
-                "status": "active",
-                "dateModified": get_now().isoformat(),
-            })
+            category_data.update(
+                {
+                    "_id": uuid4().hex,
+                    "unit": {"code": "H87", "name": "штуки"},
+                    "title": title,
+                    "classification": {"id": class_id, "scheme": "ДК021", "description": DK_CODES[class_id]},
+                    "status": "active",
+                    "dateModified": get_now().isoformat(),
+                }
+            )
 
             for c in category_data["criteria"]:
                 if c["classification"]["id"] == "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL":
@@ -132,5 +123,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

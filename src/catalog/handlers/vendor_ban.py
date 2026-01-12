@@ -1,13 +1,13 @@
 from typing import Union
 
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
-from catalog.auth import validate_access_token
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r401, r404
 
 from catalog import db
-from catalog.handlers.base_ban import BaseBanViewMixin, BaseBanViewItemMixin
+from catalog.auth import validate_access_token
+from catalog.handlers.base_ban import BaseBanViewItemMixin, BaseBanViewMixin
 from catalog.models.api import ErrorResponse
-from catalog.models.ban import VendorBanPostInput, BanResponse, BanList
+from catalog.models.ban import BanList, BanResponse, VendorBanPostInput
 from catalog.state.vendor_ban import VendorBanState
 from catalog.validations import validate_active_vendor
 
@@ -56,7 +56,10 @@ class VendorBanItemView(BaseBanViewItemMixin, PydanticView):
         return await db.read_vendor(parent_obj_id)
 
     async def get(
-        self, vendor_id: str, ban_id: str, /,
+        self,
+        vendor_id: str,
+        ban_id: str,
+        /,
     ) -> Union[r200[BanResponse], r400[ErrorResponse], r404[ErrorResponse]]:
         """
         Get a vendor ban

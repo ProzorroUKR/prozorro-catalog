@@ -1,17 +1,19 @@
-from pymongo.errors import DuplicateKeyError, PyMongoError
-from catalog.settings import CATALOG_DATA
-from catalog.db import (
-    get_category_collection,
-    get_profiles_collection,
-    get_products_collection,
-    get_offers_collection,
-)
+import asyncio
+import logging
+import os.path
+from json import loads as json_loads
+
 import aiofiles
 import aiofiles.os
-import asyncio
-import os.path
-import logging
-from json import loads as json_loads
+from pymongo.errors import DuplicateKeyError, PyMongoError
+
+from catalog.db import (
+    get_category_collection,
+    get_offers_collection,
+    get_products_collection,
+    get_profiles_collection,
+)
+from catalog.settings import CATALOG_DATA
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +26,7 @@ async def import_data_job(app=None):
             ("product", get_products_collection()),
             ("offer", get_offers_collection()),
         )
-        await asyncio.gather(*(
-            import_items(item_name, col)
-            for item_name, col in args
-        ))
+        await asyncio.gather(*(import_items(item_name, col) for item_name, col in args))
     else:
         logger.info("Import job is skipped")
 
@@ -38,7 +37,7 @@ async def import_items(name, collection):
     for file_name in os.listdir(path):
         file_path = os.path.join(path, file_name)
         if os.path.isfile(file_path):
-            async with aiofiles.open(file_path, mode='r') as f:
+            async with aiofiles.open(file_path, mode="r") as f:
                 contents = await f.read()
             json = json_loads(contents)
             # {"data": {..item data..}, "access": {}}
@@ -64,10 +63,11 @@ async def insert_object(collection, data):
 
 
 if __name__ == "__main__":
+    import sentry_sdk
+
+    from catalog.db import init_mongo
     from catalog.logging import setup_logging
     from catalog.settings import SENTRY_DSN
-    from catalog.db import init_mongo
-    import sentry_sdk
 
     setup_logging()
     if SENTRY_DSN:
@@ -75,5 +75,3 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init_mongo(None))
     loop.run_until_complete(import_data_job())
-
-

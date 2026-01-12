@@ -1,20 +1,16 @@
-from base64 import b64decode
-from bson.json_util import loads
-from catalog.db import wait_until_cluster_time_reached, get_database
-from catalog.serialization import json_response, json_dumps
-from aiohttp.web import (
-    HTTPInternalServerError,
-    HTTPBadRequest
-)
-from aiohttp.web_request import Request
-from catalog.logging import request_id_var, request_cookies_var
-from catalog.auth import login_user
-from catalog.context import set_now, set_request, set_db_session
-from aiohttp.web import middleware, HTTPException
-from pydantic import ValidationError
-from uuid import uuid4
 import logging
+from base64 import b64decode
+from uuid import uuid4
 
+from aiohttp.web import HTTPBadRequest, HTTPException, HTTPInternalServerError, middleware
+from bson.json_util import loads
+from pydantic import ValidationError
+
+from catalog.auth import login_user
+from catalog.context import set_db_session, set_now, set_request
+from catalog.db import get_database, wait_until_cluster_time_reached
+from catalog.logging import request_cookies_var, request_id_var
+from catalog.serialization import json_dumps, json_response
 from catalog.utils import get_session_time
 
 logger = logging.getLogger(__name__)
@@ -29,7 +25,7 @@ def json_dumps_validation_error(exc: ValidationError) -> str:
         loc = error.get("loc", ())
 
         if loc:
-            field_path = ".".join(str(part) for part in loc if not str(part).startswith(('function-after', 'list')))
+            field_path = ".".join(str(part) for part in loc if not str(part).startswith(("function-after", "list")))
             formatted_error = f"{msg}: {field_path}"
         else:
             formatted_error = msg
@@ -50,8 +46,8 @@ async def error_middleware(request, handler):
         )
     except HTTPException as exc:
         if exc.content_type == "text/plain":
-             exc.content_type = "application/json"
-             exc.text = json_dumps({"errors": [exc.text]})
+            exc.content_type = "application/json"
+            exc.text = json_dumps({"errors": [exc.text]})
         raise exc
     except Exception as exc:
         logger.exception(exc)
@@ -82,18 +78,17 @@ async def request_id_middleware(request, handler):
     :param handler:
     :return:
     """
-    value = request.headers.get('X-Request-ID', str(uuid4()))
+    value = request.headers.get("X-Request-ID", str(uuid4()))
     request_id_var.set(value)  # for loggers inside context
     response = await handler(request)
-    response.headers['X-Request-ID'] = value  # for AccessLogger
+    response.headers["X-Request-ID"] = value  # for AccessLogger
     return response
 
 
 @middleware
 async def login_middleware(request, handler):
     request.user = login_user(
-        request,
-        allow_anonymous=request.method in ("GET", "HEAD") or request.path == "/api/search"
+        request, allow_anonymous=request.method in ("GET", "HEAD") or request.path == "/api/search"
     )
     response = await handler(request)
     return response
@@ -106,6 +101,7 @@ async def context_middleware(request, handler):
     response = await handler(request)
     return response
 
+
 @middleware
 async def db_session_middleware(request, handler):
     """
@@ -114,7 +110,7 @@ async def db_session_middleware(request, handler):
     :param handler:
     :return:
     """
-    cookie_name = 'SESSION'
+    cookie_name = "SESSION"
     warning = None
     db = get_database()
     async with await db.client.start_session(causal_consistency=True) as session:

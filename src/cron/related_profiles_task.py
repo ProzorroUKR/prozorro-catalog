@@ -3,16 +3,16 @@ import logging
 import re
 from dataclasses import dataclass
 
-from pymongo import UpdateOne
 import sentry_sdk
+from pymongo import UpdateOne
 
-from catalog.db import get_category_collection, get_profiles_collection, get_products_collection, init_mongo
+from catalog.db import get_category_collection, get_products_collection, get_profiles_collection, init_mongo
+from catalog.logging import setup_logging
+from catalog.models.criteria import TYPEMAP
 from catalog.models.product import ProductStatus
 from catalog.models.profile import ProfileStatus
-from catalog.models.criteria import TYPEMAP
-from catalog.logging import setup_logging
+from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
-from catalog.settings import SENTRY_DSN, TECHNICAL_FEATURES_CRITERIA
 
 logger = logging.getLogger(__name__)
 
@@ -34,28 +34,19 @@ async def run_task():
     async for category in category_collection.find({}, projection={"_id": 1}, no_cursor_timeout=True):
         category_id = category["_id"]
         profiles = await profiles_collection.find(
-            {
-                "relatedCategory": category_id,
-                "status": {"$ne": ProfileStatus.hidden},
-                "criteria": {"$exists": True}
-            },
+            {"relatedCategory": category_id, "status": {"$ne": ProfileStatus.hidden}, "criteria": {"$exists": True}},
             projection={"criteria": 1},
             no_cursor_timeout=True,
         ).to_list(None)
 
         product_cursor = products_collection.find(
-            {
-                "relatedCategory": category_id,
-                "requirementResponses": {"$exists": True},
-                "status": ProductStatus.active
-            },
+            {"relatedCategory": category_id, "requirementResponses": {"$exists": True}, "status": ProductStatus.active},
             projection={"requirementResponses": 1, "relatedProfiles": 1, "relatedCategory": 1},
-            no_cursor_timeout=True
+            no_cursor_timeout=True,
         )
         product_cursor.batch_size(1000)
 
         async for product in product_cursor:
-
             related_profiles = await get_product_relatedProfiles(product, profiles)
 
             if product.get("relatedProfiles", []) != related_profiles:
@@ -122,11 +113,11 @@ async def get_product_relatedProfiles(product, profiles):
             if not requirement:
                 continue
 
-            if any(i in requirement for i in ('expectedValue', 'minValue', 'maxValue', 'pattern')):
+            if any(i in requirement for i in ("expectedValue", "minValue", "maxValue", "pattern")):
                 value = get_value(rr)
                 is_valid_profile = is_valid_req_response_value(requirement, value)
 
-            elif 'expectedValues' in requirement:
+            elif "expectedValues" in requirement:
                 value = get_value(rr, is_list=True)
                 is_valid_profile = is_valid_req_response_values(requirement, value)
 
@@ -157,18 +148,13 @@ def is_valid_req_response_value(requirement, value):
         return False
 
     try:
-        if (
-            'expectedValue' in requirement
-            and value != requirement['expectedValue']
-        ):
+        if "expectedValue" in requirement and value != requirement["expectedValue"]:
             return False
-        if 'minValue' in requirement and float(value) < float(requirement['minValue']):
+        if "minValue" in requirement and float(value) < float(requirement["minValue"]):
             return False
-        if 'maxValue' in requirement and float(value) > float(requirement['maxValue']):
+        if "maxValue" in requirement and float(value) > float(requirement["maxValue"]):
             return False
-        if 'pattern' in requirement and not re.match(
-                requirement['pattern'], str(value)
-        ):
+        if "pattern" in requirement and not re.match(requirement["pattern"], str(value)):
             return False
     except (ValueError, TypeError):
         return False
@@ -179,11 +165,11 @@ def is_valid_req_response_value(requirement, value):
 def is_valid_req_response_values(requirement, values):
     if not values:
         return False
-    if not set(values).issubset(set(requirement['expectedValues'])):
+    if not set(values).issubset(set(requirement["expectedValues"])):
         return False
-    if 'expectedMinItems' in requirement and len(values) < requirement['expectedMinItems']:
+    if "expectedMinItems" in requirement and len(values) < requirement["expectedMinItems"]:
         return False
-    if 'expectedMaxItems' in requirement and len(values) > requirement['expectedMaxItems']:
+    if "expectedMaxItems" in requirement and len(values) > requirement["expectedMaxItems"]:
         return False
 
     return True
@@ -211,5 +197,5 @@ def main():
     loop.run_until_complete(run_task())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

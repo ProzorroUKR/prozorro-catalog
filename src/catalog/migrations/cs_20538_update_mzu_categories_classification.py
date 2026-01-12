@@ -1,22 +1,21 @@
 import asyncio
 import csv
-
 import logging
-import sentry_sdk
 
+import sentry_sdk
 from pymongo import UpdateOne
 
 from catalog.db import (
-    init_mongo,
-    transaction_context_manager,
     get_category_collection,
     get_products_collection,
     get_profiles_collection,
+    init_mongo,
+    transaction_context_manager,
 )
-from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
-from catalog.utils import get_now
 from catalog.logging import setup_logging
+from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
 from catalog.settings import SENTRY_DSN
+from catalog.utils import get_now
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +107,7 @@ MZU_CATEGORIES_FIELDS_MAPPING = {
         "33140000-931756-42574629",
         "33140000-412447-42574629",
         "33140000-851237-42574629",
-     ): {
+    ): {
         "classification.id": "33141600-6",
         "classification.description": "Контейнери та пакети для забору матеріалу для аналізів, дренажі та комплекти",
     },
@@ -125,7 +124,7 @@ MZU_CATEGORIES_FIELDS_MAPPING = {
         "33140000-904270-42574629",
         "33141300-904319-42574629",
         "33141300-904320-42574629",
-     ): {
+    ): {
         "classification.id": "33141300-3",
         "classification.description": "Приладдя для венепункції та забору крові",
     },
@@ -169,7 +168,7 @@ async def migrate_profiles():
     counter = 0
     bulk = []
 
-    with open('/tmp/cs_20538_mzu_profiles.csv', 'w', newline='') as csvfile:
+    with open("/tmp/cs_20538_mzu_profiles.csv", "w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=["id", "relatedCategory", "title"], extrasaction="ignore")
         writer.writeheader()
         for category_ids, update_data in MZU_CATEGORIES_FIELDS_MAPPING.items():
@@ -251,5 +250,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

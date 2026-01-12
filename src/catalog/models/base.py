@@ -1,18 +1,24 @@
 from pydantic import BaseModel as PydanticBaseModel
 
-
 unchanged = object()
 
 
 class PropertySerializationModel(PydanticBaseModel):
-
-    def dict(self, *args,  include=None, exclude=None, **kwargs):
-        result = super().dict(*args, include=include,  exclude=exclude, **kwargs)
+    def dict(self, *args, include=None, exclude=None, **kwargs):
+        result = super().dict(*args, include=include, exclude=exclude, **kwargs)
         cls = self.__class__
         props = [
-            prop for prop in dir(cls)
+            prop
+            for prop in dir(cls)
             if isinstance(getattr(cls, prop), property)
-            and prop not in ("__values__", "fields", "model_extra", "__fields_set__", "model_fields_set")  # excluding pydantic properties
+            and prop
+            not in (
+                "__values__",
+                "fields",
+                "model_extra",
+                "__fields_set__",
+                "model_fields_set",
+            )  # excluding pydantic properties
         ]
         # Include and exclude properties
         if include:
@@ -40,4 +46,3 @@ class BaseModel(PropertySerializationModel):
             exclude_none=True,
         )
         return data
-

@@ -1,16 +1,14 @@
-from dataclasses import dataclass
 import asyncio
 import logging
-
-from pymongo.errors import PyMongoError
+from dataclasses import dataclass
 
 import sentry_sdk
+from pymongo.errors import PyMongoError
 
-from catalog.db import get_profiles_collection, get_products_collection, init_mongo, transaction_context_manager
+from catalog.db import get_products_collection, get_profiles_collection, init_mongo, transaction_context_manager
 from catalog.logging import setup_logging
-from catalog.settings import SENTRY_DSN
 from catalog.models.product import ProductStatus
-
+from catalog.settings import SENTRY_DSN
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +25,7 @@ class Counters:
 
     def __post_init__(self):
         self.total_products = self.total_products or (
-            self.good_products +
-            self.broken_active_products +
-            self.broken_hidden_products
+            self.good_products + self.broken_active_products + self.broken_hidden_products
         )
 
     def __add__(self, other):
@@ -40,7 +36,7 @@ class Counters:
             self.broken_active_products + other.broken_active_products,
             self.broken_hidden_products + other.broken_hidden_products,
             self.total_responses + other.total_responses,
-            self.broken_responses + other.broken_responses
+            self.broken_responses + other.broken_responses,
         )
 
 
@@ -69,9 +65,7 @@ async def analyze_products(profile_id: str):
     products_collection = get_products_collection()
     async with transaction_context_manager() as session:
         profile = await get_profiles_collection().find_one(
-            {"_id": profile_id},
-            projection={"criteria": 1},
-            session=session
+            {"_id": profile_id}, projection={"criteria": 1}, session=session
         )
         titles_map = {
             r["id"]: r["title"]
@@ -81,9 +75,9 @@ async def analyze_products(profile_id: str):
         }
         query = {"relatedProfiles": {"$in": [profile_id]}}
         if titles_map:
-            async for p in products_collection.find(query,
-                                                    projection={"requirementResponses": 1, "status": 1},
-                                                    session=session):
+            async for p in products_collection.find(
+                query, projection={"requirementResponses": 1, "status": 1}, session=session
+            ):
                 is_product_broken, counters = analyze_product_responses(counters, titles_map, p)
                 counters.total_products += 1
                 if is_product_broken:
@@ -118,5 +112,5 @@ def main():
     loop.run_until_complete(analyze())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

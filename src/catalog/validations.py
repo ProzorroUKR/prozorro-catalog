@@ -7,8 +7,8 @@ from aiohttp.web import HTTPBadRequest, HTTPForbidden
 from aiohttp_client_cache import CachedSession
 
 from catalog.models.category import CategoryStatus
-from catalog.models.profile import ProfileStatus
 from catalog.models.criteria import TYPEMAP
+from catalog.models.profile import ProfileStatus
 from catalog.settings import (
     CACHE_BACKEND,
     LOCALIZATION_CRITERIA,
@@ -20,17 +20,17 @@ from catalog.utils import get_now
 
 
 def validate_product_related_category(category):
-    if category['status'] != CategoryStatus.active:
+    if category["status"] != CategoryStatus.active:
         raise HTTPBadRequest(text="relatedCategory should be in `active` status")
     localization_criteria = [
-        cr for cr in category['criteria'] if cr.get("classification", {}).get("id") == LOCALIZATION_CRITERIA
+        cr for cr in category["criteria"] if cr.get("classification", {}).get("id") == LOCALIZATION_CRITERIA
     ]
     if not localization_criteria:
         raise HTTPBadRequest(text="relatedCategory must have localization criteria")
 
 
 def validate_active_vendor(vendor):
-    if not vendor['isActivated']:
+    if not vendor["isActivated"]:
         raise HTTPBadRequest(text="Vendor should be activated.")
     for ban in vendor.get("bans", []):
         if datetime.fromisoformat(ban["dueDate"]) > get_now():
@@ -39,57 +39,48 @@ def validate_active_vendor(vendor):
 
 def validate_req_response_values(requirement, values, key):
     if not values:
-        raise HTTPBadRequest(text=f'requirement {key} should have values')
+        raise HTTPBadRequest(text=f"requirement {key} should have values")
     data_type = requirement.get("dataType")
     data_type = TYPEMAP.get(data_type)
 
     for value in values:
         if not data_type or not isinstance(value, data_type):
-            raise HTTPBadRequest(text=f'requirement {key} value has unexpected type')
+            raise HTTPBadRequest(text=f"requirement {key} value has unexpected type")
         if requirement.get("dataType") == "number" and isinstance(value, bool):
-            raise HTTPBadRequest(text=f'requirement {key} value has unexpected type')
+            raise HTTPBadRequest(text=f"requirement {key} value has unexpected type")
 
-        if (
-            'expectedValue' in requirement
-            and value != requirement['expectedValue']
-        ):
-            raise HTTPBadRequest(text=f'requirement {key} unexpected value')
-        if 'minValue' in requirement and value < requirement['minValue']:
-            raise HTTPBadRequest(text=f'requirement {key} minValue')
-        if 'maxValue' in requirement and value > requirement['maxValue']:
-            raise HTTPBadRequest(text=f'requirement {key} maxValue')
-        if 'pattern' in requirement and not re.match(
-                requirement['pattern'], str(value)
-        ):
-            raise HTTPBadRequest(text=f'requirement {key} pattern')
-    if 'expectedValues' in requirement and not set(values).issubset(set(requirement['expectedValues'])):
-        raise HTTPBadRequest(text=f'requirement {key} expectedValues')
-    if 'expectedMinItems' in requirement and len(values) < requirement['expectedMinItems']:
-        raise HTTPBadRequest(text=f'requirement {key} expectedMinItems')
-    if 'expectedMaxItems' in requirement and len(values) > requirement['expectedMaxItems']:
-        raise HTTPBadRequest(text=f'requirement {key} expectedMaxItems')
+        if "expectedValue" in requirement and value != requirement["expectedValue"]:
+            raise HTTPBadRequest(text=f"requirement {key} unexpected value")
+        if "minValue" in requirement and value < requirement["minValue"]:
+            raise HTTPBadRequest(text=f"requirement {key} minValue")
+        if "maxValue" in requirement and value > requirement["maxValue"]:
+            raise HTTPBadRequest(text=f"requirement {key} maxValue")
+        if "pattern" in requirement and not re.match(requirement["pattern"], str(value)):
+            raise HTTPBadRequest(text=f"requirement {key} pattern")
+    if "expectedValues" in requirement and not set(values).issubset(set(requirement["expectedValues"])):
+        raise HTTPBadRequest(text=f"requirement {key} expectedValues")
+    if "expectedMinItems" in requirement and len(values) < requirement["expectedMinItems"]:
+        raise HTTPBadRequest(text=f"requirement {key} expectedMinItems")
+    if "expectedMaxItems" in requirement and len(values) > requirement["expectedMaxItems"]:
+        raise HTTPBadRequest(text=f"requirement {key} expectedMaxItems")
 
 
 def validate_req_response(req_response, requirement):
-    value = req_response.get('value')
-    values = req_response.get('values')
+    value = req_response.get("value")
+    values = req_response.get("values")
     if requirement.get("expectedValues") is not None and value is not None:
         raise HTTPBadRequest(text=f"only 'values' allowed in response for requirement {requirement['title']}")
     elif requirement.get("expectedValues") is None and values is not None:
         raise HTTPBadRequest(text=f"only 'value' allowed in response for requirement {requirement['title']}")
     values = [value] if value is not None else values
-    key = req_response.get('requirement')
+    key = req_response.get("requirement")
 
     validate_req_response_values(requirement, values, key)
 
 
 def validate_product_req_responses_to_category(
-        category: dict,
-        product: dict,
-        product_before: dict = None,
-        required_criteria: Iterable = None
+    category: dict, product: dict, product_before: dict = None, required_criteria: Iterable = None
 ):
-
     category_requirements = {
         r["title"]: (r, c.get("classification", {}).get("id"), group.get("id"))
         for c in category.get("criteria", [])
@@ -101,24 +92,21 @@ def validate_product_req_responses_to_category(
     localization_responded_groups = set()
 
     if category_requirements and not product.get("requirementResponses"):
-        raise HTTPBadRequest(text='should be responded at least on one category requirement')
+        raise HTTPBadRequest(text="should be responded at least on one category requirement")
 
     before_responded_requirements = {}
     if product_before:
         before_responded_requirements = {r["requirement"] for r in product_before.get("requirementResponses", [])}
 
     for req_response in product.get("requirementResponses", []):
-        key = req_response['requirement']
+        key = req_response["requirement"]
 
         if key not in category_requirements:
-            raise HTTPBadRequest(text=f'requirement {key} not found')
+            raise HTTPBadRequest(text=f"requirement {key} not found")
 
         # check if added new requirement responses to archived requirement
-        if (
-            key not in before_responded_requirements
-            and category_requirements[key][0].get("isArchived", False)
-        ):
-            raise HTTPBadRequest(text=f'requirement {key} is archived')
+        if key not in before_responded_requirements and category_requirements[key][0].get("isArchived", False):
+            raise HTTPBadRequest(text=f"requirement {key} is archived")
 
         requirement, classification, group = category_requirements[key]
         if classification == LOCALIZATION_CRITERIA:
@@ -132,20 +120,22 @@ def validate_product_req_responses_to_category(
         )
     for required_classification in required_classifications:
         if required_classification not in responded_classifications:
-            raise HTTPBadRequest(text=f'should be responded at least on one category '
-                                      f'requirement with classification {required_classification}')
+            raise HTTPBadRequest(
+                text=f"should be responded at least on one category "
+                f"requirement with classification {required_classification}"
+            )
 
 
 def validate_product_req_response_to_profile(profile: dict, product: dict):
     localization_responded_groups = set()
     for criterion in profile.get("criteria", ""):
         requirements = {
-            r["title"]: (r, group.get("id"))
-            for group in criterion["requirementGroups"]
-            for r in group["requirements"]
+            r["title"]: (r, group.get("id")) for group in criterion["requirementGroups"] for r in group["requirements"]
         }
         if not requirements:
-            raise HTTPBadRequest(text=f"product.relatedProfile({profile['id']}) should have at least one requirement for criteria {criterion['title']}")
+            raise HTTPBadRequest(
+                text=f"product.relatedProfile({profile['id']}) should have at least one requirement for criteria {criterion['title']}"
+            )
 
         is_requirement_responded = False
         for req_response in product.get("requirementResponses", ""):
@@ -158,7 +148,9 @@ def validate_product_req_response_to_profile(profile: dict, product: dict):
                 validate_req_response(req_response, requirement)
 
         if not is_requirement_responded:
-            raise HTTPBadRequest(text=f"should be responded at least on one profile({profile['id']}) requirement for criteria {criterion['title']}")
+            raise HTTPBadRequest(
+                text=f"should be responded at least on one profile({profile['id']}) requirement for criteria {criterion['title']}"
+            )
     if len(localization_responded_groups) > 1:
         raise HTTPBadRequest(
             text=f"forbidden to respond at more than one group's requirements for {LOCALIZATION_CRITERIA}"
@@ -166,18 +158,15 @@ def validate_product_req_response_to_profile(profile: dict, product: dict):
 
 
 def validate_product_to_category(
-        category,
-        product,
-        product_before=None,
-        check_classification=True,
-        required_criteria=None
+    category, product, product_before=None, check_classification=True, required_criteria=None
 ):
     if category.get("status", CategoryStatus.active) != CategoryStatus.active:
         raise HTTPBadRequest(text=f"relatedCategory should be in `{CategoryStatus.active}` status.")
     if check_classification:
         category_class = category["classification"]["id"]
-        if (category_class[:3] == "336" and product["classification"]["id"][:3] != category_class[:3]) or \
-                (category_class[:3] != "336" and product["classification"]["id"][:4] != category_class[:4]):
+        if (category_class[:3] == "336" and product["classification"]["id"][:3] != category_class[:3]) or (
+            category_class[:3] != "336" and product["classification"]["id"][:4] != category_class[:4]
+        ):
             raise HTTPBadRequest(
                 text="product classification should have the same digits at the beginning as in related category."
             )
@@ -187,7 +176,7 @@ def validate_product_to_category(
 
 def validate_product_to_profile(profile, product):
     if product["relatedCategory"] != profile["relatedCategory"]:
-        raise HTTPBadRequest(text='product and profile should be related with the same category')
+        raise HTTPBadRequest(text="product and profile should be related with the same category")
     if profile["status"] == ProfileStatus.hidden:
         raise HTTPBadRequest(text=f"relatedProfiles should be in `{ProfileStatus.active}` status")
 
@@ -213,9 +202,8 @@ def validate_profile_requirements(new_requirements: list, category: dict) -> Non
         cat_data_type = requirements_statuses[key].get("dataType")
         if cat_data_type != req.get("dataType"):
             raise HTTPBadRequest(text=f"requirement '{key}' dataType should be '{cat_data_type}' like in category")
-        if (
-            req.get("dataType") == "boolean"
-            and any(req.get(field_name) is not None for field_name in ("minValue", "maxValue", "expectedValues"))
+        if req.get("dataType") == "boolean" and any(
+            req.get(field_name) is not None for field_name in ("minValue", "maxValue", "expectedValues")
         ):
             raise HTTPBadRequest(text=f"requirement '{key}': for boolean use only expectedValue")
         if (
@@ -236,11 +224,11 @@ def validate_profile_requirements(new_requirements: list, category: dict) -> Non
         if "maxValue" in requirements_statuses[key] or "minValue" in requirements_statuses[key]:
             if req.get("expectedValue") is not None:
                 exp_value = req["expectedValue"]
-                if 'minValue' in requirements_statuses[key] and exp_value < requirements_statuses[key]['minValue']:
+                if "minValue" in requirements_statuses[key] and exp_value < requirements_statuses[key]["minValue"]:
                     raise HTTPBadRequest(
                         text=f"requirement '{key}' expectedValue shouldn't be less than minValue in category"
                     )
-                if 'maxValue' in requirements_statuses[key] and exp_value > requirements_statuses[key]['maxValue']:
+                if "maxValue" in requirements_statuses[key] and exp_value > requirements_statuses[key]["maxValue"]:
                     raise HTTPBadRequest(
                         text=f"requirement '{key}' expectedValue shouldn't be more than maxValue in category"
                     )
@@ -250,29 +238,21 @@ def validate_profile_requirements(new_requirements: list, category: dict) -> Non
 
 def validate_requirement_values_range(requirement, parent_requirement, key, min_value_field, max_value_field):
     # TODO: remove after migration data type check
-    if (
-        parent_requirement[key].get(min_value_field) is not None
-        and
-        (
-            requirement.get(min_value_field) is None
-            or (
-                isinstance(requirement[min_value_field], (float, int))
-                and isinstance(parent_requirement[key][min_value_field], (float, int))
-                and requirement[min_value_field] < parent_requirement[key][min_value_field]
-            )
+    if parent_requirement[key].get(min_value_field) is not None and (
+        requirement.get(min_value_field) is None
+        or (
+            isinstance(requirement[min_value_field], (float, int))
+            and isinstance(parent_requirement[key][min_value_field], (float, int))
+            and requirement[min_value_field] < parent_requirement[key][min_value_field]
         )
     ):
         raise HTTPBadRequest(text=f"requirement '{key}' {min_value_field} should be equal or greater than in category")
-    if (
-        parent_requirement[key].get(max_value_field) is not None
-        and
-        (
-            requirement.get(max_value_field) is None
-            or (
-                isinstance(requirement[max_value_field], (float, int))
-                and isinstance(parent_requirement[key][max_value_field], (float, int))
-                and requirement[max_value_field] > parent_requirement[key][max_value_field]
-            )
+    if parent_requirement[key].get(max_value_field) is not None and (
+        requirement.get(max_value_field) is None
+        or (
+            isinstance(requirement[max_value_field], (float, int))
+            and isinstance(parent_requirement[key][max_value_field], (float, int))
+            and requirement[max_value_field] > parent_requirement[key][max_value_field]
         )
     ):
         raise HTTPBadRequest(text=f"requirement '{key}' {max_value_field} should be equal or less than in category")
@@ -300,7 +280,9 @@ def validate_criteria_classification_uniq(obj: dict, updated_criterion=None):
             ):
                 raise HTTPBadRequest(text="Criteria with this classification already exists")
     else:
-        classification_ids = [criterion["classification"]["id"] for criterion in criteria if criterion.get("classification")]
+        classification_ids = [
+            criterion["classification"]["id"] for criterion in criteria if criterion.get("classification")
+        ]
         if len(classification_ids) != len(set(classification_ids)):
             raise HTTPBadRequest(text="Criteria classification should be unique")
 
@@ -314,8 +296,9 @@ def validate_contributor_banned_categories(category: dict, contributor: dict):
     category_administrator = category.get("marketAdministrator", {}).get("identifier", {}).get("id")
     for ban in contributor.get("bans", []):
         ban_administrator = ban.get("administrator", {}).get("identifier", {}).get("id")
-        if ban_administrator == category_administrator\
-                and ("dueDate" not in ban or datetime.fromisoformat(ban["dueDate"]) > get_now()):
+        if ban_administrator == category_administrator and (
+            "dueDate" not in ban or datetime.fromisoformat(ban["dueDate"]) > get_now()
+        ):
             raise HTTPBadRequest(text="request for product with this relatedCategory is forbidden due to ban")
 
 
@@ -326,14 +309,16 @@ def validate_previous_product_reviews(product_request: dict):
 
 def validate_contributor_ban_already_exists(contributor: dict, administrator_id):
     for ban in contributor.get("bans", []):
-        if ban.get("administrator", {}).get("identifier", {}).get("id") == administrator_id \
-                and ("dueDate" not in ban or datetime.fromisoformat(ban["dueDate"]) > get_now()):
+        if ban.get("administrator", {}).get("identifier", {}).get("id") == administrator_id and (
+            "dueDate" not in ban or datetime.fromisoformat(ban["dueDate"]) > get_now()
+        ):
             raise HTTPBadRequest(text="ban from this market administrator already exists")
 
 
 def validate_category_administrator(administrator_data: dict, category: dict):
-    if administrator_data.get("administrator", {}).get("identifier", {}).get("id") != \
-            category.get("marketAdministrator", {}).get("identifier", {}).get("id"):
+    if administrator_data.get("administrator", {}).get("identifier", {}).get("id") != category.get(
+        "marketAdministrator", {}
+    ).get("identifier", {}).get("id"):
         raise HTTPBadRequest(text="only administrator who is related to product category can moderate product request.")
 
 
@@ -345,16 +330,16 @@ async def validate_medicine_additional_classifications(obj: dict):
     for scheme, ids in med_values.items():
         if ids:
             async with CachedSession(cache=CACHE_BACKEND) as session:
-                async with session.get(f'{MEDICINE_API_URL}/registry/{scheme.lower()}.json') as resp:
+                async with session.get(f"{MEDICINE_API_URL}/registry/{scheme.lower()}.json") as resp:
                     if resp.status != 200:
-                        raise HTTPBadRequest(text=f"Can't get classification {scheme} from medicine "
-                                                  f"registry, please make request later")
+                        raise HTTPBadRequest(
+                            text=f"Can't get classification {scheme} from medicine "
+                            f"registry, please make request later"
+                        )
                     response = await resp.json()
                     data = response["data"]
                     if diff_values := set(ids).difference(data.keys()):
-                        raise HTTPBadRequest(
-                            text=f"values {diff_values} don't exist in {scheme} dictionary"
-                        )
+                        raise HTTPBadRequest(text=f"values {diff_values} don't exist in {scheme} dictionary")
 
 
 async def validate_agreement(category):
@@ -363,8 +348,7 @@ async def validate_agreement(category):
             if resp.status == 404:
                 raise HTTPBadRequest(text="Agreement doesn't exist")
             if resp.status != 200:
-                raise HTTPBadRequest(text="Can't get agreement from openprocurement api, "
-                                          "plz make request later")
+                raise HTTPBadRequest(text="Can't get agreement from openprocurement api, " "plz make request later")
             data = await resp.json()
             agreement = data["data"]
             if agreement.get("status", "") != "active":
@@ -372,5 +356,7 @@ async def validate_agreement(category):
             agr_clas_id = agreement["classification"]["id"]
             cat_clas_id = category["classification"]["id"]
             if agr_clas_id[0:3] != cat_clas_id[0:3]:
-                raise HTTPBadRequest(text="Agreement:classification:id first three numbers "
-                                          "should be equal to Category:classification:id")
+                raise HTTPBadRequest(
+                    text="Agreement:classification:id first three numbers "
+                    "should be equal to Category:classification:id"
+                )

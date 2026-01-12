@@ -1,17 +1,15 @@
-from dataclasses import dataclass
 import asyncio
 import logging
-
-from pymongo.errors import PyMongoError
-from pymongo import UpdateOne
+from dataclasses import dataclass
 
 import sentry_sdk
+from pymongo import UpdateOne
+from pymongo.errors import PyMongoError
 
 from catalog.db import get_offers_collection, init_mongo
 from catalog.logging import setup_logging
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
-
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +43,7 @@ async def migrate_offers():
             bulk.append(
                 UpdateOne(
                     filter={"_id": o["_id"]},
-                    update={"$set": {
-                        "status": "hidden", "dateModified": get_now().isoformat()}
-                    }
+                    update={"$set": {"status": "hidden", "dateModified": get_now().isoformat()}},
                 )
             )
             counters.updated_offers += 1
@@ -83,5 +79,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

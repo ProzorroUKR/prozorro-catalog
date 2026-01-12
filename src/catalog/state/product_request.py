@@ -1,13 +1,12 @@
-from catalog.state.base import BaseState
-from catalog.state.product import ProductState
-from catalog.context import get_now, get_request
 from uuid import uuid4
 
+from catalog.context import get_now, get_request
+from catalog.state.base import BaseState
+from catalog.state.product import ProductState
 from catalog.utils import convert_requests_documents_url
 
 
 class ProductRequestState(BaseState):
-
     @classmethod
     async def on_post(cls, data, category):
         data["dateCreated"] = get_now().isoformat()

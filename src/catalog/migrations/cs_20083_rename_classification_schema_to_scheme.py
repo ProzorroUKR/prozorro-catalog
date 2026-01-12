@@ -1,19 +1,18 @@
 import asyncio
-
 import logging
-import sentry_sdk
 
+import sentry_sdk
 from pymongo import UpdateOne
 
 from catalog.db import (
+    get_products_collection,
     init_mongo,
     transaction_context_manager,
-    get_products_collection,
 )
-from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
-from catalog.utils import get_now
 from catalog.logging import setup_logging
+from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
 from catalog.settings import SENTRY_DSN
+from catalog.utils import get_now
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +26,8 @@ async def migrate():
     bulk = []
     products_collection = get_products_collection()
     async for product in products_collection.find(
-            {"classification.id": {"$in": CLASSIFICATION_IDS}, "classification.schema": {"$exists": True}},
-            {"classification": 1},
+        {"classification.id": {"$in": CLASSIFICATION_IDS}, "classification.schema": {"$exists": True}},
+        {"classification": 1},
     ):
         bulk.append(
             UpdateOne(
@@ -62,5 +61,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,14 +1,14 @@
 import asyncio
 import logging
-import sentry_sdk
 
+import sentry_sdk
 from pymongo import UpdateOne
 
 from catalog.db import (
+    get_category_collection,
+    get_profiles_collection,
     init_mongo,
     transaction_context_manager,
-    get_profiles_collection,
-    get_category_collection,
 )
 from catalog.logging import setup_logging
 from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
@@ -22,17 +22,11 @@ async def migrate_categories():
     bulk = []
     counter = 0
     collection = get_category_collection()
-    async for obj in collection.find(
-        {"description": {"$exists": True}},
-        projection={"_id": 1}
-    ):
+    async for obj in collection.find({"description": {"$exists": True}}, projection={"_id": 1}):
         counter += 1
         now = get_now().isoformat()
         bulk.append(
-            UpdateOne(
-                filter={"_id": obj["_id"]},
-                update={"$unset": {"description": ""}, "$set": {"dateModified": now}}
-            )
+            UpdateOne(filter={"_id": obj["_id"]}, update={"$unset": {"description": ""}, "$set": {"dateModified": now}})
         )
 
         if bulk and len(bulk) % 500 == 0:
@@ -51,17 +45,11 @@ async def migrate_profiles():
     bulk = []
     counter = 0
     collection = get_profiles_collection()
-    async for obj in collection.find(
-        {"description": {"$exists": True}},
-        projection={"_id": 1}
-    ):
+    async for obj in collection.find({"description": {"$exists": True}}, projection={"_id": 1}):
         counter += 1
         now = get_now().isoformat()
         bulk.append(
-            UpdateOne(
-                filter={"_id": obj["_id"]},
-                update={"$unset": {"description": ""}, "$set": {"dateModified": now}}
-            )
+            UpdateOne(filter={"_id": obj["_id"]}, update={"$unset": {"description": ""}, "$set": {"dateModified": now}})
         )
 
         if bulk and len(bulk) % 500 == 0:
@@ -92,5 +80,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

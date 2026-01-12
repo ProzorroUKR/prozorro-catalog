@@ -1,43 +1,48 @@
-from copy import deepcopy
 import logging
-from typing import Union, Optional
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r404, r400, r401
+from copy import deepcopy
+from typing import Optional, Union
+
 from aiohttp.web import HTTPBadRequest
+from aiohttp_pydantic import PydanticView
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r401, r404
+
 from catalog import db
-from catalog.models.api import PaginatedList, ErrorResponse
-from catalog.auth import set_access_token, validate_accreditation, validate_access_token
-from catalog.utils import pagination_params, get_revision_changes
-from catalog.models.category import CategoryCreateInput, CategoryUpdateInput, DeprecatedCategoryCreateInput, \
-    CategoryResponse
+from catalog.auth import set_access_token, validate_access_token, validate_accreditation
+from catalog.handlers.base_criteria import (
+    BaseCriteriaItemViewMixin,
+    BaseCriteriaRGItemViewMixin,
+    BaseCriteriaRGRequirementItemViewMixin,
+    BaseCriteriaRGRequirementViewMixin,
+    BaseCriteriaRGViewMixin,
+    BaseCriteriaViewMixin,
+)
+from catalog.models.api import ErrorResponse, PaginatedList
+from catalog.models.category import (
+    CategoryCreateInput,
+    CategoryResponse,
+    CategoryUpdateInput,
+    DeprecatedCategoryCreateInput,
+)
 from catalog.models.criteria import (
-    CategoryRequirementCreateInput,
     CategoryBulkRequirementCreateInput,
-    CategoryRequirementUpdateInput,
     CategoryRequirement,
+    CategoryRequirementCreateInput,
+    CategoryRequirementUpdateInput,
     CriterionCreateInput,
     CriterionListResponse,
     CriterionResponse,
     CriterionUpdateInput,
-    RGResponse,
-    RGCreateInput,
-    RGListResponse,
-    RGUpdateInput,
+    RequestCategoryRequirementCreateInput,
     RequirementListResponse,
     RequirementResponse,
-    RequestCategoryRequirementCreateInput,
+    RGCreateInput,
+    RGListResponse,
+    RGResponse,
+    RGUpdateInput,
 )
 from catalog.serializers.base import RootSerializer
 from catalog.state.category import CategoryState
-from catalog.handlers.base_criteria import (
-    BaseCriteriaViewMixin,
-    BaseCriteriaItemViewMixin,
-    BaseCriteriaRGViewMixin,
-    BaseCriteriaRGItemViewMixin,
-    BaseCriteriaRGRequirementViewMixin,
-    BaseCriteriaRGRequirementItemViewMixin,
-)
-
+from catalog.utils import get_revision_changes, pagination_params
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +51,11 @@ class CategoryView(PydanticView):
     state = CategoryState
 
     async def get(
-        self, /, offset: Optional[str] = None,  limit: Optional[int] = 100, descending: Optional[Union[int, str]] = 0,
+        self,
+        /,
+        offset: Optional[str] = None,
+        limit: Optional[int] = 100,
+        descending: Optional[Union[int, str]] = 0,
     ) -> r200[PaginatedList]:
         """
         Get a list of categories
@@ -118,7 +127,7 @@ class CategoryItemView(PydanticView):
 
         validate_accreditation(self.request, "category")
         if category_id != body.data.id:
-            raise HTTPBadRequest(text='id mismatch')
+            raise HTTPBadRequest(text="id mismatch")
 
         data = body.data.dict_without_none()
         await self.state.on_put(data)
@@ -130,8 +139,7 @@ class CategoryItemView(PydanticView):
             f"Created category {data['id']}",
             extra={"MESSAGE_ID": "category_create_put"},
         )
-        response = {"data": RootSerializer(data, show_owner=False).data,
-                    "access": access}
+        response = {"data": RootSerializer(data, show_owner=False).data, "access": access}
         return response
 
     async def patch(
@@ -163,7 +171,6 @@ class CategoryItemView(PydanticView):
 
 
 class CategoryCriteriaViewMixin:
-
     obj_name = "category"
 
     @classmethod
@@ -244,7 +251,7 @@ class CategoryCriteriaRGItemView(CategoryCriteriaViewMixin, BaseCriteriaRGItemVi
         return await BaseCriteriaRGItemViewMixin.get(self, obj_id, criterion_id, rg_id)
 
     async def patch(
-            self, obj_id: str, criterion_id: str, rg_id: str, /, body: RGUpdateInput
+        self, obj_id: str, criterion_id: str, rg_id: str, /, body: RGUpdateInput
     ) -> Union[r200[RGResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         RequirementGroup update
@@ -279,7 +286,6 @@ class CategoryCriteriaRGRequirementView(CategoryCriteriaViewMixin, BaseCriteriaR
         """
         return await BaseCriteriaRGRequirementViewMixin.get(self, obj_id, criterion_id, rg_id)
 
-
     async def post(
         self, obj_id: str, criterion_id: str, rg_id: str, /, body: RequestCategoryRequirementCreateInput
     ) -> Union[r201[RequirementResponse], r400[ErrorResponse], r401[ErrorResponse]]:
@@ -292,7 +298,9 @@ class CategoryCriteriaRGRequirementView(CategoryCriteriaViewMixin, BaseCriteriaR
         return await BaseCriteriaRGRequirementViewMixin.post(self, obj_id, criterion_id, rg_id, body)
 
 
-class CategoryCriteriaRGRequirementItemView(CategoryCriteriaViewMixin, BaseCriteriaRGRequirementItemViewMixin, PydanticView):
+class CategoryCriteriaRGRequirementItemView(
+    CategoryCriteriaViewMixin, BaseCriteriaRGRequirementItemViewMixin, PydanticView
+):
     async def get_body_from_model(self):
         json = await self.request.json()
         return CategoryRequirementUpdateInput(**json)
@@ -320,4 +328,6 @@ class CategoryCriteriaRGRequirementItemView(CategoryCriteriaViewMixin, BaseCrite
         Security: Basic: []
         Tags: Category/Criteria/RequirementGroups/Requirements
         """
-        return await BaseCriteriaRGRequirementItemViewMixin.patch(self, obj_id, criterion_id, rg_id, requirement_id, body)
+        return await BaseCriteriaRGRequirementItemViewMixin.patch(
+            self, obj_id, criterion_id, rg_id, requirement_id, body
+        )

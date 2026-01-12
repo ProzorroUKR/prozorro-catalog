@@ -3,7 +3,7 @@ from unittest.mock import Mock
 from uuid import uuid4
 
 from catalog.migrations.cs_20838_change_expiration_date import migrate
-from tests.integration.conftest import get_fixture_json
+from tests.utils import get_fixture_json
 
 
 async def test_migrate(db):

@@ -1,22 +1,23 @@
+from uuid import uuid4
+
+from aiohttp.web import HTTPBadRequest
+
+from catalog import db
+from catalog.context import get_now
 from catalog.models.vendor import VendorStatus
 from catalog.state.base import BaseState
-from aiohttp.web import HTTPBadRequest
-from catalog.context import get_now
-from catalog import db
-from uuid import uuid4
 
 
 class VendorState(BaseState):
-
     @classmethod
     async def on_post(cls, data):
         await cls.validate_vendor_identifier(
             action="create",
             identifier_id=data["vendor"]["identifier"]["id"],
         )
-        data['id'] = uuid4().hex
-        data['isActivated'] = False
-        data['dateCreated'] = data['dateModified'] = get_now().isoformat()
+        data["id"] = uuid4().hex
+        data["isActivated"] = False
+        data["dateCreated"] = data["dateModified"] = get_now().isoformat()
         data["status"] = VendorStatus.pending
 
         super().on_post(data)
@@ -24,7 +25,7 @@ class VendorState(BaseState):
     @classmethod
     async def on_patch(cls, before, after):
         if before != after:
-            after['dateModified'] = get_now().isoformat()
+            after["dateModified"] = get_now().isoformat()
 
             # validate activation is allowed
             if after.get("isActivated") and not before.get("isActivated"):
@@ -53,6 +54,4 @@ class VendorState(BaseState):
         )
         if existing["data"]:
             dup_id = existing["data"][0]["id"]
-            raise HTTPBadRequest(
-                text=f"Cannot {action} vendor.identifier.id {identifier_id} already exists: {dup_id}"
-            )
+            raise HTTPBadRequest(text=f"Cannot {action} vendor.identifier.id {identifier_id} already exists: {dup_id}")

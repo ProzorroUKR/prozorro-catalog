@@ -1,18 +1,17 @@
 import asyncio
 import logging
 import traceback
+from copy import deepcopy
 
 import sentry_sdk
-
-from copy import deepcopy
 from pymongo import UpdateOne
 
 from catalog.db import (
     get_category_collection,
+    get_products_collection,
     get_profiles_collection,
     init_mongo,
     transaction_context_manager,
-    get_products_collection,
 )
 from catalog.logging import setup_logging
 from catalog.settings import SENTRY_DSN
@@ -37,9 +36,7 @@ def convert_expected_value_to_string(requirement):
 
 def normalize_expected_values(requirement):
     requirement["dataType"] = "string"
-    requirement["expectedValues"] = [
-        str(value) for value in requirement["expectedValues"]
-    ]
+    requirement["expectedValues"] = [str(value) for value in requirement["expectedValues"]]
     requirement["expectedMinItems"] = 1
 
 
@@ -83,9 +80,7 @@ async def get_min_value_from_responses(requirement, obj, obj_type):
 
 
 async def update_responses_in_product(product):
-    category = await get_category_collection().find_one(
-        {"_id": product["relatedCategory"]}, {"criteria": 1}
-    )
+    category = await get_category_collection().find_one({"_id": product["relatedCategory"]}, {"criteria": 1})
     if not category:
         return None
     category_requirements = {
@@ -116,7 +111,7 @@ async def update_responses_in_product(product):
                     continue
                 resp["values"] = [obj_type(val) for val in resp["values"]]
                 updated = True
-        except ValueError as e:
+        except ValueError:
             # delete such response
             updated = True
         else:
@@ -126,9 +121,7 @@ async def update_responses_in_product(product):
 
 async def requirement_not_in_category(obj, requirement):
     if obj.get("relatedCategory"):
-        category = await get_category_collection().find_one(
-            {"_id": obj["relatedCategory"]}, {"criteria": 1}
-        )
+        category = await get_category_collection().find_one({"_id": obj["relatedCategory"]}, {"criteria": 1})
         if category:
             category_requirements = {
                 r["title"]: r
@@ -171,10 +164,7 @@ async def update_criteria_and_responses_integer(obj, requirement):
             if field_name in requirement:
                 if isinstance(requirement[field_name], float):
                     requirement["dataType"] = "number"
-                elif (
-                    field_name == "expectedValue"
-                    and isinstance(requirement["expectedValue"], (bool, str))
-                ):
+                elif field_name == "expectedValue" and isinstance(requirement["expectedValue"], (bool, str)):
                     convert_expected_value_to_string(requirement)
     else:
         await get_min_value_from_responses(requirement, obj, int)
@@ -196,10 +186,7 @@ async def update_criteria_and_responses_number(obj, requirement):
     elif "minValue" in requirement or "expectedValue" in requirement:
         for field_name in ("minValue", "expectedValue"):
             if field_name in requirement:
-                if (
-                    field_name == "expectedValue"
-                    and isinstance(requirement["expectedValue"], (bool, str))
-                ):
+                if field_name == "expectedValue" and isinstance(requirement["expectedValue"], (bool, str)):
                     convert_expected_value_to_string(requirement)
                 else:
                     convert_field_to_float(requirement, field_name)
@@ -248,9 +235,7 @@ async def update_criteria_and_responses_boolean(requirement):
     if "expectedValues" in requirement:
         if len(requirement["expectedValues"]) == 1:
             if isinstance(requirement["expectedValues"][0], bool):
-                requirement["expectedValue"] = requirement[
-                    "expectedValues"
-                ][0]
+                requirement["expectedValue"] = requirement["expectedValues"][0]
                 for field_name in (
                     "expectedValues",
                     "expectedMinItems",
@@ -290,9 +275,8 @@ async def update_criteria(obj: dict):
                     continue
 
                 # Remove min/max values if expected values exist
-                if (
-                    ("expectedValue" in requirement or "expectedValues" in requirement)
-                    and ("minValue" in requirement or "maxValue" in requirement)
+                if ("expectedValue" in requirement or "expectedValues" in requirement) and (
+                    "minValue" in requirement or "maxValue" in requirement
                 ):
                     pop_min_max_values(requirement)
 
@@ -344,10 +328,12 @@ async def migrate_categories_and_profiles():
                     bulk.append(
                         UpdateOne(
                             filter={"_id": obj["_id"]},
-                            update={"$set": {
-                                "criteria": updated_criteria,
-                                "dateModified": get_now().isoformat(),
-                            }},
+                            update={
+                                "$set": {
+                                    "criteria": updated_criteria,
+                                    "dateModified": get_now().isoformat(),
+                                }
+                            },
                         )
                     )
 
@@ -356,9 +342,7 @@ async def migrate_categories_and_profiles():
                         await bulk_update(collection, bulk, session, counter, criteria_obj)
                     bulk = []
             except Exception as e:
-                logger.info(
-                    f"ERROR: {criteria_obj} with id {obj['_id']}. Caught {type(e).__name__}."
-                )
+                logger.info(f"ERROR: {criteria_obj} with id {obj['_id']}. Caught {type(e).__name__}.")
                 traceback.print_exc()
                 break
 
@@ -391,10 +375,12 @@ async def migrate_products():
             bulk.append(
                 UpdateOne(
                     filter={"_id": obj["_id"]},
-                    update={"$set": {
-                        "requirementResponses": updated_responses,
-                        "dateModified": get_now().isoformat(),
-                    }},
+                    update={
+                        "$set": {
+                            "requirementResponses": updated_responses,
+                            "dateModified": get_now().isoformat(),
+                        }
+                    },
                 )
             )
         if bulk and len(bulk) % 500 == 0:

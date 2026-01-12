@@ -1,22 +1,11 @@
 from copy import deepcopy
 
 from cron.related_profiles_task import run_task
-from tests.integration.base import TEST_AUTH
-from tests.integration.utils import create_criteria
-from tests.integration.conftest import (
-    get_fixture_json,
-    api,
-    db,
-    category,
-    product,
-    profile,
-    mock_agreement,
-    profile_without_criteria,
-)
+from tests.base import TEST_AUTH
+from tests.utils import get_fixture_json
 
 
 async def test_migrate_profiles(db, api, category, profile, product):
-
     profile_fixture = get_fixture_json("profile")
     product_fixture = get_fixture_json("product")
 
@@ -47,8 +36,8 @@ async def test_migrate_profiles(db, api, category, profile, product):
 
     profile_data_3 = deepcopy(profile_fixture)
     profile_3_id = "3" * 32
-    profile_data_3['id'] = profile_3_id
-    profile_data_3['relatedCategory'] = category["data"]["id"]
+    profile_data_3["id"] = profile_3_id
+    profile_data_3["relatedCategory"] = category["data"]["id"]
     resp = await api.put(
         f"/api/profiles/{profile_3_id}",
         json={"data": profile_data_3, "access": category["access"]},
@@ -58,22 +47,19 @@ async def test_migrate_profiles(db, api, category, profile, product):
 
     profile_data_4 = deepcopy(profile_fixture)
     profile_4_id = "4" * 32
-    profile_data_4['id'] = profile_4_id
-    profile_data_4['relatedCategory'] = category["data"]["id"]
+    profile_data_4["id"] = profile_4_id
+    profile_data_4["relatedCategory"] = category["data"]["id"]
     criteria = deepcopy(profile["data"]["criteria"])
     criteria[0]["requirementGroups"][0]["requirements"][0]["expectedValues"] = ["Одноразова1"]
-    profile_data_4['criteria'] = criteria
+    profile_data_4["criteria"] = criteria
     await db.profiles.insert_one(profile_data_4)
 
-    res = await run_task()
+    await run_task()
 
     resp = await api.get(f'/api/products/{product["data"]["id"]}')
     assert resp.status == 200
     resp_json = await resp.json()
     prod = resp_json["data"]
-    for criterion in profile_data_4["criteria"]:
-        for rg in criterion["requirementGroups"]:
-            req = [req["title"] for req in rg["requirements"]]
     assert prod["relatedProfiles"] == [profile["data"]["id"]]
 
     resp = await api.get(f'/api/products/{product_without_responses["_id"]}')

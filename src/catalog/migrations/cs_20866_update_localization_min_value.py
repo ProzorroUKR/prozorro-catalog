@@ -1,7 +1,6 @@
 import argparse
 import asyncio
 import logging
-from datetime import datetime
 
 import sentry_sdk
 from pymongo import UpdateOne
@@ -28,17 +27,14 @@ async def migrate_objects(min_value, obj_name):
     obj_collection = COLLECTION_MAPPING[obj_name]()
 
     async for obj in obj_collection.find(
-            {"status": "active"},
-            projection={"_id": 1, "criteria": 1},
+        {"status": "active"},
+        projection={"_id": 1, "criteria": 1},
     ):
         new_criteria = get_new_criteria(obj, min_value)
         if new_criteria is not None:
             now = get_now().isoformat()
             bulk.append(
-                UpdateOne(
-                    filter={"_id": obj["_id"]},
-                    update={"$set": {"criteria": new_criteria, "dateModified": now}}
-                )
+                UpdateOne(filter={"_id": obj["_id"]}, update={"$set": {"criteria": new_criteria, "dateModified": now}})
             )
             counter += 1
 

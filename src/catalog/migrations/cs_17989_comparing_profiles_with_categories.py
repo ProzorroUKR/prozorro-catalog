@@ -5,9 +5,9 @@ import sentry_sdk
 from pymongo import UpdateOne
 
 from catalog.db import (
+    get_category_collection,
     get_profiles_collection,
     init_mongo,
-    get_category_collection,
     transaction_context_manager,
 )
 from catalog.logging import setup_logging
@@ -67,9 +67,7 @@ async def requirement_diff_type_in_category(obj, requirement):
                     updated = True
                 elif category_requirements[requirement["title"]]["dataType"] == "string":
                     if "expectedValues" in requirement and requirement["expectedValues"]:  # not empty list
-                        requirement["expectedValues"] = [
-                            str(value) for value in requirement["expectedValues"]
-                        ]
+                        requirement["expectedValues"] = [str(value) for value in requirement["expectedValues"]]
                         requirement["expectedMinItems"] = 1
                         requirement["dataType"] = "string"
                         updated = True
@@ -94,10 +92,9 @@ async def requirement_diff_type_in_category(obj, requirement):
                                     requirement.pop(field_name, None)
                         requirement["dataType"] = "string"
                         updated = True
-                elif (
-                    category_requirements[requirement["title"]]["dataType"] in ("number", "integer")
-                    and requirement["dataType"] in ("number", "integer")
-                ):
+                elif category_requirements[requirement["title"]]["dataType"] in ("number", "integer") and requirement[
+                    "dataType"
+                ] in ("number", "integer"):
                     try:
                         for field_name in ("maxValue", "minValue", "expectedValue"):
                             if field_name in requirement:
@@ -149,10 +146,12 @@ async def migrate_profiles():
             bulk.append(
                 UpdateOne(
                     filter={"_id": obj["_id"]},
-                    update={"$set": {
-                        "criteria": obj["criteria"],
-                        "dateModified": get_now().isoformat(),
-                    }},
+                    update={
+                        "$set": {
+                            "criteria": obj["criteria"],
+                            "dateModified": get_now().isoformat(),
+                        }
+                    },
                 )
             )
         if bulk and len(bulk) % 500 == 0:

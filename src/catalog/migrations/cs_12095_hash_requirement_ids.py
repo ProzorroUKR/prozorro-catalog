@@ -1,15 +1,16 @@
+import asyncio
+import logging
 from collections import defaultdict
 from hashlib import md5
-from pymongo.errors import PyMongoError
+
+import sentry_sdk
 from pymongo import UpdateOne
-from catalog.db import get_profiles_collection, get_products_collection, init_mongo, transaction_context_manager
+from pymongo.errors import PyMongoError
+
+from catalog.db import get_products_collection, get_profiles_collection, init_mongo, transaction_context_manager
 from catalog.logging import setup_logging
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
-import asyncio
-import logging
-import sentry_sdk
-
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +43,7 @@ async def migrate_profile(profile_id):
 
     async with transaction_context_manager() as session:
         profile = await get_profiles_collection().find_one(
-            {"_id": profile_id},
-            projection={"criteria": 1},
-            session=session
+            {"_id": profile_id}, projection={"criteria": 1}, session=session
         )
         new_criteria = get_new_profile_criteria(counters, profile_id, profile)
         if new_criteria:
@@ -52,24 +51,22 @@ async def migrate_profile(profile_id):
             # update profile
             counters["profiles"] += 1
             result = await get_profiles_collection().update_one(
-                {"_id": profile_id},
-                {"$set": {"criteria": new_criteria, "dateModified": now}},
-                session=session
+                {"_id": profile_id}, {"$set": {"criteria": new_criteria, "dateModified": now}}, session=session
             )
             if result.modified_count != 1:
                 logger.error(f"Updating {profile_id} has unexpected modified_count: {result.modified_count}")
 
             # then update products
             bulk = []
-            async for p in products_collection.find({"relatedProfile": profile_id},
-                                                    projection={"requirementResponses": 1},
-                                                    session=session):
+            async for p in products_collection.find(
+                {"relatedProfile": profile_id}, projection={"requirementResponses": 1}, session=session
+            ):
                 new_responses = get_new_responses(counters, profile_id, p)
                 if new_responses:
                     bulk.append(
                         UpdateOne(
                             filter={"_id": p["_id"]},
-                            update={"$set": {"requirementResponses": new_responses, "dateModified": now}}
+                            update={"$set": {"requirementResponses": new_responses, "dateModified": now}},
                         )
                     )
                     counters["products"] += 1
@@ -139,5 +136,5 @@ def main():
     loop.run_until_complete(migrate())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
