@@ -825,7 +825,7 @@ wheels = [
 
 [[package]]
 name = "prozorro-catalog"
-version = "1.1.179"
+version = "1.1.183"
 source = { editable = "." }
 dependencies = [
     { name = "aiocache" },
