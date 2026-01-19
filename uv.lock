@@ -825,7 +825,7 @@ wheels = [
 
 [[package]]
 name = "prozorro-catalog"
-version = "1.1.183"
+version = "1.1.184"
 source = { editable = "." }
 dependencies = [
     { name = "aiocache" },
@@ -896,7 +896,7 @@ requires-dist = [
     { name = "pytz" },
     { name = "sentry-sdk" },
     { name = "standard-imghdr" },
-    { name = "standards", git = "https://github.com/ProzorroUKR/standards.git?rev=1.0.207" },
+    { name = "standards", git = "https://github.com/ProzorroUKR/standards.git?rev=1.0.217" },
     { name = "ujson" },
 ]
 
@@ -1457,8 +1457,8 @@ wheels = [
 
 [[package]]
 name = "standards"
-version = "1.0.207"
-source = { git = "https://github.com/ProzorroUKR/standards.git?rev=1.0.207#d95715c14797bdb4d45a6ec6def4a254027ca3bc" }
+version = "1.0.217"
+source = { git = "https://github.com/ProzorroUKR/standards.git?rev=1.0.217#bf4d583736df84d01d9005fbd32e4be82bfbfad8" }
 
 [[package]]
 name = "stevedore"
