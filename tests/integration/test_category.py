@@ -574,6 +574,21 @@ async def test_130_requirement_create(api, category):
     del requirement_data["data"]["maxValue"]
     del requirement_data["data"]["unit"]
 
+    for req_value in ("Req ", " req", "req\n", "\treq", "req\r"):
+        requirement_data["data"]["expectedValues"] = [req_value]
+        resp = await api.post(
+            f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
+            json=requirement_data,
+            auth=TEST_AUTH,
+        )
+        assert resp.status == 400
+        resp_json = await resp.json()
+        assert resp_json["errors"] == [
+            f"Value error, '{req_value}' has incorrect whitespace characters at the beginning/end: data",
+            "Input should be a valid list: data",
+        ]
+
+    requirement_data["data"]["expectedValues"] = ["value1", "value2", "value3", "value4"]
     resp = await api.post(
         f"/api/categories/{category_id}/criteria/{criteria_id}/requirementGroups/{rg_id}/requirements",
         json=requirement_data,
