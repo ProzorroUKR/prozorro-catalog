@@ -41,7 +41,7 @@ class RequirementBaseValidators(BaseModel):
             raise ValueError(f"Value '{value}' isn't {data_type_name}")
 
     @model_validator(mode="after")
-    def check_sum(cls, values):
+    def check_types(cls, values):
         if not (data_type := values.dataType):
             return values
         for k in ("expectedValue", "maxValue", "minValue"):
@@ -50,6 +50,8 @@ class RequirementBaseValidators(BaseModel):
         if values.expectedValues:
             for value in values.expectedValues:
                 cls._check_value_type(value, data_type)
+                if len(value) != len(value.strip()):
+                    raise ValueError(f"'{value}' has incorrect whitespace characters at the beginning/end")
         return values
 
     @model_validator(mode="after")
