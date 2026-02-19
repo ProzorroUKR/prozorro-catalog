@@ -38,6 +38,7 @@ from catalog.handlers.crowd_sourcing.product_request_document import (
 from catalog.handlers.general import get_version, ping_handler
 from catalog.handlers.image import ImageView
 from catalog.handlers.offer import OfferItemView, OfferView
+from catalog.handlers.price import PriceItemView, PriceView, ProductPriceView
 from catalog.handlers.product import ProductItemView, ProductView
 from catalog.handlers.product_document import ProductDocumentItemView, ProductDocumentView
 from catalog.handlers.profile import (
@@ -188,6 +189,13 @@ def create_application(on_cleanup=None):
         r"/api/profiles/{obj_id:[\w-]+}/criteria/{criterion_id:[\w-]+}/requirementGroups/{rg_id:[\w-]+}/requirements/{requirement_id:[\w-]+}",
         ProfileCriteriaRGRequirementItemView,
     )
+
+    # prices
+    app.router.add_view("/api/prices", PriceView)
+    app.router.add_view(r"/api/prices/{price_id:[\w-]+}", PriceItemView)
+
+    # product prices
+    app.router.add_view(r"/api/products/{product_id:[\w-]+}/prices", ProductPriceView)
 
     # products
     app.router.add_view("/api/products", ProductView)

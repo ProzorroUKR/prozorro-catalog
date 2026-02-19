@@ -1,0 +1,11 @@
+{
+  "productId": "some-product-id",
+  "unit": {
+    "code": "KGM",
+    "name": "кілограм"
+  },
+  "sampleSize": 50,
+  "lowerQuartile": "10.50",
+  "medianQuartile": "15.75",
+  "upperQuartile": "22.00"
+}

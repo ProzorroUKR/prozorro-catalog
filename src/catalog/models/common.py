@@ -70,6 +70,31 @@ class Unit(BaseModel):
 UNIT_EXAMPLE = Unit(code="H87", name="штука").model_dump()
 
 
+class BidUnit(BaseModel):
+    code: str = Field(
+        ...,
+        min_length=1,
+        max_length=80,
+        json_schema_extra={"example": "KGM"},
+    )
+    name: Optional[str] = Field(
+        None,
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "кілограм"},
+    )
+    value: Optional[Union[float, int]] = Field(
+        None,
+        ge=0,
+        json_schema_extra={"example": "150.00"},
+    )
+    quantity: Optional[Union[float, int]] = Field(
+        None,
+        ge=0,
+        json_schema_extra={"example": "10.00"},
+    )
+
+
 class Value(BaseModel):
     amount: Union[float, int]
     currency: str = Field(..., pattern=r"^[A-Z]{3}$")

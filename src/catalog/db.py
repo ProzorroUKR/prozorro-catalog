@@ -51,6 +51,8 @@ async def init_mongo(*app) -> AsyncIOMotorDatabase:
         init_category_indexes(),
         init_profile_indexes(),
         init_products_indexes(),
+        init_product_bids_indexes(),
+        init_prices_indexes(),
         init_offers_indexes(),
         init_vendor_indexes(),
         init_contributor_indexes(),
@@ -93,6 +95,8 @@ async def flush_database(*_):
         get_category_collection().delete_many({}),
         get_profiles_collection().delete_many({}),
         get_products_collection().delete_many({}),
+        get_product_bids_collection().delete_many({}),
+        get_prices_collection().delete_many({}),
         get_offers_collection().delete_many({}),
         get_vendor_collection().delete_many({}),
         get_contributor_collection().delete_many({}),
@@ -160,8 +164,10 @@ async def find_objects(collection, ids):
     return items
 
 
-async def paginated_result(collection, *_, offset, limit, reverse, filters=None, opt_fields=None):
-    limit = min(limit, MAX_LIST_LIMIT)
+async def paginated_result(
+    collection, *_, offset, limit, reverse, filters=None, opt_fields=None, full_data=False, max_limit=None
+):
+    limit = min(limit, max_limit if max_limit is not None else MAX_LIST_LIMIT)
     limit = max(limit, 1)
     filters = filters or {}
     if offset:
@@ -174,10 +180,13 @@ async def paginated_result(collection, *_, offset, limit, reverse, filters=None,
         else:
             filters["dateModified"] = {"$gt": offset}
 
-    projection = {"dateModified": True}
-    if opt_fields is not None:
-        for field in opt_fields:
-            projection[field] = True
+    if full_data:
+        projection = {"_rev": False}
+    else:
+        projection = {"dateModified": True}
+        if opt_fields is not None:
+            for field in opt_fields:
+                projection[field] = True
 
     items = (
         await collection.find(
@@ -475,6 +484,113 @@ async def read_product(uid, filters=None, collection=None):
 async def read_and_update_product(uid, filters=None):
     collection = get_products_collection(read_preference=ReadPreference.PRIMARY)
     data = await read_product(uid, filters=filters, collection=collection)
+    yield data
+    await update_object(collection, data)
+
+
+# product prices
+def get_prices_collection(read_preference=None):
+    return get_collection("prices", read_preference=read_preference)
+
+
+async def init_prices_indexes():
+    modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    product_index = IndexModel([("productId", ASCENDING)], background=True)
+    try:
+        await get_prices_collection().create_indexes([modified_index, product_index])
+    except PyMongoError as e:
+        logger.exception(e)
+
+
+async def insert_price(data):
+    inserted_id = await insert_object(get_prices_collection(), data)
+    return inserted_id
+
+
+async def find_prices(**kwargs):
+    collection = get_prices_collection()
+    result = await paginated_result(collection, full_data=True, max_limit=1000, **kwargs)
+    return result
+
+
+async def find_prices_by_product(product_id, **kwargs):
+    collection = get_prices_collection()
+    result = await paginated_result(
+        collection, filters={"productId": product_id}, full_data=True, max_limit=1000, **kwargs
+    )
+    return result
+
+
+async def read_price(uid, filters=None, collection=None):
+    if collection is None:
+        collection = get_prices_collection()
+    if filters is None:
+        filters = {}
+    data = await collection.find_one(
+        {"_id": uid, **filters},
+        session=get_db_session(),
+    )
+    if not data:
+        raise web.HTTPNotFound(text="Price not found")
+    return rename_id(data)
+
+
+@asynccontextmanager
+async def read_and_update_price(uid, filters=None):
+    collection = get_prices_collection(read_preference=ReadPreference.PRIMARY)
+    data = await read_price(uid, filters=filters, collection=collection)
+    yield data
+    await update_object(collection, data)
+
+
+# product_bids
+def get_product_bids_collection(read_preference=None):
+    return get_collection("product_bids", read_preference=read_preference)
+
+
+async def init_product_bids_indexes():
+    modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    unique_tender_bid_item = IndexModel(
+        [("tenderId", ASCENDING), ("bidId", ASCENDING), ("itemId", ASCENDING)],
+        unique=True,
+        background=True,
+        name="unique_tender_bid_item",
+    )
+    try:
+        await get_product_bids_collection().create_indexes([modified_index, unique_tender_bid_item])
+    except PyMongoError as e:
+        logger.exception(e)
+
+
+async def insert_product_bid(data):
+    inserted_id = await insert_object(get_product_bids_collection(), data)
+    return inserted_id
+
+
+async def find_product_bids(**kwargs):
+    collection = get_product_bids_collection()
+    result = await paginated_result(collection, **kwargs)
+    return result
+
+
+async def read_product_bid(uid, filters=None, collection=None):
+    if collection is None:
+        collection = get_product_bids_collection()
+    if filters is None:
+        filters = {}
+    data = await collection.find_one(
+        {"_id": uid, **filters},
+        session=get_db_session(),
+    )
+    if not data:
+        raise web.HTTPNotFound(text="Product bid not found")
+    return rename_id(data)
+
+
+@asynccontextmanager
+async def read_and_update_product_bid(uid, filters=None):
+    collection = get_product_bids_collection(read_preference=ReadPreference.PRIMARY)
+    data = await read_product_bid(uid, filters=filters, collection=collection)
     yield data
     await update_object(collection, data)
 
