@@ -80,6 +80,7 @@ test:
     AUTH_PATH: ${CI_PROJECT_DIR}/auth.ini
     IMG_DIR: ${CI_PROJECT_DIR}/images
     MONGODB_URI: mongodb://root:example@mongo:27017/?replicaSet=rs0
+    MONGODB_URL: mongodb://root:example@mongo:27017/?replicaSet=rs0
     MONGODB_ROOT_PASSWORD: example
     MONGODB_REPLICA_SET_MODE: primary
     MONGODB_REPLICA_SET_NAME: rs0

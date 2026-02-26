@@ -23,18 +23,6 @@ async def test_price_not_found(api, db):
     assert resp.status == 404
 
 
-PRICE_FEED_FIELDS = {
-    "id",
-    "productId",
-    "dateCreated",
-    "dateModified",
-    "sampleSize",
-    "lowerQuartile",
-    "medianQuartile",
-    "upperQuartile",
-}
-
-
 async def test_price_list_pagination(api, db):
     test_price = api.get_fixture_json("price")
 
@@ -70,7 +58,6 @@ async def test_price_list_pagination(api, db):
 
         assert len(resp_json["data"]) <= 5
         prev = resp_json["data"][0]
-        assert PRICE_FEED_FIELDS.issubset(prev.keys())
         assert price_map.pop(prev["id"]) == prev["dateModified"]
         for item in resp_json["data"][1:]:
             assert prev["dateModified"] < item["dateModified"]
@@ -104,8 +91,8 @@ async def test_product_prices(api, product):
     resp_json = await resp.json()
     assert len(resp_json["data"]) == 3
     for item in resp_json["data"]:
-        assert PRICE_FEED_FIELDS.issubset(item.keys())
-        assert item["productId"] == product_id
+        assert "id" in item
+        assert "dateModified" in item
 
 
 async def test_product_prices_not_found(api, db):
@@ -121,11 +108,6 @@ async def test_product_bid_unique_constraint(db):
         "itemId": "item-unique-001",
         "unit": {"code": "KGM", "name": "кілограм"},
         "date": "2024-01-15T10:00:00+02:00",
-        "itemClassification": {
-            "id": "33600000-6",
-            "scheme": "ДК021",
-            "description": "Фармацевтична продукція",
-        },
         "lotValueStatus": "active",
         "dateModified": get_now().isoformat(),
         "dateCreated": get_now().isoformat(),

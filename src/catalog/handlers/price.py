@@ -5,13 +5,12 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r400, r404
 
 from catalog import db
-from catalog.models.api import ErrorResponse, PaginatedList
-from catalog.models.price import PriceResponse
+from catalog.models.api import ErrorResponse
+from catalog.models.price import PaginatedPricesList, PriceResponse
 from catalog.serializers.price import PriceSerializer
 from catalog.utils import pagination_params
 
 logger = logging.getLogger(__name__)
-
 
 class PriceView(PydanticView):
     async def get(
@@ -20,7 +19,7 @@ class PriceView(PydanticView):
         offset: Optional[str] = None,
         limit: Optional[int] = 100,
         descending: Optional[Union[int, str]] = 0,
-    ) -> r200[PaginatedList]:
+    ) -> r200[PaginatedPricesList]:
         """
         Get a list of price records
 
@@ -53,15 +52,15 @@ class ProductPriceView(PydanticView):
         /,
         offset: Optional[str] = None,
         limit: Optional[int] = 100,
-        descending: Optional[Union[int, str]] = 1,
-    ) -> r200[PaginatedList]:
+        descending: Optional[Union[int, str]] = 0,
+    ) -> r200[PaginatedPricesList]:
         """
         Get a list of prices for a specific product
 
         Tags: Prices
         """
         await db.read_product(product_id)
-        offset, limit, reverse = pagination_params(self.request, default_reverse=True)
+        offset, limit, reverse = pagination_params(self.request)
         response = await db.find_prices_by_product(
             product_id,
             offset=offset,

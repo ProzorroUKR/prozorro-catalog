@@ -17,10 +17,29 @@ services:
       "--timeout=3600",
     ]
     environment:
-      MONGODB_URI: 'mongodb://root:example@mongo:27017/?replicaSet=rs0'
+      MONGODB_URI: 'mongodb://root:example@mongo:27017/?replicaSet=rs0' 
       PYTHONUNBUFFERED: '1'
     ports:
       - 8000:8000
+    volumes:
+      - ./src/catalog:/app/catalog
+      - ./src/cron:/app/cron
+      - ./tests:/app/tests
+      - ./auth.ini:/app/auth.ini
+    depends_on:
+      - mongo
+
+  crawler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        UV_EXTRA_ARGS: ""
+    command: ["python", "-m", "catalog.crawler"]
+    environment:
+      MONGODB_URI: 'mongodb://root:example@mongo:27017/?replicaSet=rs0' 
+      MONGODB_URL: 'mongodb://root:example@mongo:27017/?replicaSet=rs0' 
+      PYTHONUNBUFFERED: '1'
     volumes:
       - ./src/catalog:/app/catalog
       - ./src/cron:/app/cron

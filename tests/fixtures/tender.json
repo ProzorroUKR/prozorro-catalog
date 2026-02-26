@@ -1,0 +1,30 @@
+{
+  "id": "tender-1",
+  "procurementMethodType": "priceQuotation",
+  "status": "active",
+  "awardPeriod": {
+    "startDate": "2024-01-01T10:00:00+02:00"
+  },
+  "bids": [
+    {
+      "id": "bid-1",
+      "status": "active",
+      "items": [
+        {
+          "id": "item-1",
+          "product": "product-1",
+          "quantity": 5,
+          "unit": {
+            "code": "KGM",
+            "name": "кілограм",
+            "value": {
+              "amount": 100.0,
+              "currency": "UAH",
+              "valueAddedTaxIncluded": true
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

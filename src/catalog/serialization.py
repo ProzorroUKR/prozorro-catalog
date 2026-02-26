@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timezone
+from decimal import Decimal
 from uuid import UUID
 
 from aiohttp.web import json_response as base_json_response
@@ -19,6 +20,8 @@ def json_serialize(obj):
         return str(obj)
     if isinstance(obj, set):
         return list(sorted(obj))
+    if isinstance(obj, Decimal):
+        return str(obj)
     raise TypeError(f"Type {type(obj)} not serializable")
 
 

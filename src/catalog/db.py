@@ -7,7 +7,7 @@ from decimal import Decimal
 from urllib.parse import urlencode
 
 from aiohttp import web
-from bson.codec_options import CodecOptions, TypeRegistry
+from bson.codec_options import CodecOptions, TypeCodec, TypeRegistry
 from bson.decimal128 import Decimal128
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import ASCENDING, DESCENDING, IndexModel, ReadPreference
@@ -62,6 +62,20 @@ async def init_mongo(*app) -> AsyncIOMotorDatabase:
     return DB
 
 
+class DecimalCodec(TypeCodec):
+    python_type = Decimal  # the Python type acted upon by this type codec
+    bson_type = Decimal128  # the BSON type acted upon by this type codec
+
+    def transform_python(self, value):
+        """Function that transforms a custom type value into a type
+        that BSON can encode."""
+        return Decimal128(value)
+
+    def transform_bson(self, value):
+        """Function that transforms a vanilla BSON type value into our
+        custom type."""
+        return value.to_decimal()
+
 # The stuff below is done to be able store sets (as lists) and decimals (as decimals) types in mongodb bson
 # bson.errors.InvalidDocument: cannot encode object: {'ALL_A', 'ALL_B', 'ALL_C'}, of type: <class 'set'>
 def fallback_encoder(value):
@@ -72,7 +86,7 @@ def fallback_encoder(value):
     return value
 
 
-type_registry = TypeRegistry(fallback_encoder=fallback_encoder)
+type_registry = TypeRegistry([DecimalCodec()],fallback_encoder=fallback_encoder)
 codec_options = CodecOptions(type_registry=type_registry)
 
 
@@ -165,9 +179,9 @@ async def find_objects(collection, ids):
 
 
 async def paginated_result(
-    collection, *_, offset, limit, reverse, filters=None, opt_fields=None, full_data=False, max_limit=None
+    collection, *_, offset, limit, reverse, filters=None, opt_fields=None, full_data=False
 ):
-    limit = min(limit, max_limit if max_limit is not None else MAX_LIST_LIMIT)
+    limit = min(limit, MAX_LIST_LIMIT)
     limit = max(limit, 1)
     filters = filters or {}
     if offset:
@@ -509,17 +523,27 @@ async def insert_price(data):
 
 async def find_prices(**kwargs):
     collection = get_prices_collection()
-    result = await paginated_result(collection, full_data=True, max_limit=1000, **kwargs)
+    result = await paginated_result(collection, **kwargs, full_data=True)
     return result
 
 
 async def find_prices_by_product(product_id, **kwargs):
     collection = get_prices_collection()
     result = await paginated_result(
-        collection, filters={"productId": product_id}, full_data=True, max_limit=1000, **kwargs
+        collection, filters={"productId": product_id}, full_data=True, **kwargs
     )
     return result
 
+async def find_last_price_by_product(product_id):
+    collection = get_prices_collection()
+    price = await collection.find_one(
+        {"productId": product_id},
+        sort=[("date", DESCENDING)],
+        session=get_db_session(),
+    )
+    if not price:
+        return None
+    return rename_id(price)
 
 async def read_price(uid, filters=None, collection=None):
     if collection is None:
@@ -572,6 +596,30 @@ async def find_product_bids(**kwargs):
     result = await paginated_result(collection, **kwargs)
     return result
 
+async def find_product_bids_group_products(limit=None, skip=None, **kwargs):
+    collection = get_product_bids_collection()
+    pipeline = [
+        {"$group": {"_id": "$productId"}},
+        {"$sort": {"_id": 1}},
+    ]
+    if skip is not None:
+        pipeline.append({"$skip": skip})
+    if limit is not None:
+        pipeline.append({"$limit": limit})
+    result = collection.aggregate(pipeline, session=get_db_session())
+    return result
+
+async def find_product_bids_by_product(product_id, start_date=None):
+    collection = get_product_bids_collection()
+    match_query = {"productId": product_id}
+    if start_date:
+        match_query["date"] = {"$gte": start_date}
+    pipeline = [
+        {"$match": match_query},
+        {"$sort": {"date": 1}},
+    ]
+    result = await collection.aggregate(pipeline, session=get_db_session()).to_list(None)
+    return result
 
 async def read_product_bid(uid, filters=None, collection=None):
     if collection is None:
