@@ -60,10 +60,6 @@ class PriceCreateData(BaseModel):
         json_schema_extra={"example": "2024-01-15T12:30:00+02:00"},
     )
 
-    @property
-    def id(self):
-        return uuid4().hex
-
 
 class PriceUpdateData(BaseModel):
     productId: Optional[str] = Field(

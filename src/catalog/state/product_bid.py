@@ -10,10 +10,6 @@ class ProductBidState(BaseState):
         data.setdefault("dateModified", now)
 
     @classmethod
-    def on_post(cls, data):
-        data["dateCreated"] = data["dateModified"] = get_now().isoformat()
-
-    @classmethod
     def on_patch(cls, before, after):
         now = get_now().isoformat()
         if before != after:
