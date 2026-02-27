@@ -39,7 +39,7 @@ class ProductState(BaseState):
             category_id = after["relatedCategory"]
             category = await db.read_category(category_id)
 
-            if after.get("status", ProductStatus.active) != ProductStatus.hidden:
+            if after.get("status", ProductStatus.active) == ProductStatus.active:
                 validate_product_to_category(
                     category,
                     after,
