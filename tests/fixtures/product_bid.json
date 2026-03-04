@@ -3,16 +3,9 @@
   "bidId": "bid-id-001",
   "itemId": "item-id-001",
   "productId": "catalog-product-id-001",
-  "unit": {
-    "code": "KGM",
-    "name": "кілограм",
-    "value": {
-      "amount": 150.0,
-      "currency": "UAH",
-      "valueAddedTaxIncluded": true
-    },
-    "quantity": 10.0
-  },
+  "code": "KGM",
+  "name": "кілограм",
+  "amount": "150.00",
   "date": "2024-01-15T10:00:00+02:00",
   "lotValueStatus": "active"
 }

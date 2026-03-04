@@ -40,7 +40,7 @@ async def test_calculate_price_for_product(db):
             "bidId": f"bid-d1-{i}",
             "itemId": f"item-d1-{i}",
         })
-        bid["unit"]["value"]["amount"] = amount
+        bid["amount"] = amount
         await insert_object(get_product_bids_collection(), bid)
 
     amounts2 = [1000, 2000, 3000]
@@ -54,7 +54,7 @@ async def test_calculate_price_for_product(db):
             "bidId": f"bid-d2-{i}",
             "itemId": f"item-d2-{i}",
         })
-        bid["unit"]["value"]["amount"] = amount
+        bid["amount"] = amount
         await insert_object(get_product_bids_collection(), bid)
 
     inserted_ids = await calculate_price_for_product(product_id)
@@ -97,7 +97,7 @@ async def test_calculate_price_incrementality(db):
             "bidId": f"bid-inc-d1-{i}",
             "itemId": f"item-inc-d1-{i}",
         })
-        bid["unit"]["value"]["amount"] = amount
+        bid["amount"] = amount
         await insert_object(get_product_bids_collection(), bid)
 
     await calculate_price()
@@ -116,7 +116,7 @@ async def test_calculate_price_incrementality(db):
             "bidId": f"bid-inc-d2-{i}",
             "itemId": f"item-inc-d2-{i}",
         })
-        bid["unit"]["value"]["amount"] = amount
+        bid["amount"] = amount
         await insert_object(get_product_bids_collection(), bid)
 
     await calculate_price()

@@ -22,7 +22,7 @@ async def test_process_tender_valid(db):
     inserted_bid = await get_product_bids_collection().find_one({"tenderId": tender["id"]})
     assert inserted_bid is not None
     assert inserted_bid["productId"] == "product-1"
-    assert inserted_bid["unit"]["value"]["amount"] == 100.0
+    assert inserted_bid["amount"] == 100.0
 
     from datetime import datetime, timedelta, timezone
     expected_date = datetime(2024, 1, 1, 10, 0, tzinfo=timezone(timedelta(hours=2)))

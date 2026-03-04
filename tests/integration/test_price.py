@@ -100,18 +100,11 @@ async def test_product_prices_not_found(api, db):
     assert resp.status == 404
 
 
-async def test_product_bid_unique_constraint(db):
-    test_bid = {
-        "id": uuid4().hex,
-        "tenderId": "tender-unique-001",
-        "bidId": "bid-unique-001",
-        "itemId": "item-unique-001",
-        "unit": {"code": "KGM", "name": "кілограм"},
-        "date": "2024-01-15T10:00:00+02:00",
-        "lotValueStatus": "active",
-        "dateModified": get_now().isoformat(),
-        "dateCreated": get_now().isoformat(),
-    }
+async def test_product_bid_unique_constraint(api, db):
+    test_bid = api.get_fixture_json("product_bid")
+    test_bid["id"] = uuid4().hex
+    test_bid["dateCreated"] = get_now().isoformat()
+    test_bid["dateModified"] = get_now().isoformat()
 
     await insert_object(get_product_bids_collection(), test_bid)
 
