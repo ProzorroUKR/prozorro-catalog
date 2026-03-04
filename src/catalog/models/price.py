@@ -7,7 +7,6 @@ from pydantic import Field
 
 from catalog.models.api import Input, PageLink, Response
 from catalog.models.base import BaseModel
-from catalog.models.common import BidUnit
 from catalog.utils import get_now
 
 
@@ -23,9 +22,17 @@ class PriceCreateData(BaseModel):
         max_length=250,
         json_schema_extra={"example": "some-product-id"},
     )
-    unit: Optional[BidUnit] = Field(
-        None,
-        json_schema_extra={"example": {"code": "KGM", "name": "кілограм"}},
+    code: str = Field(
+        ...,
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "KGM"},
+    )
+    name: str = Field(
+        ...,
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "кілограм"},
     )
     date: datetime = Field(
         ...,
@@ -102,9 +109,17 @@ class Price(BaseModel):
         pattern=r"^[0-9A-Za-z_-]{1,32}$",
         json_schema_extra={"example": "some-product-id"},
     )
-    unit: Optional[BidUnit] = Field(
-        None,
-        json_schema_extra={"example": {"code": "KGM", "name": "кілограм"}},
+    code: str = Field(
+        ...,
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "KGM"},
+    )
+    name: str = Field(
+        ...,
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "кілограм"},
     )
     date: datetime = Field(
         ...,
@@ -143,7 +158,8 @@ class Price(BaseModel):
 class PriceListItem(BaseModel):
     id: str
     productId: str
-    unit: Optional[BidUnit]
+    code: str
+    name: str
     date: str
     sampleSize: int
     lowerQuartile: Decimal

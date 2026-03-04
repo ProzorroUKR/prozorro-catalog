@@ -13,7 +13,6 @@ from prozorro_crawler.utils import get_resource_url
 from catalog import db
 from catalog.db import init_mongo
 from catalog.logging import setup_logging
-from catalog.models.common import BidUnit, BidUnitValue
 from catalog.models.product_bid import ProductBidCreateData
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
@@ -39,16 +38,9 @@ async def process_tender(session: ClientSession, tender: dict[str, Any]) -> None
                             bidId=bid["id"],
                             itemId=item["id"],
                             productId=item["product"],
-                            unit=BidUnit(
-                                code=item["unit"]["code"],
-                                name=item["unit"]["name"],
-                                value=BidUnitValue(
-                                    amount=item["unit"]["value"]["amount"],
-                                    currency=item["unit"]["value"]["currency"],
-                                    valueAddedTaxIncluded=item["unit"]["value"]["valueAddedTaxIncluded"],
-                                ),
-                                quantity=item["quantity"],
-                            ),
+                            code=item["unit"]["code"],
+                            name=item["unit"]["name"],
+                            amount=item["unit"]["value"]["amount"],
                             date=tender["awardPeriod"]["startDate"],
                             lotValueStatus=tender.get("status", ""),
                             dateModified=get_now().isoformat(),

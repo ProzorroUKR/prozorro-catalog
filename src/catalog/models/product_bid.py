@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 from uuid import uuid4
 
@@ -6,7 +7,6 @@ from pydantic import Field
 
 from catalog.models.api import Input, Response
 from catalog.models.base import BaseModel
-from catalog.models.common import BID_UNIT_EXAMPLE, BidUnit
 from catalog.utils import get_now
 
 
@@ -40,9 +40,22 @@ class BaseProductBidData(BaseModel):
         max_length=250,
         json_schema_extra={"example": "catalog-product-id-001"},
     )
-    unit: BidUnit = Field(
+    code: str = Field(
         ...,
-        json_schema_extra={"example": BID_UNIT_EXAMPLE},
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "KGM"},
+    )
+    name: str = Field(
+        ...,
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "кілограм"},
+    )
+    amount: Decimal = Field(
+        ...,
+        ge=0,
+        json_schema_extra={"example": "100.50"},
     )
     date: datetime = Field(
         ...,
@@ -94,9 +107,22 @@ class ProductBidUpdateData(BaseModel):
         max_length=250,
         json_schema_extra={"example": "catalog-product-id-001"},
     )
-    unit: Optional[BidUnit] = Field(
-        None,
-        json_schema_extra={"example": BID_UNIT_EXAMPLE},
+    code: str = Field(
+        ...,
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "KGM"},
+    )
+    name: str = Field(
+        ...,
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "кілограм"},
+    )
+    amount: Decimal = Field(
+        ...,
+        ge=0,
+        json_schema_extra={"example": "100.50"},
     )
     date: Optional[datetime] = Field(
         None,
@@ -140,9 +166,22 @@ class ProductBid(BaseProductBidData):
         max_length=250,
         json_schema_extra={"example": "catalog-product-id-001"},
     )
-    unit: BidUnit = Field(
+    code: str = Field(
         ...,
-        json_schema_extra={"example": BID_UNIT_EXAMPLE},
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "KGM"},
+    )
+    name: str = Field(
+        ...,
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "кілограм"},
+    )
+    amount: Decimal = Field(
+        ...,
+        ge=0,
+        json_schema_extra={"example": "100.50"},
     )
     date: datetime = Field(
         ...,

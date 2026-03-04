@@ -69,38 +69,6 @@ class Unit(BaseModel):
 
 UNIT_EXAMPLE = Unit(code="H87", name="штука").model_dump()
 
-class BidUnitValue(BaseModel):
-    amount: Union[float, int]
-    currency: str = Field(..., pattern=r"^[A-Z]{3}$")
-    valueAddedTaxIncluded: bool = True
-
-class BidUnit(BaseModel):
-    code: str = Field(
-        ...,
-        min_length=1,
-        max_length=80,
-        json_schema_extra={"example": "KGM"},
-    )
-    name: Optional[str] = Field(
-        None,
-        min_length=1,
-        max_length=250,
-        json_schema_extra={"example": "кілограм"},
-    )
-    value: Optional[BidUnitValue] = Field(
-        None,
-        json_schema_extra={"example": {"amount": 150.00, "currency": "UAH", "valueAddedTaxIncluded": True}},
-    )
-    quantity: Optional[Union[float, int]] = Field(
-        None,
-        ge=0,
-        json_schema_extra={"example": "10.00"},
-    )
-
-BID_UNIT_VALUE_EXAMPLE = BidUnitValue(amount=150.00, currency="UAH", valueAddedTaxIncluded=True).model_dump(exclude_none=True)
-BID_UNIT_EXAMPLE = BidUnit(code="KGM", name="кілограм", value=BID_UNIT_VALUE_EXAMPLE, quantity=10.00).model_dump(exclude_none=True)
-
-
 class Value(BaseModel):
     amount: Union[float, int]
     currency: str = Field(..., pattern=r"^[A-Z]{3}$")

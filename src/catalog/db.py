@@ -516,6 +516,10 @@ async def init_prices_indexes():
         logger.exception(e)
 
 
+async def clear_prices_collection():
+    await get_prices_collection().delete_many({})
+
+
 async def insert_price(data):
     inserted_id = await insert_object(get_prices_collection(), data)
     return inserted_id
