@@ -11,6 +11,7 @@ from catalog.db import (
     transaction_context_manager,
 )
 from catalog.logging import setup_logging
+from catalog.migrations.utils import bulk_update
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
 
@@ -118,11 +119,6 @@ async def requirement_diff_type_in_category(obj, requirement):
             return updated
 
 
-async def bulk_update(collection, bulk, session, counter):
-    await collection.bulk_write(bulk, session=session)
-    logger.info(f"Processed {counter} records of migrated")
-
-
 async def migrate_profiles():
     logger.info("Start migration")
     collection = get_profiles_collection()
@@ -156,11 +152,11 @@ async def migrate_profiles():
             )
         if bulk and len(bulk) % 500 == 0:
             async with transaction_context_manager() as session:
-                await bulk_update(collection, bulk, session, counter)
+                await bulk_update(collection, bulk, session, counter, migrated_obj="profiles")
             bulk = []
     if bulk:
         async with transaction_context_manager() as session:
-            await bulk_update(collection, bulk, session, counter)
+            await bulk_update(collection, bulk, session, counter, migrated_obj="profiles")
     await cursor.close()
     logger.info(f"Finished. Processed {counter} records of migrated profiles")
     logger.info("Successfully migrated")

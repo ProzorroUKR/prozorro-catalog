@@ -13,6 +13,7 @@ from catalog.db import (
     transaction_context_manager,
 )
 from catalog.logging import setup_logging
+from catalog.migrations.utils import bulk_update
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
 
@@ -108,13 +109,6 @@ async def migrate_products(session):
         await bulk_update(collection, bulk, session, counter, migrated_obj="products")
 
     logger.info(f"Finished. Processed {counter} records of migrated products")
-
-
-async def bulk_update(collection, bulk, session, counter, migrated_obj):
-    result = await collection.bulk_write(bulk, session=session)
-    logger.info(f"Processed {counter} records of migrated {migrated_obj}")
-    if result.modified_count != len(bulk):
-        logger.error(f"Unexpected modified_count: {result.modified_count}; expected {len(bulk)}")
 
 
 async def migrate():
