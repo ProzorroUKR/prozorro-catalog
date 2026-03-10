@@ -13,6 +13,7 @@ from catalog.db import (
     transaction_context_manager,
 )
 from catalog.logging import setup_logging
+from catalog.migrations.utils import bulk_update
 from catalog.models.common import UNIT_CODES_DATA
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
@@ -144,11 +145,6 @@ async def migrate_categories_and_profiles():
         await cursor.close()
 
         logger.info(f"Finished. Processed {counter} records of migrated {criteria_obj}")
-
-
-async def bulk_update(collection, bulk, session, counter, migrated_obj):
-    await collection.bulk_write(bulk, session=session)
-    logger.info(f"Processed {counter} records of migrated {migrated_obj}")
 
 
 async def migrate():

@@ -12,6 +12,7 @@ from catalog.db import (
     transaction_context_manager,
 )
 from catalog.logging import setup_logging
+from catalog.migrations.utils import bulk_update
 from catalog.settings import CPB_USERNAME, SENTRY_DSN
 
 logger = logging.getLogger(__name__)
@@ -35,19 +36,14 @@ async def migrate():
             logger.info(f"CATEGORY ID {obj['_id']} TOKEN: {new_token}")
 
             if bulk and len(bulk) % 500 == 0:
-                await bulk_update(collection, bulk, session, counter)
+                await bulk_update(collection, bulk, session, counter, migrated_obj="categories")
                 bulk = []
 
         if bulk:
-            await bulk_update(collection, bulk, session, counter)
+            await bulk_update(collection, bulk, session, counter, migrated_obj="categories")
 
         logger.info(f"Finished. Processed {counter} records of migrated categories")
     logger.info("Successfully migrated")
-
-
-async def bulk_update(collection, bulk, session, counter):
-    await collection.bulk_write(bulk, session=session)
-    logger.info(f"Processed {counter} records of migrated categories")
 
 
 def main():

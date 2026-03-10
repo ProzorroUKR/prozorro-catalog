@@ -11,7 +11,7 @@ from catalog.db import (
     transaction_context_manager,
 )
 from catalog.logging import setup_logging
-from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
+from catalog.migrations.utils import bulk_update
 from catalog.models.common import COUNTRY_NAMES, DataSchemaEnum
 from catalog.settings import LOCALIZATION_CRITERIA, SENTRY_DSN
 from catalog.utils import get_now

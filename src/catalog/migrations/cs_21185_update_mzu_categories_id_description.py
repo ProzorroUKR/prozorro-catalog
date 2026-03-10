@@ -13,22 +13,18 @@ from catalog.db import (
     transaction_context_manager,
 )
 from catalog.logging import setup_logging
-from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
+from catalog.migrations.utils import bulk_update
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
 
 logger = logging.getLogger(__name__)
 
 MZU_CATEGORIES_FIELDS_MAPPING = {
-    (
-        "33140000-222021-42574629",
-    ): {
+    ("33140000-222021-42574629",): {
         "classification.id": "33141110-4",
         "classification.description": "Перев'язувальні матеріали",
     },
-    (
-        "33140000-000001-42574629",
-    ): {
+    ("33140000-000001-42574629",): {
         "classification.id": "33141000-0",
         "classification.description": "Медичні матеріали нехімічні та гематологічні одноразового застосування",
     },
@@ -111,9 +107,7 @@ MZU_CATEGORIES_FIELDS_MAPPING = {
         "classification.id": "33141300-3",
         "classification.description": "Приладдя для венепункції та забору крові",
     },
-    (
-        "33192500-000001-42574629",
-    ): {
+    ("33192500-000001-42574629",): {
         "classification.id": "33141600-6",
         "classification.description": "Контейнери та пакети для забору матеріалу для аналізів, дренажі та комплекти",
     },
