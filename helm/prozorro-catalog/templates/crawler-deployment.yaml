@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+{{- if .Values.crawler.enabled }}
+{{ $root := . }}
+metadata:
+  name: {{ include "prozorro-catalog.fullname" . }}-crawler
+  labels:
+    {{- include "prozorro-catalog.labels" . | nindent 4 }}
+    component: crawler
+spec:
+  replicas: {{ .Values.crawler.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "prozorro-catalog.selectorLabels" . | nindent 6 }}
+      component: crawler
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "prozorro-catalog.selectorLabels" . | nindent 8 }}
+        component: crawler
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "prozorro-catalog.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: crawler
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["python", "-m", "catalog.crawler"]
+          env:
+            {{- range $key, $value := .Values.environment }}
+            - name: {{ $key }}
+              value: {{ tpl $value $root | quote }}
+            {{- end }}
+            {{- range $key, $value := .Values.environmentCrawler }}
+            - name: {{ $key }}
+              value: {{ tpl $value $root | quote }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.crawler.resources | nindent 12 }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/etc
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: config-volume
+          secret:
+            secretName: {{ template "prozorro-catalog.fullname" . }}
+{{- end }}
