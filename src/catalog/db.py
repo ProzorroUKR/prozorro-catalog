@@ -850,9 +850,9 @@ async def find_tags(limit, active):
     return items
 
 
-async def read_tag(tag_id):
+async def read_tag(tag_code):
     tag = await get_tag_collection().find_one(
-        {"code": tag_id},
+        {"code": tag_code},
         session=get_db_session(),
     )
     if not tag:
@@ -870,8 +870,8 @@ async def update_tag(tag):
 
 
 @asynccontextmanager
-async def read_and_update_tag(uid):
-    data = await read_tag(uid)
+async def read_and_update_tag(tag_code):
+    data = await read_tag(tag_code)
     yield data
     try:
         await update_tag(data)
@@ -884,16 +884,16 @@ async def read_and_update_tag(uid):
         raise web.HTTPBadRequest(text=f"Document with id {data['_id']} already exists")
 
 
-async def delete_tag(tag_id):
+async def delete_tag(tag_code):
     result = await get_tag_collection().delete_one(
-        {"code": tag_id},
+        {"code": tag_code},
         session=get_db_session(),
     )
     if result.deleted_count == 0:
         raise web.HTTPNotFound(text="Tag not found")
 
 
-async def find_objects_with_tag(tag_id):
+async def find_objects_with_tag(tag_code):
     """
     Find categories and profiles with particular tag.
     Limit by 10 results just for mentioning list of objects in exception.
@@ -901,25 +901,25 @@ async def find_objects_with_tag(tag_id):
     category_ids = (
         await get_category_collection()
         .find(
-            {"tags": tag_id},
+            {"tags": tag_code},
             session=get_db_session(),
         )
         .limit(10)
         .distinct("_id")
     )
     if category_ids:
-        raise web.HTTPBadRequest(text=f"Tag `{tag_id}` is used in categories {category_ids}")
+        raise web.HTTPBadRequest(text=f"Tag `{tag_code}` is used in categories {category_ids}")
     profile_ids = (
         await get_profiles_collection()
         .find(
-            {"tags": tag_id},
+            {"tags": tag_code},
             session=get_db_session(),
         )
         .limit(10)
         .distinct("_id")
     )
     if profile_ids:
-        raise web.HTTPBadRequest(text=f"Tag `{tag_id}` is used in profiles {profile_ids}")
+        raise web.HTTPBadRequest(text=f"Tag `{tag_code}` is used in profiles {profile_ids}")
 
 
 async def validate_tags_exist(tag_codes: list[str]) -> None:

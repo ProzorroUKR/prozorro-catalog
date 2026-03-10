@@ -10,14 +10,10 @@ from catalog.db import (
     transaction_context_manager,
 )
 from catalog.logging import setup_logging
+from catalog.migrations.utils import bulk_update
 from catalog.settings import SENTRY_DSN
 
 logger = logging.getLogger(__name__)
-
-
-async def bulk_update(collection, bulk, session, counter):
-    await collection.bulk_write(bulk, session=session)
-    logger.info(f"Processed {counter} records of migrated vendors")
 
 
 async def migrate_vendors():
@@ -41,11 +37,11 @@ async def migrate_vendors():
         )
         if bulk and len(bulk) % 500 == 0:
             async with transaction_context_manager() as session:
-                await bulk_update(collection, bulk, session, counter)
+                await bulk_update(collection, bulk, session, counter, migrated_obj="vendors")
             bulk = []
     if bulk:
         async with transaction_context_manager() as session:
-            await bulk_update(collection, bulk, session, counter)
+            await bulk_update(collection, bulk, session, counter, migrated_obj="vendors")
     await cursor.close()
     logger.info(f"Finished. Processed {counter} records of migrated vendors")
     logger.info("Successfully migrated")

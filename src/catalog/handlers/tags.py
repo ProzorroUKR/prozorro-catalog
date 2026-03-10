@@ -46,23 +46,24 @@ class TagView(PydanticView):
             extra={
                 "MESSAGE_ID": "tag_create_post",
                 "tag_id": data["id"],
+                "tag_code": data["code"],
             },
         )
         return {"data": TagSerializer(data).data}
 
 
 class TagItemView(PydanticView):
-    async def get(self, tag_id: str, /) -> Union[r200[TagResponse], r400[ErrorResponse], r404[ErrorResponse]]:
+    async def get(self, tag_code: str, /) -> Union[r200[TagResponse], r400[ErrorResponse], r404[ErrorResponse]]:
         """
         Get tag
 
         Tags: Tags
         """
-        tag = await db.read_tag(tag_id)
+        tag = await db.read_tag(tag_code)
         return {"data": TagSerializer(tag).data}
 
     async def patch(
-        self, tag_id: str, /, body: TagUpdateInput
+        self, tag_code: str, /, body: TagUpdateInput
     ) -> Union[r200[TagResponse], r400[ErrorResponse], r401[ErrorResponse], r404[ErrorResponse]]:
         """
         Tag update
@@ -71,7 +72,7 @@ class TagItemView(PydanticView):
         Tags: Tags
         """
         validate_accreditation(self.request, "category")
-        async with db.read_and_update_tag(tag_id) as tag:
+        async with db.read_and_update_tag(tag_code) as tag:
             # export data back to dict
             data = body.data.dict_without_none()
             old_tag = deepcopy(tag)
@@ -79,13 +80,13 @@ class TagItemView(PydanticView):
             get_revision_changes(self.request, new_obj=tag, old_obj=old_tag)
 
         logger.info(
-            f"Updated tag {tag_id}",
+            f"Updated tag {tag_code}",
             extra={"MESSAGE_ID": "tag_patch"},
         )
 
         return {"data": TagSerializer(tag).data}
 
-    async def delete(self, tag_id: str, /) -> Union[r200[SuccessResponse], r404[ErrorResponse]]:
+    async def delete(self, tag_code: str, /) -> Union[r200[SuccessResponse], r404[ErrorResponse]]:
         """
         Tag delete
 
@@ -93,6 +94,6 @@ class TagItemView(PydanticView):
         Tags: Tags
         """
         validate_accreditation(self.request, "category")
-        await db.find_objects_with_tag(tag_id)
-        await db.delete_tag(tag_id)
+        await db.find_objects_with_tag(tag_code)
+        await db.delete_tag(tag_code)
         return {"result": "success"}
