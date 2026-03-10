@@ -352,7 +352,7 @@ def create_application(on_cleanup=None):
         TagView,
     )
     app.router.add_view(
-        "/api/tags/{tag_id}",
+        "/api/tags/{tag_code}",
         TagItemView,
     )
 
