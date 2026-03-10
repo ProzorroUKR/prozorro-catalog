@@ -61,12 +61,6 @@ class BaseProductBidData(BaseModel):
         ...,
         json_schema_extra={"example": "2024-01-15T10:00:00+02:00"},
     )
-    lotValueStatus: str = Field(
-        ...,
-        min_length=1,
-        max_length=80,
-        json_schema_extra={"example": "active"},
-    )
     dateModified: datetime = Field(
         default_factory=lambda: get_now().isoformat(),
         json_schema_extra={"example": "2024-01-15T12:30:00+02:00"},
@@ -75,6 +69,7 @@ class BaseProductBidData(BaseModel):
         default_factory=lambda: get_now().isoformat(),
         json_schema_extra={"example": "2024-01-15T10:00:00+02:00"},
     )
+
 
 class ProductBidCreateData(BaseProductBidData):
     @property
@@ -128,12 +123,6 @@ class ProductBidUpdateData(BaseModel):
         None,
         json_schema_extra={"example": "2024-01-15T10:00:00+02:00"},
     )
-    lotValueStatus: Optional[str] = Field(
-        None,
-        min_length=1,
-        max_length=80,
-        json_schema_extra={"example": "active"},
-    )
 
 
 class ProductBid(BaseProductBidData):
@@ -186,12 +175,6 @@ class ProductBid(BaseProductBidData):
     date: datetime = Field(
         ...,
         json_schema_extra={"example": "2024-01-15T10:00:00+02:00"},
-    )
-    lotValueStatus: str = Field(
-        ...,
-        min_length=1,
-        max_length=80,
-        json_schema_extra={"example": "active"},
     )
     dateModified: datetime = Field(
         default_factory=lambda: get_now().isoformat(),

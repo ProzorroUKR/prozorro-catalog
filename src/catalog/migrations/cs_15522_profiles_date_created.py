@@ -6,7 +6,7 @@ from pymongo import UpdateOne
 
 from catalog.db import get_profiles_collection, init_mongo, transaction_context_manager
 from catalog.logging import setup_logging
-from catalog.migrations.cs_15202_migrate_requirement_expected_value_to_values import bulk_update
+from catalog.migrations.utils import bulk_update
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
 

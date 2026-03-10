@@ -76,6 +76,7 @@ class DecimalCodec(TypeCodec):
         custom type."""
         return value.to_decimal()
 
+
 # The stuff below is done to be able store sets (as lists) and decimals (as decimals) types in mongodb bson
 # bson.errors.InvalidDocument: cannot encode object: {'ALL_A', 'ALL_B', 'ALL_C'}, of type: <class 'set'>
 def fallback_encoder(value):
@@ -86,7 +87,7 @@ def fallback_encoder(value):
     return value
 
 
-type_registry = TypeRegistry([DecimalCodec()],fallback_encoder=fallback_encoder)
+type_registry = TypeRegistry([DecimalCodec()], fallback_encoder=fallback_encoder)
 codec_options = CodecOptions(type_registry=type_registry)
 
 
@@ -178,9 +179,7 @@ async def find_objects(collection, ids):
     return items
 
 
-async def paginated_result(
-    collection, *_, offset, limit, reverse, filters=None, opt_fields=None, full_data=False
-):
+async def paginated_result(collection, *_, offset, limit, reverse, filters=None, opt_fields=None, full_data=False):
     limit = min(limit, MAX_LIST_LIMIT)
     limit = max(limit, 1)
     filters = filters or {}
@@ -533,10 +532,20 @@ async def find_prices(**kwargs):
 
 async def find_prices_by_product(product_id, **kwargs):
     collection = get_prices_collection()
-    result = await paginated_result(
-        collection, filters={"productId": product_id}, full_data=True, **kwargs
-    )
+    result = await paginated_result(collection, filters={"productId": product_id}, full_data=True, **kwargs)
     return result
+
+
+async def find_last_calculated_price():
+    collection = get_prices_collection()
+    price = await collection.find_one(
+        sort=[("date", DESCENDING)],
+        session=get_db_session(),
+    )
+    if not price:
+        return None
+    return rename_id(price)
+
 
 async def find_last_price_by_product(product_id):
     collection = get_prices_collection()
@@ -548,6 +557,7 @@ async def find_last_price_by_product(product_id):
     if not price:
         return None
     return rename_id(price)
+
 
 async def read_price(uid, filters=None, collection=None):
     if collection is None:
@@ -600,7 +610,8 @@ async def find_product_bids(**kwargs):
     result = await paginated_result(collection, **kwargs)
     return result
 
-async def find_product_bids_group_products(limit=None, skip=None, **kwargs):
+
+async def find_product_bids_group_products(limit=None, skip=None, start_date=None, **kwargs):
     collection = get_product_bids_collection()
     pipeline = [
         {"$group": {"_id": "$productId"}},
@@ -610,8 +621,12 @@ async def find_product_bids_group_products(limit=None, skip=None, **kwargs):
         pipeline.append({"$skip": skip})
     if limit is not None:
         pipeline.append({"$limit": limit})
+    if start_date is not None:
+        pipeline.insert(0, {"$match": {"dateCreated": {"$gte": start_date}}})
+
     result = collection.aggregate(pipeline, session=get_db_session())
     return result
+
 
 async def find_product_bids_by_product(product_id, start_date=None):
     collection = get_product_bids_collection()
@@ -622,8 +637,10 @@ async def find_product_bids_by_product(product_id, start_date=None):
         {"$match": match_query},
         {"$sort": {"date": 1}},
     ]
+
     result = await collection.aggregate(pipeline, session=get_db_session()).to_list(None)
     return result
+
 
 async def read_product_bid(uid, filters=None, collection=None):
     if collection is None:
@@ -833,9 +850,9 @@ async def find_tags(limit, active):
     return items
 
 
-async def read_tag(tag_id):
+async def read_tag(tag_code):
     tag = await get_tag_collection().find_one(
-        {"code": tag_id},
+        {"code": tag_code},
         session=get_db_session(),
     )
     if not tag:
@@ -853,8 +870,8 @@ async def update_tag(tag):
 
 
 @asynccontextmanager
-async def read_and_update_tag(uid):
-    data = await read_tag(uid)
+async def read_and_update_tag(tag_code):
+    data = await read_tag(tag_code)
     yield data
     try:
         await update_tag(data)
@@ -867,16 +884,16 @@ async def read_and_update_tag(uid):
         raise web.HTTPBadRequest(text=f"Document with id {data['_id']} already exists")
 
 
-async def delete_tag(tag_id):
+async def delete_tag(tag_code):
     result = await get_tag_collection().delete_one(
-        {"code": tag_id},
+        {"code": tag_code},
         session=get_db_session(),
     )
     if result.deleted_count == 0:
         raise web.HTTPNotFound(text="Tag not found")
 
 
-async def find_objects_with_tag(tag_id):
+async def find_objects_with_tag(tag_code):
     """
     Find categories and profiles with particular tag.
     Limit by 10 results just for mentioning list of objects in exception.
@@ -884,25 +901,25 @@ async def find_objects_with_tag(tag_id):
     category_ids = (
         await get_category_collection()
         .find(
-            {"tags": tag_id},
+            {"tags": tag_code},
             session=get_db_session(),
         )
         .limit(10)
         .distinct("_id")
     )
     if category_ids:
-        raise web.HTTPBadRequest(text=f"Tag `{tag_id}` is used in categories {category_ids}")
+        raise web.HTTPBadRequest(text=f"Tag `{tag_code}` is used in categories {category_ids}")
     profile_ids = (
         await get_profiles_collection()
         .find(
-            {"tags": tag_id},
+            {"tags": tag_code},
             session=get_db_session(),
         )
         .limit(10)
         .distinct("_id")
     )
     if profile_ids:
-        raise web.HTTPBadRequest(text=f"Tag `{tag_id}` is used in profiles {profile_ids}")
+        raise web.HTTPBadRequest(text=f"Tag `{tag_code}` is used in profiles {profile_ids}")
 
 
 async def validate_tags_exist(tag_codes: list[str]) -> None:

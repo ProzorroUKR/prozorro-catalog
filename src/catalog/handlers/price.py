@@ -12,6 +12,7 @@ from catalog.utils import pagination_params
 
 logger = logging.getLogger(__name__)
 
+
 class PriceView(PydanticView):
     async def get(
         self,

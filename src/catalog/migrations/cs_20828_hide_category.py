@@ -7,7 +7,7 @@ from pymongo import UpdateOne
 
 from catalog.db import get_category_collection, init_mongo, transaction_context_manager
 from catalog.logging import setup_logging
-from catalog.migrations.cs_16303_requirement_iso_migration import bulk_update
+from catalog.migrations.utils import bulk_update
 from catalog.settings import SENTRY_DSN
 from catalog.utils import get_now
 

@@ -41,7 +41,6 @@ class PatchTag(BaseModel):
 
 
 class Tag(BaseModel):
-    id: str = Field(..., min_length=32, max_length=32)
     code: str
     name: str
     name_en: str
