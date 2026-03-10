@@ -23,15 +23,24 @@ logger = logging.getLogger(__name__)
 RESOURCE = "tenders"
 TENDERS_URL = get_resource_url(RESOURCE)
 
+
 async def process_tender(session: ClientSession, tender: dict[str, Any]) -> None:
-    if tender is not None and "awardPeriod" in tender and tender["awardPeriod"].get("startDate") is not None and tender.get("procurementMethodType") == "priceQuotation":
+    if (
+        tender is not None
+        and "awardPeriod" in tender
+        and tender["awardPeriod"].get("startDate") is not None
+        and tender.get("procurementMethodType") == "priceQuotation"
+    ):
         for n, bid in enumerate(tender.get("bids", []), start=1):
-            
             if bid.get("status") == "active" and "items" in bid and type(bid["items"]) is list:
                 for item in bid["items"]:
-
                     # Перевіряємо наявність необхідних полів та валідність даних
-                    if "unit" in item and "product" in item and "value" in item["unit"] and item["unit"]["value"]["amount"] > 0:
+                    if (
+                        "unit" in item
+                        and "product" in item
+                        and "value" in item["unit"]
+                        and item["unit"]["value"]["amount"] > 0
+                    ):
                         product_bid_data = ProductBidCreateData(
                             id=uuid4().hex,
                             tenderId=tender["id"],
@@ -42,7 +51,6 @@ async def process_tender(session: ClientSession, tender: dict[str, Any]) -> None
                             name=item["unit"]["name"],
                             amount=item["unit"]["value"]["amount"],
                             date=tender["awardPeriod"]["startDate"],
-                            lotValueStatus=tender.get("status", ""),
                             dateModified=get_now().isoformat(),
                             dateCreated=get_now().isoformat(),
                         )
@@ -52,22 +60,25 @@ async def process_tender(session: ClientSession, tender: dict[str, Any]) -> None
                         except Exception as e:
                             logger.exception(f"Error inserting product bid data for item in bid #{n}: {e}")
 
+
 async def item_data_handler(session: ClientSession, items: list[dict[str, Any]]) -> None:
     if items is not None:
         logger.info(f"Processing {len(items)} tenders")
         for item in items:
             await process_resource(session, url=TENDERS_URL, resource_id=item["id"], process_function=process_tender)
 
+
 async def run_task():
     logger.info("Starting tenders bid crawler")
     await run_app(
-            data_handler=item_data_handler,
-            json_loads=json.loads,
-            opt_fields=["status"],
-            resource=RESOURCE,
-        )
-    
+        data_handler=item_data_handler,
+        json_loads=json.loads,
+        opt_fields=["status"],
+        resource=RESOURCE,
+    )
+
     return None
+
 
 def main():
     setup_logging()

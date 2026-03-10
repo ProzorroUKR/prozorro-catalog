@@ -174,6 +174,7 @@ class PaginatedPricesList(BaseModel):
     next_page: PageLink
     prev_page: Optional[PageLink]
 
+
 PriceCreateInput = Input[PriceCreateData]
 PriceUpdateInput = Input[PriceUpdateData]
 PriceResponse = Response[Price]

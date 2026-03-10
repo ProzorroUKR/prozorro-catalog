@@ -69,6 +69,7 @@ class Unit(BaseModel):
 
 UNIT_EXAMPLE = Unit(code="H87", name="штука").model_dump()
 
+
 class Value(BaseModel):
     amount: Union[float, int]
     currency: str = Field(..., pattern=r"^[A-Z]{3}$")
