@@ -2,9 +2,9 @@ import asyncio
 import json
 import logging
 from typing import Any
-from uuid import uuid4
 
 import sentry_sdk
+from pymongo.errors import DuplicateKeyError
 from aiohttp import ClientSession
 from prozorro_crawler.main import run_app
 from prozorro_crawler.resource import process_resource
@@ -42,7 +42,6 @@ async def process_tender(session: ClientSession, tender: dict[str, Any]) -> None
                         and item["unit"]["value"]["amount"] > 0
                     ):
                         product_bid_data = ProductBidCreateData(
-                            id=uuid4().hex,
                             tenderId=tender["id"],
                             bidId=bid["id"],
                             itemId=item["id"],
@@ -57,8 +56,10 @@ async def process_tender(session: ClientSession, tender: dict[str, Any]) -> None
                         try:
                             await db.insert_product_bid(product_bid_data.model_dump(exclude_none=True))
                             logger.info(f"Inserted product bid data for item in bid #{n} of tender {tender['id']}")
+                        except DuplicateKeyError:
+                            logger.debug(f"Product bid already exists for item in bid #{n} of tender {tender['id']}")
                         except Exception as e:
-                            logger.exception(f"Error inserting product bid data for item in bid #{n}: {e}")
+                            logger.exception(f"Error inserting product bid data for item in bid #{n} of tender {tender['id']}: {e}")
 
 
 async def item_data_handler(session: ClientSession, items: list[dict[str, Any]]) -> None:

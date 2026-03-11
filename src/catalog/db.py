@@ -601,8 +601,10 @@ async def init_product_bids_indexes():
 
 
 async def insert_product_bid(data):
-    inserted_id = await insert_object(get_product_bids_collection(), data)
-    return inserted_id
+    collection = get_product_bids_collection()
+    data.pop("id", None)
+    result = await collection.insert_one(data)
+    return result.inserted_id
 
 
 async def find_product_bids(**kwargs):
