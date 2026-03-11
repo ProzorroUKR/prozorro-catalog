@@ -24,6 +24,7 @@ services:
     volumes:
       - ./src/catalog:/app/catalog
       - ./src/cron:/app/cron
+      - ./src/seed:/app/seed
       - ./tests:/app/tests
       - ./auth.ini:/app/auth.ini
     depends_on:
