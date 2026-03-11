@@ -2,7 +2,14 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# API specific configuration
 replicaCount: 1
+
+# Crawler specific configuration
+crawler:
+  enabled: true
+  replicaCount: 1
+  resources: {}
 
 image:
   repository: docker-registry.prozorro.gov.ua/cdb/prozorro-catalog
@@ -22,6 +29,11 @@ environment:
   DOC_SERVICE_URL: http://ds.k8s.prozorro.gov.ua
   DOC_SERVICE_SIGNING_SEED: 480310b588d10049d4a1199c37c258ecc9e2d15fde6851cbe8eaf35210fbefc0
   DOC_SERVICE_SEEDS: a8968c4682ffa921c91caab5b60c84fbd089311549e5c3defd48f413c89337b6
+
+environmentCrawler:
+  PUBLIC_API_HOST: https://public-api-sandbox.prozorro.gov.ua
+  MONGODB_URL: mongodb://root:yei6AhvaQuaiPa@mongodb-catalog-0.mongodb-catalog-headless.data.svc.cluster.local:27017,mongodb-catalog-1.mongodb-catalog-headless.data.svc.cluster.local:27017,mongodb-catalog-3.mongodb-catalog-headless.data.svc.cluster.local:27017/?replicaSet=rs0
+  MONGODB_DATABASE: prozorro-crawler
 
 nameOverride: ""
 fullnameOverride: ""
