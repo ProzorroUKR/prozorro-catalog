@@ -4,11 +4,11 @@ import logging
 from typing import Any
 
 import sentry_sdk
-from pymongo.errors import DuplicateKeyError
 from aiohttp import ClientSession
 from prozorro_crawler.main import run_app
 from prozorro_crawler.resource import process_resource
 from prozorro_crawler.utils import get_resource_url
+from pymongo.errors import DuplicateKeyError
 
 from catalog import db
 from catalog.db import init_mongo
