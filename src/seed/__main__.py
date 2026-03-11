@@ -44,6 +44,9 @@ async def step_seed_data():
     cat_col = get_category_collection()
     prod_col = get_products_collection()
 
+    cat_col.delete_many({})
+    prod_col.delete_many({})
+
     paper_cat = build_category(
         cat_id="30197630-100001-42574629",
         title="Папір офісний",

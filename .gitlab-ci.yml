@@ -134,6 +134,15 @@ run_seed:
   except:
     - schedules
 
+run_cron_price:
+  extends: review
+  script:
+    - kubectl --namespace dev-prozorro rollout status deployment ${RELEASE}-prozorro-catalog
+    - kubectl --namespace dev-prozorro exec deployment/${RELEASE}-prozorro-catalog -- python cron/calculate_price.py
+  when: manual
+  except:
+    - schedules
+
 review_master:
   extends: review
   after_script:
