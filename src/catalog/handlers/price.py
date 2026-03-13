@@ -19,6 +19,7 @@ class PriceView(PydanticView):
         /,
         offset: Optional[str] = None,
         limit: Optional[int] = 100,
+        descending: Optional[Union[int, str]] = 0,
     ) -> r200[PaginatedPricesList]:
         """
         Get a list of price records
@@ -29,7 +30,7 @@ class PriceView(PydanticView):
         response = await db.find_prices(
             offset=offset,
             limit=limit,
-            reverse=False,
+            reverse=reverse,
         )
         return response
 
@@ -52,6 +53,7 @@ class ProductPriceView(PydanticView):
         /,
         offset: Optional[str] = None,
         limit: Optional[int] = 100,
+        descending: Optional[Union[int, str]] = 0,
     ) -> r200[PaginatedPricesList]:
         """
         Get a list of prices for a specific product
@@ -64,6 +66,6 @@ class ProductPriceView(PydanticView):
             product_id,
             offset=offset,
             limit=limit,
-            reverse=False,
+            reverse=reverse,
         )
         return response

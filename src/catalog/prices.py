@@ -95,7 +95,10 @@ async def calculate_price_for_product(product_id: str, days_back: int = 7) -> Li
             dateModified=get_now().isoformat(),
         )
 
-        inserted_id = await db.insert_price(price_data.model_dump(exclude_none=True))
+        data = price_data.model_dump(exclude_none=True)
+        data["dateCreated"] = data["dateCreated"].isoformat()
+        data["dateModified"] = data["dateModified"].isoformat()
+        inserted_id = await db.insert_price(data)
         inserted_ids.append(inserted_id)
 
     logger.info(f"Calculated and inserted prices for product {product_id} in {len(inserted_ids)} rows")
