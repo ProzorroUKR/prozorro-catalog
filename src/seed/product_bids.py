@@ -44,7 +44,7 @@ def decimal_amount(val):
 
 def make_bid_data(product_id, amount, date, code="PK", name="пачка"):
     """Create a validated bid dict via BaseProductBidData (stable id field)."""
-    return BaseProductBidData(
+    data = BaseProductBidData(
         id=uuid4().hex,
         tenderId=f"UA-{date.strftime('%Y-%m-%d')}-{uuid4().hex[:8]}",
         bidId=uuid4().hex,
@@ -57,6 +57,9 @@ def make_bid_data(product_id, amount, date, code="PK", name="пачка"):
         dateModified=get_now().isoformat(),
         dateCreated=get_now().isoformat(),
     ).model_dump(exclude_none=True)
+    data["dateCreated"] = data["dateCreated"].isoformat()
+    data["dateModified"] = data["dateModified"].isoformat()
+    return data
 
 
 def generate_dates(start, end, interval_days):

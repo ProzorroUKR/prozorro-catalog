@@ -54,7 +54,10 @@ async def process_tender(session: ClientSession, tender: dict[str, Any]) -> None
                             dateCreated=get_now().isoformat(),
                         )
                         try:
-                            await db.insert_product_bid(product_bid_data.model_dump(exclude_none=True))
+                            data = product_bid_data.model_dump(exclude_none=True)
+                            data["dateCreated"] = data["dateCreated"].isoformat()
+                            data["dateModified"] = data["dateModified"].isoformat()
+                            await db.insert_product_bid(data)
                             logger.info(f"Inserted product bid data for item in bid #{n} of tender {tender['id']}")
                         except DuplicateKeyError:
                             logger.debug(f"Product bid already exists for item in bid #{n} of tender {tender['id']}")
