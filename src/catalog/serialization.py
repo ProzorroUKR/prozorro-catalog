@@ -21,7 +21,7 @@ def json_serialize(obj):
     if isinstance(obj, set):
         return list(sorted(obj))
     if isinstance(obj, Decimal):
-        return str(obj)
+        return float(obj)
     raise TypeError(f"Type {type(obj)} not serializable")
 
 
