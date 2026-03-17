@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import statistics
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import List
@@ -46,18 +47,6 @@ async def calculate_price_for_product(product_id: str, days_back: int = 7) -> Li
     if not unique_days:
         return []
 
-    def get_quartile(k: int, n: int, sorted_data: list[Decimal]) -> Decimal:
-        L = k * (n + 1) / 4.0
-        if L <= 1:
-            return sorted_data[0]
-        if L >= n:
-            return sorted_data[-1]
-
-        idx = int(L) - 1
-        fraction = Decimal(L - int(L))
-        val = sorted_data[idx] + fraction * (sorted_data[idx + 1] - sorted_data[idx])
-        return Decimal(str(round(val, 2)))
-
     inserted_ids = []
 
     for current_day in unique_days:
@@ -71,9 +60,12 @@ async def calculate_price_for_product(product_id: str, days_back: int = 7) -> Li
         amounts = sorted([Decimal(bid["amount"]) for bid in window_bids])
         n = len(amounts)
 
-        q1 = get_quartile(1, n, amounts)
-        q2 = get_quartile(2, n, amounts)
-        q3 = get_quartile(3, n, amounts)
+        q1, q2, q3 = statistics.quantiles(amounts, n=4)
+
+        # To Float for better readability in logs
+        amounts_log = [float(a) for a in amounts]
+        logger.debug(f"Calculating price for product {current_day}: sample size={n}, amounts={amounts_log}")
+        logger.debug(f"Calculated quantiles for product {current_day}: Q1={float(q1)}, Median={float(q2)}, Q3={float(q3)}")
 
         name = window_bids[0].get("name")
         code = window_bids[0].get("code")
@@ -154,3 +146,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
