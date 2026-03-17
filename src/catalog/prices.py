@@ -62,11 +62,6 @@ async def calculate_price_for_product(product_id: str, days_back: int = 7) -> Li
 
         q1, q2, q3 = statistics.quantiles(amounts, n=4)
 
-        # To Float for better readability in logs
-        amounts_log = [float(a) for a in amounts]
-        logger.debug(f"Calculating price for product {current_day}: sample size={n}, amounts={amounts_log}")
-        logger.debug(f"Calculated quantiles for product {current_day}: Q1={float(q1)}, Median={float(q2)}, Q3={float(q3)}")
-
         name = window_bids[0].get("name")
         code = window_bids[0].get("code")
 
