@@ -32,35 +32,11 @@ async def test_process_tender_valid(db):
 
 
 @pytest.mark.asyncio
-async def test_process_tender_invalid_method(db):
-    await flush_database()
-    session = MagicMock()
-    tender = deepcopy(get_fixture_json("tender"))
-    tender["procurementMethodType"] = "belowThreshold"  # Not priceQuotation
-
-    await process_tender(session, tender)
-    bids_count = await get_product_bids_collection().count_documents({})
-    assert bids_count == 0
-
-
-@pytest.mark.asyncio
 async def test_process_tender_inactive_bid(db):
     await flush_database()
     session = MagicMock()
     tender = deepcopy(get_fixture_json("tender"))
     tender["bids"][0]["status"] = "invalid"  # Not active
-
-    await process_tender(session, tender)
-    bids_count = await get_product_bids_collection().count_documents({})
-    assert bids_count == 0
-
-
-@pytest.mark.asyncio
-async def test_process_tender_missing_award_period(db):
-    await flush_database()
-    session = MagicMock()
-    tender = deepcopy(get_fixture_json("tender"))
-    del tender["awardPeriod"]
 
     await process_tender(session, tender)
     bids_count = await get_product_bids_collection().count_documents({})

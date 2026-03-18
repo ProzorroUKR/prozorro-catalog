@@ -25,12 +25,7 @@ TENDERS_URL = get_resource_url(RESOURCE)
 
 
 async def process_tender(session: ClientSession, tender: dict[str, Any]) -> None:
-    if (
-        tender is not None
-        and "awardPeriod" in tender
-        and tender["awardPeriod"].get("startDate") is not None
-        and tender.get("procurementMethodType") == "priceQuotation"
-    ):
+    if tender is not None:
         for n, bid in enumerate(tender.get("bids", []), start=1):
             if bid.get("status") == "active" and "items" in bid and type(bid["items"]) is list:
                 for item in bid["items"]:
@@ -62,13 +57,21 @@ async def process_tender(session: ClientSession, tender: dict[str, Any]) -> None
                         except DuplicateKeyError:
                             logger.debug(f"Product bid already exists for item in bid #{n} of tender {tender['id']}")
                         except Exception as e:
-                            logger.exception(f"Error inserting product bid data for item in bid #{n} of tender {tender['id']}: {e}")
+                            logger.exception(
+                                f"Error inserting product bid data for item in bid #{n} of tender {tender['id']}: {e}"
+                            )
 
 
 async def item_data_handler(session: ClientSession, items: list[dict[str, Any]]) -> None:
     if items is not None:
-        logger.info(f"Processing {len(items)} tenders")
-        for item in items:
+        filtered = [
+            item
+            for item in items
+            if item.get("procurementMethodType") == "priceQuotation"
+            and item.get("awardPeriod", {}).get("startDate") is not None
+        ]
+        logger.info(f"Processing {len(filtered)}/{len(items)} tenders (priceQuotation with awardPeriod)")
+        for item in filtered:
             await process_resource(session, url=TENDERS_URL, resource_id=item["id"], process_function=process_tender)
 
 
@@ -77,7 +80,7 @@ async def run_task():
     await run_app(
         data_handler=item_data_handler,
         json_loads=json.loads,
-        opt_fields=["status"],
+        opt_fields=["status", "procurementMethodType", "awardPeriod"],
         resource=RESOURCE,
     )
 

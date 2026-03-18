@@ -104,7 +104,7 @@ async def calculate_price(batch_size: int = 100) -> None:
     last_calculated_date = None
 
     if last_price and "date" in last_price:
-        last_calculated_date = last_price["dateCreated"]
+        last_calculated_date = last_price["date"]
 
     skip = 0
     while True:
