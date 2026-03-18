@@ -60,7 +60,14 @@ async def calculate_price_for_product(product_id: str, days_back: int = 7) -> Li
         amounts = sorted([Decimal(bid["amount"]) for bid in window_bids])
         n = len(amounts)
 
-        q1, q2, q3 = statistics.quantiles(amounts, n=4)
+        if n <= 1:
+            q1 = q2 = q3 = amounts[0]
+        elif n == 2:
+            q1 = amounts[0]
+            q2 = amounts[0]
+            q3 = amounts[1]
+        else:
+            q1, q2, q3 = statistics.quantiles(amounts, n=4)
 
         name = window_bids[0].get("name")
         code = window_bids[0].get("code")
@@ -101,8 +108,9 @@ async def calculate_price(batch_size: int = 100) -> None:
 
     skip = 0
     while True:
+        end_date = datetime.combine(get_now().date(), datetime.min.time())
         product_bids = await db.find_product_bids_group_products(
-            limit=batch_size, skip=skip, start_date=last_calculated_date
+            limit=batch_size, skip=skip, start_date=last_calculated_date, end_date=end_date
         )
         count = 0
         async for product_bid in product_bids:

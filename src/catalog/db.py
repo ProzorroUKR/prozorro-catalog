@@ -613,7 +613,7 @@ async def find_product_bids(**kwargs):
     return result
 
 
-async def find_product_bids_group_products(limit=None, skip=None, start_date=None, **kwargs):
+async def find_product_bids_group_products(limit=None, skip=None, start_date=None, end_date=None, **kwargs):
     collection = get_product_bids_collection()
     pipeline = [
         {"$group": {"_id": "$productId"}},
@@ -624,7 +624,9 @@ async def find_product_bids_group_products(limit=None, skip=None, start_date=Non
     if limit is not None:
         pipeline.append({"$limit": limit})
     if start_date is not None:
-        pipeline.insert(0, {"$match": {"dateCreated": {"$gte": start_date}}})
+        pipeline.insert(0, {"$match": {"date": {"$gte": start_date}}})
+    if end_date is not None:
+        pipeline.insert(0, {"$match": {"date": {"$lt": end_date}}})
 
     result = collection.aggregate(pipeline, session=get_db_session())
     return result
