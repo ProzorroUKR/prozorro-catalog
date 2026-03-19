@@ -99,17 +99,6 @@ class BaseProductCreateData(ProductRequirementResponses):
 
 
 class VendorProductCreateData(BaseProductCreateData):
-    relatedProfiles: Optional[List[str]] = Field(
-        None,
-        min_length=1,
-        max_length=1,
-        json_schema_extra={
-            "example": [
-                uuid4().hex,
-            ]
-        },
-    )
-
     @property
     def id(self):
         return uuid4().hex

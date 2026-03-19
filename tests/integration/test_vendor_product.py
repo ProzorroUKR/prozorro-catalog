@@ -351,7 +351,6 @@ async def test_vendor_product_with_different_formats_of_expected_values(api, ven
 
     test_product = api.get_fixture_json("vendor_product")
     test_product["relatedCategory"] = category_id
-    test_product["relatedProfiles"] = [profile["data"]["id"]]
     del test_product["requirementResponses"]
 
     resp = await api.post(

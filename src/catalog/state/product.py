@@ -8,7 +8,6 @@ from catalog.state.base import BaseState
 from catalog.validations import (
     validate_medicine_additional_classifications,
     validate_product_to_category,
-    validate_product_to_profile,
 )
 
 
@@ -25,7 +24,6 @@ class ProductState(BaseState):
             check_classification=cls.check_classification,
             required_criteria=cls.required_criteria,
         )
-        await cls.validate_product_to_profiles(data)
         await validate_medicine_additional_classifications(data)
         cls.copy_data_from_category(data, category)
         data["dateCreated"] = data["dateModified"] = get_now().isoformat()
@@ -47,7 +45,6 @@ class ProductState(BaseState):
                     check_classification=(after.get("vendor") is None),
                     required_criteria=cls.required_criteria,
                 )
-                await cls.validate_product_to_profiles(after)
             if before.get("additionalClassifications", "") != after.get("additionalClassifications", ""):
                 await validate_medicine_additional_classifications(after)
             cls.copy_data_from_category(after, category)
@@ -58,13 +55,6 @@ class ProductState(BaseState):
         after["dateModified"] = now
 
         super().on_patch(before, after)
-
-    @classmethod
-    async def validate_product_to_profiles(cls, product):
-        profile_ids = product.get("relatedProfiles", [])
-        for profile_id in profile_ids:
-            profile = await db.read_profile(profile_id)
-            validate_product_to_profile(profile, product)
 
     @classmethod
     def copy_data_from_category(cls, product, category):
