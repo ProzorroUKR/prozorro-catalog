@@ -87,7 +87,10 @@ def validate_product_req_responses_to_category(
         for group in c["requirementGroups"]
         for r in group["requirements"]
     }
-    required_classifications = {i[1] for i in category_requirements.values() if i[1] in required_criteria}
+    required_classifications = set()
+    if required_criteria:
+        required_classifications = {i[1] for i in category_requirements.values() if i[1] in required_criteria}
+
     responded_classifications = set()
     localization_responded_groups = set()
 

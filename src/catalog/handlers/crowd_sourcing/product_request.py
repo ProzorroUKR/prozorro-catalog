@@ -15,7 +15,6 @@ from catalog.models.product_request import (
     ProductRequestReviewCreateResponse,
 )
 from catalog.serializers.product_request import ProductRequestSerializer
-from catalog.settings import CRITERIA_LIST
 from catalog.state.product_request import ProductRequestState
 from catalog.utils import get_now, get_revision_changes, pagination_params
 from catalog.validations import (
@@ -49,7 +48,7 @@ class ContributorProductRequestView(PydanticView):
 
         # category validations
         category = await db.read_category(data["product"]["relatedCategory"])
-        validate_product_to_category(category, data["product"], required_criteria=CRITERIA_LIST)
+        validate_product_to_category(category, data["product"])
         validate_contributor_banned_categories(category, contributor)
 
         data["contributor_id"] = contributor["id"]
