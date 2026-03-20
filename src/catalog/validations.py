@@ -8,7 +8,6 @@ from aiohttp_client_cache import CachedSession
 
 from catalog.models.category import CategoryStatus
 from catalog.models.criteria import TYPEMAP
-from catalog.models.profile import ProfileStatus
 from catalog.settings import (
     CACHE_BACKEND,
     LOCALIZATION_CRITERIA,
@@ -129,37 +128,6 @@ def validate_product_req_responses_to_category(
             )
 
 
-def validate_product_req_response_to_profile(profile: dict, product: dict):
-    localization_responded_groups = set()
-    for criterion in profile.get("criteria", ""):
-        requirements = {
-            r["title"]: (r, group.get("id")) for group in criterion["requirementGroups"] for r in group["requirements"]
-        }
-        if not requirements:
-            raise HTTPBadRequest(
-                text=f"product.relatedProfile({profile['id']}) should have at least one requirement for criteria {criterion['title']}"
-            )
-
-        is_requirement_responded = False
-        for req_response in product.get("requirementResponses", ""):
-            key = req_response["requirement"]
-            if key in requirements:
-                is_requirement_responded = True
-                requirement, group = requirements[key]
-                if criterion.get("classification", {}).get("id") == LOCALIZATION_CRITERIA:
-                    localization_responded_groups.add(group)
-                validate_req_response(req_response, requirement)
-
-        if not is_requirement_responded:
-            raise HTTPBadRequest(
-                text=f"should be responded at least on one profile({profile['id']}) requirement for criteria {criterion['title']}"
-            )
-    if len(localization_responded_groups) > 1:
-        raise HTTPBadRequest(
-            text=f"forbidden to respond at more than one group's requirements for {LOCALIZATION_CRITERIA}"
-        )
-
-
 def validate_product_to_category(
     category, product, product_before=None, check_classification=True, required_criteria=None
 ):
@@ -175,15 +143,6 @@ def validate_product_to_category(
             )
 
     validate_product_req_responses_to_category(category, product, product_before, required_criteria)
-
-
-def validate_product_to_profile(profile, product):
-    if product["relatedCategory"] != profile["relatedCategory"]:
-        raise HTTPBadRequest(text="product and profile should be related with the same category")
-    if profile["status"] == ProfileStatus.hidden:
-        raise HTTPBadRequest(text=f"relatedProfiles should be in `{ProfileStatus.active}` status")
-
-    validate_product_req_response_to_profile(profile, product)
 
 
 def validate_profile_requirements(new_requirements: list, category: dict) -> None:

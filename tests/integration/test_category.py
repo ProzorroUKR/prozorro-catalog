@@ -956,7 +956,6 @@ async def test_two_criteria(api, mock_agreement):
     # create localization product
     data = api.get_fixture_json("vendor_product")
     data["relatedCategory"] = category_data["data"]["id"]
-    data["relatedProfiles"] = [profile["data"]["id"]]
     for item, rr in enumerate(data["requirementResponses"]):
         if "requirement" not in rr:
             rr["requirement"] = reqs[item]["title"]
