@@ -23,6 +23,8 @@ async def test_process_tender_valid(db):
     assert inserted_bid is not None
     assert inserted_bid["productId"] == "product-1"
     assert inserted_bid["amount"] == 100.0
+    assert inserted_bid["currency"] == "UAH"
+    assert inserted_bid["valueAddedTaxIncluded"] is True
 
     from datetime import datetime, timedelta, timezone
 

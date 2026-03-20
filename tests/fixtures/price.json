@@ -1,7 +1,9 @@
 {
   "productId": "some-product-id",
-  "code": "KGM",
-  "name": "кілограм",
+  "currency": "UAH",
+  "valueAddedTaxIncluded": false,
+  "unitCode": "KGM",
+  "unitName": "кілограм",
   "sampleSize": 50,
   "lowerQuartile": "10.50",
   "medianQuartile": "15.75",

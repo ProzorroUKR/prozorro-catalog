@@ -73,7 +73,7 @@ package = true
 [tool.uv.sources]
 jsonpatch = { git = "https://github.com/ProzorroUKR/python-json-patch.git", rev = "1.14+jsondiff.unicode.replacefix.0" }
 standards = { git = "https://github.com/ProzorroUKR/standards.git", rev = "1.0.217" }
-prozorro-crawler = { git = "https://github.com/ProzorroUKR/prozorro_crawler.git" }
+prozorro-crawler = { git = "https://github.com/ProzorroUKR/prozorro_crawler.git", rev = "2.1.9" }
 
 [tool.pytest.ini_options]
 minversion = "6.0"

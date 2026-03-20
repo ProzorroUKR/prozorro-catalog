@@ -22,13 +22,23 @@ class PriceCreateData(BaseModel):
         max_length=250,
         json_schema_extra={"example": "some-product-id"},
     )
-    code: str = Field(
+    unitCode: str = Field(
         ...,
         min_length=1,
         max_length=250,
         json_schema_extra={"example": "KGM"},
     )
-    name: str = Field(
+    currency: str = Field(
+        ...,
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "UAH"},
+    )
+    valueAddedTaxIncluded: bool = Field(
+        ...,
+        json_schema_extra={"example": False},
+    )
+    unitName: str = Field(
         ...,
         min_length=1,
         max_length=250,
@@ -75,6 +85,16 @@ class PriceUpdateData(BaseModel):
         max_length=250,
         json_schema_extra={"example": "some-product-id"},
     )
+    currency: Optional[str] = Field(
+        None,
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "UAH"},
+    )
+    valueAddedTaxIncluded: Optional[bool] = Field(
+        None,
+        json_schema_extra={"example": False},
+    )
     sampleSize: Optional[int] = Field(
         None,
         ge=1,
@@ -109,13 +129,23 @@ class Price(BaseModel):
         pattern=r"^[0-9A-Za-z_-]{1,32}$",
         json_schema_extra={"example": "some-product-id"},
     )
-    code: str = Field(
+    currency: str = Field(
+        ...,
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "UAH"},
+    )
+    valueAddedTaxIncluded: bool = Field(
+        ...,
+        json_schema_extra={"example": False},
+    )
+    unitCode: str = Field(
         ...,
         min_length=1,
         max_length=250,
         json_schema_extra={"example": "KGM"},
     )
-    name: str = Field(
+    unitName: str = Field(
         ...,
         min_length=1,
         max_length=250,
@@ -158,8 +188,10 @@ class Price(BaseModel):
 class PriceListItem(BaseModel):
     id: str
     productId: str
-    code: str
-    name: str
+    currency: str
+    valueAddedTaxIncluded: bool
+    unitCode: str
+    unitName: str
     date: str
     sampleSize: int
     lowerQuartile: Decimal

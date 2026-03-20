@@ -14,6 +14,7 @@ Scenarios (100 products, 2-year period, ~35-40K bids total):
   - Sparse data (5): clusters of 5-8 bids, gaps of 2-4 weeks
   - Duplicate bids (3): 1 bid/2 days, same tender/bid/item (tests unique constraint)
   - Invalid bids (2): 1 bid/3 days, amount=0
+  - Billion prices (3): 1 bid/2 days, base ~3B UAH → quartiles > 1B
 
 """
 
@@ -42,7 +43,7 @@ def decimal_amount(val):
     return Decimal(str(max(0, round(val, 2))))
 
 
-def make_bid_data(product_id, amount, date, code="PK", name="пачка"):
+def make_bid_data(product_id, amount, date, unitCode="PK", unitName="пачка"):
     """Create a validated bid dict via BaseProductBidData (stable id field)."""
     data = BaseProductBidData(
         id=uuid4().hex,
@@ -50,8 +51,10 @@ def make_bid_data(product_id, amount, date, code="PK", name="пачка"):
         bidId=uuid4().hex,
         itemId=uuid4().hex[:16],
         productId=product_id,
-        code=code,
-        name=name,
+        currency="UAH",
+        valueAddedTaxIncluded=False,
+        unitCode=unitCode,
+        unitName=unitName,
         amount=decimal_amount(amount),
         date=date.isoformat(),
         dateModified=get_now().isoformat(),
@@ -72,25 +75,25 @@ def generate_dates(start, end, interval_days):
     return dates
 
 
-def generate_normal_market(product_id, base_price, code, name):
+def generate_normal_market(product_id, base_price, unitCode, unitName):
     """1 bid/2 days, ±10% → ~3-4 per 7-day window."""
     bids = []
     for d in generate_dates(START_DATE, END_DATE, 2):
         price = base_price * random.uniform(0.9, 1.1)
-        bids.append(make_bid_data(product_id, price, d, code, name))
+        bids.append(make_bid_data(product_id, price, d, unitCode, unitName))
     return bids
 
 
-def generate_low_sample(product_id, base_price, code, name):
+def generate_low_sample(product_id, base_price, unitCode, unitName):
     """1 bid/14 days → 0-1 per window (tests small sample behaviour)."""
     bids = []
     for d in generate_dates(START_DATE, END_DATE, 14):
         price = base_price * random.uniform(0.7, 1.3)
-        bids.append(make_bid_data(product_id, price, d, code, name))
+        bids.append(make_bid_data(product_id, price, d, unitCode, unitName))
     return bids
 
 
-def generate_extreme_outliers(product_id, base_price, code, name):
+def generate_extreme_outliers(product_id, base_price, unitCode, unitName):
     """1 bid/day, 5% chance of x5 outlier → ~7 per window."""
     bids = []
     for d in generate_dates(START_DATE, END_DATE, 1):
@@ -98,66 +101,66 @@ def generate_extreme_outliers(product_id, base_price, code, name):
             price = base_price * random.uniform(4.0, 6.0)
         else:
             price = base_price * random.uniform(0.9, 1.1)
-        bids.append(make_bid_data(product_id, price, d, code, name))
+        bids.append(make_bid_data(product_id, price, d, unitCode, unitName))
     return bids
 
 
-def generate_constant_price(product_id, base_price, code, name):
+def generate_constant_price(product_id, base_price, unitCode, unitName):
     """1 bid/2 days, same price → ~3-4 per window, Q1=Q2=Q3."""
     bids = []
     for d in generate_dates(START_DATE, END_DATE, 2):
-        bids.append(make_bid_data(product_id, base_price, d, code, name))
+        bids.append(make_bid_data(product_id, base_price, d, unitCode, unitName))
     return bids
 
 
-def generate_growing_trend(product_id, base_price, code, name):
+def generate_growing_trend(product_id, base_price, unitCode, unitName):
     """1 bid/2 days, +1%/month → ~3-4 per window."""
     bids = []
     for d in generate_dates(START_DATE, END_DATE, 2):
         months_elapsed = (d - START_DATE).days / 30.0
         price = base_price * (1 + 0.01 * months_elapsed) * random.uniform(0.98, 1.02)
-        bids.append(make_bid_data(product_id, price, d, code, name))
+        bids.append(make_bid_data(product_id, price, d, unitCode, unitName))
     return bids
 
 
-def generate_falling_trend(product_id, base_price, code, name):
+def generate_falling_trend(product_id, base_price, unitCode, unitName):
     """1 bid/2 days, -1%/month → ~3-4 per window."""
     bids = []
     for d in generate_dates(START_DATE, END_DATE, 2):
         months_elapsed = (d - START_DATE).days / 30.0
         price = base_price * (1 - 0.01 * months_elapsed) * random.uniform(0.98, 1.02)
         price = max(price, base_price * 0.1)
-        bids.append(make_bid_data(product_id, price, d, code, name))
+        bids.append(make_bid_data(product_id, price, d, unitCode, unitName))
     return bids
 
 
-def generate_high_volatility(product_id, base_price, code, name):
+def generate_high_volatility(product_id, base_price, unitCode, unitName):
     """1 bid/day, ±40% → ~7 per window."""
     bids = []
     for d in generate_dates(START_DATE, END_DATE, 1):
         price = base_price * random.uniform(0.6, 1.4)
-        bids.append(make_bid_data(product_id, price, d, code, name))
+        bids.append(make_bid_data(product_id, price, d, unitCode, unitName))
     return bids
 
 
-def generate_sparse_data(product_id, base_price, code, name):
+def generate_sparse_data(product_id, base_price, unitCode, unitName):
     """Clusters of 5-8 bids over 3-5 days, then gap of 2-4 weeks."""
     bids = []
     current = START_DATE
     while current <= END_DATE:
         cluster_size = random.randint(5, 8)
-        for i in range(cluster_size):
+        for _ in range(cluster_size):
             d = current + timedelta(days=random.randint(0, 4))
             if d > END_DATE:
                 break
             jitter = timedelta(hours=random.randint(8, 17), minutes=random.randint(0, 59))
             price = base_price * random.uniform(0.85, 1.15)
-            bids.append(make_bid_data(product_id, price, d + jitter, code, name))
+            bids.append(make_bid_data(product_id, price, d + jitter, unitCode, unitName))
         current += timedelta(days=random.randint(14, 28))
     return bids
 
 
-def generate_duplicate_bids(product_id, base_price, code, name):
+def generate_duplicate_bids(product_id, base_price, unitCode, unitName):
     """1 bid/2 days, same tender/bid/item — tests unique constraint handling."""
     bids = []
     dates = generate_dates(START_DATE, END_DATE, 2)
@@ -165,7 +168,7 @@ def generate_duplicate_bids(product_id, base_price, code, name):
     bid_id = uuid4().hex
     item_id = uuid4().hex[:16]
     for d in dates:
-        bid = make_bid_data(product_id, base_price, d, code, name)
+        bid = make_bid_data(product_id, base_price, d, unitCode, unitName)
         bid["tenderId"] = tender_id
         bid["bidId"] = bid_id
         bid["itemId"] = item_id
@@ -173,27 +176,28 @@ def generate_duplicate_bids(product_id, base_price, code, name):
     return bids
 
 
-def generate_invalid_bids(product_id, base_price, code, name):
+def generate_invalid_bids(product_id, base_price, unitCode, unitName):
     """1 bid/3 days, amount=0 or near-zero."""
     bids = []
     for d in generate_dates(START_DATE, END_DATE, 3):
         amount = 0 if random.random() < 0.5 else random.uniform(0, 0.01)
-        bids.append(make_bid_data(product_id, amount, d, code, name))
+        bids.append(make_bid_data(product_id, amount, d, unitCode, unitName))
     return bids
 
 
 SCENARIO_CONFIG = [
-    ("normal_market", 30, generate_normal_market, 100),
-    ("low_sample", 10, generate_low_sample, 100),
-    ("extreme_outliers", 10, generate_extreme_outliers, 100),
-    ("constant_price", 10, generate_constant_price, 100),
-    ("growing_trend", 10, generate_growing_trend, 100),
-    ("falling_trend", 10, generate_falling_trend, 100),
-    ("high_volatility", 10, generate_high_volatility, 100),
-    ("sparse_data", 5, generate_sparse_data, 100),
-    ("duplicate_bids", 3, generate_duplicate_bids, 100),
-    ("invalid_bids", 2, generate_invalid_bids, 100),
-]
+    ("normal_market",    30, generate_normal_market,    100),
+    ("low_sample",       15, generate_low_sample,       100),
+    ("extreme_outliers", 15, generate_extreme_outliers, 100),
+    ("constant_price",   15, generate_constant_price,   100),
+    ("growing_trend",    15, generate_growing_trend,    100),
+    ("falling_trend",    15, generate_falling_trend,    100),
+    ("high_volatility",  15, generate_high_volatility,  100),
+    ("sparse_data",      10, generate_sparse_data,      100),
+    ("duplicate_bids",    5, generate_duplicate_bids,   100),
+    ("invalid_bids",      5, generate_invalid_bids,     100),
+    ("billion_prices",   10, generate_normal_market,    3_000_000_000),
+]  # total: 150 products
 
 
 async def get_product_ids():
@@ -219,7 +223,7 @@ async def get_units_by_category(category_ids):
     for cat_id in category_ids:
         category = await collection.find_one({"_id": cat_id})
         if category and "unit" in category:
-            units[cat_id] = (category["unit"]["code"], category["unit"]["name"])
+            units[cat_id] = (category["unit"]["code"], category["unit"]["name"])  # category.unit uses code/name (common.Unit)
         else:
             units[cat_id] = ("PK", "пачка")
     return units
@@ -276,11 +280,19 @@ async def main():
     product_ids = [p["_id"] for p in products]
     total_needed = sum(cfg[1] for cfg in SCENARIO_CONFIG)
 
+    # Billion-price scenarios must use unique product IDs to avoid mixing
+    # drastically different price ranges in the same product's bid history.
+    normal_needed = sum(cfg[1] for cfg in SCENARIO_CONFIG if cfg[3] < 1_000_000_000)
     if len(product_ids) < total_needed:
         print(f"Warning: need {total_needed} products but only have {len(product_ids)}.")
-        print("Will reuse product IDs for remaining scenarios.")
-        while len(product_ids) < total_needed:
-            product_ids.extend(product_ids[: total_needed - len(product_ids)])
+        if len(product_ids) < normal_needed:
+            print("Will reuse product IDs for normal-price scenarios.")
+            while len(product_ids) < normal_needed:
+                product_ids.extend(product_ids[: normal_needed - len(product_ids)])
+        if len(product_ids) < total_needed:
+            print("Not enough unique products for billion-price scenarios — they will be skipped.")
+            # Pad with None so the loop can detect and skip them
+            product_ids.extend([None] * (total_needed - len(product_ids)))
 
     idx = 0
     total_bids = 0
@@ -289,12 +301,14 @@ async def main():
         scenario_bids = []
         for _ in range(count):
             pid = product_ids[idx]
-            cat_id = product_category.get(pid)
-            code, name = units_by_category.get(cat_id, ("PK", "пачка"))
-            product_base = base_price * random.uniform(0.5, 3.0)
-            bids = generator_func(pid, product_base, code, name)
-            scenario_bids.extend(bids)
             idx += 1
+            if pid is None:
+                continue
+            cat_id = product_category.get(pid)
+            unitCode, unitName = units_by_category.get(cat_id, ("PK", "пачка"))
+            product_base = base_price * random.uniform(0.5, 3.0)
+            bids = generator_func(pid, product_base, unitCode, unitName)
+            scenario_bids.extend(bids)
 
         inserted = await bulk_insert(bids_collection, scenario_bids)
         total_bids += inserted

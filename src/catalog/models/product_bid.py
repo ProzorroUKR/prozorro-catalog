@@ -40,13 +40,13 @@ class BaseProductBidData(BaseModel):
         max_length=250,
         json_schema_extra={"example": "catalog-product-id-001"},
     )
-    code: str = Field(
+    unitCode: str = Field(
         ...,
         min_length=1,
         max_length=250,
         json_schema_extra={"example": "KGM"},
     )
-    name: str = Field(
+    unitName: str = Field(
         ...,
         min_length=1,
         max_length=250,
@@ -56,6 +56,16 @@ class BaseProductBidData(BaseModel):
         ...,
         ge=0,
         json_schema_extra={"example": "100.50"},
+    )
+    currency: str = Field(
+        ...,
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "UAH"},
+    )
+    valueAddedTaxIncluded: bool = Field(
+        ...,
+        json_schema_extra={"example": False},
     )
     date: datetime = Field(
         ...,
@@ -102,13 +112,13 @@ class ProductBidUpdateData(BaseModel):
         max_length=250,
         json_schema_extra={"example": "catalog-product-id-001"},
     )
-    code: str = Field(
+    unitCode: str = Field(
         ...,
         min_length=1,
         max_length=250,
         json_schema_extra={"example": "KGM"},
     )
-    name: str = Field(
+    unitName: str = Field(
         ...,
         min_length=1,
         max_length=250,
@@ -118,6 +128,16 @@ class ProductBidUpdateData(BaseModel):
         ...,
         ge=0,
         json_schema_extra={"example": "100.50"},
+    )
+    currency: str = Field(
+        ...,
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "UAH"},
+    )
+    valueAddedTaxIncluded: bool = Field(
+        ...,
+        json_schema_extra={"example": False},
     )
     date: Optional[datetime] = Field(
         None,
@@ -155,13 +175,13 @@ class ProductBid(BaseProductBidData):
         max_length=250,
         json_schema_extra={"example": "catalog-product-id-001"},
     )
-    code: str = Field(
+    unitCode: str = Field(
         ...,
         min_length=1,
         max_length=250,
         json_schema_extra={"example": "KGM"},
     )
-    name: str = Field(
+    unitName: str = Field(
         ...,
         min_length=1,
         max_length=250,
@@ -171,6 +191,16 @@ class ProductBid(BaseProductBidData):
         ...,
         ge=0,
         json_schema_extra={"example": "100.50"},
+    )
+    currency: str = Field(
+        ...,
+        min_length=1,
+        max_length=250,
+        json_schema_extra={"example": "UAH"},
+    )
+    valueAddedTaxIncluded: bool = Field(
+        ...,
+        json_schema_extra={"example": False},
     )
     date: datetime = Field(
         ...,

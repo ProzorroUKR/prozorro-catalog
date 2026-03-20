@@ -37,15 +37,13 @@ def get_int_from_query(request, key, default=0, raise_error=True):
         return value
 
 
-def pagination_params(request, default_limit=100, default_reverse=False):
+def pagination_params(request, default_limit=100):
     q = request.query
     offset = q.get("offset", "")
     limit = get_int_from_query(request, "limit", default=default_limit)
-    if "descending" in q or "reverse" in q:
-        reverse = bool(q.get("reverse") or get_int_from_query(request, "descending", raise_error=False))
-    else:
-        reverse = default_reverse
+    reverse = bool(q.get("reverse") or get_int_from_query(request, "descending", raise_error=False))
     return offset, limit, reverse
+
 
 
 def requests_params(request, *args):

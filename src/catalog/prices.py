@@ -69,8 +69,10 @@ async def calculate_price_for_product(product_id: str, days_back: int = 7) -> Li
         else:
             q1, q2, q3 = statistics.quantiles(amounts, n=4)
 
-        name = window_bids[0].get("name")
-        code = window_bids[0].get("code")
+        unitName = window_bids[0].get("unitName")
+        unitCode = window_bids[0].get("unitCode")
+        currency = window_bids[0].get("currency")
+        value_added_tax_included = window_bids[0].get("valueAddedTaxIncluded")
 
         current_day_dates = [bd for bd, _ in parsed_bids if bd.date() == current_day]
         max_date_in_day = max(current_day_dates)
@@ -78,8 +80,10 @@ async def calculate_price_for_product(product_id: str, days_back: int = 7) -> Li
         price_data = PriceCreateData(
             id=uuid4().hex,
             productId=product_id,
-            code=code,
-            name=name,
+            currency=currency,
+            valueAddedTaxIncluded=value_added_tax_included,
+            unitCode=unitCode,
+            unitName=unitName,
             date=max_date_in_day,
             sampleSize=n,
             lowerQuartile=q1,
@@ -149,4 +153,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    

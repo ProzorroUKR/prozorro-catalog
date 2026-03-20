@@ -25,7 +25,7 @@ TENDERS_URL = get_resource_url(RESOURCE)
 
 
 async def process_tender(session: ClientSession, tender: dict[str, Any]) -> None:
-    if tender is not None:
+    if tender is not None and tender.get("awardPeriod", {}).get("startDate") is not None:
         for n, bid in enumerate(tender.get("bids", []), start=1):
             if bid.get("status") == "active" and "items" in bid and type(bid["items"]) is list:
                 for item in bid["items"]:
@@ -41,9 +41,11 @@ async def process_tender(session: ClientSession, tender: dict[str, Any]) -> None
                             bidId=bid["id"],
                             itemId=item["id"],
                             productId=item["product"],
-                            code=item["unit"]["code"],
-                            name=item["unit"]["name"],
+                            unitCode=item["unit"]["code"],
+                            unitName=item["unit"]["name"],
                             amount=item["unit"]["value"]["amount"],
+                            currency=item["unit"]["value"]["currency"],
+                            valueAddedTaxIncluded=item["unit"]["value"]["valueAddedTaxIncluded"],
                             date=tender["awardPeriod"]["startDate"],
                             dateModified=get_now().isoformat(),
                             dateCreated=get_now().isoformat(),
