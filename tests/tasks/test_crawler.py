@@ -29,8 +29,9 @@ async def test_process_tender_valid(db):
     from datetime import datetime, timedelta, timezone
 
     expected_date = datetime(2024, 1, 1, 10, 0, tzinfo=timezone(timedelta(hours=2)))
+    inserted_date = datetime.fromisoformat(inserted_bid["date"])
 
-    assert inserted_bid["date"].replace(tzinfo=timezone.utc) == expected_date.astimezone(timezone.utc)
+    assert inserted_date.astimezone(timezone.utc) == expected_date.astimezone(timezone.utc)
 
 
 @pytest.mark.asyncio

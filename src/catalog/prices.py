@@ -23,11 +23,11 @@ async def calculate_price_for_product(product_id: str, days_back: int = 7) -> Li
     last_calculated_date = None
 
     if last_price and "date" in last_price:
-        last_calculated_date = last_price["date"].date()
+        last_calculated_date = datetime.fromisoformat(last_price["date"]).date()
 
     start_date = None
     if last_calculated_date:
-        start_date = datetime.combine(last_calculated_date - timedelta(days=days_back), datetime.min.time())
+        start_date = datetime.combine(last_calculated_date - timedelta(days=days_back), datetime.min.time()).isoformat()
 
     product_bids = await db.find_product_bids_by_product(product_id, start_date=start_date)
 
@@ -36,7 +36,7 @@ async def calculate_price_for_product(product_id: str, days_back: int = 7) -> Li
 
     parsed_bids = []
     for bid in product_bids:
-        bid_date = bid["date"]
+        bid_date = datetime.fromisoformat(bid["date"])
         parsed_bids.append((bid_date, bid))
 
     unique_days = sorted(list(set(bd.date() for bd, _ in parsed_bids)))
@@ -84,7 +84,7 @@ async def calculate_price_for_product(product_id: str, days_back: int = 7) -> Li
             valueAddedTaxIncluded=value_added_tax_included,
             unitCode=unitCode,
             unitName=unitName,
-            date=max_date_in_day,
+            date=max_date_in_day.isoformat(),
             sampleSize=n,
             lowerQuartile=q1,
             medianQuartile=q2,
@@ -94,6 +94,7 @@ async def calculate_price_for_product(product_id: str, days_back: int = 7) -> Li
         )
 
         data = price_data.model_dump(exclude_none=True)
+        data["date"] = data["date"].isoformat()
         data["dateCreated"] = data["dateCreated"].isoformat()
         data["dateModified"] = data["dateModified"].isoformat()
         inserted_id = await db.insert_price(data)
@@ -112,7 +113,7 @@ async def calculate_price(batch_size: int = 100) -> None:
 
     skip = 0
     while True:
-        end_date = datetime.combine(get_now().date(), datetime.min.time())
+        end_date = datetime.combine(get_now().date(), datetime.min.time()).isoformat()
         product_bids = await db.find_product_bids_group_products(
             limit=batch_size, skip=skip, start_date=last_calculated_date, end_date=end_date
         )

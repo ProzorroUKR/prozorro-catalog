@@ -52,6 +52,7 @@ async def process_tender(session: ClientSession, tender: dict[str, Any]) -> None
                         )
                         try:
                             data = product_bid_data.model_dump(exclude_none=True)
+                            data["date"] = data["date"].isoformat()
                             data["dateCreated"] = data["dateCreated"].isoformat()
                             data["dateModified"] = data["dateModified"].isoformat()
                             await db.insert_product_bid(data)

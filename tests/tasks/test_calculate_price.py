@@ -37,7 +37,7 @@ async def test_calculate_price_for_product(db):
             {
                 "id": f"bid-d1-{i}",
                 "productId": product_id,
-                "date": day1 + timedelta(hours=i),
+                "date": (day1 + timedelta(hours=i)).isoformat(),
                 "tenderId": f"tender-d1-{i}",
                 "bidId": f"bid-d1-{i}",
                 "itemId": f"item-d1-{i}",
@@ -54,7 +54,7 @@ async def test_calculate_price_for_product(db):
         {
             "id": "bid-ignored-1",
             "productId": product_id,
-            "date": day1,
+            "date": (day1).isoformat(),
             "currency": "USD",
             "valueAddedTaxIncluded": False,
             "amount": 10000,
@@ -70,7 +70,7 @@ async def test_calculate_price_for_product(db):
         {
             "id": "bid-ignored-2",
             "productId": product_id,
-            "date": day1,
+            "date": (day1).isoformat(),
             "currency": "UAH",
             "valueAddedTaxIncluded": True,
             "amount": 20000,
@@ -88,7 +88,7 @@ async def test_calculate_price_for_product(db):
             {
                 "id": f"bid-d2-{i}",
                 "productId": product_id,
-                "date": day2 + timedelta(hours=i),
+                "date": (day2 + timedelta(hours=i)).isoformat(),
                 "tenderId": f"tender-d2-{i}",
                 "bidId": f"bid-d2-{i}",
                 "itemId": f"item-d2-{i}",
@@ -97,6 +97,7 @@ async def test_calculate_price_for_product(db):
             }
         )
         bid["amount"] = amount
+        print(f"Inserting bid: {bid}")  # --- IGNORE ---
         await insert_object(get_product_bids_collection(), bid)
 
     inserted_ids = await calculate_price_for_product(product_id)
@@ -105,7 +106,7 @@ async def test_calculate_price_for_product(db):
     # [100, 200, 300, 400, 500], n=5
     # The ignored bids (USD or VAT=True) should not affect these quartiles
     price1 = await get_prices_collection().find_one(
-        {"productId": product_id, "date": {"$lt": day2.replace(hour=0, minute=0, second=0, microsecond=0)}}
+        {"productId": product_id, "date": {"$lt": (day2.replace(hour=0, minute=0, second=0, microsecond=0)).isoformat()}}
     )
     assert price1 is not None
     assert price1["sampleSize"] == 5
@@ -117,7 +118,7 @@ async def test_calculate_price_for_product(db):
 
     # [100, 200, 300, 400, 500, 1000, 2000, 3000], n=8
     price2 = await get_prices_collection().find_one(
-        {"productId": product_id, "date": {"$gte": day2.replace(hour=0, minute=0, second=0, microsecond=0)}}
+        {"productId": product_id, "date": {"$gte": (day2.replace(hour=0, minute=0, second=0, microsecond=0)).isoformat()}}
     )
     assert price2 is not None
     assert price2["sampleSize"] == 8
@@ -145,7 +146,7 @@ async def test_calculate_price_incrementality(db):
             {
                 "id": f"bid-inc-d1-{i}",
                 "productId": product_id,
-                "date": day1 + timedelta(hours=i),
+                "date": (day1 + timedelta(hours=i)).isoformat(),
                 "dateCreated": (now + timedelta(hours=i)).isoformat(),
                 "tenderId": f"tender-inc-d1-{i}",
                 "bidId": f"bid-inc-d1-{i}",
@@ -167,7 +168,7 @@ async def test_calculate_price_incrementality(db):
             {
                 "id": f"bid-inc-d2-{i}",
                 "productId": product_id,
-                "date": day2 + timedelta(hours=i),
+                "date": (day2 + timedelta(hours=i)).isoformat(),
                 "dateCreated": (now + timedelta(hours=i)).isoformat(),
                 "tenderId": f"tender-inc-d2-{i}",
                 "bidId": f"bid-inc-d2-{i}",
@@ -198,7 +199,7 @@ async def test_calculate_price_ignored_bids(db):
         {
             "id": "bid-usd",
             "productId": product_id,
-            "date": day1,
+            "date": (day1).isoformat(),
             "currency": "USD",
             "valueAddedTaxIncluded": False,
             "amount": 100,
@@ -215,7 +216,7 @@ async def test_calculate_price_ignored_bids(db):
         {
             "id": "bid-vat",
             "productId": product_id,
-            "date": day1 + timedelta(hours=1),
+            "date": (day1 + timedelta(hours=1)).isoformat(),
             "currency": "UAH",
             "valueAddedTaxIncluded": True,
             "amount": 120,

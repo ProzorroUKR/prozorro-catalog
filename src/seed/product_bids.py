@@ -60,6 +60,7 @@ def make_bid_data(product_id, amount, date, unitCode="PK", unitName="пачка"
         dateModified=get_now().isoformat(),
         dateCreated=get_now().isoformat(),
     ).model_dump(exclude_none=True)
+    data["date"] = data["date"].isoformat()
     data["dateCreated"] = data["dateCreated"].isoformat()
     data["dateModified"] = data["dateModified"].isoformat()
     return data
@@ -186,17 +187,17 @@ def generate_invalid_bids(product_id, base_price, unitCode, unitName):
 
 
 SCENARIO_CONFIG = [
-    ("normal_market",    30, generate_normal_market,    100),
-    ("low_sample",       15, generate_low_sample,       100),
+    ("normal_market", 30, generate_normal_market, 100),
+    ("low_sample", 15, generate_low_sample, 100),
     ("extreme_outliers", 15, generate_extreme_outliers, 100),
-    ("constant_price",   15, generate_constant_price,   100),
-    ("growing_trend",    15, generate_growing_trend,    100),
-    ("falling_trend",    15, generate_falling_trend,    100),
-    ("high_volatility",  15, generate_high_volatility,  100),
-    ("sparse_data",      10, generate_sparse_data,      100),
-    ("duplicate_bids",    5, generate_duplicate_bids,   100),
-    ("invalid_bids",      5, generate_invalid_bids,     100),
-    ("billion_prices",   10, generate_normal_market,    3_000_000_000),
+    ("constant_price", 15, generate_constant_price, 100),
+    ("growing_trend", 15, generate_growing_trend, 100),
+    ("falling_trend", 15, generate_falling_trend, 100),
+    ("high_volatility", 15, generate_high_volatility, 100),
+    ("sparse_data", 10, generate_sparse_data, 100),
+    ("duplicate_bids", 5, generate_duplicate_bids, 100),
+    ("invalid_bids", 5, generate_invalid_bids, 100),
+    ("billion_prices", 10, generate_normal_market, 3_000_000_000),
 ]  # total: 150 products
 
 
@@ -223,7 +224,10 @@ async def get_units_by_category(category_ids):
     for cat_id in category_ids:
         category = await collection.find_one({"_id": cat_id})
         if category and "unit" in category:
-            units[cat_id] = (category["unit"]["code"], category["unit"]["name"])  # category.unit uses code/name (common.Unit)
+            units[cat_id] = (
+                category["unit"]["code"],
+                category["unit"]["name"],
+            )  # category.unit uses code/name (common.Unit)
         else:
             units[cat_id] = ("PK", "пачка")
     return units
