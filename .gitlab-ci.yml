@@ -147,7 +147,7 @@ run_full_recalculate_price:
   extends: review
   script:
     - kubectl --namespace dev-prozorro rollout status deployment ${RELEASE}-prozorro-catalog
-    - kubectl --namespace dev-prozorro exec deployment/${RELEASE}-prozorro-catalog -- python catalog/prices.py
+    - kubectl --namespace dev-prozorro exec deployment/${RELEASE}-prozorro-catalog -- python -m catalog.prices
   when: manual
   except:
     - schedules
