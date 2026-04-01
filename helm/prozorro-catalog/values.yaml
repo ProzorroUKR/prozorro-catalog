@@ -33,7 +33,7 @@ environment:
 environmentCrawler:
   PUBLIC_API_HOST: https://public-api-sandbox.prozorro.gov.ua
   MONGODB_URL: mongodb://root:yei6AhvaQuaiPa@mongodb-catalog-0.mongodb-catalog-headless.data.svc.cluster.local:27017,mongodb-catalog-1.mongodb-catalog-headless.data.svc.cluster.local:27017,mongodb-catalog-3.mongodb-catalog-headless.data.svc.cluster.local:27017/?replicaSet=rs0
-  MONGODB_DATABASE: prozorro-crawler
+  MONGODB_DATABASE: crawler-catalogs-{{ .Release.Name }}
 
 nameOverride: ""
 fullnameOverride: ""

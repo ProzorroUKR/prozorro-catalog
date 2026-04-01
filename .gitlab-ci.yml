@@ -143,6 +143,25 @@ run_cron_price:
   except:
     - schedules
 
+run_full_recalculate_price:
+  extends: review
+  script:
+    - kubectl --namespace dev-prozorro rollout status deployment ${RELEASE}-prozorro-catalog
+    - kubectl --namespace dev-prozorro exec deployment/${RELEASE}-prozorro-catalog -- python catalog/prices.py
+  when: manual
+  except:
+    - schedules
+
+restart_crawler:
+  extends: review
+  script:
+    - kubectl --namespace dev-prozorro rollout status deployment ${RELEASE}-prozorro-catalog
+    - kubectl --namespace dev-prozorro exec deployment/${RELEASE}-prozorro-catalog -- python seed/clear_crawler.py
+    - kubectl --namespace dev-prozorro rollout restart deployment ${RELEASE}-prozorro-catalog-crawler
+  when: manual
+  except:
+    - schedules
+
 review_master:
   extends: review
   after_script:
