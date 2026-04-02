@@ -1,77 +1,212 @@
 from copy import deepcopy
 
+import pytest
+
 from cron.related_profiles_task import run_task
-from tests.base import TEST_AUTH
 from tests.utils import get_fixture_json
 
 
-async def test_migrate_profiles(db, api, category, profile, product):
-    profile_fixture = get_fixture_json("profile")
-    product_fixture = get_fixture_json("product")
+@pytest.mark.parametrize(
+    ("setup_profile_data", "setup_product_data", "check_product"),
+    [
+        pytest.param(
+            lambda init_data, profile, category: ...,
+            lambda init_data, product, category: (
+                init_data.update(
+                    {"_id": "a" * 32, "relatedCategory": category["id"], "dateModified": "2026-01-01T00:00:00"}
+                ),
+                init_data.pop("requirementResponses", None),
+            ),
+            lambda init_data, prod: all(
+                (
+                    "requirementResponses" not in prod,
+                    "relatedProfiles" not in prod,
+                    init_data.get("dateModified") == prod.get("dateModified"),
+                )
+            ),
+            id="product without requirementResponses",
+        ),
+        pytest.param(
+            lambda init_data, profile, category: ...,
+            lambda init_data, product, category: (
+                init_data.update(
+                    {
+                        "_id": "a" * 32,
+                        "relatedCategory": category["id"],
+                        "dateModified": "2026-01-01T00:00:00",
+                        "requirementResponses": product["requirementResponses"][2:],
+                    }
+                ),
+            ),
+            lambda init_data, prod: all(
+                (
+                    "relatedProfiles" not in prod,
+                    init_data.get("dateModified") == prod.get("dateModified"),
+                )
+            ),
+            id="product with partial requirementResponses",
+        ),
+        pytest.param(
+            lambda init_data, profile, category: (
+                profile["criteria"][0]["requirementGroups"][0]["requirements"][0].update(
+                    {"expectedValues": ["test_value"]}
+                ),
+                init_data.update({"_id": "a" * 32, "relatedCategory": category["id"], "criteria": profile["criteria"]}),
+            ),
+            lambda init_data, product, category: (
+                product["requirementResponses"][0].update({"values": ["Одноразова2"]}),
+                init_data.update(
+                    {
+                        "_id": "a" * 32,
+                        "relatedCategory": category["id"],
+                        "dateModified": "2026-01-01T00:00:00",
+                        "requirementResponses": product["requirementResponses"],
+                    }
+                ),
+            ),
+            lambda init_data, prod: all(
+                (
+                    "relatedProfiles" not in prod,
+                    init_data.get("dateModified") == prod.get("dateModified"),
+                )
+            ),
+            id="profile requirements does not match requirementResponses",
+        ),
+        pytest.param(
+            lambda init_data, profile, category: (
+                profile["criteria"][0]["requirementGroups"][0]["requirements"][0].update(
+                    {"expectedValues": ["test_value"]}
+                ),
+                init_data.update({"_id": "a" * 32, "relatedCategory": category["id"], "criteria": profile["criteria"]}),
+            ),
+            lambda init_data, product, category: (
+                product["requirementResponses"][0].update({"values": ["test_value"]}),
+                init_data.update(
+                    {
+                        "_id": "a" * 32,
+                        "relatedCategory": category["id"],
+                        "dateModified": "2026-01-01T00:00:00",
+                        "requirementResponses": product["requirementResponses"],
+                    }
+                ),
+            ),
+            lambda init_data, prod: all(
+                (
+                    "a" * 32 in prod["relatedProfiles"],
+                    init_data.get("dateModified") != prod.get("dateModified"),
+                )
+            ),
+            id="profile requirements match requirementResponses",
+        ),
+        pytest.param(
+            lambda init_data, profile, category: (
+                profile["criteria"][-1]["requirementGroups"].pop(-1),
+                profile["criteria"][-1]["requirementGroups"][0]["requirements"][0].update({"title": "test title"}),
+                init_data.update({"_id": "a" * 32, "relatedCategory": category["id"], "criteria": profile["criteria"]}),
+            ),
+            lambda init_data, product, category: (
+                product["requirementResponses"][0].update({"values": ["test_value"]}),
+                init_data.update(
+                    {
+                        "_id": "a" * 32,
+                        "relatedCategory": category["id"],
+                        "dateModified": "2026-01-01T00:00:00",
+                        "requirementResponses": product["requirementResponses"],
+                    }
+                ),
+            ),
+            lambda init_data, prod: all(
+                (
+                    "relatedProfiles" not in prod,
+                    init_data.get("dateModified") == prod.get("dateModified"),
+                )
+            ),
+            id="LOCALIZATION_CRITERIA criteria requirement groups do not match product's requirementResponses",
+        ),
+        pytest.param(
+            lambda init_data, profile, category: (
+                profile["criteria"][0]["requirementGroups"][0]["requirements"][0].update(
+                    {"expectedValues": ["test_value"]}
+                ),
+                profile["criteria"][-1]["requirementGroups"][-1]["requirements"][0].update({"title": "test title"}),
+                init_data.update({"_id": "a" * 32, "relatedCategory": category["id"], "criteria": profile["criteria"]}),
+            ),
+            lambda init_data, product, category: (
+                product["requirementResponses"][0].update({"values": ["test_value"]}),
+                init_data.update(
+                    {
+                        "_id": "a" * 32,
+                        "relatedCategory": category["id"],
+                        "dateModified": "2026-01-01T00:00:00",
+                        "requirementResponses": product["requirementResponses"],
+                    }
+                ),
+            ),
+            lambda init_data, prod: all(
+                (
+                    "a" * 32 in prod["relatedProfiles"],
+                    init_data.get("dateModified") != prod.get("dateModified"),
+                )
+            ),
+            id="one of the LOCALIZATION_CRITERIA criteria requirement groups match product's requirementResponses",
+        ),
+        pytest.param(
+            lambda init_data, profile, category: (
+                profile["criteria"][0]["requirementGroups"][0]["requirements"][0].update(
+                    {"expectedValues": ["test_value"]}
+                ),
+                init_data.update({"_id": "a" * 32, "relatedCategory": category["id"], "criteria": profile["criteria"]}),
+            ),
+            lambda init_data, product, category: (
+                product["requirementResponses"][0].update({"values": ["test_value"]}),
+                product["requirementResponses"].append(
+                    {
+                        "requirement": "Товар походить з однієї з країн, "
+                        "що підписала Угоду про державні "
+                        "закупівлі Світової Організації торгівлі "
+                        "(GPA) або іншої країни з якою "
+                        "Україна має міжнародні договори про державні закупівлі",
+                        "value": "LT",
+                        "classification": {
+                            "scheme": "ESPD211",
+                            "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL",
+                        },
+                    }
+                ),
+                init_data.update(
+                    {
+                        "_id": "a" * 32,
+                        "relatedCategory": category["id"],
+                        "dateModified": "2026-01-01T00:00:00",
+                        "requirementResponses": product["requirementResponses"],
+                    }
+                ),
+            ),
+            lambda init_data, prod: all(
+                (
+                    "relatedProfiles" not in prod,
+                    init_data.get("dateModified") == prod.get("dateModified"),
+                )
+            ),
+            id="multiple LOCALIZATION_CRITERIA criteria requirement groups match product's requirementResponses",
+        ),
+    ],
+)
+async def test_set_related_profiles(
+    db, api, category, profile, product, setup_profile_data, setup_product_data, check_product
+):
+    test_profile = get_fixture_json("profile")
+    setup_profile_data(test_profile, deepcopy(profile["data"]), category["data"])
+    await db.profiles.insert_one(test_profile)
 
-    product_without_responses = deepcopy(product_fixture)
-    product_without_responses["_id"] = "1" * 32
-    product_without_responses["relatedCategory"] = category["data"]["id"]
-    del product_without_responses["requirementResponses"]
-    await db.products.insert_one(product_without_responses)
-
-    product_with_not_all_responses = deepcopy(product_fixture)
-    product_with_not_all_responses["_id"] = "2" * 32
-    product_with_not_all_responses["relatedCategory"] = category["data"]["id"]
-    req_responses = deepcopy(product["data"]["requirementResponses"])
-    product_with_not_all_responses["requirementResponses"] = req_responses[2:]
-    await db.products.insert_one(product_with_not_all_responses)
-
-    #
-    # profile_data_1 = deepcopy(profile_fixture)
-    # profile_data_1["_id"] = "1" * 32
-    # profile_data_1["unit"] = {"unit":  "unit"}
-    # await db.profiles.insert_one(profile_data_1)
-
-    profile_data_2 = deepcopy(profile_fixture)
-    profile_data_2["_id"] = "2" * 32
-    profile_data_2["value"] = "value"
-    profile_data_2["relatedCategory"] = profile["data"]["relatedCategory"]
-    await db.profiles.insert_one(profile_data_2)
-
-    profile_data_3 = deepcopy(profile_fixture)
-    profile_3_id = "3" * 32
-    profile_data_3["id"] = profile_3_id
-    profile_data_3["relatedCategory"] = category["data"]["id"]
-    resp = await api.put(
-        f"/api/profiles/{profile_3_id}",
-        json={"data": profile_data_3, "access": category["access"]},
-        auth=TEST_AUTH,
-    )
-    assert resp.status == 201
-
-    profile_data_4 = deepcopy(profile_fixture)
-    profile_4_id = "4" * 32
-    profile_data_4["id"] = profile_4_id
-    profile_data_4["relatedCategory"] = category["data"]["id"]
-    criteria = deepcopy(profile["data"]["criteria"])
-    criteria[0]["requirementGroups"][0]["requirements"][0]["expectedValues"] = ["Одноразова1"]
-    profile_data_4["criteria"] = criteria
-    await db.profiles.insert_one(profile_data_4)
+    test_product = get_fixture_json("product")
+    setup_product_data(test_product, deepcopy(product["data"]), category["data"])
+    await db.products.insert_one(test_product)
 
     await run_task()
 
-    resp = await api.get(f'/api/products/{product["data"]["id"]}')
+    resp = await api.get(f'/api/products/{test_product["_id"]}')
     assert resp.status == 200
     resp_json = await resp.json()
     prod = resp_json["data"]
-    assert prod["relatedProfiles"] == [profile["data"]["id"]]
-
-    resp = await api.get(f'/api/products/{product_without_responses["_id"]}')
-    assert resp.status == 200
-    resp_json = await resp.json()
-    prod = resp_json["data"]
-    assert "requirementResponses" not in prod
-    assert "relatedProfiles" not in prod
-
-    resp = await api.get(f'/api/products/{product_with_not_all_responses["_id"]}')
-    assert resp.status == 200
-    resp_json = await resp.json()
-    prod = resp_json["data"]
-    assert "requirementResponses" in prod
-    assert "relatedProfiles" not in prod
+    assert check_product(test_product, prod)
