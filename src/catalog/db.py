@@ -632,11 +632,13 @@ async def find_product_bids_group_products(limit=None, skip=None, start_date=Non
     return result
 
 
-async def find_product_bids_by_product(product_id, start_date=None):
+async def find_product_bids_by_product(product_id, start_date=None, unit_code=None):
     collection = get_product_bids_collection()
     match_query = {"productId": product_id, "currency": "UAH", "valueAddedTaxIncluded": False}
     if start_date:
         match_query["date"] = {"$gte": start_date}
+    if unit_code:
+        match_query["unitCode"] = unit_code
     pipeline = [
         {"$match": match_query},
         {"$sort": {"date": 1}},

@@ -7,6 +7,7 @@ from typing import List
 from uuid import uuid4
 
 import sentry_sdk
+from aiohttp import web
 
 from catalog import db
 from catalog.db import init_mongo
@@ -19,6 +20,28 @@ logger = logging.getLogger(__name__)
 
 
 async def calculate_price_for_product(product_id: str, days_back: int = 7) -> List[str]:
+    try:
+        product = await db.read_product(product_id)
+    except web.HTTPNotFound:
+        logger.info(f"Product {product_id} not found")
+        return []
+
+    category_id = product.get("relatedCategory")
+    if not category_id:
+        logger.info(f"Product {product_id} has no relatedCategory")
+        return []
+
+    try:
+        category = await db.read_category(category_id)
+    except web.HTTPNotFound:
+        logger.info(f"Category {category_id} for product {product_id} not found")
+        return []
+
+    unit_code = category.get("unit", {}).get("code")
+    if not unit_code:
+        logger.info(f"Category {category_id} for product {product_id} has no unit code")
+        return []
+
     last_price = await db.find_last_price_by_product(product_id)
     last_calculated_date = None
 
@@ -29,7 +52,7 @@ async def calculate_price_for_product(product_id: str, days_back: int = 7) -> Li
     if last_calculated_date:
         start_date = datetime.combine(last_calculated_date - timedelta(days=days_back), datetime.min.time()).isoformat()
 
-    product_bids = await db.find_product_bids_by_product(product_id, start_date=start_date)
+    product_bids = await db.find_product_bids_by_product(product_id, start_date=start_date, unit_code=unit_code)
 
     if not product_bids:
         return []
@@ -119,7 +142,10 @@ async def calculate_price(batch_size: int = 100) -> None:
         )
         count = 0
         async for product_bid in product_bids:
-            await calculate_price_for_product(product_bid["_id"])
+            try:
+                await calculate_price_for_product(product_bid["_id"])
+            except Exception as e:
+                logger.info(f"Error while calculating price for product {product_bid['_id']}: {e}")
             count += 1
 
         if count < batch_size:
