@@ -1,6 +1,6 @@
 [project]
 name = "prozorro-catalog"
-version = "1.1.189"
+version = "1.1.191"
 description = "Prozorro Catalog API"
 readme = "README.md"
 license = { text = "Apache License 2.0" }
@@ -72,7 +72,7 @@ package = true
 
 [tool.uv.sources]
 jsonpatch = { git = "https://github.com/ProzorroUKR/python-json-patch.git", rev = "1.14+jsondiff.unicode.replacefix.0" }
-standards = { git = "https://github.com/ProzorroUKR/standards.git", rev = "1.0.236" }
+standards = { git = "https://github.com/ProzorroUKR/standards.git", rev = "1.0.241" }
 prozorro-crawler = { git = "https://github.com/ProzorroUKR/prozorro_crawler.git", rev = "2.1.9" }
 
 [tool.pytest.ini_options]
