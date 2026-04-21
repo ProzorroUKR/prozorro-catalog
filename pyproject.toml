@@ -1,6 +1,6 @@
 [project]
 name = "prozorro-catalog"
-version = "1.1.191"
+version = "1.1.192"
 description = "Prozorro Catalog API"
 readme = "README.md"
 license = { text = "Apache License 2.0" }
