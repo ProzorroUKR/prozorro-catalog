@@ -1,0 +1,12 @@
+{
+  "tenderId": "tender-id-001",
+  "bidId": "bid-id-001",
+  "itemId": "item-id-001",
+  "productId": "catalog-product-id-001",
+  "currency": "UAH",
+  "valueAddedTaxIncluded": false,
+  "unitCode": "KGM",
+  "unitName": "кілограм",
+  "amount": "150.00",
+  "date": "2024-01-15T10:00:00+02:00"
+}

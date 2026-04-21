@@ -1,0 +1,103 @@
+import asyncio
+import json
+import logging
+from typing import Any
+
+import sentry_sdk
+from aiohttp import ClientSession
+from prozorro_crawler.main import run_app
+from prozorro_crawler.resource import process_resource
+from prozorro_crawler.utils import get_resource_url
+from pymongo.errors import DuplicateKeyError
+
+from catalog import db
+from catalog.db import init_mongo
+from catalog.logging import setup_logging
+from catalog.models.product_bid import ProductBidCreateData
+from catalog.settings import SENTRY_DSN
+from catalog.utils import get_now
+
+logger = logging.getLogger(__name__)
+
+
+RESOURCE = "tenders"
+TENDERS_URL = get_resource_url(RESOURCE)
+
+
+async def process_tender(session: ClientSession, tender: dict[str, Any]) -> None:
+    if tender is not None and tender.get("awardPeriod", {}).get("startDate") is not None:
+        for n, bid in enumerate(tender.get("bids", []), start=1):
+            if bid.get("status") == "active" and "items" in bid and type(bid["items"]) is list:
+                for item in bid["items"]:
+                    # Перевіряємо наявність необхідних полів та валідність даних
+                    if (
+                        "unit" in item
+                        and "product" in item
+                        and "value" in item["unit"]
+                        and item["unit"]["value"]["amount"] > 0
+                    ):
+                        product_bid_data = ProductBidCreateData(
+                            tenderId=tender["id"],
+                            bidId=bid["id"],
+                            itemId=item["id"],
+                            productId=item["product"],
+                            unitCode=item["unit"]["code"],
+                            unitName=item["unit"]["name"],
+                            amount=item["unit"]["value"]["amount"],
+                            currency=item["unit"]["value"]["currency"],
+                            valueAddedTaxIncluded=item["unit"]["value"]["valueAddedTaxIncluded"],
+                            date=tender["awardPeriod"]["startDate"],
+                            dateModified=get_now().isoformat(),
+                            dateCreated=get_now().isoformat(),
+                        )
+                        try:
+                            data = product_bid_data.model_dump(exclude_none=True)
+                            data["date"] = data["date"].isoformat()
+                            data["dateCreated"] = data["dateCreated"].isoformat()
+                            data["dateModified"] = data["dateModified"].isoformat()
+                            await db.insert_product_bid(data)
+                            logger.info(f"Inserted product bid data for item in bid #{n} of tender {tender['id']}")
+                        except DuplicateKeyError:
+                            logger.debug(f"Product bid already exists for item in bid #{n} of tender {tender['id']}")
+                        except Exception as e:
+                            logger.exception(
+                                f"Error inserting product bid data for item in bid #{n} of tender {tender['id']}: {e}"
+                            )
+
+
+async def item_data_handler(session: ClientSession, items: list[dict[str, Any]]) -> None:
+    if items is not None:
+        filtered = [
+            item
+            for item in items
+            if item.get("procurementMethodType") == "priceQuotation"
+            and item.get("awardPeriod", {}).get("startDate") is not None
+        ]
+        logger.info(f"Processing {len(filtered)}/{len(items)} tenders (priceQuotation with awardPeriod)")
+        for item in filtered:
+            await process_resource(session, url=TENDERS_URL, resource_id=item["id"], process_function=process_tender)
+
+
+async def run_task():
+    logger.info("Starting tenders bid crawler")
+    await run_app(
+        data_handler=item_data_handler,
+        json_loads=json.loads,
+        opt_fields=["status", "procurementMethodType", "awardPeriod"],
+        resource=RESOURCE,
+    )
+
+    return None
+
+
+def main():
+    setup_logging()
+    if SENTRY_DSN:
+        sentry_sdk.init(dsn=SENTRY_DSN)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(init_mongo())
+    loop.run_until_complete(run_task())
+
+
+if __name__ == "__main__":
+    main()

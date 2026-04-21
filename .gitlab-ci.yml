@@ -80,6 +80,7 @@ test:
     AUTH_PATH: ${CI_PROJECT_DIR}/auth.ini
     IMG_DIR: ${CI_PROJECT_DIR}/images
     MONGODB_URI: mongodb://root:example@mongo:27017/?replicaSet=rs0
+    MONGODB_URL: mongodb://root:example@mongo:27017/?replicaSet=rs0
     MONGODB_ROOT_PASSWORD: example
     MONGODB_REPLICA_SET_MODE: primary
     MONGODB_REPLICA_SET_NAME: rs0
@@ -123,6 +124,43 @@ review:
     - master
     - schedules
   when: manual
+
+run_seed:
+  extends: review
+  script:
+    - kubectl --namespace dev-prozorro rollout status deployment ${RELEASE}-prozorro-catalog
+    - kubectl --namespace dev-prozorro exec deployment/${RELEASE}-prozorro-catalog -- python -m seed
+  when: manual
+  except:
+    - schedules
+
+run_cron_price:
+  extends: review
+  script:
+    - kubectl --namespace dev-prozorro rollout status deployment ${RELEASE}-prozorro-catalog
+    - kubectl --namespace dev-prozorro exec deployment/${RELEASE}-prozorro-catalog -- python cron/calculate_price.py
+  when: manual
+  except:
+    - schedules
+
+run_full_recalculate_price:
+  extends: review
+  script:
+    - kubectl --namespace dev-prozorro rollout status deployment ${RELEASE}-prozorro-catalog
+    - kubectl --namespace dev-prozorro exec deployment/${RELEASE}-prozorro-catalog -- python -m catalog.prices
+  when: manual
+  except:
+    - schedules
+
+restart_crawler:
+  extends: review
+  script:
+    - kubectl --namespace dev-prozorro rollout status deployment ${RELEASE}-prozorro-catalog
+    - kubectl --namespace dev-prozorro exec deployment/${RELEASE}-prozorro-catalog -- python seed/clear_crawler.py
+    - kubectl --namespace dev-prozorro rollout restart deployment ${RELEASE}-prozorro-catalog-crawler
+  when: manual
+  except:
+    - schedules
 
 review_master:
   extends: review

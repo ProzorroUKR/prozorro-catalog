@@ -7,7 +7,7 @@ from decimal import Decimal
 from urllib.parse import urlencode
 
 from aiohttp import web
-from bson.codec_options import CodecOptions, TypeRegistry
+from bson.codec_options import CodecOptions, TypeCodec, TypeRegistry
 from bson.decimal128 import Decimal128
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import ASCENDING, DESCENDING, IndexModel, ReadPreference
@@ -51,6 +51,8 @@ async def init_mongo(*app) -> AsyncIOMotorDatabase:
         init_category_indexes(),
         init_profile_indexes(),
         init_products_indexes(),
+        init_product_bids_indexes(),
+        init_prices_indexes(),
         init_offers_indexes(),
         init_vendor_indexes(),
         init_contributor_indexes(),
@@ -58,6 +60,21 @@ async def init_mongo(*app) -> AsyncIOMotorDatabase:
         init_tag_indexes(),
     )
     return DB
+
+
+class DecimalCodec(TypeCodec):
+    python_type = Decimal  # the Python type acted upon by this type codec
+    bson_type = Decimal128  # the BSON type acted upon by this type codec
+
+    def transform_python(self, value):
+        """Function that transforms a custom type value into a type
+        that BSON can encode."""
+        return Decimal128(value)
+
+    def transform_bson(self, value):
+        """Function that transforms a vanilla BSON type value into our
+        custom type."""
+        return value.to_decimal()
 
 
 # The stuff below is done to be able store sets (as lists) and decimals (as decimals) types in mongodb bson
@@ -70,7 +87,7 @@ def fallback_encoder(value):
     return value
 
 
-type_registry = TypeRegistry(fallback_encoder=fallback_encoder)
+type_registry = TypeRegistry([DecimalCodec()], fallback_encoder=fallback_encoder)
 codec_options = CodecOptions(type_registry=type_registry)
 
 
@@ -93,6 +110,8 @@ async def flush_database(*_):
         get_category_collection().delete_many({}),
         get_profiles_collection().delete_many({}),
         get_products_collection().delete_many({}),
+        get_product_bids_collection().delete_many({}),
+        get_prices_collection().delete_many({}),
         get_offers_collection().delete_many({}),
         get_vendor_collection().delete_many({}),
         get_contributor_collection().delete_many({}),
@@ -160,7 +179,7 @@ async def find_objects(collection, ids):
     return items
 
 
-async def paginated_result(collection, *_, offset, limit, reverse, filters=None, opt_fields=None):
+async def paginated_result(collection, *_, offset, limit, reverse, filters=None, opt_fields=None, full_data=False):
     limit = min(limit, MAX_LIST_LIMIT)
     limit = max(limit, 1)
     filters = filters or {}
@@ -174,10 +193,13 @@ async def paginated_result(collection, *_, offset, limit, reverse, filters=None,
         else:
             filters["dateModified"] = {"$gt": offset}
 
-    projection = {"dateModified": True}
-    if opt_fields is not None:
-        for field in opt_fields:
-            projection[field] = True
+    if full_data:
+        projection = {"_rev": False}
+    else:
+        projection = {"dateModified": True}
+        if opt_fields is not None:
+            for field in opt_fields:
+                projection[field] = True
 
     items = (
         await collection.find(
@@ -475,6 +497,175 @@ async def read_product(uid, filters=None, collection=None):
 async def read_and_update_product(uid, filters=None):
     collection = get_products_collection(read_preference=ReadPreference.PRIMARY)
     data = await read_product(uid, filters=filters, collection=collection)
+    yield data
+    await update_object(collection, data)
+
+
+# product prices
+def get_prices_collection(read_preference=None):
+    return get_collection("prices", read_preference=read_preference)
+
+
+async def init_prices_indexes():
+    modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    product_index = IndexModel([("productId", ASCENDING)], background=True)
+    try:
+        await get_prices_collection().create_indexes([modified_index, product_index])
+    except PyMongoError as e:
+        logger.exception(e)
+
+
+async def clear_prices_collection():
+    await get_prices_collection().delete_many({})
+
+
+async def insert_price(data):
+    inserted_id = await insert_object(get_prices_collection(), data)
+    return inserted_id
+
+
+async def find_prices(**kwargs):
+    collection = get_prices_collection()
+    result = await paginated_result(collection, **kwargs, full_data=True)
+    return result
+
+
+async def find_prices_by_product(product_id, **kwargs):
+    collection = get_prices_collection()
+    result = await paginated_result(collection, filters={"productId": product_id}, full_data=True, **kwargs)
+    return result
+
+
+async def find_last_calculated_price():
+    collection = get_prices_collection()
+    price = await collection.find_one(
+        sort=[("date", DESCENDING)],
+        session=get_db_session(),
+    )
+    if not price:
+        return None
+    return rename_id(price)
+
+
+async def find_last_price_by_product(product_id):
+    collection = get_prices_collection()
+    price = await collection.find_one(
+        {"productId": product_id},
+        sort=[("date", DESCENDING)],
+        session=get_db_session(),
+    )
+    if not price:
+        return None
+    return rename_id(price)
+
+
+async def read_price(uid, filters=None, collection=None):
+    if collection is None:
+        collection = get_prices_collection()
+    if filters is None:
+        filters = {}
+    data = await collection.find_one(
+        {"_id": uid, **filters},
+        session=get_db_session(),
+    )
+    if not data:
+        raise web.HTTPNotFound(text="Price not found")
+    return rename_id(data)
+
+
+@asynccontextmanager
+async def read_and_update_price(uid, filters=None):
+    collection = get_prices_collection(read_preference=ReadPreference.PRIMARY)
+    data = await read_price(uid, filters=filters, collection=collection)
+    yield data
+    await update_object(collection, data)
+
+
+# product_bids
+def get_product_bids_collection(read_preference=None):
+    return get_collection("product_bids", read_preference=read_preference)
+
+
+async def init_product_bids_indexes():
+    modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    unique_tender_bid_item = IndexModel(
+        [("tenderId", ASCENDING), ("bidId", ASCENDING), ("itemId", ASCENDING)],
+        unique=True,
+        background=True,
+        name="unique_tender_bid_item",
+    )
+    try:
+        await get_product_bids_collection().create_indexes([modified_index, unique_tender_bid_item])
+    except PyMongoError as e:
+        logger.exception(e)
+
+
+async def insert_product_bid(data):
+    collection = get_product_bids_collection()
+    data.pop("id", None)
+    result = await collection.insert_one(data)
+    return result.inserted_id
+
+
+async def find_product_bids(**kwargs):
+    collection = get_product_bids_collection()
+    result = await paginated_result(collection, **kwargs)
+    return result
+
+
+async def find_product_bids_group_products(limit=None, skip=None, start_date=None, end_date=None, **kwargs):
+    collection = get_product_bids_collection()
+    pipeline = [
+        {"$group": {"_id": "$productId"}},
+        {"$sort": {"_id": 1}},
+    ]
+    if skip is not None:
+        pipeline.append({"$skip": skip})
+    if limit is not None:
+        pipeline.append({"$limit": limit})
+    if start_date is not None:
+        pipeline.insert(0, {"$match": {"date": {"$gte": start_date}}})
+    if end_date is not None:
+        pipeline.insert(0, {"$match": {"date": {"$lt": end_date}}})
+
+    result = collection.aggregate(pipeline, session=get_db_session())
+    return result
+
+
+async def find_product_bids_by_product(product_id, start_date=None, unit_code=None):
+    collection = get_product_bids_collection()
+    match_query = {"productId": product_id, "currency": "UAH", "valueAddedTaxIncluded": False}
+    if start_date:
+        match_query["date"] = {"$gte": start_date}
+    if unit_code:
+        match_query["unitCode"] = unit_code
+    pipeline = [
+        {"$match": match_query},
+        {"$sort": {"date": 1}},
+    ]
+
+    result = await collection.aggregate(pipeline, session=get_db_session()).to_list(None)
+    return result
+
+
+async def read_product_bid(uid, filters=None, collection=None):
+    if collection is None:
+        collection = get_product_bids_collection()
+    if filters is None:
+        filters = {}
+    data = await collection.find_one(
+        {"_id": uid, **filters},
+        session=get_db_session(),
+    )
+    if not data:
+        raise web.HTTPNotFound(text="Product bid not found")
+    return rename_id(data)
+
+
+@asynccontextmanager
+async def read_and_update_product_bid(uid, filters=None):
+    collection = get_product_bids_collection(read_preference=ReadPreference.PRIMARY)
+    data = await read_product_bid(uid, filters=filters, collection=collection)
     yield data
     await update_object(collection, data)
 

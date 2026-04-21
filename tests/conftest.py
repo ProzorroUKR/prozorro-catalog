@@ -6,8 +6,17 @@ from uuid import uuid4
 import pytest
 
 from catalog.api import create_application
-from catalog.db import flush_database, get_database, get_offers_collection, init_mongo, insert_object
+from catalog.db import (
+    flush_database,
+    get_database,
+    get_offers_collection,
+    get_prices_collection,
+    get_product_bids_collection,
+    init_mongo,
+    insert_object,
+)
 from catalog.doc_service import generate_test_url
+from catalog.utils import get_now
 from tests.base import TEST_AUTH, TEST_AUTH_CPB
 from tests.utils import create_criteria, create_profile, get_fixture_json
 
@@ -95,6 +104,28 @@ async def offer(db, api, product):
     resp = await api.get(f"/api/offers/{offer_id}")
     assert resp.status == 200, await resp.json()
     return await resp.json()
+
+
+@pytest.fixture
+async def price(db, api):
+    data = get_fixture_json("price")
+    data["id"] = uuid4().hex
+    data["dateModified"] = get_now().isoformat()
+    data["dateCreated"] = get_now().isoformat()
+    await insert_object(get_prices_collection(), data)
+    resp = await api.get(f"/api/prices/{data['id']}")
+    assert resp.status == 200
+    return await resp.json()
+
+
+@pytest.fixture
+async def product_bid(db, api):
+    data = get_fixture_json("product_bid")
+    data["id"] = uuid4().hex
+    data["dateModified"] = get_now().isoformat()
+    data["dateCreated"] = get_now().isoformat()
+    await insert_object(get_product_bids_collection(), data)
+    return data
 
 
 @pytest.fixture
