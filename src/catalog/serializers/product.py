@@ -10,7 +10,7 @@ def set_field_from_requirements(criteria, requirement_responses):
         for req in rg.get("requirements", "")
     }
 
-    fields_to_copy = ("classification", "unit")
+    fields_to_copy = ("classification", "unit", "dataSchema")
 
     for rr in requirement_responses:
         req = requirements.get(rr["requirement"])
