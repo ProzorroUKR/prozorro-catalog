@@ -117,6 +117,37 @@ async def test_411_product_rr_create(api, category, profile):
     assert json_data["errors"] == [f'requirement {req["title"]} is archived']
 
 
+async def test_requirement_response_carries_data_schema(api, category):
+    category_id = category["data"]["id"]
+    country_req = category["data"]["criteria"][1]["requirementGroups"][1]["requirements"][0]
+    assert country_req.get("dataSchema"), "fixture must have a dataSchema requirement"
+
+    test_product = {"data": api.get_fixture_json("product")}
+    test_product["data"]["relatedCategory"] = category_id
+    test_product["access"] = category["access"]
+    set_requirements_to_responses(test_product["data"]["requirementResponses"], category)
+
+    test_product["data"]["requirementResponses"][-1] = {
+        "requirement": country_req["title"],
+        "values": ["US"],
+    }
+
+    resp = await api.post("/api/products", json=test_product, auth=TEST_AUTH)
+    assert resp.status == 201, await resp.json()
+    product_id = (await resp.json())["data"]["id"]
+
+    resp = await api.get(f"/api/products/{product_id}")
+    assert resp.status == 200
+    responses = (await resp.json())["data"]["requirementResponses"]
+
+    country_rr = next(rr for rr in responses if rr["requirement"] == country_req["title"])
+    assert country_rr["dataSchema"] == country_req["dataSchema"]
+
+    for rr in responses:
+        if rr["requirement"] != country_req["title"]:
+            assert "dataSchema" not in rr
+
+
 async def test_420_product_patch(api, category, profile, product):
     product_id = product["data"]["id"]
 

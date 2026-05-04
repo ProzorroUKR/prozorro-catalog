@@ -9,11 +9,15 @@ from catalog.models.api import AuthorizedInput, CreateResponse, Response
 from catalog.models.base import BaseModel
 from catalog.models.common import (
     CLASSIFICATION_EXAMPLE,
+    UNIT_EXAMPLE,
     CategoryMarketAdministrator,
     Classification,
+    DataSchemaEnum,
     Identifier,
     Image,
+    Unit,
 )
+from catalog.models.criteria import CRITERION_CLASSIFICATION_EXAMPLE, CriterionClassification
 from catalog.models.document import DOCUMENT_EXAMPLE, Document, DocumentPostData
 from catalog.settings import TIMEZONE
 from catalog.utils import get_now
@@ -65,6 +69,21 @@ class RequirementResponse(BaseModel):
         None,
         json_schema_extra={"example": ["string1", "string2"]},
     )
+    classification: Optional[CriterionClassification] = Field(
+        None,
+        json_schema_extra={"example": CRITERION_CLASSIFICATION_EXAMPLE},
+        description="Populated on response from the parent category criterion. Ignored on input.",
+    )
+    unit: Optional[Unit] = Field(
+        None,
+        json_schema_extra={"example": UNIT_EXAMPLE},
+        description="Populated on response from the matching category requirement. Ignored on input.",
+    )
+    dataSchema: Optional[DataSchemaEnum] = Field(
+        None,
+        json_schema_extra={"example": DataSchemaEnum.ISO_3166.value},
+        description="Populated on response from the matching category requirement. Ignored on input.",
+    )
 
 
 class ProductRequirementResponses(BaseModel):
@@ -72,7 +91,17 @@ class ProductRequirementResponses(BaseModel):
         None,
         min_length=1,
         max_length=200,
-        json_schema_extra={"example": [{"requirement": "string", "value": 2}]},
+        json_schema_extra={
+            "example": [
+                {
+                    "requirement": "string",
+                    "value": 2,
+                    "classification": CRITERION_CLASSIFICATION_EXAMPLE,
+                    "unit": UNIT_EXAMPLE,
+                    "dataSchema": DataSchemaEnum.ISO_3166.value,
+                }
+            ]
+        },
     )
 
     @field_validator("requirementResponses")
