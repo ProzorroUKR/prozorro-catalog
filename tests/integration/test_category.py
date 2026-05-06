@@ -1085,3 +1085,107 @@ async def test_requirement_data_schema(api, category):
         auth=TEST_AUTH,
     )
     assert resp.status == 200
+
+
+def _law922_criterion_payload(criterion_id):
+    return {
+        "title": "Спосіб використання",
+        "description": "Спосіб використання (одноразова або багаторазова)",
+        "legislation": [
+            {
+                "identifier": {
+                    "id": "922-VIII",
+                    "legalName": "Закон України \"Про публічні закупівлі\"",
+                    "uri": "https://zakon.rada.gov.ua/laws/show/922-19#Text",
+                },
+                "version": "2024-04-19",
+                "article": "22.2.3",
+            }
+        ],
+        "classification": {
+            "scheme": "LAW922",
+            "id": criterion_id,
+        },
+    }
+
+
+async def test_category_criterion_create_with_law922_scheme(api, mock_agreement):
+    data = api.get_fixture_json("category")
+    resp = await api.put(f"/api/categories/{data['id']}", json={"data": data}, auth=TEST_AUTH)
+    assert resp.status == 201
+    category_data = await resp.json()
+
+    criterion = _law922_criterion_payload(
+        "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
+    )
+
+    resp = await api.post(
+        f"/api/categories/{category_data['data']['id']}/criteria",
+        json={"data": criterion, "access": category_data["access"]},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 201
+    resp_json = await resp.json()
+    assert resp_json["data"][-1]["classification"] == {
+        "scheme": "LAW922",
+        "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
+    }
+
+
+async def test_category_criterion_patch_to_law922_scheme(api, mock_agreement):
+    data = api.get_fixture_json("category")
+    resp = await api.put(f"/api/categories/{data['id']}", json={"data": data}, auth=TEST_AUTH)
+    assert resp.status == 201
+    category_data = await resp.json()
+    category_id = category_data["data"]["id"]
+    access = category_data["access"]
+
+    criteria = api.get_fixture_json("criteria")
+    criterion = deepcopy(criteria["criteria"][1])
+    criterion.pop("requirementGroups")
+    resp = await api.post(
+        f"/api/categories/{category_id}/criteria",
+        json={"data": criterion, "access": access},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 201
+    criterion_id = (await resp.json())["data"][-1]["id"]
+
+    resp = await api.patch(
+        f"/api/categories/{category_id}/criteria/{criterion_id}",
+        json={
+            "data": {
+                "classification": {
+                    "scheme": "LAW922",
+                    "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL",
+                }
+            },
+            "access": access,
+        },
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 200
+    resp_json = await resp.json()
+    assert resp_json["data"]["classification"] == {
+        "scheme": "LAW922",
+        "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL",
+    }
+
+    resp = await api.patch(
+        f"/api/categories/{category_id}/criteria/{criterion_id}",
+        json={
+            "data": {
+                "classification": {
+                    "scheme": "FOOBAR",
+                    "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL",
+                }
+            },
+            "access": access,
+        },
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    resp_json = await resp.json()
+    assert resp_json["errors"] == [
+        "Input should be 'ESPD211' or 'LAW922': data.classification.scheme",
+    ]

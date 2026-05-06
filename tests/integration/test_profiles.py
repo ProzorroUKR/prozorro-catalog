@@ -38,7 +38,7 @@ async def create_blank_criterion(api, profile):
     assert resp.status == 400
     assert {
         "errors": [
-            "Input should be 'ESPD211': data.CriterionCreateData.classification.scheme",
+            "Input should be 'ESPD211' or 'LAW922': data.CriterionCreateData.classification.scheme",
             "Value error, must be one of ('CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL', "
             "'CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES'): data.CriterionCreateData.classification.id",
             "Input should be a valid list: data",
@@ -796,3 +796,67 @@ async def test_331_requirement_patch(api, profile_without_criteria):
     resp_json = await resp.json()
     assert resp_json["data"]["expectedMinItems"] == 1
     assert set(resp_json["data"]["expectedValues"]) == set(requirement_data["data"]["expectedValues"])
+
+
+def _law922_criterion_payload(criterion_id):
+    return {
+        "title": "Спосіб використання",
+        "description": "Спосіб використання (одноразова або багаторазова)",
+        "legislation": [
+            {
+                "identifier": {
+                    "id": "922-VIII",
+                    "legalName": "Закон України \"Про публічні закупівлі\"",
+                    "uri": "https://zakon.rada.gov.ua/laws/show/922-19#Text",
+                },
+                "version": "2024-04-19",
+                "article": "22.2.3",
+            }
+        ],
+        "classification": {
+            "scheme": "LAW922",
+            "id": criterion_id,
+        },
+    }
+
+
+async def test_profile_criterion_create_with_law922_scheme(api, profile_without_criteria):
+    profile = profile_without_criteria
+    profile_id = profile["data"]["id"]
+
+    criterion_data = _law922_criterion_payload(
+        "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
+    )
+
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria",
+        json={"data": criterion_data, "access": profile["access"]},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 201
+    resp_json = await resp.json()
+    assert resp_json["data"][-1]["classification"] == {
+        "scheme": "LAW922",
+        "id": "CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES",
+    }
+
+
+async def test_profile_criterion_create_with_law922_invalid_id(api, profile_without_criteria):
+    profile = profile_without_criteria
+    profile_id = profile["data"]["id"]
+
+    criterion_data = _law922_criterion_payload("CRITERION.UNKNOWN")
+
+    resp = await api.post(
+        f"/api/profiles/{profile_id}/criteria",
+        json={"data": criterion_data, "access": profile["access"]},
+        auth=TEST_AUTH,
+    )
+    assert resp.status == 400
+    assert {
+        "errors": [
+            "Value error, must be one of ('CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.LOCAL_ORIGIN_LEVEL', "
+            "'CRITERION.OTHER.SUBJECT_OF_PROCUREMENT.TECHNICAL_FEATURES'): data.CriterionCreateData.classification.id",
+            "Input should be a valid list: data",
+        ]
+    } == await resp.json()
