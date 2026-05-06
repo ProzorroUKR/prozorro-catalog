@@ -412,7 +412,7 @@ LEGISLATION_ITEM_EXAMPLE = LegislationItem(
 
 
 class CriterionClassification(BaseModel):
-    scheme: Literal["ESPD211"]
+    scheme: Literal["ESPD211", "LAW922"]
     id: str = Field(..., min_length=1, max_length=250)
 
     @field_validator("id")
