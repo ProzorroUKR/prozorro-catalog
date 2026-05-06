@@ -508,9 +508,11 @@ def get_prices_collection(read_preference=None):
 
 async def init_prices_indexes():
     modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    date_index = IndexModel([("date", ASCENDING)], background=True)
     product_index = IndexModel([("productId", ASCENDING)], background=True)
+    date_product_index = IndexModel([("date", ASCENDING), ("productId", ASCENDING)], background=True)
     try:
-        await get_prices_collection().create_indexes([modified_index, product_index])
+        await get_prices_collection().create_indexes([modified_index, date_index, product_index, date_product_index])
     except PyMongoError as e:
         logger.exception(e)
 
@@ -588,6 +590,9 @@ def get_product_bids_collection(read_preference=None):
 
 async def init_product_bids_indexes():
     modified_index = IndexModel([("dateModified", ASCENDING)], background=True)
+    date_index = IndexModel([("date", ASCENDING)], background=True)
+    product_index = IndexModel([("productId", ASCENDING)], background=True)
+    date_product_index = IndexModel([("date", ASCENDING), ("productId", ASCENDING)], background=True)
     unique_tender_bid_item = IndexModel(
         [("tenderId", ASCENDING), ("bidId", ASCENDING), ("itemId", ASCENDING)],
         unique=True,
@@ -595,7 +600,9 @@ async def init_product_bids_indexes():
         name="unique_tender_bid_item",
     )
     try:
-        await get_product_bids_collection().create_indexes([modified_index, unique_tender_bid_item])
+        await get_product_bids_collection().create_indexes(
+            [modified_index, date_index, product_index, date_product_index, unique_tender_bid_item]
+        )
     except PyMongoError as e:
         logger.exception(e)
 
