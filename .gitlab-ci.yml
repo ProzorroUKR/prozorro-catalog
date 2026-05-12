@@ -1,13 +1,34 @@
-stages:
-  - build
-  - lint
-  - test
-  - deploy
-  - cleanup
+include:
+  - project: 'Web-Projects/pipeline-scripts'
+    ref: master
+    file: '/templates/security.yml'
 
 variables:
   HELM: "helm3"
   REPO_URL: http://repo-staging.dc.prozorro.gov.ua/repos/helm/
+  SEC_CS_IMAGE: $CI_REGISTRY_IMAGE:$CI_TAG
+  SEC_CS_DOCKERFILE_PATH: Dockerfile
+  DEFECTDOJO_PRODUCT_TYPE: "CDB"
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "master" && $BUILT_AS_BRIDGE == null
+      when: never
+    - if: $CI_COMMIT_BRANCH && $BUILT_AS_BRIDGE
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+    - when: never
+
+stages:
+  - build
+  - security
+  - lint
+  - test
+  - deploy
+  - cleanup
 
 build:
   stage: build
@@ -25,8 +46,8 @@ build:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       variables:
         CI_TAG: "latest"
-    # if it is push event or manual pipeline trigger (merge request is excluded)
-    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+    # for branches and merge requests
+    - if: $CI_COMMIT_BRANCH || $CI_PIPELINE_SOURCE == "merge_request_event"
       variables:
         CI_TAG: "ci-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
   before_script:
@@ -51,13 +72,12 @@ build:
   allow_failure: false
   tags:
     - kube-dev
-  only:
-    - branches
-  except:
-    - schedules
   stage: lint
   variables:
     GIT_STRATEGY: clone
+  rules:
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 mypy:
   extends: .lint_tools
@@ -98,6 +118,9 @@ test:
         path: coverage.xml
         coverage_format: cobertura
   coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
+  rules:
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 review:
   stage: deploy
@@ -118,12 +141,11 @@ review:
         --set environment.VERSION=${VERSION}
         --set ingress.hosts[0].host=catalog.${RELEASE}.k8s.prozorro.gov.ua,ingress.hosts[0].paths[0].path=/
         --set ingress.hosts[0].paths[0].pathType=ImplementationSpecific
-  only:
-    - branches
-  except:
-    - master
-    - schedules
-  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != "master"
+      when: manual
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
 
 run_seed:
   extends: review
@@ -131,8 +153,6 @@ run_seed:
     - kubectl --namespace dev-prozorro rollout status deployment ${RELEASE}-prozorro-catalog
     - kubectl --namespace dev-prozorro exec deployment/${RELEASE}-prozorro-catalog -- python -m seed
   when: manual
-  except:
-    - schedules
 
 run_cron_price:
   extends: review
@@ -140,8 +160,6 @@ run_cron_price:
     - kubectl --namespace dev-prozorro rollout status deployment ${RELEASE}-prozorro-catalog
     - kubectl --namespace dev-prozorro exec deployment/${RELEASE}-prozorro-catalog -- python cron/calculate_price.py
   when: manual
-  except:
-    - schedules
 
 run_full_recalculate_price:
   extends: review
@@ -149,8 +167,6 @@ run_full_recalculate_price:
     - kubectl --namespace dev-prozorro rollout status deployment ${RELEASE}-prozorro-catalog
     - kubectl --namespace dev-prozorro exec deployment/${RELEASE}-prozorro-catalog -- python -m catalog.prices
   when: manual
-  except:
-    - schedules
 
 restart_crawler:
   extends: review
@@ -159,17 +175,13 @@ restart_crawler:
     - kubectl --namespace dev-prozorro exec deployment/${RELEASE}-prozorro-catalog -- python seed/clear_crawler.py
     - kubectl --namespace dev-prozorro rollout restart deployment ${RELEASE}-prozorro-catalog-crawler
   when: manual
-  except:
-    - schedules
 
 review_master:
   extends: review
   after_script:
     - kubectl --namespace dev-prozorro rollout restart deployment catalog-master-prozorro-catalog
-  only:
-    - master
-  except:
-    - schedules
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
 
 stop_review:
   stage: deploy
@@ -180,11 +192,11 @@ stop_review:
     action: stop
   tags:
     - shell
-  only:
-    - branches
-  except:
-    - schedules
-  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != "master"
+      when: manual
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
 
 clenup-ci-image:
   stage: cleanup
@@ -192,4 +204,8 @@ clenup-ci-image:
     - shell
   script:
     - docker rmi -f $CI_TAG || true
+  rules:
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_TAG
   when: always
