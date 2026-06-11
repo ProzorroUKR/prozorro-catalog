@@ -1,3 +1,18 @@
+> [!WARNING]
+> **DEPRECATED — Локалізація v2.0**
+>
+> Цей документ описує застарілий процес реєстрації виробників та публікації локалізованих товарів
+> через ендпоінт `/api/vendors`.
+>
+> Починаючи з **Локалізації v3.0**, весь цей флоу переноситься на єдиний ендпоінт краудсорсингу:
+> - Реєстрація виробника → `PUT /api/crowd-sourcing/contributors/{id}/manufacturer`
+> - Подача товару → `POST /api/crowd-sourcing/contributors/{id}/requests`
+>
+> Ендпоінт `/api/vendors` та маршрути `/api/vendors/{id}/products` залишаються доступними
+> для зворотної сумісності, але більше не є рекомендованим шляхом.
+>
+> Актуальний план міграції: [`docs/vendor_to_crowdsourcing/plan.md`](../vendor_to_crowdsourcing/plan.md)
+
 # Локалізація v2.0
 
 

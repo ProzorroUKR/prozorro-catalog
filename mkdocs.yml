@@ -1,0 +1,50 @@
+site_name: Prozorro Catalog
+site_description: Documentation for the Prozorro Catalog API
+site_url: https://prozorraukr.github.io/prozorro-catalog/
+repo_url: https://github.com/ProzorroUKR/prozorro-catalog
+repo_name: ProzorroUKR/prozorro-catalog
+edit_uri: edit/master/docs/
+
+theme:
+  name: material
+  language: uk
+  palette:
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Краудсорсинг:
+      - Огляд: crowdsourcing/README.md
+  - Локалізація:
+      - v3.0 (актуально): vendor_to_crowdsourcing/README.md
+      - v3.0 — план змін: vendor_to_crowdsourcing/plan.md
+      - v2.0 (deprecated): vendor_products/README.md
+  - Теги: tags/README.md
